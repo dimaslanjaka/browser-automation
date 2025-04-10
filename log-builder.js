@@ -50,6 +50,9 @@ function generateTableRows(logs) {
   return logs
     .map(({ timestamp, type, data }) => {
       const rowClass = type.includes('Skipped') ? 'skipped' : 'processed';
+      let keterangan = [];
+      if (data.diabetes) keterangan.push('DIABETES');
+      if (data.batuk) keterangan.push(data.batuk);
 
       return `
         <tr class="${rowClass}">
@@ -64,7 +67,7 @@ function generateTableRows(logs) {
             <td>${data.tb ?? '-'}</td>
             <td>${data.umur ?? '-'}</td>
             <td>${data.gender ?? '-'}</td>
-            <td>${data.batuk ?? '-'}</td>
+            <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
         </tr>`;
     })
     .join('');
