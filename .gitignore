@@ -1,0 +1,64 @@
+# Node.js dependencies
+node_modules/
+
+# Yarn files
+yarn.lock
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/*.gz
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+out/
+coverage/
+
+# Puppeteer related
+puppeteer-screenshots/
+puppeteer-traces/
+.puppeteer-chromium/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+.idea/
+*.iml
+
+# IntelliJ IDEA files
+*.ipr
+*.iws
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# Keep VSCode settings and plugin recommendations
+.vscode/exclude/
+.vscode/tmp/
+!vscode/settings.json
+!vscode/extensions.json
+.vscode/sftp*.json
+
+# Temporary files
+*.log
+*.tmp
+*.swp
+.cache/
+
+# TypeScript
+*.tsbuildinfo

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log Data</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      h2 {
+        text-align: center;
+      }
+      .table-container {
+        overflow-x: auto;
+        max-width: 100vw;
+        margin: auto;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px; /* Pastikan tabel tidak terlalu kecil */
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        white-space: nowrap; /* Hindari teks pecah ke bawah */
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      /* Warna indikator */
+      .skipped {
+        background-color: #ffcccc;
+      } /* Merah muda untuk skipped */
+      .processed {
+        background-color: #ccffcc;
+      } /* Hijau muda untuk processed */
+
+      /* Responsif untuk layar kecil */
+      @media screen and (max-width: 768px) {
+        .table-container {
+          padding: 5px;
+        }
+        table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+          font-size: 14px;
+        }
+        th,
+        td {
+          padding: 6px;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+        body {
+          margin: 10px;
+        }
+        table {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Log Data</h2>
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Creation Date</th>
+          <th>Row Index</th>
+          <th>Date</th>
+          <th>Name</th>
+          <th>NIK</th>
+          <th>Occupation</th>
+          <th>Original Occupation</th>
+          <th>BB (kg)</th>
+          <th>TB (cm)</th>
+          <th>Umur (tahun)</th>
+          <th>Gender</th>
+          <th>Keterangan</th>
+        </tr>
+        {{rows}}
+      </table>
+    </div>
+  </body>
+</html>
