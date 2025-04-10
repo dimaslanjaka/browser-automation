@@ -226,7 +226,7 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(1567, 1628); //
+    let datas = getXlsxData(1621, 1628); //
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('first', firstItem, 'last', lastItem);

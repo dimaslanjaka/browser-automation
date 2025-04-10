@@ -24,7 +24,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(1567, 1628);
+  const datas = getXlsxData(1621, 1628);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -165,7 +165,8 @@ async function main() {
       { pattern: /rumah\s*tangga/, value: 'IRT' },
       { pattern: /swasta/, value: 'Wiraswasta' },
       { pattern: /tidak\s*bekerja|belum\s*bekerja/, value: 'Tidak Bekerja' },
-      { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' }
+      { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
+      { pattern: /guru|dosen/, value: 'Guru/ Dosen' }
     ];
 
     let jobMatched = false;
