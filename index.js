@@ -8,7 +8,8 @@ import {
   fixTbAndBb,
   isNIKNotFoundModalVisible,
   isIdentityModalVisible,
-  isInvalidAlertVisible
+  isInvalidAlertVisible,
+  isNikErrorVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
 import { getAge, getXlsxData } from './xlsx_data.js';
@@ -93,6 +94,12 @@ async function main() {
       await page.waitForSelector('[aria-labelledby="dialogconfirm_wnd_title"]', { visible: true, timeout: 5000 });
     } catch (_e) {
       //
+    }
+
+    console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
+    if (await isNikErrorVisible(page)) {
+      console.error('NIK error notification visible, please re-check. Aborting...');
+      break;
     }
 
     console.log('Identity modal is visible:', await isIdentityModalVisible(page));
