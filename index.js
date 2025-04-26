@@ -4,7 +4,12 @@ import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
-import { fixTbAndBb, isErrorModalVisible, isIdentityModalVisible, isInvalidAlertVisible } from './src/skrin_utils.js';
+import {
+  fixTbAndBb,
+  isNIKNotFoundModalVisible,
+  isIdentityModalVisible,
+  isInvalidAlertVisible
+} from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
 import { getAge, getXlsxData } from './xlsx_data.js';
 
@@ -117,11 +122,11 @@ async function main() {
       console.log('✅ Successfully clicked the button inside the iframe.');
     }
 
-    // Check if error modal visible
-    const errorModalVisible = await isErrorModalVisible(page);
-    console.log('Is error modal visible:', errorModalVisible);
+    // Check if NIK not found modal visible
+    const isNikNotFound = await isNIKNotFoundModalVisible(page);
+    console.log('Is NIK not found modal visible:', isNikNotFound);
 
-    if (errorModalVisible) {
+    if (isNikNotFound) {
       console.error('Skipping due data not found');
       appendLog(data, 'Skipped Data');
       continue;

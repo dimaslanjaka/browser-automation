@@ -43,7 +43,7 @@ export async function isIdentityModalVisible(page) {
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
  * @returns {Promise<boolean>} - Resolves to true if the error modal is visible, otherwise false.
  */
-export async function isErrorModalVisible(page) {
+export async function isNIKNotFoundModalVisible(page) {
   return await page.evaluate(() => {
     const modal = document.querySelector('[aria-labelledby="dialogconfirm_wnd_title"]');
     return modal && modal.innerText.includes('Data tidak ditemukan');
