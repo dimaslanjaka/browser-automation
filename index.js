@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(1793, 1852);
+  const datas = getXlsxData(1795, 1852);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -285,10 +285,12 @@ async function main() {
     }
 
     // Auto submit
+    let hasSubmitted = false;
     if (
       !(await isIdentityModalVisible(page)) &&
       !(await isInvalidAlertVisible(page)) &&
-      !(await isNikErrorVisible(page))
+      !(await isNikErrorVisible(page)) &&
+      !(await isNIKNotFoundModalVisible(page))
     ) {
       // Click save
       await page.click('#save');
@@ -305,10 +307,12 @@ async function main() {
         console.log('waiting success notification alert...');
         await sleep(1000);
       }
+
+      hasSubmitted = true;
     }
 
     console.log('Data processed successfully:', data);
-    await waitEnter('Press Enter to continue...');
+    if (!hasSubmitted) await waitEnter('Press Enter to continue...');
     appendLog(data);
 
     // Build HTML log
