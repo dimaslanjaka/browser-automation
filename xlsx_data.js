@@ -174,10 +174,13 @@ export async function fetchXlsxData2() {
         transformedRow.nik = String(rawRow[rawNikKey]).replace(/\.0+$/, '');
       }
 
-      // Throw an error if 'nik' or 'tanggal' is missing or empty
-      if (!transformedRow.nik || !transformedRow.tanggal) {
-        throw new Error(`Invalid data at row ${index + 1} in sheet '${sheetName}': Missing 'NIK' or 'TANGGAL'`);
-      }
+      // if (!transformedRow.nik) {
+      //   throw new Error(`Invalid data at row ${index + 1} in sheet '${sheetName}': Missing 'NIK'`);
+      // }
+
+      // if (!transformedRow.tanggal) {
+      //   throw new Error(`Invalid data at row ${index + 1} in sheet '${sheetName}': Missing 'TANGGAL'`);
+      // }
 
       return transformedRow;
     });
@@ -226,7 +229,7 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(1621, 1628); //
+    let datas = getXlsxData(1793, 1852);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('first', firstItem, 'last', lastItem);

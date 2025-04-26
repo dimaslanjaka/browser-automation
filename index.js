@@ -9,7 +9,8 @@ import {
   isNIKNotFoundModalVisible,
   isIdentityModalVisible,
   isInvalidAlertVisible,
-  isNikErrorVisible
+  isNikErrorVisible,
+  isSuccessNotificationVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
 import { getAge, getXlsxData } from './xlsx_data.js';
@@ -30,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(1621, 1628);
+  const datas = getXlsxData(1793, 1852);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -284,18 +285,27 @@ async function main() {
     }
 
     // Auto submit
-    // if (!(await isIdentityModalVisible(page))) {
-    //   // Click save
-    //   await page.click('#save');
-    //   try {
-    //     // Wait for the confirmation modal to appear
-    //     await page.waitForSelector('#yesButton', { visible: true });
-    //     // Click the "Ya" button
-    //     await page.click('#yesButton');
-    //   } catch (_) {
-    //     // Fail sending data, press manually
-    //   }
-    // }
+    if (
+      !(await isIdentityModalVisible(page)) &&
+      !(await isInvalidAlertVisible(page)) &&
+      !(await isNikErrorVisible(page))
+    ) {
+      // Click save
+      await page.click('#save');
+      try {
+        // Wait for the confirmation modal to appear
+        await page.waitForSelector('#yesButton', { visible: true });
+        // Click the "Ya" button
+        await page.click('#yesButton');
+      } catch (_) {
+        // Fail sending data, press manually
+      }
+
+      while (!(await isSuccessNotificationVisible(page))) {
+        console.log('waiting success notification alert...');
+        await sleep(1000);
+      }
+    }
 
     console.log('Data processed successfully:', data);
     await waitEnter('Press Enter to continue...');
