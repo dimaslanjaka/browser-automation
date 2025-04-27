@@ -142,6 +142,15 @@ async function main() {
       continue;
     }
 
+    if (`${data.nama}`.trim().length === 0) {
+      const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
+      data.nama = `${nama}`.trim();
+      // re-check
+      if (`${data.nama}`.trim().length === 0) {
+        throw new Error("❌ Failed to take the patient's name");
+      }
+    }
+
     const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
     data.gender = gender;
     const tgl_lahir = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
