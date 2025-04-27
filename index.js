@@ -329,6 +329,9 @@ async function main() {
 
   console.log('All data processed.');
   rl.close();
+
+  // Build HTML log
+  buildHtmlLog();
 }
 
 function buildHtmlLog() {
