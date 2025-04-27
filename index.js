@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(1795, 1852);
+  const datas = getXlsxData(2059, 2136);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -176,8 +176,9 @@ async function main() {
     const jobMappings = [
       { pattern: /pelajar|mahasiswa/, value: 'Pelajar/ Mahasiswa' },
       { pattern: /rumah\s*tangga/, value: 'IRT' },
-      { pattern: /swasta/, value: 'Wiraswasta' },
-      { pattern: /tidak\s*bekerja|belum\s*bekerja/, value: 'Tidak Bekerja' },
+      { pattern: /swasta|pedagang/, value: 'Wiraswasta' },
+      { pattern: /tukang|buruh/, value: 'Buruh ' },
+      { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/, value: 'Tidak Bekerja' },
       { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
       { pattern: /guru|dosen/, value: 'Guru/ Dosen' }
     ];
@@ -277,7 +278,12 @@ async function main() {
       await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
     }
 
-    // await sleep(3000);
+    await sleep(2000);
+
+    // Re-check if the identity modal is visible
+    while (await isIdentityModalVisible(page)) {
+      await waitEnter('Please identity modal. Press Enter to continue...');
+    }
 
     // Check if the invalid element alert is visible
     while (await isInvalidAlertVisible(page)) {
@@ -303,9 +309,9 @@ async function main() {
         // Fail sending data, press manually
       }
 
+      await sleep(1000); // waiting ajax
       while (!(await isSuccessNotificationVisible(page))) {
-        console.log('waiting success notification alert...');
-        await sleep(1000);
+        await waitEnter('Success notification not visible. Press Enter to continue...');
       }
 
       hasSubmitted = true;

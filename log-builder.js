@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { defaultLogFilePath } from './src/utils.js';
+import moment from 'moment';
 
 // Define __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -53,10 +54,11 @@ function generateTableRows(logs) {
       let keterangan = [];
       if (data.diabetes) keterangan.push('DIABETES');
       if (data.batuk) keterangan.push(data.batuk);
+      const formattedTime = moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
 
       return `
         <tr class="${rowClass}">
-            <td>${timestamp}</td>
+            <td>${formattedTime}</td>
             <td>${data.rowIndex ?? '-'}</td>
             <td>${data.tanggal ?? '-'}</td>
             <td>${data.nama ?? '-'}</td>

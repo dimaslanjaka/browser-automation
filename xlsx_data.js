@@ -229,9 +229,12 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(1795, 1852);
+    let datas = getXlsxData(2059, 2136);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('first', firstItem, 'last', lastItem);
   })();
 }
+
+// 26/04/2025
+// need fix index 1833 AN WAHID "PX TB"
