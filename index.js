@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(2059, 2136);
+  const datas = getXlsxData(2336, 2436);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;

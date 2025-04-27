@@ -198,19 +198,35 @@ export async function fetchXlsxData2() {
  * @returns {import('./globals').ExcelRowData[]} - An array of extracted data objects.
  */
 export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
+  // Read the JSON file content (outputJsonFile must be defined somewhere)
   let data = JSON.parse(fs.readFileSync(outputJsonFile, 'utf-8'));
 
-  // If the parsed data is an object (from an XLSX file), extract the specified sheet's data
+  // If the parsed data is an object (multiple sheets), select the specific sheet
   if (!Array.isArray(data)) {
     data = data[sheetName];
   }
 
-  // Ensure indexes are within valid bounds
+  // Make sure startIndex and lastIndex are within valid array bounds
   if (startIndex < 0) startIndex = 0;
   if (lastIndex > data.length) lastIndex = data.length;
 
-  // Return the extracted range of data
-  return data.slice(startIndex, lastIndex);
+  // Initialize a variable to keep track of the last known 'tanggal'
+  let lastTanggal = '';
+
+  // Loop through all data entries to fix missing 'tanggal' fields
+  const fixedData = data.map((item) => {
+    if (item.tanggal && item.tanggal.trim() !== '') {
+      // If 'tanggal' exists and is not just empty spaces, update lastTanggal
+      lastTanggal = item.tanggal;
+    } else {
+      // If 'tanggal' is missing or empty, copy the last known 'tanggal'
+      item.tanggal = lastTanggal;
+    }
+    return item;
+  });
+
+  // Return only the requested slice of data based on startIndex and lastIndex
+  return fixedData.slice(startIndex, lastIndex);
 }
 
 export function getAge(dateString) {
@@ -229,7 +245,7 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(2059, 2136);
+    let datas = getXlsxData(2336, 2436);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('first', firstItem, 'last', lastItem);
