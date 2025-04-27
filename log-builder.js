@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { defaultLogFilePath } from './src/utils.js';
 import moment from 'moment';
+import { minify } from 'html-minifier-terser';
 
 // Define __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -76,7 +77,7 @@ function generateTableRows(logs) {
 }
 
 // Read template and replace {{rows}} placeholder
-function generateHTML(logs) {
+async function generateHTML(logs) {
   if (!existsSync(templatePath)) {
     console.error(`❌ Template file not found: ${templatePath}`);
     return;
@@ -85,9 +86,20 @@ function generateHTML(logs) {
   const template = readFileSync(templatePath, 'utf-8');
   const rows = generateTableRows(logs);
   const finalHTML = template.replace('{{rows}}', rows);
-  writeFileSync(outputPath, finalHTML);
 
-  console.log(`✅ HTML file generated: ${outputPath}. Open it in a browser.`);
+  // Minify the HTML
+  const minifiedHTML = await minify(finalHTML, {
+    collapseWhitespace: true,
+    removeComments: true,
+    removeRedundantAttributes: true,
+    removeEmptyAttributes: true,
+    minifyCSS: true,
+    minifyJS: true
+  });
+
+  writeFileSync(outputPath, minifiedHTML);
+
+  console.log(`✅ Minified HTML file generated: ${outputPath}. Open it in a browser.`);
 }
 
 // Process logs and generate HTML
