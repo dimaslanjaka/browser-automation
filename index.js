@@ -284,7 +284,7 @@ async function main() {
 
     // Re-check if the identity modal is visible
     while (await isIdentityModalVisible(page)) {
-      await waitEnter('Please identity modal. Press Enter to continue...');
+      await waitEnter('Please check identity modal. Press Enter to continue...');
     }
 
     // Check if the invalid element alert is visible
