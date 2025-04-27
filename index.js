@@ -137,6 +137,8 @@ async function main() {
     if (isNikNotFound) {
       console.error('Skipping due data not found');
       appendLog(data, 'Skipped Data');
+      // Build HTML log
+      buildHtmlLog();
       continue;
     }
 
@@ -322,11 +324,15 @@ async function main() {
     appendLog(data);
 
     // Build HTML log
-    spawn('node', [path.resolve(__dirname, 'log-builder.js')], { cwd: __dirname });
+    buildHtmlLog();
   }
 
   console.log('All data processed.');
   rl.close();
+}
+
+function buildHtmlLog() {
+  spawn('node', [path.resolve(__dirname, 'log-builder.js')], { cwd: __dirname });
 }
 
 main().catch(console.error);
