@@ -55,18 +55,46 @@ function parseLogFile(logFilePath) {
 
 /**
  * Generates HTML table rows from parsed log data.
+ * Any additional keys in the data object not listed in the predefined columns
+ * will be grouped into a single last <td>. If none exist, the cell will contain a dash.
  *
  * @param {Array<{ timestamp: string, type: string, data: Object }>} logs - The array of log entries.
  * @returns {string} HTML string representing the table rows.
  */
 function generateTableRows(logs) {
+  const predefinedKeys = [
+    'rowIndex',
+    'tanggal',
+    'nama',
+    'nik',
+    'pekerjaan',
+    'pekerjaan_original',
+    'bb',
+    'tb',
+    'umur',
+    'gender',
+    'diabetes',
+    'batuk',
+    'tgl_lahir'
+  ];
+
   return logs
     .map(({ timestamp, type, data }) => {
       const rowClass = type.includes('Skipped') ? 'skipped' : 'processed';
-      let keterangan = [];
+      const keterangan = [];
       if (data.diabetes) keterangan.push('DIABETES');
       if (data.batuk) keterangan.push(data.batuk);
       const formattedTime = moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
+
+      // Collect additional key-value pairs into a single string
+      const additionalEntries = Object.entries(data).filter(([key]) => !predefinedKeys.includes(key));
+
+      const additionalInfo =
+        additionalEntries.length > 0
+          ? additionalEntries.map(([key, value]) => `${key}: ${value ?? '-'}`).join(', ')
+          : '-';
+
+      const birthDate = `${data.tgl_lahir ?? ''} (${data.umur ?? '-'})`;
 
       return `
         <tr class="${rowClass}">
@@ -79,9 +107,10 @@ function generateTableRows(logs) {
             <td>${data.pekerjaan_original ?? '-'}</td>
             <td>${data.bb ?? '-'}</td>
             <td>${data.tb ?? '-'}</td>
-            <td>${data.umur ?? '-'}</td>
+            <td>${data.tgl_lahir ? birthDate : '-'}</td>
             <td>${data.gender ?? '-'}</td>
             <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
+            <td>${additionalInfo}</td>
         </tr>`;
     })
     .join('');
