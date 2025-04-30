@@ -156,6 +156,18 @@ export async function fetchXlsxData2() {
           // Get properly parsed date from non-raw version
           if (value instanceof Date) {
             value = value.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
+          } else if (typeof value === 'string') {
+            // String date fixer
+            const matchHypens = value.match(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(\d{4})$/);
+            if (matchHypens) {
+              // fix DD-MM-YYYY to DD/MM/YYYY
+              value = value.replace(/-/g, '/');
+            }
+          }
+
+          // Verify date should be DD/MM/YYYY
+          if (!value.includes('/')) {
+            throw new Error(`Invalid string date: ${value}`);
           }
         }
 
@@ -245,12 +257,9 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(2336, 2436);
+    let datas = getXlsxData(2836, 3036);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('first', firstItem, 'last', lastItem);
   })();
 }
-
-// 26/04/2025
-// need fix index 1833 AN WAHID "PX TB"

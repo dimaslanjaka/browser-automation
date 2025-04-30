@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(2336, 2436);
+  const datas = getXlsxData(2836, 3036);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -71,7 +71,7 @@ async function main() {
 
     if (!`${data.tanggal}`.includes('/')) {
       await browser.close();
-      throw new Error('INVALID DATE');
+      throw new Error(`INVALID DATE ${JSON.stringify(data, null, 2)}`);
     }
 
     await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
@@ -142,13 +142,11 @@ async function main() {
       continue;
     }
 
+    const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
+    data.nama = `${nama}`.trim();
+    // re-check
     if (`${data.nama}`.trim().length === 0) {
-      const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
-      data.nama = `${nama}`.trim();
-      // re-check
-      if (`${data.nama}`.trim().length === 0) {
-        throw new Error("❌ Failed to take the patient's name");
-      }
+      throw new Error("❌ Failed to take the patient's name");
     }
 
     const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
@@ -191,7 +189,8 @@ async function main() {
       { pattern: /tukang|buruh/, value: 'Buruh ' },
       { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/, value: 'Tidak Bekerja' },
       { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
-      { pattern: /guru|dosen/, value: 'Guru/ Dosen' }
+      { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
+      { pattern: /perawat/, value: 'Tenaga Profesional Medis ' }
     ];
 
     let jobMatched = false;
