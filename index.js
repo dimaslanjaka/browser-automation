@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(2836, 3036);
+  const datas = getXlsxData(3012, 3036);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -340,6 +340,9 @@ async function main() {
 
   // Build HTML log
   buildHtmlLog();
+
+  // Close browser
+  await browser.close();
 }
 
 function buildHtmlLog() {
