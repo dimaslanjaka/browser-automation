@@ -345,8 +345,25 @@ async function main() {
   await browser.close();
 }
 
-function buildHtmlLog() {
-  spawn('node', [path.resolve(__dirname, 'log-builder.js')], { cwd: __dirname });
+async function buildHtmlLog() {
+  return new Promise((resolve, reject) => {
+    const child = spawn('node', [path.resolve(__dirname, 'log-builder.js')], {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`log-builder.js exited with code ${code}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+  });
 }
 
 main().catch(console.error);
