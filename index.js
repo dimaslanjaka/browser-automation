@@ -1,15 +1,15 @@
+import { spawnAsync } from 'cross-spawn';
 import dotenv from 'dotenv';
-import { spawn } from 'node:child_process';
 import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import {
   fixTbAndBb,
-  isNIKNotFoundModalVisible,
   isIdentityModalVisible,
   isInvalidAlertVisible,
   isNikErrorVisible,
+  isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
@@ -31,7 +31,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(3012, 3036);
+  const datas = getXlsxData(3767, 3800);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -79,6 +79,14 @@ async function main() {
     await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
+
+    if (data.nik.length < 16) {
+      console.error('Skipping due NIK length invalid, should be 16 digits.');
+      appendLog(data, 'Skipped Data');
+      // Build HTML log
+      buildHtmlLog();
+      continue;
+    }
     await typeAndTrigger(page, '#nik', getNumbersOnly(data.nik));
 
     await sleep(5000);
@@ -99,8 +107,7 @@ async function main() {
 
     console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
     if (await isNikErrorVisible(page)) {
-      console.error('NIK error notification visible, please re-check. Aborting...');
-      break;
+      throw new Error('NIK error notification visible, please re-check. Aborting...');
     }
 
     console.log('Identity modal is visible:', await isIdentityModalVisible(page));
@@ -184,7 +191,7 @@ async function main() {
 
     const jobMappings = [
       { pattern: /pelajar|mahasiswa/, value: 'Pelajar/ Mahasiswa' },
-      { pattern: /rumah\s*tangga/, value: 'IRT' },
+      { pattern: /rumah\s*tangga|irt/, value: 'IRT' },
       { pattern: /swasta|pedagang/, value: 'Wiraswasta' },
       { pattern: /tukang|buruh/, value: 'Buruh ' },
       { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/, value: 'Tidak Bekerja' },
@@ -284,8 +291,10 @@ async function main() {
       await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
     } else {
       let keteranganBatuk = data.batuk.replace(/ya,/, 'batuk');
-      await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
-      await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
+      if (/\d/m.test(keteranganBatuk)) {
+        await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
+        await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
+      }
     }
 
     await sleep(2000);
@@ -301,7 +310,7 @@ async function main() {
     }
 
     // Auto submit
-    let hasSubmitted = false;
+    let hasSubmitted;
     if (
       !(await isIdentityModalVisible(page)) &&
       !(await isInvalidAlertVisible(page)) &&
@@ -325,6 +334,8 @@ async function main() {
       }
 
       hasSubmitted = true;
+    } else {
+      hasSubmitted = false;
     }
 
     console.log('Data processed successfully:', data);
@@ -346,23 +357,13 @@ async function main() {
 }
 
 async function buildHtmlLog() {
-  return new Promise((resolve, reject) => {
-    const child = spawn('node', [path.resolve(__dirname, 'log-builder.js')], {
-      cwd: __dirname,
-      stdio: 'inherit'
-    });
-
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`log-builder.js exited with code ${code}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(err);
-    });
+  await spawnAsync('node', [path.resolve(__dirname, 'log-builder.js')], {
+    cwd: __dirname,
+    stdio: 'inherit'
+  });
+  await spawnAsync('node', [path.resolve(__dirname, 'log-analyzer.js')], {
+    cwd: __dirname,
+    stdio: 'inherit'
   });
 }
 

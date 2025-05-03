@@ -226,16 +226,22 @@ export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
   let lastTanggal = '';
 
   // Loop through all data entries to fix missing 'tanggal' fields
-  const fixedData = data.map((item) => {
-    if (item.tanggal && item.tanggal.trim() !== '') {
-      // If 'tanggal' exists and is not just empty spaces, update lastTanggal
-      lastTanggal = item.tanggal;
-    } else {
-      // If 'tanggal' is missing or empty, copy the last known 'tanggal'
-      item.tanggal = lastTanggal;
+  const fixedData = data.map(
+    /**
+     * @param {import('./globals').ExcelRowData} item
+     * @returns {import('./globals').ExcelRowData}
+     */
+    (item) => {
+      if (item.tanggal && item.tanggal.trim() !== '') {
+        // If 'tanggal' exists and is not just empty spaces, update lastTanggal
+        lastTanggal = item.tanggal;
+      } else {
+        // If 'tanggal' is missing or empty, copy the last known 'tanggal'
+        item.tanggal = lastTanggal;
+      }
+      return item;
     }
-    return item;
-  });
+  );
 
   // Return only the requested slice of data based on startIndex and lastIndex
   return fixedData.slice(startIndex, lastIndex);
@@ -257,9 +263,12 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(3012, 3036);
+    let datas = getXlsxData(3767, 3800);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
-    console.log('first', firstItem, 'last', lastItem);
+    console.log('total:', datas.length);
+    console.log('first:', firstItem);
+    console.log('last:', lastItem);
+    console.log(firstItem.nik.length);
   })();
 }
