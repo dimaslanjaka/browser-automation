@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "cross-spawn": "^7.0.6",
     "dateformat": "^5.0.3",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
@@ -40,5 +41,8 @@
     "prettier-plugin-embed": "^0.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
+  },
+  "resolutions": {
+    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/private/release/cross-spawn.tgz"
   }
 }
