@@ -58,7 +58,7 @@ function parseLogFile(logFilePath) {
  * Any additional keys in the data object not listed in the predefined columns
  * will be grouped into a single last <td>. If none exist, the cell will contain a dash.
  *
- * @param {Array<{ timestamp: string, type: string, data: Object }>} logs - The array of log entries.
+ * @param {Array<{ timestamp: string, type: string, data: import('./globals.d.ts').ExcelRowData }>} logs - The array of log entries.
  * @returns {string} HTML string representing the table rows.
  */
 function generateTableRows(logs) {
@@ -80,7 +80,14 @@ function generateTableRows(logs) {
 
   return logs
     .map(({ timestamp, type, data }) => {
-      const rowClass = type.includes('Skipped') ? 'skipped' : 'processed';
+      let rowClass;
+      if (data.nik.length != 16) {
+        rowClass = 'invalid-nik';
+      } else if (type.includes('Skipped')) {
+        rowClass = 'skipped';
+      } else {
+        rowClass = 'processed';
+      }
       const keterangan = [];
       if (data.diabetes) keterangan.push('DIABETES');
       if (data.batuk) keterangan.push(data.batuk);
