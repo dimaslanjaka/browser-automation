@@ -14,6 +14,37 @@
       h2 {
         text-align: center;
       }
+      .legend {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 10px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+      }
+      .legend-item {
+        display: inline-block;
+        margin-right: 15px;
+      }
+      .legend-color {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        vertical-align: middle;
+        margin-right: 6px;
+        border: 1px solid #000;
+      }
+      .color-processed {
+        background-color: #ccffcc;
+      }
+      .color-skipped {
+        background-color: #ffcccc;
+      }
+      .color-invalid {
+        background-color: #e36dee;
+      }
+
       .table-container {
         overflow-x: auto;
         max-width: 100vw;
@@ -26,28 +57,29 @@
       table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 800px; /* Pastikan tabel tidak terlalu kecil */
+        min-width: 800px;
       }
       th,
       td {
         border: 1px solid #070707;
         padding: 8px;
         text-align: left;
-        white-space: nowrap; /* Hindari teks pecah ke bawah */
+        white-space: nowrap;
       }
       th {
         background-color: #4caf50;
         color: white;
       }
-      /* Warna indikator */
       .skipped {
         background-color: #ffcccc;
-      } /* Merah muda untuk skipped */
+      }
       .processed {
         background-color: #ccffcc;
-      } /* Hijau muda untuk processed */
+      }
+      .invalid-nik {
+        background-color: #e36dee;
+      }
 
-      /* Responsif untuk layar kecil */
       @media screen and (max-width: 768px) {
         .table-container {
           padding: 5px;
@@ -76,6 +108,22 @@
   </head>
   <body>
     <h2>Log Data</h2>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-color color-processed"></span>
+        Hijau = Data berhasil diinput
+      </div>
+      <div class="legend-item">
+        <span class="legend-color color-skipped"></span>
+        Merah = Data tidak ditemukan
+      </div>
+      <div class="legend-item">
+        <span class="legend-color color-invalid"></span>
+        Ungu = Data tidak valid
+      </div>
+    </div>
+
     <div class="table-container">
       <table>
         <tr>
