@@ -59,7 +59,7 @@ function parseLogFile(logFilePath) {
  * will be grouped into a single last <td>. If none exist, the cell will contain a dash.
  *
  * @param {Array<{ timestamp: string, type: string, data: import('./globals.d.ts').ExcelRowData }>} logs - The array of log entries.
- * @returns {{ rowsHTML: string, rowClassCounts: { 'invalid-nik': number, skipped: number, processed: number } }}
+ * @returns {{ rowsHTML: string, rowClassCounts: { 'invalid': number, skipped: number, processed: number } }}
  * An object containing the HTML string representing the table rows and an object with the counts of each row class type.
  */
 function generateTableRows(logs) {
@@ -79,8 +79,8 @@ function generateTableRows(logs) {
     'tgl_lahir'
   ];
 
-  const rowClassCounts = {
-    'invalid-nik': 0,
+  const counter = {
+    invalid: 0,
     skipped: 0,
     processed: 0
   };
@@ -89,14 +89,14 @@ function generateTableRows(logs) {
     .map(({ timestamp, type, data }) => {
       let rowClass;
       if (data.nik.length != 16) {
-        rowClass = 'invalid-nik';
-        rowClassCounts['invalid-nik']++;
+        rowClass = 'invalid';
+        counter['invalid']++;
       } else if (type.includes('Skipped')) {
         rowClass = 'skipped';
-        rowClassCounts['skipped']++;
+        counter['skipped']++;
       } else {
         rowClass = 'processed';
-        rowClassCounts['processed']++;
+        counter['processed']++;
       }
 
       const keterangan = [];
@@ -136,7 +136,7 @@ function generateTableRows(logs) {
   // Return the rows HTML and the counts of each rowClass
   return {
     rowsHTML: rows,
-    rowClassCounts
+    rowClassCounts: counter
   };
 }
 
@@ -157,7 +157,7 @@ async function generateHTML(logs) {
   const finalHTML = template
     .replace('{{rows}}', rowsHTML)
     .replace('[total-processed]', rowClassCounts.processed)
-    .replace('[total-invalid]', rowClassCounts['invalid-nik'])
+    .replace('[total-invalid]', rowClassCounts['invalid'])
     .replace('[total-skipped]', rowClassCounts.skipped);
 
   const minifiedHTML = await minify(finalHTML, {
