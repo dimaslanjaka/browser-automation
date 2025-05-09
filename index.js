@@ -352,8 +352,14 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
       }
 
       await sleep(1000); // waiting ajax
-      while (!(await isSuccessNotificationVisible(page))) {
-        await waitEnter('Success notification not visible. Press Enter to continue...');
+      while (true) {
+        const isSuccessVisible = await isSuccessNotificationVisible(page);
+        if (isSuccessVisible) {
+          console.log('✅ Success notification is visible');
+          break;
+        }
+        // Optional: wait a bit to avoid tight loop
+        await new Promise((r) => setTimeout(r, 100));
       }
 
       hasSubmitted = true;
