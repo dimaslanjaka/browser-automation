@@ -48,6 +48,14 @@
         background-color: #e36dee;
       }
 
+      .centered-text {
+        display: flex;
+        justify-content: center; /* Menyelaraskan secara horizontal */
+        align-items: center; /* Menyelaraskan secara vertikal */
+        height: auto; /* Membuat div mengambil seluruh tinggi layar */
+        text-align: center; /* Menyelaraskan teks di tengah */
+      }
+
       .table-container {
         overflow-x: auto;
         max-width: 100vw;
@@ -117,6 +125,8 @@
         Ungu = <b>[total-invalid]</b> Data tidak valid
       </div>
     </div>
+
+    <div class="centered-text"><small>Dikerjakan dalam [estimated-time]</small></div>
 
     <div class="table-container">
       <table>

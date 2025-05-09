@@ -56,11 +56,17 @@ function parseLogFile(logFilePath) {
 /**
  * Generates HTML table rows from parsed log data.
  * Any additional keys in the data object not listed in the predefined columns
- * will be grouped into a single last <td>. If none exist, the cell will contain a dash.
+ * will be grouped into a single last <td>. If none exist, the cell will contain a dash ('-').
  *
  * @param {Array<{ timestamp: string, type: string, data: import('./globals.d.ts').ExcelRowData }>} logs - The array of log entries.
- * @returns {{ rowsHTML: string, rowClassCounts: { 'invalid': number, skipped: number, processed: number } }}
- * An object containing the HTML string representing the table rows and an object with the counts of each row class type.
+ * @returns {{ rowsHTML: string, rowClassCounts: { invalid: number, skipped: number, processed: number, estimated: string } }}
+ * An object containing:
+ * - `rowsHTML`: A string representing the HTML for the table rows.
+ * - `rowClassCounts`: An object with counts of each row class type:
+ *   - `invalid`: Number of rows classified as invalid.
+ *   - `skipped`: Number of rows classified as skipped.
+ *   - `processed`: Number of rows classified as processed.
+ *   - `estimated`: The estimated time difference between the first and last timestamps, formatted as "X days Y hours Z minutes W seconds".
  */
 function generateTableRows(logs) {
   const predefinedKeys = [
@@ -82,7 +88,8 @@ function generateTableRows(logs) {
   const counter = {
     invalid: 0,
     skipped: 0,
-    processed: 0
+    processed: 0,
+    estimated: ''
   };
 
   const rows = logs
@@ -133,6 +140,32 @@ function generateTableRows(logs) {
     })
     .join('');
 
+  // Count estimated time
+  const timestamps = logs;
+  // 1. Sort the array based on timestamp
+  timestamps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // 2. Calculate the time difference between the first and last timestamp
+  const startTimestamp = new Date(timestamps[0].timestamp);
+  const endTimestamp = new Date(timestamps[timestamps.length - 1].timestamp);
+  const timeDifference = endTimestamp - startTimestamp;
+
+  // 3. Convert the time difference to days, hours, minutes, and seconds
+  const totalSeconds = timeDifference / 1000;
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  // 4. Set the result
+  const timeParts = [];
+  if (days > 0) timeParts.push(`${days} hari`);
+  if (hours > 0) timeParts.push(`${hours} jam`);
+  if (minutes > 0) timeParts.push(`${minutes} menit`);
+  if (seconds > 0) timeParts.push(`${seconds} detik`);
+
+  counter.estimated = timeParts.length > 0 ? timeParts.join(' ') : '-';
+
   // Return the rows HTML and the counts of each rowClass
   return {
     rowsHTML: rows,
@@ -158,7 +191,8 @@ async function generateHTML(logs) {
     .replace('{{rows}}', rowsHTML)
     .replace('[total-processed]', rowClassCounts.processed)
     .replace('[total-invalid]', rowClassCounts['invalid'])
-    .replace('[total-skipped]', rowClassCounts.skipped);
+    .replace('[total-skipped]', rowClassCounts.skipped)
+    .replace('[estimated-time]', rowClassCounts.estimated);
 
   const minifiedHTML = await minify(finalHTML, {
     collapseWhitespace: true,
