@@ -33,7 +33,16 @@ function waitEnter(message) {
   });
 }
 
-async function main() {
+/**
+ * Main function to process data from an Excel sheet and interact with a web page using Puppeteer.
+ * This function automates the process of logging in, filling out forms, and submitting data.
+ *
+ * @param {function(import('./globals').ExcelRowData): import('./globals').ExcelRowData} [dataCallback=(data) => data] - A callback function
+ * that takes a data object of type `ExcelRowData` (from `./globals`) and returns the modified data.
+ * Defaults to an identity function that returns the input data unchanged.
+ * @returns {Promise<void>} A promise that resolves when all data has been processed and the browser is closed.
+ */
+async function main(dataCallback = (data) => data) {
   const datas = getXlsxData(process.env.index_start, process.env.index_end);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
@@ -65,7 +74,7 @@ async function main() {
     /**
      * @type {import('./globals').ExcelRowData}
      */
-    const data = datas.shift();
+    let data = await dataCallback(datas.shift()); // <-- modify the data via callback
     if (!data) {
       throw new Error('No more data to process.');
     }
