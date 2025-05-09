@@ -5,10 +5,15 @@ import nodeXlsx from 'node-xlsx';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
+import dotenv from 'dotenv';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 const outputJsonFile = path.join(__dirname, '.cache/debug_output.json');
 
 function getFormattedDate(date) {
@@ -263,7 +268,7 @@ export function getAge(dateString) {
 if (process.argv[1] === __filename) {
   (async () => {
     await fetchXlsxData2();
-    let datas = getXlsxData(3767, 3800);
+    let datas = getXlsxData(process.env.index_start, process.env.index_end);
     let lastItem = datas.at(-1);
     let firstItem = datas.at(0);
     console.log('total:', datas.length);

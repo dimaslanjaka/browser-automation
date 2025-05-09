@@ -15,8 +15,11 @@ import {
 import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
 import { getAge, getXlsxData } from './xlsx_data.js';
 
+// Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const rl = readline.createInterface({
@@ -31,7 +34,7 @@ function waitEnter(message) {
 }
 
 async function main() {
-  const datas = getXlsxData(3767, 3800);
+  const datas = getXlsxData(process.env.index_start, process.env.index_end);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
