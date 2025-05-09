@@ -59,7 +59,8 @@ function parseLogFile(logFilePath) {
  * will be grouped into a single last <td>. If none exist, the cell will contain a dash.
  *
  * @param {Array<{ timestamp: string, type: string, data: import('./globals.d.ts').ExcelRowData }>} logs - The array of log entries.
- * @returns {string} HTML string representing the table rows.
+ * @returns {{ rowsHTML: string, rowClassCounts: { 'invalid-nik': number, skipped: number, processed: number } }}
+ * An object containing the HTML string representing the table rows and an object with the counts of each row class type.
  */
 function generateTableRows(logs) {
   const predefinedKeys = [
@@ -78,16 +79,26 @@ function generateTableRows(logs) {
     'tgl_lahir'
   ];
 
-  return logs
+  const rowClassCounts = {
+    'invalid-nik': 0,
+    skipped: 0,
+    processed: 0
+  };
+
+  const rows = logs
     .map(({ timestamp, type, data }) => {
       let rowClass;
       if (data.nik.length != 16) {
         rowClass = 'invalid-nik';
+        rowClassCounts['invalid-nik']++;
       } else if (type.includes('Skipped')) {
         rowClass = 'skipped';
+        rowClassCounts['skipped']++;
       } else {
         rowClass = 'processed';
+        rowClassCounts['processed']++;
       }
+
       const keterangan = [];
       if (data.diabetes) keterangan.push('DIABETES');
       if (data.batuk) keterangan.push(data.batuk);
@@ -104,23 +115,29 @@ function generateTableRows(logs) {
       const birthDate = `${data.tgl_lahir ?? ''} (${data.umur ?? '-'})`;
 
       return `
-        <tr class="${rowClass}">
-            <td>${formattedTime}</td>
-            <td>${data.rowIndex ?? '-'}</td>
-            <td>${data.tanggal ?? '-'}</td>
-            <td>${data.nama ?? '-'}</td>
-            <td>${data.nik ?? '-'}</td>
-            <td>${data.pekerjaan ?? '-'}</td>
-            <td>${data.pekerjaan_original ?? '-'}</td>
-            <td>${data.bb ?? '-'}</td>
-            <td>${data.tb ?? '-'}</td>
-            <td>${data.tgl_lahir ? birthDate : '-'}</td>
-            <td>${data.gender ?? '-'}</td>
-            <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
-            <td>${additionalInfo}</td>
-        </tr>`;
+      <tr class="${rowClass}">
+          <td>${formattedTime}</td>
+          <td>${data.rowIndex ?? '-'}</td>
+          <td>${data.tanggal ?? '-'}</td>
+          <td>${data.nama ?? '-'}</td>
+          <td>${data.nik ?? '-'}</td>
+          <td>${data.pekerjaan ?? '-'}</td>
+          <td>${data.pekerjaan_original ?? '-'}</td>
+          <td>${data.bb ?? '-'}</td>
+          <td>${data.tb ?? '-'}</td>
+          <td>${data.tgl_lahir ? birthDate : '-'}</td>
+          <td>${data.gender ?? '-'}</td>
+          <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
+          <td>${additionalInfo}</td>
+      </tr>`;
     })
     .join('');
+
+  // Return the rows HTML and the counts of each rowClass
+  return {
+    rowsHTML: rows,
+    rowClassCounts
+  };
 }
 
 /**
@@ -136,8 +153,12 @@ async function generateHTML(logs) {
   }
 
   const template = fs.readFileSync(templatePath, 'utf-8');
-  const rows = generateTableRows(logs);
-  const finalHTML = template.replace('{{rows}}', rows);
+  const { rowClassCounts, rowsHTML } = generateTableRows(logs);
+  const finalHTML = template
+    .replace('{{rows}}', rowsHTML)
+    .replace('[total-processed]', rowClassCounts.processed)
+    .replace('[total-invalid]', rowClassCounts['invalid-nik'])
+    .replace('[total-skipped]', rowClassCounts.skipped);
 
   const minifiedHTML = await minify(finalHTML, {
     collapseWhitespace: true,
@@ -150,7 +171,7 @@ async function generateHTML(logs) {
 
   fs.writeFileSync(outputPath, minifiedHTML);
 
-  console.log(`✅ Minified HTML file generated: ${outputPath}. Open it in a browser.`);
+  console.log(`✅ Minified HTML file generated: ${outputPath}.`);
 }
 
 // Parse log data and generate HTML output
