@@ -142,22 +142,26 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
       // Get the correct iframe inside #dialog
       const iframeElement = await page.$('#dialog iframe.k-content-frame');
       if (!iframeElement) {
-        throw new Error('❌ Iframe inside #dialog not found!');
+        console.log('❌ Iframe inside #dialog not found!');
+      } else {
+        // Get iframe content
+        const iframe = await iframeElement.contentFrame();
+        if (!iframe) {
+          console.log('❌ Failed to get content of iframe inside #dialog!');
+        } else {
+          try {
+            // Wait for the button inside the iframe
+            await iframe.waitForSelector('#pilih', { timeout: 5000 });
+
+            // Click the button inside the iframe
+            await iframe.click('#pilih');
+
+            console.log('✅ Successfully clicked the button inside the iframe.');
+          } catch (_e) {
+            console.log('❌ Failed to get content of #pilih inside the iframe');
+          }
+        }
       }
-
-      // Get iframe content
-      const iframe = await iframeElement.contentFrame();
-      if (!iframe) {
-        throw new Error('❌ Failed to get content of iframe inside #dialog!');
-      }
-
-      // Wait for the button inside the iframe
-      await iframe.waitForSelector('#pilih', { timeout: 5000 });
-
-      // Click the button inside the iframe
-      await iframe.click('#pilih');
-
-      console.log('✅ Successfully clicked the button inside the iframe.');
     }
 
     // Check if NIK not found modal visible
