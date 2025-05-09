@@ -209,12 +209,15 @@ export async function fetchXlsxData2() {
 /**
  * Retrieves extracted Excel data from a cached JSON file.
  *
- * @param {number} startIndex - The starting index for data extraction (inclusive).
- * @param {number} lastIndex - The ending index for data extraction (exclusive).
+ * @param {number|string} startIndex - The starting index for data extraction (inclusive).
+ * @param {number|string} lastIndex - The ending index for data extraction (exclusive).
  * @param {string} [sheetName='Sheet1'] - The sheet name to extract data from if the cache contains multiple sheets.
  * @returns {import('./globals').ExcelRowData[]} - An array of extracted data objects.
  */
 export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
+  if (typeof startIndex === 'string') startIndex = parseInt(startIndex);
+  if (typeof lastIndex === 'string') lastIndex = parseInt(lastIndex);
+
   // Read the JSON file content (outputJsonFile must be defined somewhere)
   let data = JSON.parse(fs.readFileSync(outputJsonFile, 'utf-8'));
 
@@ -270,10 +273,11 @@ if (process.argv[1] === __filename) {
     await fetchXlsxData2();
     let datas = getXlsxData(process.env.index_start, process.env.index_end);
     let lastItem = datas.at(-1);
+    lastItem.nikLength = lastItem.nik.length;
     let firstItem = datas.at(0);
-    console.log('total:', datas.length);
-    console.log('first:', firstItem);
-    console.log('last:', lastItem);
-    console.log(firstItem.nik.length);
+    firstItem.nikLength = firstItem.nik.length;
+    console.log('total data:', datas.length);
+    console.log('first data:', firstItem);
+    console.log('last data:', lastItem);
   })();
 }
