@@ -234,7 +234,7 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
     }
 
     if (!jobMatched) {
-      if (job === 'unspecified') {
+      if (job === 'unspecified' || job === 'lainnya') {
         if (age > 55 || age <= 20) {
           data.pekerjaan = 'Tidak Bekerja';
         } else {
