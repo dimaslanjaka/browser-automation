@@ -12,7 +12,7 @@ import {
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, sleep } from './src/utils.js';
+import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
 import { getAge, getXlsxData } from './xlsx_data.js';
 
 // Get the absolute path of the current script
@@ -27,8 +27,9 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-function waitEnter(message) {
+function waitEnter(message, sound = true) {
   return new Promise(function (resolve) {
+    if (sound) singleBeep();
     rl.question(message, resolve);
   });
 }

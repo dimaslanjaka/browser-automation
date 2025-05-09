@@ -1,5 +1,14 @@
 import path from 'node:path';
 import fs from 'fs-extra';
+import { exec } from 'child_process';
+
+export function singleBeep() {
+  exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
+}
+
+export function multiBeep() {
+  exec('1..3 | %{ [console]::beep(1000, 500) }', { shell: 'powershell.exe' });
+}
 
 /**
  * Pauses execution for a specified amount of time.
