@@ -1,7 +1,7 @@
-import { readFile } from 'fs/promises';
+import fs from 'fs';
 import { defaultLogFilePath } from './src/utils.js';
 
-const log = await readFile(defaultLogFilePath, 'utf-8');
+const log = fs.readFileSync(defaultLogFilePath, 'utf-8');
 const lines = log.split('\n').filter(Boolean);
 
 let lastIndex = null;
@@ -15,7 +15,7 @@ lines.forEach((line, i) => {
 
     if (seenRowIndexes.has(rowIndex)) {
       console.log(`⚠️  Duplicated rowIndex ${rowIndex} (at line ${i + 1})`);
-      return; // Skip further checks for duplicates
+      return; // Skip missing check for duplicates
     }
 
     seenRowIndexes.add(rowIndex);
