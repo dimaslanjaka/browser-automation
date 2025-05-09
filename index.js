@@ -149,16 +149,17 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
         if (!iframe) {
           console.log('❌ Failed to get content of iframe inside #dialog!');
         } else {
+          // Wait for the button inside the iframe
           try {
-            // Wait for the button inside the iframe
             await iframe.waitForSelector('#pilih', { timeout: 5000 });
-
-            // Click the button inside the iframe
-            await iframe.click('#pilih');
-
-            console.log('✅ Successfully clicked the button inside the iframe.');
           } catch (_e) {
-            console.log('❌ Failed to get content of #pilih inside the iframe');
+            console.log('❌ Failed to wait for the button inside the iframe (#pilih).');
+          }
+
+          // Click the button inside the iframe
+          if (await page.$('#pilih')) {
+            await iframe.click('#pilih');
+            console.log('✅ Clicked the button inside the iframe (#pilih) successfully.');
           }
         }
       }
