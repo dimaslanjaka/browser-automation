@@ -33,6 +33,17 @@ function waitEnter(message) {
   });
 }
 
+async function buildHtmlLog() {
+  await spawnAsync('node', [path.resolve(__dirname, 'log-builder.js')], {
+    cwd: __dirname,
+    stdio: 'inherit'
+  });
+  await spawnAsync('node', [path.resolve(__dirname, 'log-analyzer.js')], {
+    cwd: __dirname,
+    stdio: 'inherit'
+  });
+}
+
 /**
  * Main function to process data from an Excel sheet and interact with a web page using Puppeteer.
  * This function automates the process of logging in, filling out forms, and submitting data.
@@ -42,7 +53,7 @@ function waitEnter(message) {
  * Defaults to an identity function that returns the input data unchanged.
  * @returns {Promise<void>} A promise that resolves when all data has been processed and the browser is closed.
  */
-async function main(dataCallback = (data) => data) {
+export async function runEntrySkrining(dataCallback = (data) => data) {
   const datas = getXlsxData(process.env.index_start, process.env.index_end);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
@@ -368,15 +379,4 @@ async function main(dataCallback = (data) => data) {
   await browser.close();
 }
 
-async function buildHtmlLog() {
-  await spawnAsync('node', [path.resolve(__dirname, 'log-builder.js')], {
-    cwd: __dirname,
-    stdio: 'inherit'
-  });
-  await spawnAsync('node', [path.resolve(__dirname, 'log-analyzer.js')], {
-    cwd: __dirname,
-    stdio: 'inherit'
-  });
-}
-
-main().catch(console.error);
+if (process.argv[1] === __filename) runEntrySkrining().catch(console.error);
