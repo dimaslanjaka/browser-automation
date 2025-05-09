@@ -73,3 +73,49 @@ export function uniqueArrayObjByKey(data, key) {
     }, {})
   );
 }
+
+/**
+ * Get all weekdays (Monday to Friday) in the current month.
+ *
+ * @param {boolean} [debug=false] - If true, logs debug information with the formatted date and day name.
+ * @returns {string[]} Array of dates in the format DD/MM/YYYY for all weekdays in the current month.
+ *
+ * @example
+ * // Get weekdays without debug info
+ * const weekdays = getWeekdaysOfCurrentMonth();
+ * console.log(weekdays);
+ *
+ * @example
+ * // Get weekdays with debug info
+ * const weekdaysWithDebug = getWeekdaysOfCurrentMonth(true);
+ * console.log(weekdaysWithDebug);
+ */
+export function getWeekdaysOfCurrentMonth(debug = false) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // January = 0
+
+  const result = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    const dayName = date.toLocaleString('en-us', { weekday: 'long' }); // Get day name
+
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const formattedDate = `${dd}/${mm}/${yyyy}`;
+
+    if (debug) {
+      console.log(`Date: ${formattedDate}, Day: ${dayName}`);
+    }
+
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      result.push(formattedDate);
+    }
+  }
+
+  return result;
+}
