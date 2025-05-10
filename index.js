@@ -81,10 +81,18 @@ export async function processData(browser, data) {
     await pages[0].close(); // Close the first tab
   }
 
-  await page.goto('https://sumatera.sitb.id/sitb2024/skrining', { waitUntil: 'networkidle2' });
+  await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
+    waitUntil: 'networkidle2',
+    timeout: 120000
+  });
+
   await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
   await page.click('#btnAdd_ta_skrining');
-  await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', { waitUntil: 'networkidle2' });
+
+  await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
+    waitUntil: 'networkidle2',
+    timeout: 120000
+  });
 
   await page.waitForSelector('#nik', { visible: true });
   await sleep(3000);
