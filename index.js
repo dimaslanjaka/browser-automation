@@ -304,7 +304,9 @@ export async function processData(browser, data) {
 
   // Re-check if the identity modal is visible
   while (await isIdentityModalVisible(page)) {
+    // Confirm identity modal
     confirmIdentityModal(page);
+    // Re-check
     if (await isIdentityModalVisible(page)) {
       await waitEnter('Please check identity modal. Press Enter to continue...');
     }
@@ -312,7 +314,13 @@ export async function processData(browser, data) {
 
   // Check if the invalid element alert is visible
   while (await isInvalidAlertVisible(page)) {
-    await waitEnter('Please check alert messages. Press Enter to continue...');
+    // Solve common problems
+    await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+    await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
+    // Re-check
+    if (await isInvalidAlertVisible(page)) {
+      await waitEnter('Please check alert messages. Press Enter to continue...');
+    }
   }
 
   // Auto submit
