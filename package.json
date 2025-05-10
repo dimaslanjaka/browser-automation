@@ -18,7 +18,7 @@
     "dateformat": "^5.0.3",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
-    "glob": "^11.0.1",
+    "glob": "^11.0.2",
     "google-auth-library": "^9.15.1",
     "googleapis": "^148.0.0",
     "html-minifier-terser": "^7.2.0",
@@ -50,6 +50,8 @@
     "typescript": "^5.8.2"
   },
   "resolutions": {
-    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/private/release/cross-spawn.tgz"
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/fcd1121/releases/bin.tgz",
+    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/private/release/cross-spawn.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/840f63d269216f134b84414cf300499703090071/packages/sbg-utility/release/sbg-utility.tgz"
   }
 }
