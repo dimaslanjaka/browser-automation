@@ -312,9 +312,14 @@ export async function processData(browser, data) {
   while (await isInvalidAlertVisible(page)) {
     // Solve common problems
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+    await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
+    await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', data.pekerjaan);
+
     // Re-check
     if (await isInvalidAlertVisible(page)) {
-      await waitEnter('Please check alert messages. Press Enter to continue...');
+      console.log('Please check alert messages for:');
+      console.log(data);
+      await waitEnter('Press Enter to continue...');
     }
   }
 
