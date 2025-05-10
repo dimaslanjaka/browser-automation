@@ -16,6 +16,7 @@ import {
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
 import { getXlsxData } from './xlsx_data.js';
+import { playMp3FromUrl } from './src/beep.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -81,18 +82,25 @@ export async function processData(browser, data) {
     await pages[0].close(); // Close the first tab
   }
 
-  await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
-    waitUntil: 'networkidle2',
-    timeout: 120000
-  });
+  try {
+    await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
+      waitUntil: 'networkidle2',
+      timeout: 120000
+    });
 
-  await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
-  await page.click('#btnAdd_ta_skrining');
+    await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
+    await page.click('#btnAdd_ta_skrining');
 
-  await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
-    waitUntil: 'networkidle2',
-    timeout: 120000
-  });
+    await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
+      waitUntil: 'networkidle2',
+      timeout: 120000
+    });
+  } catch (_) {
+    await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
+    console.log('Repeat failure data');
+    // Repeat
+    return processData(browser, data);
+  }
 
   await page.waitForSelector('#nik', { visible: true });
   await sleep(3000);
