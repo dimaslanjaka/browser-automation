@@ -38,6 +38,33 @@ export async function isIdentityModalVisible(page) {
   );
 }
 
+export async function confirmIdentityModal(page) {
+  // Get the correct iframe inside #dialog
+  const iframeElement = await page.$('#dialog iframe.k-content-frame');
+  if (!iframeElement) {
+    console.log('❌ Iframe inside #dialog not found!');
+  } else {
+    // Get iframe content
+    const iframe = await iframeElement.contentFrame();
+    if (!iframe) {
+      console.log('❌ Failed to get content of iframe inside #dialog!');
+    } else {
+      // Wait for the button inside the iframe
+      try {
+        await iframe.waitForSelector('#pilih', { timeout: 5000 });
+      } catch (_e) {
+        console.log('❌ Failed to wait for the button inside the iframe (#pilih).');
+      }
+
+      // Click the button inside the iframe
+      if (await page.$('#pilih')) {
+        await iframe.click('#pilih');
+        console.log('✅ Clicked the button inside the iframe (#pilih) successfully.');
+      }
+    }
+  }
+}
+
 /**
  * Checks if a visible error notification with the class `.k-notification-error`
  * is present on the page. Specifically used to detect the NIK error message.

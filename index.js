@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import {
+  confirmIdentityModal,
   fixTbAndBb,
   isIdentityModalVisible,
   isInvalidAlertVisible,
@@ -138,33 +139,7 @@ export async function processData(browser, data) {
   console.log('Identity modal is visible:', await isIdentityModalVisible(page));
 
   if (await isIdentityModalVisible(page)) {
-    // Click the button
-    await sleep(2000);
-
-    // Get the correct iframe inside #dialog
-    const iframeElement = await page.$('#dialog iframe.k-content-frame');
-    if (!iframeElement) {
-      console.log('❌ Iframe inside #dialog not found!');
-    } else {
-      // Get iframe content
-      const iframe = await iframeElement.contentFrame();
-      if (!iframe) {
-        console.log('❌ Failed to get content of iframe inside #dialog!');
-      } else {
-        // Wait for the button inside the iframe
-        try {
-          await iframe.waitForSelector('#pilih', { timeout: 5000 });
-        } catch (_e) {
-          console.log('❌ Failed to wait for the button inside the iframe (#pilih).');
-        }
-
-        // Click the button inside the iframe
-        if (await page.$('#pilih')) {
-          await iframe.click('#pilih');
-          console.log('✅ Clicked the button inside the iframe (#pilih) successfully.');
-        }
-      }
-    }
+    confirmIdentityModal(page);
   }
 
   // Check if NIK not found modal visible
@@ -329,7 +304,10 @@ export async function processData(browser, data) {
 
   // Re-check if the identity modal is visible
   while (await isIdentityModalVisible(page)) {
-    await waitEnter('Please check identity modal. Press Enter to continue...');
+    confirmIdentityModal(page);
+    if (await isIdentityModalVisible(page)) {
+      await waitEnter('Please check identity modal. Press Enter to continue...');
+    }
   }
 
   // Check if the invalid element alert is visible
