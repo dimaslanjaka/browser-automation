@@ -140,7 +140,7 @@ export async function processData(browser, data) {
   console.log('Identity modal is visible:', await isIdentityModalVisible(page));
 
   if (await isIdentityModalVisible(page)) {
-    confirmIdentityModal(page);
+    await confirmIdentityModal(page);
   }
 
   // Check if NIK not found modal visible
@@ -301,7 +301,8 @@ export async function processData(browser, data) {
   // Re-check if the identity modal is visible
   while (await isIdentityModalVisible(page)) {
     // Confirm identity modal
-    confirmIdentityModal(page);
+    await confirmIdentityModal(page);
+    await sleep(1000);
     // Re-check
     if (await isIdentityModalVisible(page)) {
       await waitEnter('Please check identity modal. Press Enter to continue...');
