@@ -1,3 +1,4 @@
+import { getAge } from '../xlsx_data.js';
 import { typeAndTrigger } from './puppeteer_utils.js';
 
 /**
@@ -299,4 +300,24 @@ export async function fixTbAndBb(page, age, gender) {
       throw new Error('Berat badan tidak valid');
     }
   }
+}
+
+/**
+ * Get patient data information
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ */
+export async function getPersonInfo(page) {
+  const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
+  const birthDate = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
+  const age = getAge(birthDate);
+  const province = await page.$eval('#field_item_provinsi_ktp_id input[type="text"]', (input) => input.value.trim());
+  const city = await page.$eval('#field_item_kabupaten_ktp_id input[type="text"]', (input) => input.value.trim());
+  const occupation = await page.evaluate(() => document.querySelector('input[name="pekerjaan_id_input"]')?.value);
+  const bodyWeight = await page.evaluate(
+    () => document.querySelector('#field_item_berat_badan input[type="text"]')?.value
+  );
+  const bodyHeight = await page.evaluate(
+    () => document.querySelector('#field_item_tinggi_badan input[type="text"]')?.value
+  );
+  return { gender, age, birthDate, location: { province, city }, occupation, bodyWeight, bodyHeight };
 }

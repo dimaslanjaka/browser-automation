@@ -7,6 +7,7 @@ import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '
 import {
   confirmIdentityModal,
   fixTbAndBb,
+  getPersonInfo,
   isIdentityModalVisible,
   isInvalidAlertVisible,
   isNikErrorVisible,
@@ -14,7 +15,7 @@ import {
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
-import { getAge, getXlsxData } from './xlsx_data.js';
+import { getXlsxData } from './xlsx_data.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -161,11 +162,10 @@ export async function processData(browser, data) {
     throw new Error("❌ Failed to take the patient's name");
   }
 
-  const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
+  const { gender, age, birthDate, location } = await getPersonInfo(page);
+  const { province, city } = location;
   data.gender = gender;
-  const tgl_lahir = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
-  data.tgl_lahir = tgl_lahir;
-  const age = getAge(tgl_lahir);
+  data.tgl_lahir = birthDate;
   data.umur = age;
   console.log('Jenis kelamin:', gender, 'Umur:', age, 'tahun');
   if (!gender || isNaN(age)) {
@@ -173,17 +173,13 @@ export async function processData(browser, data) {
   }
 
   // Fix if location data is empty
-  const provinceValue = await page.$eval('#field_item_provinsi_ktp_id input[type="text"]', (input) =>
-    input.value.trim()
-  );
-  console.log(`Provinsi: ${provinceValue}`, provinceValue.length == 0 ? '(empty)' : '');
-  if (provinceValue.length == 0) {
+  console.log(`Provinsi: ${province}`, province.length == 0 ? '(empty)' : '');
+  if (province.length == 0) {
     await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', 'Jawa Timur');
   }
 
-  const cityValue = await page.$eval('#field_item_kabupaten_ktp_id input[type="text"]', (input) => input.value.trim());
-  console.log(`Kabupaten/Kota: ${cityValue}`, cityValue.length == 0 ? '(empty)' : '');
-  if (cityValue.length == 0) {
+  console.log(`Kabupaten/Kota: ${city}`, city.length == 0 ? '(empty)' : '');
+  if (city.length == 0) {
     await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', 'Kota Surabaya');
   }
 
@@ -316,7 +312,6 @@ export async function processData(browser, data) {
   while (await isInvalidAlertVisible(page)) {
     // Solve common problems
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
-    await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
     // Re-check
     if (await isInvalidAlertVisible(page)) {
       await waitEnter('Please check alert messages. Press Enter to continue...');
