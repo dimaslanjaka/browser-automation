@@ -38,30 +38,50 @@ export async function isIdentityModalVisible(page) {
   );
 }
 
+/**
+ * Attempts to click the "Iya" (or #pilih) button inside an iframe within a modal dialog.
+ * This function waits for the iframe content to load and handles both ID-based and text-based button selection.
+ *
+ * @async
+ * @function
+ * @param {import('puppeteer').Page} page - The Puppeteer Page instance representing the browser tab.
+ * @returns {Promise<void>} Resolves when the click is attempted or fails with a log message.
+ */
 export async function confirmIdentityModal(page) {
-  // Get the correct iframe inside #dialog
   const iframeElement = await page.$('#dialog iframe.k-content-frame');
   if (!iframeElement) {
     console.log('❌ Iframe inside #dialog not found!');
-  } else {
-    // Get iframe content
-    const iframe = await iframeElement.contentFrame();
-    if (!iframe) {
-      console.log('❌ Failed to get content of iframe inside #dialog!');
-    } else {
-      // Wait for the button inside the iframe
-      try {
-        await iframe.waitForSelector('#pilih', { timeout: 5000 });
-      } catch (_e) {
-        console.log('❌ Failed to wait for the button inside the iframe (#pilih).');
-      }
+    return;
+  }
 
-      // Click the button inside the iframe
-      if (await page.$('#pilih')) {
-        await iframe.click('#pilih');
-        console.log('✅ Clicked the button inside the iframe (#pilih) successfully.');
-      }
+  const iframe = await iframeElement.contentFrame();
+  if (!iframe) {
+    console.log('❌ Failed to get content of iframe inside #dialog!');
+    return;
+  }
+
+  try {
+    // Wait for the iframe to load visible content
+    await iframe.waitForSelector('body', { visible: true, timeout: 10000 });
+
+    // Try to find button by ID
+    const pilihBtn = await iframe.$('#pilih');
+    if (pilihBtn) {
+      await pilihBtn.click();
+      console.log('✅ Clicked #pilih button inside iframe.');
+      return;
     }
+
+    // Fallback: try to find button with text "Iya"
+    const iyaBtn = await iframe.$x("//button[contains(translate(., 'IYA', 'iya'), 'iya')]");
+    if (iyaBtn.length > 0) {
+      await iyaBtn[0].click();
+      console.log('✅ Clicked "Iya" button inside iframe via XPath.');
+    } else {
+      console.log('❌ "Iya" button not found inside iframe.');
+    }
+  } catch (err) {
+    console.error('❌ Error while trying to click button inside iframe:', err);
   }
 }
 
