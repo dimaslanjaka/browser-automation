@@ -255,6 +255,13 @@ export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
   return fixedData.slice(startIndex, lastIndex);
 }
 
+/**
+ * Calculates the age in years from a given birth date string in DD/MM/YYYY format.
+ *
+ * @param {string} dateString - The birth date as a string in the format "DD/MM/YYYY".
+ * @returns {number} The age in years. Returns 0 if the date is in the future.
+ * @throws {Error} If the input date string is not in a valid DD/MM/YYYY format.
+ */
 export function getAge(dateString) {
   let birthDate = moment(dateString, 'DD/MM/YYYY', true); // Strict parsing for DD/MM/YYYY
 
