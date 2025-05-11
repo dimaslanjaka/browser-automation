@@ -213,7 +213,7 @@ export async function processData(browser, data) {
     { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
     { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
     { pattern: /perawat|dokter/, value: 'Tenaga Profesional Medis ' },
-    { pattern: /pengacara/, value: 'Tenaga Profesional Non Medis ' }
+    { pattern: /pengacara|wartawan/, value: 'Tenaga Profesional Non Medis ' }
   ];
 
   let jobMatched = false;
