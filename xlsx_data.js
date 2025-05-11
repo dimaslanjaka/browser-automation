@@ -256,17 +256,18 @@ export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
 }
 
 /**
- * Calculates the age in years from a given birth date string in DD/MM/YYYY format.
+ * Calculates the age in years from a given birth date string using a specified format.
  *
- * @param {string} dateString - The birth date as a string in the format "DD/MM/YYYY".
+ * @param {string} dateString - The birth date as a string.
+ * @param {string} [dateFormat='DD/MM/YYYY'] - The expected format of the input date string (default is 'DD/MM/YYYY').
  * @returns {number} The age in years. Returns 0 if the date is in the future.
- * @throws {Error} If the input date string is not in a valid DD/MM/YYYY format.
+ * @throws {Error} If the input date string is not valid according to the given format.
  */
-export function getAge(dateString) {
-  let birthDate = moment(dateString, 'DD/MM/YYYY', true); // Strict parsing for DD/MM/YYYY
+export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
+  let birthDate = moment(dateString, dateFormat, true); // Strict parsing
 
   if (!birthDate.isValid()) {
-    throw new Error(`Invalid date format: "${dateString}". Expected format: DD/MM/YYYY`);
+    throw new Error(`Invalid date format: "${dateString}". Expected format: ${dateFormat}`);
   }
 
   let age = moment().diff(birthDate, 'years');
