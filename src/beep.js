@@ -173,16 +173,17 @@ async function prepareFfplay() {
  */
 export async function playMp3FromUrl(mp3Url) {
   const filename = path.basename(mp3Url.split('?')[0]);
-  const filePath = path.join(cacheDir, filename);
+  const filePath = path.join(cacheDir, 'audio', filename);
 
   if (!fs.existsSync(filePath)) {
     console.log(`Downloading ${filename}...`);
     await downloadFile(mp3Url, filePath);
   }
 
-  await prepareFfplay();
+  const ffplayDir = await prepareFfplay();
+  const ffplayBin = isWindows ? 'ffplay.exe' : 'ffplay';
 
-  const ffplayProcess = spawn('ffplay', [filePath, '-nodisp', '-autoexit'], {
+  const ffplayProcess = spawn(`${ffplayDir}/${ffplayBin}`, [filePath, '-nodisp', '-autoexit'], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true
