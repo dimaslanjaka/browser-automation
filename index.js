@@ -212,7 +212,8 @@ export async function processData(browser, data) {
     { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/, value: 'Tidak Bekerja' },
     { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
     { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
-    { pattern: /perawat/, value: 'Tenaga Profesional Medis ' }
+    { pattern: /perawat|dokter/, value: 'Tenaga Profesional Medis ' },
+    { pattern: /pengacara/, value: 'Tenaga Profesional Non Medis ' }
   ];
 
   let jobMatched = false;
