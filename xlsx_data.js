@@ -281,9 +281,7 @@ if (process.argv[1] === __filename) {
     await fetchXlsxData2();
     let datas = getXlsxData(process.env.index_start, process.env.index_end);
     let lastItem = datas.at(-1);
-    lastItem.nikLength = lastItem.nik.length;
     let firstItem = datas.at(0);
-    firstItem.nikLength = firstItem.nik.length;
     console.log('total data:', datas.length);
     console.log('first data:', firstItem);
     console.log('last data:', lastItem);
