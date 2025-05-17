@@ -24,12 +24,85 @@ if (!SPREADSHEET_ID) {
 }
 
 const CREDENTIALS_PATH = path.join(process.cwd(), '.cache', 'credentials.json');
+const TOKEN_PATH = path.join(process.cwd(), '.cache', 'token.json');
 
+/**
+ * Saves the OAuth2 credentials (access token, refresh token, etc.) to a local file.
+ *
+ * @param {import('google-auth-library').OAuth2Client} auth - The authenticated OAuth2 client.
+ * @param {import('google-auth-library').Credentials} customCredentials - Custom credentials to save.
+ */
+function saveToken(auth, customCredentials = null) {
+  try {
+    fs.writeFileSync(
+      TOKEN_PATH,
+      JSON.stringify(customCredentials ? customCredentials : auth.credentials, null, 2),
+      'utf-8'
+    );
+  } catch (err) {
+    console.error('Failed to save token:', err);
+  }
+}
+
+/**
+ * Loads previously saved OAuth2 credentials from the local file system.
+ *
+ * @returns {import('google-auth-library').Credentials|null} The saved credentials object,
+ * or null if the file doesn't exist or cannot be parsed.
+ */
+function loadSavedToken() {
+  try {
+    const content = fs.readFileSync(TOKEN_PATH, 'utf-8');
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtains an authenticated OAuth2 client, reusing or refreshing tokens if available.
+ *
+ * @returns {Promise<import('google-auth-library').OAuth2Client>}
+ */
 async function authorize() {
   const auth = await authenticate({
     keyfilePath: CREDENTIALS_PATH,
     scopes: SCOPES
   });
+
+  const savedToken = loadSavedToken();
+  if (savedToken) {
+    auth.setCredentials(savedToken);
+  }
+
+  // Persist any updated tokens (access or refresh)
+  auth.on('tokens', (tokens) => {
+    const combined = { ...auth.credentials, ...tokens };
+    try {
+      saveToken(auth, combined);
+      console.log('Updated token saved to', TOKEN_PATH);
+    } catch (err) {
+      console.error('Failed to write updated token:', err);
+    }
+  });
+
+  // Refresh the access token if expired
+  const { expiry_date } = auth.credentials;
+  const isExpired = !expiry_date || expiry_date <= Date.now();
+
+  if (isExpired) {
+    try {
+      const newToken = await auth.refreshAccessToken();
+      auth.setCredentials(newToken.credentials);
+      saveToken(auth);
+      console.log('Access token refreshed and saved.');
+    } catch (err) {
+      console.error('Failed to refresh access token:', err);
+    }
+  } else {
+    console.log('Cached access token is still valid.');
+  }
+
   return auth;
 }
 
