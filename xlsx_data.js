@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const outputJsonFile = path.join(__dirname, '.cache/debug_output.json');
+const outputSheetJsonFile = path.join(__dirname, '.cache/sheets/debug_output.json');
 
 function getFormattedDate(date) {
   var year = date.getFullYear();
@@ -36,7 +36,7 @@ function getFormattedDate(date) {
  * @returns {Promise<import('./globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
 export async function fetchXlsxData(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER) {
-  const files = await glob.glob('.cache/*.xlsx', { cwd: __dirname, absolute: true });
+  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: __dirname, absolute: true });
 
   if (files.length === 0) {
     console.log('No Excel files found.');
@@ -92,10 +92,10 @@ export async function fetchXlsxData(startIndex = 0, lastIndex = Number.MAX_SAFE_
     debugOutput += '-----------------------------\n';
   });
 
-  const outputFile = path.join(process.cwd(), '.cache/debug_output.txt');
+  const outputFile = path.join(process.cwd(), '.cache/sheets/debug_output.txt');
   fs.writeFileSync(outputFile, debugOutput, 'utf8');
-  fs.writeFileSync(outputJsonFile, JSON.stringify(debugOutputJson, null, 2), 'utf8');
-  console.log(`Debug output saved to: \n\t${outputFile}\n\t${outputJsonFile}`);
+  fs.writeFileSync(outputSheetJsonFile, JSON.stringify(debugOutputJson, null, 2), 'utf8');
+  console.log(`Debug output saved to: \n\t${outputFile}\n\t${outputSheetJsonFile}`);
 
   return debugOutputJson;
 }
@@ -108,7 +108,7 @@ export async function fetchXlsxData(startIndex = 0, lastIndex = Number.MAX_SAFE_
  * @returns {Promise<import('./globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
 export async function fetchXlsxData2() {
-  const files = await glob.glob('.cache/*.xlsx', { cwd: __dirname, absolute: true });
+  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: __dirname, absolute: true });
 
   if (files.length === 0) {
     throw new Error('No Excel files found.');
@@ -203,7 +203,7 @@ export async function fetchXlsxData2() {
     });
   });
 
-  fs.writeFileSync(outputJsonFile, JSON.stringify(allSheetsData, null, 2), 'utf8');
+  fs.writeFileSync(outputSheetJsonFile, JSON.stringify(allSheetsData, null, 2), 'utf8');
 }
 
 /**
@@ -219,7 +219,7 @@ export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
   if (typeof lastIndex === 'string') lastIndex = parseInt(lastIndex);
 
   // Read the JSON file content (outputJsonFile must be defined somewhere)
-  let data = JSON.parse(fs.readFileSync(outputJsonFile, 'utf-8'));
+  let data = JSON.parse(fs.readFileSync(outputSheetJsonFile, 'utf-8'));
 
   // If the parsed data is an object (multiple sheets), select the specific sheet
   if (!Array.isArray(data)) {

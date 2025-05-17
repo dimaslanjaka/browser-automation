@@ -117,7 +117,7 @@ async function downloadSheets() {
   const sheetsList = sheetMeta.data.sheets;
 
   // Ensure output folder exists
-  const outDir = path.join(process.cwd(), '.cache');
+  const outDir = path.join(process.cwd(), '.cache', 'sheets');
   fs.mkdirSync(outDir, { recursive: true });
 
   // Download XLSX (whole spreadsheet)
