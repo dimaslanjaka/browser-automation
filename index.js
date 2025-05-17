@@ -219,7 +219,6 @@ export async function processData(browser, data) {
   const job = data.pekerjaan.trim().toLowerCase();
 
   const jobMappings = [
-    { pattern: /pelajar|mahasiswa/, value: 'Pelajar/ Mahasiswa' },
     { pattern: /rumah\s*tangga|irt/, value: 'IRT' },
     { pattern: /swasta|pedagang/, value: 'Wiraswasta' },
     { pattern: /tukang|buruh/, value: 'Buruh ' },
@@ -227,7 +226,8 @@ export async function processData(browser, data) {
     { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
     { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
     { pattern: /perawat|dokter/, value: 'Tenaga Profesional Medis ' },
-    { pattern: /pengacara|wartawan/, value: 'Tenaga Profesional Non Medis ' }
+    { pattern: /pengacara|wartawan/, value: 'Tenaga Profesional Non Medis ' },
+    { pattern: /pelajar|siswa|siswi|sekolah/, value: 'Pelajar/ Mahasiswa' }
   ];
 
   let jobMatched = false;
