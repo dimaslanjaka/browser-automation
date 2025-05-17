@@ -19,6 +19,8 @@ const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
 if (!SPREADSHEET_ID) {
   throw new Error('Missing SPREADSHEET_ID in .env file');
+} else if (`${SPREADSHEET_ID}`.trim().length === 0) {
+  throw new Error('SPREADSHEET_ID is empty');
 }
 
 const CREDENTIALS_PATH = path.join(process.cwd(), '.cache', 'credentials.json');
