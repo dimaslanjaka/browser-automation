@@ -17,6 +17,7 @@ import {
 import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
 import { getXlsxData } from './xlsx_data.js';
 import { playMp3FromUrl } from './src/beep.js';
+import moment from 'moment';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -111,9 +112,22 @@ export async function processData(browser, data) {
 
   console.log('Processing:', data);
 
-  if (!`${data.tanggal}`.includes('/')) {
+  if (!`${data.tanggal}`.includes('/') || !data.tanggal || data.tanggal.length < 8) {
     await browser.close();
     throw new Error(`INVALID DATE ${JSON.stringify(data, null, 2)}`);
+  }
+
+  const parseTanggal = moment(data.tanggal, 'DD/MM/YYYY', true); // strict parsing
+
+  if (!parseTanggal.isValid()) {
+    await browser.close();
+    throw new Error(`INVALID DATE ${JSON.stringify(data, null, 2)}`);
+  }
+
+  if (parseTanggal.day() === 0) {
+    // Sunday
+    await browser.close();
+    throw new Error(`SUNDAY DATE NOT ALLOWED: ${data.tanggal}`);
   }
 
   await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
