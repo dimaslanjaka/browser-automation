@@ -18,4 +18,4 @@
 
 7.  Download the resulting JSON file --- **this is your `credentials.json`**.
 
-    - Save it in your project root as `credentials.json`.
+    - Save it in `.cache/credentials.json`.
