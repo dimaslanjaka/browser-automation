@@ -9,6 +9,10 @@ let hasMissing = false;
 const seenRowIndexes = new Set();
 
 lines.forEach((line, i) => {
+  if (`${line.trim()}`.length === 0) {
+    // Skip empty lines
+    return;
+  }
   const match = line.match(/"rowIndex":(\d+)/);
   if (match) {
     const rowIndex = parseInt(match[1], 10);
