@@ -227,7 +227,8 @@ export async function processData(browser, data) {
     { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
     { pattern: /perawat|dokter/, value: 'Tenaga Profesional Medis ' },
     { pattern: /pengacara|wartawan/, value: 'Tenaga Profesional Non Medis ' },
-    { pattern: /pelajar|siswa|siswi|sekolah/, value: 'Pelajar/ Mahasiswa' }
+    { pattern: /pelajar|siswa|siswi|sekolah/, value: 'Pelajar/ Mahasiswa' },
+    { pattern: /s[o,u]pir/, value: 'Sopir ' }
   ];
 
   let jobMatched = false;
