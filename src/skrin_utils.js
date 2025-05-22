@@ -41,12 +41,12 @@ export async function isIdentityModalVisible(page) {
 
 /**
  * Attempts to click the "Iya" (or #pilih) button inside an iframe within a modal dialog.
- * This function waits for the iframe content to load and handles both ID-based and text-based button selection.
+ * Adds secondary validation and JS-based fallback for clicking.
  *
  * @async
  * @function
  * @param {import('puppeteer').Page} page - The Puppeteer Page instance representing the browser tab.
- * @returns {Promise<void>} Resolves when the click is attempted or fails with a log message.
+ * @returns {Promise<void>} Resolves when the click is attempted or logs an appropriate error.
  */
 export async function confirmIdentityModal(page) {
   const iframeElement = await page.$('#dialog iframe.k-content-frame');
@@ -62,27 +62,89 @@ export async function confirmIdentityModal(page) {
   }
 
   try {
-    // Wait for the iframe to load visible content
     await iframe.waitForSelector('body', { visible: true, timeout: 10000 });
 
-    // Try to find button by ID
     const pilihBtn = await iframe.$('#pilih');
     if (pilihBtn) {
-      await pilihBtn.click();
-      console.log('✅ Clicked #pilih button inside iframe.');
-      return;
+      const box = await pilihBtn.boundingBox();
+      if (box) {
+        try {
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => null),
+            pilihBtn.click({ delay: 100 })
+          ]);
+
+          // Small buffer wait to be sure
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const modalStillVisible = await page.$eval('#dialog', (el) => el.offsetParent !== null).catch(() => false);
+          if (!modalStillVisible) {
+            console.log('✅ #pilih clicked, modal gone.');
+            return;
+          }
+
+          console.warn('⚠️ Modal still visible. Trying JS-based dispatch as fallback...');
+          const jsDispatchWorked = await iframe.evaluate(() => {
+            const btn = document.querySelector('#pilih');
+            if (!btn) return false;
+
+            btn.dispatchEvent(
+              new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              })
+            );
+            return true;
+          });
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const stillVisible = await page.$eval('#dialog', (el) => el.offsetParent !== null).catch(() => false);
+          if (!stillVisible && jsDispatchWorked) {
+            console.log('✅ JS-dispatch click closed modal.');
+            return;
+          }
+
+          console.log('❌ JS dispatch didn’t close modal.');
+        } catch (err) {
+          console.error('❌ Error while clicking #pilih:', err);
+          return;
+        }
+      } else {
+        console.warn('⚠️ #pilih is not visible (no bounding box).');
+      }
     }
 
-    // Fallback: try to find button with text "Iya"
-    const iyaBtn = await iframe.$x("//button[contains(translate(., 'IYA', 'iya'), 'iya')]");
-    if (iyaBtn.length > 0) {
-      await iyaBtn[0].click();
-      console.log('✅ Clicked "Iya" button inside iframe via XPath.');
+    // Fallback: Evaluate XPath manually
+    const iyaClicked = await iframe.evaluate(() => {
+      try {
+        const xpath = "//button[contains(translate(., 'IYA', 'iya'), 'iya')]";
+        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const btn = result.singleNodeValue;
+        if (btn instanceof HTMLElement) {
+          btn.dispatchEvent(
+            new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            })
+          );
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    });
+
+    if (iyaClicked) {
+      console.log('✅ Clicked "Iya" button using XPath + JS dispatch.');
     } else {
-      console.log('❌ "Iya" button not found inside iframe.');
+      console.log('❌ No #pilih or "Iya" button found or clickable.');
     }
   } catch (err) {
-    console.error('❌ Error while trying to click button inside iframe:', err);
+    console.error('❌ Error in confirmIdentityModal:', err);
   }
 }
 
