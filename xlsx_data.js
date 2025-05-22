@@ -12,9 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-const outputSheetJsonFile = path.join(__dirname, '.cache/sheets/debug_output.json');
+const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output.json');
 
 function getFormattedDate(date) {
   var year = date.getFullYear();
@@ -36,7 +36,7 @@ function getFormattedDate(date) {
  * @returns {Promise<import('./globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
 export async function fetchXlsxData(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER) {
-  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: __dirname, absolute: true });
+  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: process.cwd(), absolute: true });
 
   if (files.length === 0) {
     console.log('No Excel files found.');
@@ -108,7 +108,7 @@ export async function fetchXlsxData(startIndex = 0, lastIndex = Number.MAX_SAFE_
  * @returns {Promise<import('./globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
 export async function fetchXlsxData2() {
-  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: __dirname, absolute: true });
+  const files = await glob.glob('.cache/sheets/*.xlsx', { cwd: process.cwd(), absolute: true });
 
   if (files.length === 0) {
     throw new Error('No Excel files found.');
@@ -215,6 +215,9 @@ export async function fetchXlsxData2() {
  * @returns {import('./globals').ExcelRowData[]} - An array of extracted data objects.
  */
 export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
+  if (lastIndex < startIndex) {
+    throw new Error(`Invalid range: lastIndex (${lastIndex}) must be greater than startIndex (${startIndex}).`);
+  }
   if (typeof startIndex === 'string') startIndex = parseInt(startIndex);
   if (typeof lastIndex === 'string') lastIndex = parseInt(lastIndex);
 
