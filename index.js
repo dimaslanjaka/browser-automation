@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -53,12 +53,12 @@ function waitEnter(message, sound = true) {
  * @returns {Promise<void>} A promise that resolves when the log building process is complete.
  */
 async function buildHtmlLog() {
-  await spawnAsync('node', [path.resolve(__dirname, 'log-builder.js')], {
-    cwd: __dirname,
+  await spawnAsync('node', [path.resolve(process.cwd(), 'log-builder.js')], {
+    cwd: process.cwd(),
     stdio: 'inherit'
   });
-  await spawnAsync('node', [path.resolve(__dirname, 'log-analyzer.js')], {
-    cwd: __dirname,
+  await spawnAsync('node', [path.resolve(process.cwd(), 'log-analyzer.js')], {
+    cwd: process.cwd(),
     stdio: 'inherit'
   });
 }
