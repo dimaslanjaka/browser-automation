@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
 import { array_random } from 'sbg-utility';
 import { SharedPrefs } from './src/SharedPrefs.js';
+import { nikParse } from './src/nik-parser/index.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -244,6 +245,151 @@ export async function fetchXlsxData2() {
 }
 
 /**
+ * Reads Excel (.xlsx) files in the current directory and extracts data.
+ *
+ * @param {number} [startIndex=0] - The starting row index to extract data from.
+ * @param {number} [lastIndex=Number.MAX_SAFE_INTEGER] - The ending row index to extract data until.
+ * @returns {Promise<import('./globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
+ */
+export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER) {
+  const files = await glob.glob('.cache/sheets/*.xlsx', {
+    cwd: process.cwd(),
+    absolute: true
+  });
+
+  if (files.length === 0) {
+    throw new Error('No Excel files found.');
+  }
+
+  const workbook = XLSX.read(fs.readFileSync(files[0]), { cellDates: true });
+  const allSheetsData = {};
+  let customRangeData = {};
+
+  const keyMap = {
+    TANGGAL: 'tanggal',
+    'TANGGAL ENTRY': 'tanggal',
+    NAMA: 'nama',
+    'NAMA PASIEN': 'nama',
+    NIK: 'nik',
+    'NIK PASIEN': 'nik',
+    PEKERJAAN: 'pekerjaan',
+    'BERAT BADAN': 'bb',
+    BB: 'bb',
+    'TINGGI BADAN': 'tb',
+    TB: 'tb',
+    BATUK: 'batuk',
+    DM: 'diabetes',
+    'TGL LAHIR': 'tanggal_lahir',
+    'TANGGAL LAHIR': 'tanggal_lahir',
+    'TANGGAL LAHIR PASIEN': 'tanggal_lahir',
+    ALAMAT: 'alamat',
+    'ALAMAT PASIEN': 'alamat',
+    'JENIS KELAMIN': 'jenis_kelamin',
+    'PETUGAS YG MENG ENTRY': 'petugas',
+    'PETUGAS ENTRY': 'petugas'
+  };
+
+  workbook.SheetNames.forEach((sheetName) => {
+    const sheet = workbook.Sheets[sheetName];
+    const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // raw array of arrays
+
+    const headerRowIndex = 7487;
+    const dataStartIndex = headerRowIndex + 1;
+    const headers = raw[headerRowIndex];
+
+    const jsonData = XLSX.utils.sheet_to_json(sheet, {
+      raw: false,
+      cellDates: true,
+      dateNF: 'DD/MM/YYYY',
+      range: dataStartIndex,
+      header: headers
+    });
+
+    const rawJsonData = XLSX.utils.sheet_to_json(sheet, {
+      raw: true,
+      cellDates: true,
+      dateNF: 'DD/MM/YYYY',
+      range: dataStartIndex,
+      header: headers
+    });
+
+    allSheetsData[sheetName] = jsonData.map((row, index) => {
+      const rawRow = rawJsonData[index];
+      let transformedRow = { rowIndex: dataStartIndex + index }; // absolute row index
+
+      Object.values(keyMap).forEach((mappedKey) => {
+        transformedRow[mappedKey] = undefined;
+      });
+
+      let sharedPrefsKey = '';
+      let shared_prefs_data = {};
+
+      for (const key of Object.keys(row)) {
+        const newKey = keyMap[key] || key;
+        let value = row[key];
+
+        if (newKey === 'nik') {
+          sharedPrefsKey = `nik_${value}`;
+          shared_prefs_data = shared_prefs.get(sharedPrefsKey, {});
+          const nik_parser_result = nikParse(value);
+          transformedRow.parsed_nik = nik_parser_result.data || {};
+        }
+
+        if (newKey === 'tanggal') {
+          if (value instanceof Date) {
+            value = value.toLocaleDateString('en-GB'); // DD/MM/YYYY
+          } else if (typeof value === 'string') {
+            const matchHypens = value.match(/^\d{2}-\d{2}-\d{4}$/);
+            if (matchHypens) value = value.replace(/-/g, '/');
+          }
+
+          if (containsMonth(value)) {
+            if (moment(shared_prefs_data.saved_generated_date, 'DD/MM/YYYY', true).isValid()) {
+              value = shared_prefs_data.saved_generated_date;
+            } else {
+              const newValue = array_random(
+                getDatesWithoutSundays(extractMonthName(value), new Date().getFullYear(), 'DD/MM/YYYY', true)
+              );
+              if (moment(newValue, 'DD/MM/YYYY', true).isValid()) {
+                value = newValue;
+                shared_prefs_data.saved_generated_date = newValue;
+              }
+            }
+          }
+
+          if (!['tanggal entry'].includes(value.trim().toLowerCase()) && !value.includes('/')) {
+            throw new Error(`Invalid string date: ${value}`);
+          }
+        }
+
+        if (newKey === 'bb' || newKey === 'tb') {
+          value = parseFloat(`${value}`.replace(',', '.')) || null;
+        }
+
+        transformedRow[newKey] = value;
+      }
+
+      const rawNikKey = Object.keys(rawRow).find((k) => (keyMap[k] || k) === 'nik');
+      if (rawNikKey && rawRow[rawNikKey] !== undefined) {
+        transformedRow.nik = String(rawRow[rawNikKey]).replace(/\.0+$/, '');
+      }
+
+      if (transformedRow.nik) {
+        shared_prefs_data.nik = transformedRow.nik;
+        shared_prefs.set(sharedPrefsKey, shared_prefs_data);
+      }
+
+      return transformedRow;
+    });
+    customRangeData = allSheetsData[sheetName].filter((row) => row.rowIndex >= startIndex && row.rowIndex <= lastIndex);
+  });
+
+  fs.writeFileSync(outputSheetJsonFile, JSON.stringify(allSheetsData, null, 2), 'utf8');
+
+  return customRangeData;
+}
+
+/**
  * Retrieves extracted Excel data from a cached JSON file.
  *
  * @param {number|string} startIndex - The starting index for data extraction (inclusive).
@@ -318,12 +464,19 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
 
 if (process.argv[1] === __filename) {
   (async () => {
-    await fetchXlsxData2();
-    let datas = getXlsxData(process.env.index_start, process.env.index_end);
-    let lastItem = datas.at(-1);
-    let firstItem = datas.at(0);
-    console.log('total data:', datas.length);
-    console.log('first data:', firstItem);
-    console.log('last data:', lastItem);
+    // await fetchXlsxData2();
+    // let datas = getXlsxData(process.env.index_start, process.env.index_end);
+    // let lastItem = datas.at(-1);
+    // let firstItem = datas.at(0);
+    // console.log('total data:', datas.length);
+    // console.log('first data:', firstItem);
+    // console.log('last data:', lastItem);
+    await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
+      let lastItem = datas.at(-1);
+      let firstItem = datas.at(0);
+      console.log('total data:', datas.length);
+      console.log('first data:', firstItem);
+      console.log('last data:', lastItem);
+    });
   })();
 }

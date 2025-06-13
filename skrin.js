@@ -1,8 +1,10 @@
 import { spawnAsync } from 'cross-spawn';
 import dotenv from 'dotenv';
+import moment from 'moment';
 import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { playMp3FromUrl } from './src/beep.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import {
   confirmIdentityModal,
@@ -15,9 +17,7 @@ import {
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
-import { getXlsxData } from './xlsx_data.js';
-import { playMp3FromUrl } from './src/beep.js';
-import moment from 'moment';
+import { fetchXlsxData3 } from './xlsx_data.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -70,7 +70,7 @@ async function buildHtmlLog() {
  * correcting job/location fields, and submitting the form.
  *
  * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with the web pages.
- * @param {import('./globals').ExcelRowData} data - A single row of Excel data to be submitted through the form.
+ * @param {import('./globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
  * @returns {Promise<void>} A promise that resolves once the data has been processed and the entry has been submitted or skipped.
  * @throws {Error} If required fields are missing or invalid, or an unexpected state is encountered.
  */
@@ -410,7 +410,8 @@ export async function processData(browser, data) {
  * @returns {Promise<void>} A promise that resolves when all data entries are processed and the browser is closed.
  */
 export async function runEntrySkrining(dataCallback = (data) => data) {
-  const datas = getXlsxData(process.env.index_start, process.env.index_end);
+  // const datas = getXlsxData(process.env.index_start, process.env.index_end);
+  const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
@@ -423,7 +424,7 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
 
   while (datas.length > 0) {
     /**
-     * @type {import('./globals').ExcelRowData}
+     * @type {import('./globals.js').ExcelRowData}
      */
     let data = await dataCallback(datas.shift()); // <-- modify the data via callback
     await processData(browser, data);
