@@ -1,13 +1,47 @@
 import fs from 'fs';
 import path from 'path';
 
+const instances = new Set();
+
+/**
+ * Register shutdown hooks to save all SharedPrefs instances to disk.
+ */
+function registerShutdownHook() {
+  const saveAll = () => {
+    for (const instance of instances) {
+      instance.saveToDisk();
+    }
+  };
+
+  process.once('exit', saveAll);
+  process.once('SIGINT', () => {
+    saveAll();
+    process.exit(0);
+  });
+  process.once('SIGTERM', () => {
+    saveAll();
+    process.exit(0);
+  });
+}
+
+let shutdownHookRegistered = false;
+
+/**
+ * SharedPrefs is a persistent key-value store similar to Android's SharedPreferences.
+ */
 export class SharedPrefs {
+  /** @type {string} */
   #filePath;
+
+  /** @type {Record<string, any>} */
   #prefs;
+
+  /** @type {boolean} */
+  #dirty = false;
 
   /**
    * @param {string} name - Preference file name (without extension)
-   * @param {string} [dir='.cache/shared_prefs'] - Directory to store preferences
+   * @param {string} [dir='.cache/shared_prefs'] - Directory to store preference files
    */
   constructor(name, dir = '.cache/shared_prefs') {
     const folderPath = path.resolve(dir);
@@ -18,35 +52,42 @@ export class SharedPrefs {
     }
 
     this.#prefs = this.#load();
+
+    instances.add(this);
+    if (!shutdownHookRegistered) {
+      registerShutdownHook();
+      shutdownHookRegistered = true;
+    }
   }
 
   /**
-   * Load preferences from disk
+   * Load preference data from disk.
    * @returns {Record<string, any>}
+   * @private
    */
   #load() {
     if (!fs.existsSync(this.#filePath)) {
-      fs.writeFileSync(this.#filePath, '{}');
       return {};
     }
-
-    const content = fs.readFileSync(this.#filePath, 'utf-8');
     try {
-      return JSON.parse(content);
+      return JSON.parse(fs.readFileSync(this.#filePath, 'utf-8'));
     } catch {
       return {};
     }
   }
 
   /**
-   * Save preferences to disk
+   * Save the current preferences to disk if they have changed.
    */
-  #save() {
-    fs.writeFileSync(this.#filePath, JSON.stringify(this.#prefs, null, 2));
+  saveToDisk() {
+    if (this.#dirty) {
+      fs.writeFileSync(this.#filePath, JSON.stringify(this.#prefs, null, 2));
+      this.#dirty = false;
+    }
   }
 
   /**
-   * Get a value by key
+   * Get a stored value by key.
    * @param {string} key
    * @param {any} [defaultValue=null]
    * @returns {any}
@@ -56,26 +97,26 @@ export class SharedPrefs {
   }
 
   /**
-   * Set a key-value pair and auto-save
+   * Set a value for a key (writes will be deferred until process exit).
    * @param {string} key
    * @param {any} value
    */
   set(key, value) {
     this.#prefs[key] = value;
-    this.#save();
+    this.#dirty = true;
   }
 
   /**
-   * Remove a key and auto-save
+   * Remove a key from the preferences.
    * @param {string} key
    */
   remove(key) {
     delete this.#prefs[key];
-    this.#save();
+    this.#dirty = true;
   }
 
   /**
-   * Check if a key exists
+   * Check if a key exists.
    * @param {string} key
    * @returns {boolean}
    */
@@ -84,7 +125,7 @@ export class SharedPrefs {
   }
 
   /**
-   * Get all key-value pairs
+   * Get all key-value pairs.
    * @returns {Record<string, any>}
    */
   getAll() {
@@ -92,10 +133,10 @@ export class SharedPrefs {
   }
 
   /**
-   * Clear all preferences and auto-save
+   * Clear all preferences.
    */
   clear() {
     this.#prefs = {};
-    this.#save();
+    this.#dirty = true;
   }
 }
