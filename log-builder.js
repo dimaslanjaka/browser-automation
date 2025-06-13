@@ -116,7 +116,19 @@ function generateTableRows(logs) {
 
       const additionalInfo =
         additionalEntries.length > 0
-          ? additionalEntries.map(([key, value]) => `${key}: ${value ?? '-'}`).join(', ')
+          ? additionalEntries
+              .map(([key, value]) => {
+                let formattedValue;
+                if (value === null || value === undefined) {
+                  formattedValue = '-';
+                } else if (typeof value === 'object') {
+                  formattedValue = JSON.stringify(value, null, 2); // pretty print
+                } else {
+                  formattedValue = String(value);
+                }
+                return `${key}: ${formattedValue}`;
+              })
+              .join(', ')
           : '-';
 
       const birthDate = `${data.tgl_lahir ?? ''} (${data.umur ?? '-'})`;
