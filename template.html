@@ -145,19 +145,24 @@
     <div class="legend">
       <div class="legend-item">
         <span class="legend-color color-processed"></span>
-        Hijau = <b>[total-processed]</b> Data berhasil diinput
+        Hijau = <b id="total-processed">[total-processed]</b> Data berhasil diinput
       </div>
       <div class="legend-item">
         <span class="legend-color color-skipped"></span>
-        Merah = <b>[total-skipped]</b> Data tidak ditemukan
+        Merah = <b id="total-skipped">[total-skipped]</b> Data tidak ditemukan
       </div>
       <div class="legend-item">
         <span class="legend-color color-invalid"></span>
-        Ungu = <b>[total-invalid]</b> Data tidak valid
+        Ungu = <b id="total-invalid">[total-invalid]</b> Data tidak valid
       </div>
     </div>
 
-    <div class="centered-text"><small>Dikerjakan dalam [estimated-time]</small></div>
+    <div class="centered-text">
+      <small
+        >Dikerjakan dalam <span id="estimated-time">[estimated-time]</span>
+        <i class="fa-solid fa-copy copy-btn" title="Copy" id="copy-overall"></i
+      ></small>
+    </div>
 
     <div class="table-container">
       <table id="log-table">
@@ -207,6 +212,22 @@
         });
 
         td.appendChild(copyBtn);
+      });
+      document.getElementById('copy-overall')?.addEventListener('click', () => {
+        const totalProcessed = document.getElementById('total-processed').textContent;
+        const totalSkipped = document.getElementById('total-skipped').textContent;
+        const totalInvalid = document.getElementById('total-invalid').textContent;
+        const estimatedTime = document.getElementById('estimated-time').textContent;
+        // Construct the text to copy
+        const textToCopy = `${totalProcessed} berhasil diinput, ${totalSkipped} tidak ditemukan, ${totalInvalid} tidak valid. Dikerjakan dalam ${estimatedTime}.`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          console.log('Copied:', textToCopy);
+          // Optional visual feedback:
+          const btn = document.getElementById('copy-overall');
+          btn.classList.add('copied');
+          setTimeout(() => btn.classList.remove('copied'), 1000);
+        });
       });
     </script>
   </body>
