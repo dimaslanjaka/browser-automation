@@ -82,7 +82,8 @@ function generateTableRows(logs) {
     'gender',
     'diabetes',
     'batuk',
-    'tgl_lahir'
+    'tgl_lahir',
+    'alamat'
   ];
 
   const counter = {
@@ -146,6 +147,7 @@ function generateTableRows(logs) {
           <td>${data.tb ?? '-'}</td>
           <td>${data.tgl_lahir ? birthDate : '-'}</td>
           <td>${data.gender ?? '-'}</td>
+          <td>${data.alamat ?? '-'}</td>
           <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
           <td>${additionalInfo}</td>
       </tr>`;
