@@ -4,11 +4,17 @@
  *
  * @param {string} monthName - Month name (e.g., "May", "Mei", "August", "Agustus").
  * @param {number} [year=new Date().getFullYear()] - The target year.
- * @param {string} [format="YYYY-MM-DD"] - Desired date format (supports "YYYY-MM-DD", "DD/MM/YYYY", "MM-DD-YYYY").
- * @returns {string[]} An array of formatted dates, excluding Sundays.
- * @throws {Error} If the month name is not recognized or format is invalid.
+ * @param {string} [format="YYYY-MM-DD"] - Desired date format. Supported: "YYYY-MM-DD", "DD/MM/YYYY", "MM-DD-YYYY".
+ * @param {boolean} [limitToToday=false] - If true, exclude future dates beyond today.
+ * @returns {string[]} An array of formatted dates, excluding Sundays and optionally future dates.
+ * @throws {Error} If the month name or format is invalid.
  */
-export function getDatesWithoutSundays(monthName, year = new Date().getFullYear(), format = 'YYYY-MM-DD') {
+export function getDatesWithoutSundays(
+  monthName,
+  year = new Date().getFullYear(),
+  format = 'YYYY-MM-DD',
+  limitToToday = false
+) {
   const monthMap = {
     january: 0,
     februari: 1,
@@ -55,15 +61,18 @@ export function getDatesWithoutSundays(monthName, year = new Date().getFullYear(
     }
   };
 
+  const today = new Date();
   const month = monthMap[key];
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const dateList = [];
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
-    if (date.getDay() !== 0) {
-      dateList.push(formatDate(date));
-    }
+
+    if (date.getDay() === 0) continue; // Skip Sundays
+    if (limitToToday && date > today) break; // Stop at today if limit enabled
+
+    dateList.push(formatDate(date));
   }
 
   return dateList;

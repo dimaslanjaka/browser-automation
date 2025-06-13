@@ -188,7 +188,7 @@ export async function fetchXlsxData2() {
               value = shared_prefs_data.saved_generated_date;
             } else {
               const newValue = array_random(
-                getDatesWithoutSundays(extractMonthName(value), new Date().getFullYear(), 'DD/MM/YYYY')
+                getDatesWithoutSundays(extractMonthName(value), new Date().getFullYear(), 'DD/MM/YYYY', true)
               );
               if (moment(newValue, 'DD/MM/YYYY', true).isValid()) {
                 // If the date is valid, use it
