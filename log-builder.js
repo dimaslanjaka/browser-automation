@@ -139,15 +139,15 @@ function generateTableRows(logs) {
           <td>${formattedTime}</td>
           <td>${data.rowIndex ?? '-'}</td>
           <td>${data.tanggal ?? '-'}</td>
-          <td>${data.nama ?? '-'}</td>
-          <td>${data.nik ?? '-'}</td>
+          <td copy-data="${data.nama ?? '-'}">${data.nama ?? '-'}</td>
+          <td copy-data="${data.nik ?? '-'}">${data.nik ?? '-'}</td>
           <td>${data.pekerjaan ?? '-'}</td>
           <td>${data.pekerjaan_original ?? '-'}</td>
           <td>${data.bb ?? '-'}</td>
           <td>${data.tb ?? '-'}</td>
-          <td>${data.tgl_lahir ? birthDate : '-'}</td>
+          <td copy-data="${data.tgl_lahir ? birthDate : '-'}">${data.tgl_lahir ? birthDate : '-'}</td>
           <td>${data.gender ?? '-'}</td>
-          <td>${data.alamat ?? '-'}</td>
+          <td copy-data="${data.alamat ?? '-'}">${data.alamat ?? '-'}</td>
           <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
           <td>${additionalInfo}</td>
       </tr>`;

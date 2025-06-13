@@ -25,6 +25,7 @@ dist/
 build/
 out/
 coverage/
+public/
 
 # Puppeteer related
 puppeteer-screenshots/

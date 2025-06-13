@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Log Data</title>
+    <link rel="icon" type="image/x-icon" href="//www.webmanajemen.com/favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="//rawcdn.githack.com/dimaslanjaka/Web-Manajemen/0f634f242ff259087c9fe176e8f28ccaebb5c015/css/all.min.css" />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -124,6 +128,15 @@
       footer a:hover {
         text-decoration: underline;
       }
+
+      .copy-btn {
+        cursor: pointer;
+        margin-left: 8px;
+        color: #007bff;
+      }
+      .copied {
+        color: green;
+      }
     </style>
   </head>
   <body>
@@ -147,7 +160,7 @@
     <div class="centered-text"><small>Dikerjakan dalam [estimated-time]</small></div>
 
     <div class="table-container">
-      <table>
+      <table id="log-table">
         <tr>
           <th>Tanggal Pembuatan</th>
           <th>Indeks Baris</th>
@@ -176,5 +189,25 @@
         <a href="https://www.facebook.com/dimaslanjaka1" target="_blank">Facebook</a>
       </p>
     </footer>
+
+    <script>
+      document.querySelectorAll('#log-table td[copy-data]').forEach((td) => {
+        const copyData = td.getAttribute('copy-data');
+
+        const copyBtn = document.createElement('i');
+        copyBtn.className = 'fa-solid fa-copy copy-btn';
+        copyBtn.title = 'Copy';
+
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent triggering row events
+          navigator.clipboard.writeText(copyData).then(() => {
+            copyBtn.classList.add('copied');
+            setTimeout(() => copyBtn.classList.remove('copied'), 1000);
+          });
+        });
+
+        td.appendChild(copyBtn);
+      });
+    </script>
   </body>
 </html>
