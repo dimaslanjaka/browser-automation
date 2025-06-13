@@ -6,6 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import dotenv from 'dotenv';
+import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
+import { array_random } from 'sbg-utility';
+import { SharedPrefs } from './src/SharedPrefs.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +17,7 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
+const shared_prefs = new SharedPrefs('sheets', '.cache/shared_prefs');
 const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output.json');
 
 function getFormattedDate(date) {
@@ -153,9 +157,17 @@ export async function fetchXlsxData2() {
         transformedRow[mappedKey] = undefined;
       });
 
+      let sharedPrefsKey = '';
+      let shared_prefs_data = {};
+
       Object.keys(row).forEach((key) => {
         let newKey = keyMap[key] || key; // Map known keys, keep unknown keys
         let value = row[key];
+
+        if (newKey === 'nik') {
+          sharedPrefsKey = `nik_${value}`;
+          shared_prefs_data = shared_prefs.get(sharedPrefsKey, {});
+        }
 
         if (newKey === 'tanggal') {
           // Get properly parsed date from non-raw version
@@ -170,9 +182,28 @@ export async function fetchXlsxData2() {
             }
           }
 
-          // Verify date should be DD/MM/YYYY
-          if (!value.includes('/')) {
-            throw new Error(`Invalid string date: ${value}`);
+          if (containsMonth(value)) {
+            if (moment(shared_prefs_data.saved_generated_date, 'DD/MM/YYYY', true).isValid()) {
+              // If the date is valid, use it
+              value = shared_prefs_data.saved_generated_date;
+            } else {
+              const newValue = array_random(
+                getDatesWithoutSundays(extractMonthName(value), new Date().getFullYear(), 'DD/MM/YYYY')
+              );
+              if (moment(newValue, 'DD/MM/YYYY', true).isValid()) {
+                // If the date is valid, use it
+                // console.log(`Replacing date "${value}" with "${newValue}"`);
+                value = newValue;
+                shared_prefs_data.saved_generated_date = newValue;
+              }
+            }
+          }
+
+          if (!['tanggal entry'].includes(value.trim().toLowerCase())) {
+            // Verify date should be DD/MM/YYYY
+            if (!value.includes('/')) {
+              throw new Error(`Invalid string date: ${value}`);
+            }
           }
         }
 
@@ -198,6 +229,12 @@ export async function fetchXlsxData2() {
       // if (!transformedRow.tanggal) {
       //   throw new Error(`Invalid data at row ${index + 1} in sheet '${sheetName}': Missing 'TANGGAL'`);
       // }
+
+      // Save shared_prefs data if NIK is present
+      if (transformedRow.nik) {
+        shared_prefs_data.nik = transformedRow.nik;
+        shared_prefs.set(sharedPrefsKey, shared_prefs_data);
+      }
 
       return transformedRow;
     });
