@@ -6,6 +6,7 @@ import { authenticate } from '@google-cloud/local-auth';
 import axios from 'axios';
 import { URL, URLSearchParams } from 'url';
 import dotenv from 'dotenv';
+import { OAuth2Client } from 'google-auth-library';
 
 // Load environment variables
 dotenv.config();
@@ -60,19 +61,56 @@ function loadSavedToken() {
 }
 
 /**
+ * Loads an OAuth2Client using saved credentials and refresh tokens.
+ *
+ * @async
+ * @function getClient
+ * @returns {Promise<OAuth2Client>} An authenticated OAuth2Client instance with refreshed access token if needed.
+ * @throws {Error} If the token file is missing or invalid.
+ */
+async function getClient() {
+  const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf-8'));
+  const { client_id, client_secret, redirect_uris } = credentials.installed;
+
+  const oAuth2Client = new OAuth2Client(client_id, client_secret, redirect_uris[0]);
+
+  try {
+    const token = JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf-8'));
+    oAuth2Client.setCredentials(token);
+
+    // Optional: Refresh token if expired
+    const newToken = await oAuth2Client.getAccessToken();
+    if (newToken?.token !== token.access_token) {
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(oAuth2Client.credentials));
+    }
+
+    return oAuth2Client;
+  } catch (err) {
+    console.error('Error loading token:', err);
+    throw new Error('Missing or invalid token. Run an initial browser login flow to generate token.json.');
+  }
+}
+
+/**
  * Obtains an authenticated OAuth2 client, reusing or refreshing tokens if available.
  *
  * @returns {Promise<import('google-auth-library').OAuth2Client>}
  */
 async function authorize() {
-  const auth = await authenticate({
-    keyfilePath: CREDENTIALS_PATH,
-    scopes: SCOPES
-  });
+  console.log('Authorizing with Google Sheets API...');
+  /**
+   * @type {Promise<import('google-auth-library').OAuth2Client>}
+   */
+  let auth = await getClient();
 
   const savedToken = loadSavedToken();
   if (savedToken) {
     auth.setCredentials(savedToken);
+  } else {
+    auth = await authenticate({
+      keyfilePath: CREDENTIALS_PATH,
+      scopes: SCOPES
+    });
   }
 
   // Persist any updated tokens (access or refresh)
@@ -87,9 +125,12 @@ async function authorize() {
   });
 
   // Refresh the access token if expired
-  const { expiry_date } = auth.credentials;
+  const { expiry_date = false } = auth.credentials;
   const isExpired = !expiry_date || expiry_date <= Date.now();
-
+  console.log(`Token expiry date: ${expiry_date ? new Date(expiry_date).toISOString() : 'N/A'}`);
+  console.log(`Token is ${isExpired ? 'expired' : 'valid'}.`);
+  // If the token is expired, attempt to refresh it
+  // and save the new credentials
   if (isExpired) {
     try {
       const newToken = await auth.refreshAccessToken();
