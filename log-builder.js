@@ -1,13 +1,18 @@
+import { minify } from 'html-minifier-terser';
+import moment from 'moment';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultLogFilePath } from './src/utils.js';
-import moment from 'moment';
-import { minify } from 'html-minifier-terser';
+import dotenv from 'dotenv';
+import { writefile } from 'sbg-utility';
 
 // Define __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 // Ensure .cache directory exists
 const cacheDir = path.join(__dirname, '.cache');
@@ -22,7 +27,7 @@ const templatePath = path.join(__dirname, 'template.html');
  * Parses a log file and returns an array of structured log entries.
  *
  * @param {string} logFilePath - The path to the log file.
- * @returns {Array<{ timestamp: string, type: string, data: Object }>} An array of log entry objects.
+ * @returns {Array<{ timestamp: string, type: string, data: Object, minIndex: number, maxIndex: number }>} An array of log entry objects.
  */
 function parseLogFile(logFilePath) {
   if (!fs.existsSync(logFilePath)) {
@@ -32,8 +37,19 @@ function parseLogFile(logFilePath) {
 
   const logData = fs
     .readFileSync(logFilePath, 'utf-8')
-    .split('\n')
+    .split(/\r?\n/)
     .filter((line) => line.trim() !== '');
+  const rowIndexes = [...logData.join(/\r?\n/).matchAll(/"rowIndex":(\d+)/g)].map((m) => parseInt(m[1], 10));
+  let minIndex = 0;
+  let maxIndex = 0;
+
+  if (rowIndexes.length > 0) {
+    minIndex = Math.min(...rowIndexes);
+    maxIndex = Math.max(...rowIndexes);
+    console.log(`RowIndex Range: ${minIndex} - ${maxIndex}`);
+  } else {
+    console.log('No rowIndex found');
+  }
 
   return logData
     .map((line) => {
@@ -48,7 +64,7 @@ function parseLogFile(logFilePath) {
         return null;
       }
 
-      return { timestamp, type, data };
+      return { timestamp, type, data, minIndex, maxIndex };
     })
     .filter((entry) => entry !== null);
 }
@@ -220,8 +236,14 @@ async function generateHTML(logs) {
   fs.writeFileSync(outputPath, minifiedHTML);
 
   console.log(`✅ Minified HTML file generated: ${outputPath}.`);
+
+  return minifiedHTML;
 }
 
-// Parse log data and generate HTML output
-const logs = parseLogFile(defaultLogFilePath);
-generateHTML(logs);
+(async function () {
+  const publicDir = path.join(process.cwd(), 'public');
+  // Parse log data and generate HTML output
+  const logs = parseLogFile(defaultLogFilePath);
+  const generatedHtml = await generateHTML(logs);
+  writefile(path.join(publicDir, 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html'), generatedHtml);
+})();
