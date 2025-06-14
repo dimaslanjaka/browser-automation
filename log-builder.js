@@ -161,7 +161,7 @@ function generateTableRows(logs) {
           <td>${data.pekerjaan_original ?? '-'}</td>
           <td copy-data="${data.bb ?? '-'}">${data.bb ?? '-'}</td>
           <td copy-data="${data.tb ?? '-'}">${data.tb ?? '-'}</td>
-          <td copy-data="${data.tgl_lahir ? birthDate : '-'}">${data.tgl_lahir ? birthDate : '-'}</td>
+          <td copy-data="${data.tgl_lahir ?? '-'}">${data.tgl_lahir ? birthDate : '-'}</td>
           <td>${data.gender ?? '-'}</td>
           <td copy-data="${data.alamat ?? '-'}">${data.alamat ?? '-'}</td>
           <td>${keterangan.length > 0 ? keterangan.join(', ') : '-'}</td>
