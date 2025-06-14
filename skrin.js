@@ -96,9 +96,9 @@ export async function processData(browser, data) {
       waitUntil: 'networkidle2',
       timeout: 120000
     });
-  } catch (_) {
+  } catch (e) {
     await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
-    console.log('Repeat failure data');
+    console.error('Error navigating to skrining page:', e.message);
     // Repeat
     return processData(browser, data);
   }
