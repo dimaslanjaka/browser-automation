@@ -209,20 +209,24 @@
       document.querySelectorAll('#log-table td[copy-data]').forEach((td) => {
         const copyData = td.getAttribute('copy-data');
 
-        const copyBtn = document.createElement('i');
-        copyBtn.className = 'fa-solid fa-copy copy-btn';
-        copyBtn.title = 'Copy';
+        // Only show copy button if copyData is not empty and not '-'
+        if (copyData && copyData.trim().length > 0 && copyData.trim() !== '-') {
+          const copyBtn = document.createElement('i');
+          copyBtn.className = 'fa-solid fa-copy copy-btn';
+          copyBtn.title = 'Copy';
 
-        copyBtn.addEventListener('click', (e) => {
-          e.stopPropagation(); // Prevent triggering row events
-          navigator.clipboard.writeText(copyData).then(() => {
-            copyBtn.classList.add('copied');
-            setTimeout(() => copyBtn.classList.remove('copied'), 1000);
+          copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering row events
+            navigator.clipboard.writeText(copyData).then(() => {
+              copyBtn.classList.add('copied');
+              setTimeout(() => copyBtn.classList.remove('copied'), 1000);
+            });
           });
-        });
 
-        td.appendChild(copyBtn);
+          td.appendChild(copyBtn);
+        }
       });
+
       document.getElementById('copy-overall')?.addEventListener('click', () => {
         const totalProcessed = document.getElementById('total-processed').textContent;
         const totalSkipped = document.getElementById('total-skipped').textContent;
