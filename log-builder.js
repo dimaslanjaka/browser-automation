@@ -1,10 +1,10 @@
+import dotenv from 'dotenv';
 import { minify } from 'html-minifier-terser';
 import moment from 'moment';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultLogFilePath } from './src/utils.js';
-import dotenv from 'dotenv';
 import { writefile } from 'sbg-utility';
 
 // Define __filename and __dirname
@@ -20,7 +20,7 @@ if (!fs.existsSync(cacheDir)) {
   fs.mkdirSync(cacheDir, { recursive: true });
 }
 
-const outputPath = path.join(__dirname, '.cache/log.html');
+const outputHtmlPath = path.join(__dirname, '.cache/log.html');
 const templatePath = path.join(__dirname, 'template.html');
 
 /**
@@ -206,7 +206,7 @@ function generateTableRows(logs) {
 /**
  * Generates and writes a minified HTML file using the template and log data.
  *
- * @param {Array<{ timestamp: string, type: string, data: Object }>} logs - Parsed log entries.
+ * @param {Array<{ timestamp: string, type: string, data: Object, minIndex: number, maxIndex: number }>} logs - Parsed log entries.
  * @returns {Promise<void>}
  */
 async function generateHTML(logs) {
@@ -219,10 +219,12 @@ async function generateHTML(logs) {
   const { rowClassCounts, rowsHTML } = generateTableRows(logs);
   const finalHTML = template
     .replace('{{rows}}', rowsHTML)
-    .replace('[total-processed]', rowClassCounts.processed)
-    .replace('[total-invalid]', rowClassCounts['invalid'])
-    .replace('[total-skipped]', rowClassCounts.skipped)
-    .replace('[estimated-time]', rowClassCounts.estimated);
+    .replace(/\[total-processed\]/g, rowClassCounts.processed)
+    .replace(/\[total-invalid\]/g, rowClassCounts['invalid'])
+    .replace(/\[total-skipped\]/g, rowClassCounts.skipped)
+    .replace(/\[estimated-time\]/g, rowClassCounts.estimated)
+    .replace(/\[min-range\]/g, logs.at(0).minIndex)
+    .replace(/\[max-range\]/g, logs.at(0).maxIndex);
 
   const minifiedHTML = await minify(finalHTML, {
     collapseWhitespace: true,
@@ -233,9 +235,9 @@ async function generateHTML(logs) {
     minifyJS: true
   });
 
-  fs.writeFileSync(outputPath, minifiedHTML);
+  fs.writeFileSync(outputHtmlPath, minifiedHTML);
 
-  console.log(`✅ Minified HTML file generated: ${outputPath}.`);
+  console.log(`✅ Minified HTML file generated: ${outputHtmlPath}.`);
 
   return minifiedHTML;
 }
@@ -245,5 +247,7 @@ async function generateHTML(logs) {
   // Parse log data and generate HTML output
   const logs = parseLogFile(defaultLogFilePath);
   const generatedHtml = await generateHTML(logs);
-  writefile(path.join(publicDir, 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html'), generatedHtml);
+  const publicFileName = 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html';
+  const publicFilePath = path.join(publicDir, publicFileName);
+  writefile(publicFilePath, generatedHtml);
 })();
