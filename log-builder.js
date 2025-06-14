@@ -159,8 +159,8 @@ function generateTableRows(logs) {
           <td copy-data="${data.nik ?? '-'}">${data.nik ?? '-'}</td>
           <td>${data.pekerjaan ?? '-'}</td>
           <td>${data.pekerjaan_original ?? '-'}</td>
-          <td>${data.bb ?? '-'}</td>
-          <td>${data.tb ?? '-'}</td>
+          <td copy-data="${data.bb ?? '-'}">${data.bb ?? '-'}</td>
+          <td copy-data="${data.tb ?? '-'}">${data.tb ?? '-'}</td>
           <td copy-data="${data.tgl_lahir ? birthDate : '-'}">${data.tgl_lahir ? birthDate : '-'}</td>
           <td>${data.gender ?? '-'}</td>
           <td copy-data="${data.alamat ?? '-'}">${data.alamat ?? '-'}</td>
