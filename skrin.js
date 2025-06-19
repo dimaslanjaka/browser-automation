@@ -69,10 +69,17 @@ async function buildHtmlLog() {
  * Steps include navigating pages, inputting data, checking for various modals and alerts,
  * correcting job/location fields, and submitting the form.
  *
- * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with the web pages.
+ * @async
+ * @function processData
+ * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with web pages.
  * @param {import('./globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
- * @returns {Promise<void>} A promise that resolves once the data has been processed and the entry has been submitted or skipped.
- * @throws {Error} If required fields are missing or invalid, or an unexpected state is encountered.
+ * @returns {Promise<{
+ *   status: 'success' | 'error',
+ *   reason?: 'invalid_nik_length' | 'data_not_found' | string,
+ *   description?: string,
+ *   data?: import('./globals.js').ExcelRowData
+ * }>} Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
+ * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
 export async function processData(browser, data) {
   const page = await browser.newPage(); // Open new tab
@@ -141,7 +148,11 @@ export async function processData(browser, data) {
     appendLog(data, 'Skipped Data');
     // Build HTML log
     buildHtmlLog();
-    return;
+    return {
+      status: 'error',
+      reason: 'invalid_nik_length',
+      description: 'Skipping due NIK length invalid, should be 16 digits.'
+    };
   }
 
   await typeAndTrigger(page, '#nik', getNumbersOnly(data.nik));
@@ -182,7 +193,11 @@ export async function processData(browser, data) {
     appendLog(data, 'Skipped Data');
     // Build HTML log
     buildHtmlLog();
-    return;
+    return {
+      status: 'error',
+      reason: 'data_not_found',
+      description: 'Skipping due data not found'
+    };
   }
 
   const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
@@ -397,6 +412,11 @@ export async function processData(browser, data) {
 
   // Build HTML log
   buildHtmlLog();
+
+  return {
+    status: 'success',
+    data
+  };
 }
 
 /**
