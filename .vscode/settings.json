@@ -72,7 +72,6 @@
   "eslint.useFlatConfig": true,
   "files.autoSave": "onWindowChange",
   "files.exclude": {
-    "**/.cache/**": true,
     "**/.DS_Store": true,
     "**/.git": true,
     "**/.hg": true,
