@@ -1,6 +1,7 @@
-import path from 'node:path';
-import fs from 'fs-extra';
 import { exec } from 'child_process';
+import fs from 'fs-extra';
+import path from 'node:path';
+import { readfile } from 'sbg-utility';
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
@@ -46,16 +47,54 @@ export function extractNumericWithComma(str) {
 export const defaultLogFilePath = path.join(process.cwd(), '.cache/lastData.log');
 
 /**
- * Appends a log entry to the specified log file.
+ * Appends a log entry to the specified log file in the format:
+ * `ISO_TIMESTAMP - MESSAGE: JSON_DATA`
  *
- * @param {any} data - The data to be logged.
- * @param {string} [message='Processed Data'] - A custom message for the log entry.
- * @param {string|null} [logFilePath=null] - The path to the log file. Defaults to `.cache/lastData.log` in the current directory.
+ * @param {any} data - The data to be logged. Will be serialized using `JSON.stringify`.
+ * @param {string} [message='Processed Data'] - A label indicating the status or type of the log entry.
+ * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, defaults to `defaultLogFilePath`.
  */
 export function appendLog(data, message = 'Processed Data', logFilePath = null) {
   if (!logFilePath) logFilePath = defaultLogFilePath;
   const logEntry = `${new Date().toISOString()} - ${message}: ${JSON.stringify(data)}\n`;
   fs.appendFileSync(logFilePath, logEntry, 'utf8');
+}
+
+/**
+ * Reads and parses structured log entries from a log file.
+ *
+ * Each line is expected to be in the format:
+ * `ISO_TIMESTAMP - STATUS: JSON_DATA`
+ *
+ * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, defaults to `defaultLogFilePath`.
+ * @returns {Array<{timestamp: string, status: string, data: any}>} An array of parsed log objects.
+ */
+export function getLogData(logFilePath = null) {
+  if (!logFilePath) logFilePath = defaultLogFilePath;
+  const log = readfile(logFilePath);
+
+  return log
+    .trim()
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(.+?) - ([^:]+): (.+)$/);
+      if (!match) return null;
+
+      const [_, timestamp, status, jsonStr] = match;
+      let data;
+      try {
+        data = JSON.parse(jsonStr);
+      } catch (_e) {
+        data = { error: 'Invalid JSON', raw: jsonStr };
+      }
+
+      return {
+        timestamp,
+        status,
+        data
+      };
+    })
+    .filter(Boolean);
 }
 
 /**
