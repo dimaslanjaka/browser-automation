@@ -425,8 +425,9 @@ export async function processData(browser, data) {
  * Logs into the web application, iterates through the data entries, and processes each one using `processData`.
  * Optionally allows transformation of each row of data through a callback before processing.
  *
- * @param {(data: import('./globals').ExcelRowData) => import('./globals').ExcelRowData} [dataCallback=(data) => data]
- *   A callback to optionally transform each Excel data row before processing. Defaults to identity function.
+ * @param {(data: import('./globals').ExcelRowData) => import('./globals').ExcelRowData | Promise<import('./globals').ExcelRowData>} [dataCallback]
+ *   A callback to optionally transform each Excel data row before processing. Can be synchronous or asynchronous.
+ *   Defaults to an identity function if not provided.
  * @returns {Promise<void>} A promise that resolves when all data entries are processed and the browser is closed.
  */
 export async function runEntrySkrining(dataCallback = (data) => data) {
