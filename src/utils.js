@@ -63,11 +63,14 @@ export function appendLog(data, message = 'Processed Data', logFilePath = null) 
 /**
  * Reads and parses structured log entries from a log file.
  *
- * Normalizes log entry status to one of: 'processed', 'skipped', or 'invalid'.
- * Ignores malformed lines.
+ * Each object includes:
+ * - `timestamp`: ISO string
+ * - `status`: normalized to 'processed', 'skipped', or 'invalid'
+ * - `data`: parsed JSON or error
+ * - `raw`: the original line string from the log
  *
  * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, uses `defaultLogFilePath`.
- * @returns {Array<{timestamp: string, status: 'processed' | 'skipped' | 'invalid', data: any}>}
+ * @returns {Array<{timestamp: string, status: string, data: any, raw: string}>}
  */
 export function getLogData(logFilePath = null) {
   if (!logFilePath) logFilePath = defaultLogFilePath;
@@ -78,25 +81,22 @@ export function getLogData(logFilePath = null) {
     .split('\n')
     .map((line) => {
       const match = line.match(/^(.+?) - ([^:]+): (.+)$/);
-      if (!match) return null;
+      if (!match) {
+        return {
+          raw: line,
+          error: 'Invalid log line format'
+        };
+      }
 
       const [_, timestamp, statusRaw, jsonStr] = match;
 
-      // Normalize status
-      let status;
-      switch (statusRaw.trim().toLowerCase()) {
-        case 'processed data':
-          status = 'processed';
-          break;
-        case 'skipped data':
-          status = 'skipped';
-          break;
-        case 'invalid data':
-          status = 'invalid';
-          break;
-        default:
-          status = statusRaw.trim().toLowerCase(); // fallback to raw lowercase status
-      }
+      // Normalize status to lowercase keyword
+      const statusMap = {
+        'processed data': 'processed',
+        'skipped data': 'skipped',
+        'invalid data': 'invalid'
+      };
+      const status = statusMap[statusRaw.trim().toLowerCase()] || statusRaw.trim().toLowerCase();
 
       let data;
       try {
@@ -108,10 +108,10 @@ export function getLogData(logFilePath = null) {
       return {
         timestamp,
         status,
-        data
+        data,
+        raw: line // this is what you asked for
       };
-    })
-    .filter(Boolean); // remove nulls
+    });
 }
 
 /**
