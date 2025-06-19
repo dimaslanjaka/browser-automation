@@ -63,11 +63,11 @@ export function appendLog(data, message = 'Processed Data', logFilePath = null) 
 /**
  * Reads and parses structured log entries from a log file.
  *
- * Each line is expected to be in the format:
- * `ISO_TIMESTAMP - STATUS: JSON_DATA`
+ * Normalizes log entry status to one of: 'processed', 'skipped', or 'invalid'.
+ * Ignores malformed lines.
  *
- * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, defaults to `defaultLogFilePath`.
- * @returns {Array<{timestamp: string, status: string, data: any}>} An array of parsed log objects.
+ * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, uses `defaultLogFilePath`.
+ * @returns {Array<{timestamp: string, status: 'processed' | 'skipped' | 'invalid', data: any}>}
  */
 export function getLogData(logFilePath = null) {
   if (!logFilePath) logFilePath = defaultLogFilePath;
@@ -80,7 +80,24 @@ export function getLogData(logFilePath = null) {
       const match = line.match(/^(.+?) - ([^:]+): (.+)$/);
       if (!match) return null;
 
-      const [_, timestamp, status, jsonStr] = match;
+      const [_, timestamp, statusRaw, jsonStr] = match;
+
+      // Normalize status
+      let status;
+      switch (statusRaw.trim().toLowerCase()) {
+        case 'processed data':
+          status = 'processed';
+          break;
+        case 'skipped data':
+          status = 'skipped';
+          break;
+        case 'invalid data':
+          status = 'invalid';
+          break;
+        default:
+          status = statusRaw.trim().toLowerCase(); // fallback to raw lowercase status
+      }
+
       let data;
       try {
         data = JSON.parse(jsonStr);
@@ -94,7 +111,7 @@ export function getLogData(logFilePath = null) {
         data
       };
     })
-    .filter(Boolean);
+    .filter(Boolean); // remove nulls
 }
 
 /**
