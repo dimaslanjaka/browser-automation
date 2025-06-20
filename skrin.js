@@ -218,6 +218,11 @@ export async function processData(browser, data) {
       await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', parsed_nik_gender);
 
       // format tgl lahir 12/06/2025
+      // Validate DD/MM/YYYY format
+      const parsedLahir = moment(data.parsed_nik.lahir, 'DD/MM/YYYY', true);
+      if (!parsedLahir.isValid()) {
+        throw new Error('❌ Invalid birth date format from NIK, expected DD/MM/YYYY');
+      }
       await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', data.parsed_nik.lahir);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
