@@ -70,7 +70,7 @@ export function appendLog(data, message = 'Processed Data', logFilePath = null) 
  * - `raw`: the original line string from the log
  *
  * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, uses `defaultLogFilePath`.
- * @returns {Array<{timestamp: string, status: string, data: any, raw: string}>}
+ * @returns {Array<{timestamp: string, status: string, data: import('../globals').ExcelRowData, raw: string}>}
  */
 export function getLogData(logFilePath = null) {
   if (!logFilePath) logFilePath = defaultLogFilePath;
