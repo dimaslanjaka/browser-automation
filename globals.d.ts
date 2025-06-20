@@ -8,6 +8,7 @@ export interface ExcelRowData {
   tb: number;
   batuk: string;
   diabetes: string;
+  alamat?: string;
   parsed_nik?: {
     nama: string;
     kelamin: string;
