@@ -103,18 +103,26 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    let building = false;
     if (req.url === '/build') {
       // Trigger log file rebuild
-      spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
-        .on('close', () => {
-          spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' }).on(
-            'error',
-            console.error
-          );
-        })
-        .on('error', console.error);
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('Log files rebuilt in background. Check console for details.');
+      if (!building) {
+        building = true;
+        spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
+          .then(() => {
+            spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' })
+              .then(() => {
+                building = false;
+              })
+              .catch(console.error);
+          })
+          .catch(console.error);
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('Log files rebuilt in background. Check console for details.');
+      } else {
+        res.writeHead(503, { 'Content-Type': 'text/plain' });
+        res.end('Rebuild already in progress. Please wait.');
+      }
       return;
     }
 
