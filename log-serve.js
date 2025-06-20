@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-escape */
-import { spawn as spawnAsync } from 'cross-spawn';
+import { spawnAsync } from 'cross-spawn';
 import fssync from 'fs';
 import fs from 'fs/promises';
 import http from 'http';
