@@ -419,6 +419,14 @@ export async function processData(browser, data) {
   };
 }
 
+export async function skrinLogin(page) {
+  await page.goto('https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
+  await page.type('input[name="username"]', process.env.skrin_username);
+  await page.type('input[name="password"]', process.env.skrin_password);
+  await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
+  console.log('Login successful');
+}
+
 /**
  * Main function to automate processing of multiple rows of Excel data for skrining entry.
  *
@@ -437,18 +445,18 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
   let page = puppeteer.page;
   const browser = puppeteer.browser;
 
-  await page.goto('https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
-  await page.type('input[name="username"]', process.env.skrin_username);
-  await page.type('input[name="password"]', process.env.skrin_password);
-  await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
-  console.log('Login successful');
+  await skrinLogin(page);
 
   while (datas.length > 0) {
     /**
      * @type {import('./globals.js').ExcelRowData}
      */
     let data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    await processData(browser, data);
+    const result = await processData(browser, data);
+    if (result.status == 'error') {
+      console.error(Object.assign(result, { data }));
+      break;
+    }
   }
 
   console.log('All data processed.');
