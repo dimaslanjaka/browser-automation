@@ -184,3 +184,13 @@ export function getWeekdaysOfCurrentMonth(debug = false) {
 
   return result;
 }
+
+/**
+ * Converts the first character of each word in a string to uppercase.
+ *
+ * @param {string} str - The input string to be transformed.
+ * @returns {string} The transformed string with each word's first letter in uppercase.
+ */
+export function ucwords(str) {
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
