@@ -1,4 +1,5 @@
 /* eslint-disable no-useless-escape */
+import { spawnAsync } from 'cross-spawn';
 import fssync from 'fs';
 import fs from 'fs/promises';
 import http from 'http';
@@ -70,6 +71,15 @@ const server = http.createServer(async (req, res) => {
     req.on('close', () => {
       clients = clients.filter((client) => client !== res);
     });
+  } else if (req.url === '/build') {
+    // Trigger log file rebuild
+    spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
+      .then(() => {
+        spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' }).catch(console.error);
+      })
+      .catch(console.error);
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Log files rebuilt in background. Check console for details.');
   } else {
     // Try to serve static files from /public
     const safePath = path.normalize(decodeURIComponent(req.url)).replace(/^(\.\.[\/\\])+/, '');
