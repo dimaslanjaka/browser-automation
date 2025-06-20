@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import fs from 'fs-extra';
 import path from 'node:path';
 import { readfile } from 'sbg-utility';
+import { nikParse } from './nik-parser/index.js';
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
@@ -103,6 +104,12 @@ export function getLogData(logFilePath = null) {
         data = JSON.parse(jsonStr);
       } catch (_e) {
         data = { error: 'Invalid JSON', raw: jsonStr };
+      }
+
+      if (!data.parsed_nik && data.nik) {
+        // If parsed_nik is not present, parse the NIK
+        const nik_parser_result = nikParse(data.nik);
+        data.parsed_nik = nik_parser_result.data || {};
       }
 
       return {
