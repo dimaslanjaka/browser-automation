@@ -399,9 +399,9 @@ export async function processData(browser, data) {
 
     // Re-check
     if (await isInvalidAlertVisible(page)) {
-      console.log('Please check alert messages for:');
-      console.log(data);
-      await waitEnter('Press Enter to continue...');
+      console.warn('⚠️ Invalid alert detected for the following data:');
+      console.dir(data, { depth: null });
+      await waitEnter('Please review the alert and press Enter to continue...');
     }
   }
 
@@ -440,8 +440,12 @@ export async function processData(browser, data) {
     hasSubmitted = false;
   }
 
-  console.log('Data processed successfully:', data);
-  if (!hasSubmitted) await waitEnter('Press Enter to continue...');
+  if (hasSubmitted) {
+    console.log('✅ Data submitted successfully:', data);
+  } else {
+    console.warn('⚠️ Data processed but not submitted:', data);
+    await waitEnter('Press Enter to continue...');
+  }
 
   return {
     status: 'success',
