@@ -19,7 +19,6 @@
  * 🧩 Dependencies:
  * - `ansi-colors` – for styled terminal output
  * - `dotenv` – to load GitHub token from `.env`
- * - `sbg-utility` – provides the `writefile` utility
  *
  * ✅ Use case:
  * - Ensures package resolutions always use immutable SHAs instead of mutable branch names.
@@ -28,9 +27,9 @@
 
 import ansiColors from 'ansi-colors';
 import 'dotenv/config';
+import fs from 'fs';
 import https from 'https';
 import path from 'path';
-import { writefile } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import pkg from './package.json' with { type: 'json' };
 
@@ -223,5 +222,5 @@ function parseGitHubUrl(url) {
       pkg.resolutions[key] = result.new_url;
     }
   }
-  writefile(path.join(__dirname, 'package.json'), JSON.stringify(pkg, null, 2));
+  fs.writeFileSync(path.join(__dirname, 'package.json'), JSON.stringify(pkg, null, 2));
 })();
