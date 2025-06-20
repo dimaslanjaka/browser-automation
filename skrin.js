@@ -16,7 +16,7 @@ import {
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep } from './src/utils.js';
+import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep, ucwords } from './src/utils.js';
 import { fetchXlsxData3 } from './xlsx_data.js';
 
 // Get the absolute path of the current script
@@ -224,6 +224,15 @@ export async function processData(browser, data) {
         throw new Error('❌ Invalid birth date format from NIK, expected DD/MM/YYYY');
       }
       await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', data.parsed_nik.lahir);
+
+      const { kotakab, kecamatan, provinsi } = data.parsed_nik;
+      await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
+      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
+      await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
+      if (!data.alamat || data.alamat.length === 0) {
+        throw new Error("❌ Failed to take the patient's address");
+      }
+      await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', data.alamat);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
       return {
@@ -422,6 +431,7 @@ export async function processData(browser, data) {
       await page.click('#yesButton');
     } catch (_) {
       // Fail sending data, press manually
+      waitEnter('Failed to click #yesButton for confirmation modal. Please press Enter to continue...');
     }
 
     await sleep(1000); // waiting ajax
@@ -441,9 +451,9 @@ export async function processData(browser, data) {
   }
 
   if (hasSubmitted) {
-    console.log('✅ Data submitted successfully:', data);
+    console.log('✅\tData submitted successfully:', data);
   } else {
-    console.warn('⚠️ Data processed but not submitted:', data);
+    console.warn('⚠️\tData processed but not submitted:', data);
     await waitEnter('Press Enter to continue...');
   }
 
