@@ -189,16 +189,44 @@ export async function processData(browser, data) {
   console.log('Is NIK not found modal visible:', isNikNotFound);
 
   if (isNikNotFound) {
-    console.error('Skipping due data not found');
-    // TODO fix manual input
-    // appendLog(data, 'Skipped Data');
-    // Build HTML log
-    // buildHtmlLog();
-    return {
-      status: 'error',
-      reason: 'data_not_found',
-      description: 'Skipping due data not found'
-    };
+    // Input manual data from parsed NIK if available
+
+    const shouldClickYes = await page.evaluate(() => {
+      const dialog = document.querySelector('#dialogconfirm');
+      if (!dialog) return false;
+
+      const text = (dialog.innerText || dialog.textContent || '').toLowerCase();
+      return (
+        text.includes('access to resources is temporary closed'.toLowerCase()) &&
+        text.includes('Apakah Anda akan melanjutkan penginputan manual?'.toLowerCase())
+      );
+    });
+
+    if (shouldClickYes) {
+      await page.click('#yesButton');
+
+      if (!data.nama || data.nama.length === 0) {
+        throw new Error("❌ Failed to take the patient's name");
+      }
+      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', data.nama);
+
+      if (!data.parsed_nik) {
+        throw new Error('❌ Failed to parse NIK data');
+      }
+      const parsed_nik_gender = data.parsed_nik.kelamin.toLowerCase() == 'laki-laki' ? 'Laki-laki' : 'Perempuan';
+      console.log(`Gender ${parsed_nik_gender} detected from NIK`);
+      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', parsed_nik_gender);
+
+      // format tgl lahir 12/06/2025
+      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', data.parsed_nik.lahir);
+    } else {
+      // If the modal does not contain the expected text, we assume it's a different issue
+      return {
+        status: 'error',
+        reason: 'data_not_found',
+        description: 'Skipping due data not found'
+      };
+    }
   }
 
   const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
