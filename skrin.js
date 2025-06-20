@@ -145,7 +145,7 @@ export async function processData(browser, data) {
 
   if (data.nik.length < 16) {
     console.error('Skipping due NIK length invalid, should be 16 digits.');
-    appendLog(data, 'Skipped Data');
+    appendLog(data, 'Invalid Data');
     // Build HTML log
     buildHtmlLog();
     return {
@@ -190,9 +190,10 @@ export async function processData(browser, data) {
 
   if (isNikNotFound) {
     console.error('Skipping due data not found');
-    appendLog(data, 'Skipped Data');
+    // TODO fix manual input
+    // appendLog(data, 'Skipped Data');
     // Build HTML log
-    buildHtmlLog();
+    // buildHtmlLog();
     return {
       status: 'error',
       reason: 'data_not_found',
@@ -408,10 +409,6 @@ export async function processData(browser, data) {
 
   console.log('Data processed successfully:', data);
   if (!hasSubmitted) await waitEnter('Press Enter to continue...');
-  appendLog(data);
-
-  // Build HTML log
-  buildHtmlLog();
 
   return {
     status: 'success',
@@ -456,6 +453,11 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
       break;
+    } else {
+      appendLog(data);
+
+      // Build HTML log
+      await buildHtmlLog();
     }
   }
 
