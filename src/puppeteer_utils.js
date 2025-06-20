@@ -27,11 +27,19 @@ const userDataDir = path.resolve(process.cwd(), '.cache/profile1');
 let browser = null;
 
 /**
- * Launches or reuses a Puppeteer browser instance.
+ * Launches a new browser instance using `puppeteer-extra` or reuses an existing one.
+ *
  * @async
  * @function getPuppeteer
- * @returns {Promise<{ page: import('puppeteer').Page, browser: import('puppeteer').Browser }>}
- * An object containing the Puppeteer `page` and `browser` instances.
+ * @returns {Promise<{
+ *   page: import('puppeteer').Page,
+ *   browser: import('puppeteer').Browser,
+ *   puppeteer: typeof import('puppeteer-extra')
+ * }>}
+ * Resolves with an object containing:
+ * - `page`: A new Puppeteer `Page` instance.
+ * - `browser`: The launched or reused Puppeteer `Browser` instance.
+ * - `puppeteer`: The `puppeteer-extra` module reference.
  */
 export async function getPuppeteer() {
   if (!browser || !browser.connected) {
@@ -53,7 +61,7 @@ export async function getPuppeteer() {
   }
 
   const page = await browser.newPage();
-  return { page, browser };
+  return { page, browser, puppeteer };
 }
 
 /**
