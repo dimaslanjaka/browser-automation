@@ -448,7 +448,9 @@ export async function processData(browser, data) {
       await page.click('#yesButton');
     } catch (_) {
       // Fail sending data, press manually
-      waitEnter('Failed to click #yesButton for confirmation modal. Please press Enter to continue...');
+      waitEnter(
+        'Failed to click #yesButton for confirmation modal. Please click the button manually, then press Enter to continue...'
+      );
     }
 
     await sleep(1000);
@@ -459,7 +461,10 @@ export async function processData(browser, data) {
         break;
       }
       // Optional: wait a bit to avoid tight loop
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 1000));
+      if (Date.now() % 5000 < 1000) {
+        console.log('Waiting for success notification modal to be visible...');
+      }
     }
 
     hasSubmitted = true;
