@@ -4,8 +4,8 @@ import moment from 'moment';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defaultLogFilePath } from './src/utils.js';
 import { writefile } from 'sbg-utility';
+import { defaultLogFilePath } from './src/utils.js';
 
 // Define __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +20,6 @@ if (!fs.existsSync(cacheDir)) {
   fs.mkdirSync(cacheDir, { recursive: true });
 }
 
-const outputHtmlPath = path.join(__dirname, '.cache/log.html');
 const templatePath = path.join(__dirname, 'template.html');
 
 /**
@@ -29,7 +28,7 @@ const templatePath = path.join(__dirname, 'template.html');
  * @param {string} logFilePath - The path to the log file.
  * @returns {Array<{ timestamp: string, type: string, data: Object, minIndex: number, maxIndex: number }>} An array of log entry objects.
  */
-function parseLogFile(logFilePath) {
+export function parseLogFile(logFilePath) {
   if (!fs.existsSync(logFilePath)) {
     console.error(`❌ Log file not found: ${logFilePath}`);
     return [];
@@ -84,7 +83,7 @@ function parseLogFile(logFilePath) {
  *   - `processed`: Number of rows classified as processed.
  *   - `estimated`: The estimated time difference between the first and last timestamps, formatted as "X days Y hours Z minutes W seconds".
  */
-function generateTableRows(logs) {
+export function generateTableRows(logs) {
   const predefinedKeys = [
     'rowIndex',
     'tanggal',
@@ -115,12 +114,14 @@ function generateTableRows(logs) {
       if (data.nik.length != 16) {
         rowClass = 'invalid';
         counter['invalid']++;
-      } else if (type.includes('Skipped')) {
+      } else if (type == 'Skipped Data') {
         rowClass = 'skipped';
         counter['skipped']++;
-      } else {
+      } else if (type == 'Processed Data' || type == 'Processed Skipped Data') {
         rowClass = 'processed';
         counter['processed']++;
+      } else {
+        throw new Error(`Unknown type: ${type}`);
       }
 
       const keterangan = [];
@@ -209,7 +210,7 @@ function generateTableRows(logs) {
  * @param {Array<{ timestamp: string, type: string, data: Object, minIndex: number, maxIndex: number }>} logs - Parsed log entries.
  * @returns {Promise<void>}
  */
-async function generateHTML(logs) {
+export async function generateHTML(logs) {
   if (!fs.existsSync(templatePath)) {
     console.error(`❌ Template file not found: ${templatePath}`);
     return;
@@ -235,19 +236,18 @@ async function generateHTML(logs) {
     minifyJS: true
   });
 
-  fs.writeFileSync(outputHtmlPath, minifiedHTML);
-
-  console.log(`✅ Minified HTML file generated: ${outputHtmlPath}.`);
-
   return minifiedHTML;
 }
 
-(async function () {
-  const publicDir = path.join(process.cwd(), 'public');
-  // Parse log data and generate HTML output
-  const logs = parseLogFile(defaultLogFilePath);
-  const generatedHtml = await generateHTML(logs);
-  const publicFileName = 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html';
-  const publicFilePath = path.join(publicDir, publicFileName);
-  writefile(publicFilePath, generatedHtml);
-})();
+if (process.argv[1] === __filename) {
+  (async function () {
+    const publicDir = path.join(process.cwd(), 'public');
+    // Parse log data and generate HTML output
+    const logs = parseLogFile(defaultLogFilePath);
+    const generatedHtml = await generateHTML(logs);
+    const publicFileName = 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html';
+    const publicFilePath = path.join(publicDir, publicFileName);
+    writefile(publicFilePath, generatedHtml);
+    console.log(`✅ Minified HTML file generated: ${publicFilePath}.`);
+  })();
+}
