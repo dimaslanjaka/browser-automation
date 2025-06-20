@@ -15,6 +15,12 @@ export interface ExcelRowData {
     kotakab: string;
     kecamatan: string;
     uniqcode: string;
+    provinsi: string;
     nik: string;
+    tambahan: {
+      kodepos: string;
+      usia: string;
+      ultah: string;
+    };
   };
 }
