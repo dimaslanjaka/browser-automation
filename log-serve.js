@@ -1,6 +1,7 @@
-import http from 'http';
-import fs from 'fs/promises';
+/* eslint-disable no-useless-escape */
 import fssync from 'fs';
+import fs from 'fs/promises';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,8 +10,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const logFilePath = path.join(__dirname, '.cache', 'log.html');
+const staticDir = path.join(__dirname, 'public'); // Directory for static files
 
 let clients = [];
+
+// Helper to get mime type from extension
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case '.html':
+      return 'text/html';
+    case '.css':
+      return 'text/css';
+    case '.js':
+      return 'application/javascript';
+    case '.json':
+      return 'application/json';
+    case '.png':
+      return 'image/png';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.gif':
+      return 'image/gif';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.ico':
+      return 'image/x-icon';
+    default:
+      return 'application/octet-stream';
+  }
+}
 
 const server = http.createServer(async (req, res) => {
   if (req.url === '/' || req.url === '/log.html') {
@@ -41,8 +71,28 @@ const server = http.createServer(async (req, res) => {
       clients = clients.filter((client) => client !== res);
     });
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
+    // Try to serve static files from /public
+    const safePath = path.normalize(decodeURIComponent(req.url)).replace(/^(\.\.[\/\\])+/, '');
+    const filePath = path.join(staticDir, safePath);
+
+    try {
+      // Prevent directory traversal
+      if (!filePath.startsWith(staticDir)) {
+        throw new Error('Forbidden');
+      }
+      const stat = await fs.stat(filePath);
+      if (stat.isFile()) {
+        const data = await fs.readFile(filePath);
+        res.writeHead(200, { 'Content-Type': getMimeType(filePath) });
+        res.end(data);
+        return;
+      } else {
+        throw new Error('Not a file');
+      }
+    } catch (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('File not found: ' + err.message);
+    }
   }
 });
 
