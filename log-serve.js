@@ -39,13 +39,30 @@ const customHtml = `
   evtSource.onmessage = () => location.reload();
 </script>
 <!-- Button to trigger log rebuild -->
-<button
-  id="buildButton"
-  class="fixed top-4 right-4 z-50 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-  type="button"
->
-  Rebuild Logs
-</button>
+<style>
+  #buildButton {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 50;
+    padding: 0.5rem 1rem;
+    background-color: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+    border: none;
+    transition: background-color 0.2s;
+    outline: none;
+  }
+  #buildButton:hover {
+    background-color: #1d4ed8;
+  }
+  #buildButton:focus {
+    box-shadow: 0 0 0 2px #60a5fa;
+  }
+</style>
+<button id="buildButton" type="button">Rebuild Logs</button>
 <script>
   document.getElementById('buildButton').addEventListener('click', () => {
     fetch('/build')
