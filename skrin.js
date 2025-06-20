@@ -416,14 +416,31 @@ export async function processData(browser, data) {
 
   // Auto submit
   let hasSubmitted;
-  if (
-    !(await isIdentityModalVisible(page)) &&
-    !(await isInvalidAlertVisible(page)) &&
-    !(await isNikErrorVisible(page)) &&
-    !(await isNIKNotFoundModalVisible(page))
-  ) {
-    // Click save
-    await page.click('#save');
+  const identityModalVisible = await isIdentityModalVisible(page);
+  const invalidAlertVisible = await isInvalidAlertVisible(page);
+  const nikErrorVisible = await isNikErrorVisible(page);
+  const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
+
+  console.log('identityModalVisible:', identityModalVisible);
+  console.log('invalidAlertVisible:', invalidAlertVisible);
+  console.log('nikErrorVisible:', nikErrorVisible);
+  console.log('nikNotFoundModalVisible:', nikNotFoundModalVisible);
+
+  const isAllowedToSubmit =
+    !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
+  console.log('isAllowedToSubmit:', isAllowedToSubmit);
+  if (isAllowedToSubmit) {
+    // Clck the save button
+    console.log('Clicking the save button...');
+    await page.$eval('#save', (el) => el.scrollIntoView());
+    await page.evaluate(() => {
+      const el = document.querySelector('#save');
+      if (el) {
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+      }
+    });
+
+    await sleep(1000);
     try {
       // Wait for the confirmation modal to appear
       await page.waitForSelector('#yesButton', { visible: true });
@@ -434,7 +451,7 @@ export async function processData(browser, data) {
       waitEnter('Failed to click #yesButton for confirmation modal. Please press Enter to continue...');
     }
 
-    await sleep(1000); // waiting ajax
+    await sleep(1000);
     while (true) {
       const isSuccessVisible = await isSuccessNotificationVisible(page);
       if (isSuccessVisible) {
