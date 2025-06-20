@@ -109,7 +109,9 @@ export function getLogData(logFilePath = null) {
       if (!data.parsed_nik && data.nik) {
         // If parsed_nik is not present, parse the NIK
         const nik_parser_result = nikParse(data.nik);
-        data.parsed_nik = nik_parser_result.data || {};
+        if (nik_parser_result.status === 'success') {
+          data.parsed_nik = nik_parser_result.data || {};
+        }
       }
 
       return {
