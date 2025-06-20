@@ -208,7 +208,19 @@ export async function isSuccessNotificationVisible(page) {
 export async function isNIKNotFoundModalVisible(page) {
   return await page.evaluate(() => {
     const modal = document.querySelector('[aria-labelledby="dialogconfirm_wnd_title"]');
-    return modal && modal.innerText.includes('Data tidak ditemukan');
+    if (modal && modal.innerText.includes('Data tidak ditemukan')) {
+      // Check visibility: display, visibility, opacity, and boundingClientRect
+      const style = window.getComputedStyle(modal);
+      const rect = modal.getBoundingClientRect();
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        style.opacity !== '0' &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    }
+    return false;
   });
 }
 
