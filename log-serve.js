@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-escape */
-import { spawnAsync } from 'cross-spawn';
+import { spawn as spawnAsync } from 'cross-spawn';
 import fssync from 'fs';
 import fs from 'fs/promises';
 import http from 'http';
@@ -16,97 +16,148 @@ const staticDir = path.join(__dirname, 'public'); // Directory for static files
 let clients = [];
 
 // Helper to get mime type from extension
+const mimeTypes = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
+};
 function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  switch (ext) {
-    case '.html':
-      return 'text/html';
-    case '.css':
-      return 'text/css';
-    case '.js':
-      return 'application/javascript';
-    case '.json':
-      return 'application/json';
-    case '.png':
-      return 'image/png';
-    case '.jpg':
-    case '.jpeg':
-      return 'image/jpeg';
-    case '.gif':
-      return 'image/gif';
-    case '.svg':
-      return 'image/svg+xml';
-    case '.ico':
-      return 'image/x-icon';
-    default:
-      return 'application/octet-stream';
+  return mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+}
+
+const customHtml = `
+<!-- Live Reload Script -->
+<script>
+  const evtSource = new EventSource("/events");
+  evtSource.onmessage = () => location.reload();
+</script>
+<!-- Button to trigger log rebuild -->
+<button
+  id="buildButton"
+  class="fixed top-4 right-4 z-50 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+  type="button"
+>
+  Rebuild Logs
+</button>
+<script>
+  document.getElementById('buildButton').addEventListener('click', () => {
+    fetch('/build')
+      .then(response => response.text())
+      .then(data => {
+        alert(data);
+        location.reload();
+      })
+      .catch(err => console.error('Error rebuilding logs:', err));
+  });
+</script>
+`;
+
+function injectLiveReload(html) {
+  // Prefer to inject before </body>, else append
+  return html.includes('</body>') ? html.replace('</body>', `${customHtml}\n</body>`) : html + customHtml;
+}
+
+async function serveHtmlFile(filePath, res) {
+  try {
+    let html = await fs.readFile(filePath, 'utf8');
+    html = injectLiveReload(html);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(html);
+  } catch (err) {
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Error loading file: ' + err.message);
   }
 }
 
+function sanitizePath(url) {
+  // Prevent directory traversal, decode URI, normalize
+  return path.normalize(decodeURIComponent(url)).replace(/^(\.\.[\/\\])+/, '');
+}
+
 const server = http.createServer(async (req, res) => {
-  if (req.url === '/' || req.url === '/log.html') {
-    try {
-      let html = await fs.readFile(logFilePath, 'utf8');
-      // Inject live reload script
-      html += `
-        <script>
-          const evtSource = new EventSource("/events");
-          evtSource.onmessage = () => location.reload();
-        </script>`;
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(html);
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Error loading file: ' + err.message);
+  try {
+    if (req.url === '/' || req.url === '/log.html') {
+      await serveHtmlFile(logFilePath, res);
+      return;
     }
-  } else if (req.url === '/events') {
-    // SSE: Server-Sent Events for live reload
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive'
-    });
-    res.write('\n');
-    clients.push(res);
-    req.on('close', () => {
-      clients = clients.filter((client) => client !== res);
-    });
-  } else if (req.url === '/build') {
-    // Trigger log file rebuild
-    spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
-      .then(() => {
-        spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' }).catch(console.error);
-      })
-      .catch(console.error);
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Log files rebuilt in background. Check console for details.');
-  } else {
-    // Try to serve static files from /public
-    const safePath = path.normalize(decodeURIComponent(req.url)).replace(/^(\.\.[\/\\])+/, '');
+
+    if (req.url === '/events') {
+      // SSE: Server-Sent Events for live reload
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive'
+      });
+      res.write('\n');
+      clients.push(res);
+      req.on('close', () => {
+        clients = clients.filter((client) => client !== res);
+      });
+      return;
+    }
+
+    if (req.url === '/build') {
+      // Trigger log file rebuild
+      spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
+        .on('close', () => {
+          spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' }).on(
+            'error',
+            console.error
+          );
+        })
+        .on('error', console.error);
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('Log files rebuilt in background. Check console for details.');
+      return;
+    }
+
+    // Serve static files from /public
+    const safePath = sanitizePath(req.url);
     const filePath = path.join(staticDir, safePath);
 
-    try {
-      // Prevent directory traversal
-      if (!filePath.startsWith(staticDir)) {
-        throw new Error('Forbidden');
-      }
-      const stat = await fs.stat(filePath);
-      if (stat.isFile()) {
-        const data = await fs.readFile(filePath);
-        res.writeHead(200, { 'Content-Type': getMimeType(filePath) });
-        res.end(data);
-        return;
-      } else {
-        throw new Error('Not a file');
-      }
-    } catch (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('File not found: ' + err.message);
+    // Prevent directory traversal
+    if (!filePath.startsWith(staticDir)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
     }
+
+    let stat;
+    try {
+      stat = await fs.stat(filePath);
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('File not found');
+      return;
+    }
+
+    if (!stat.isFile()) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not a file');
+      return;
+    }
+
+    if (filePath.endsWith('.html')) {
+      await serveHtmlFile(filePath, res);
+    } else {
+      const data = await fs.readFile(filePath);
+      res.writeHead(200, { 'Content-Type': getMimeType(filePath) });
+      res.end(data);
+    }
+  } catch (err) {
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Internal server error: ' + err.message);
   }
 });
 
-// Watch file for changes
+// Watch file for changes and trigger live reload
 fssync.watch(logFilePath, () => {
   for (const client of clients) {
     client.write('data: reload\n\n');
