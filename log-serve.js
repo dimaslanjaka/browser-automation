@@ -62,17 +62,51 @@ const customHtml = `
   #buildButton:focus {
     box-shadow: 0 0 0 2px #60a5fa;
   }
+  #snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #323232;
+    color: #fff;
+    text-align: center;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    position: fixed;
+    left: 50%;
+    bottom: 2rem;
+    transform: translateX(-50%);
+    z-index: 100;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s;
+  }
+  #snackbar.show {
+    visibility: visible;
+    opacity: 1;
+  }
 </style>
 <button id="buildButton" type="button">Rebuild Logs</button>
+<div id="snackbar"></div>
 <script>
+  function showSnackbar(message) {
+    const snackbar = document.getElementById('snackbar');
+    snackbar.textContent = message;
+    snackbar.classList.add('show');
+    setTimeout(() => {
+      snackbar.classList.remove('show');
+    }, 3000);
+  }
+
   document.getElementById('buildButton').addEventListener('click', () => {
     fetch('/build')
       .then(response => response.text())
       .then(data => {
-        alert(data);
-        location.reload();
+        showSnackbar(data);
+        setTimeout(() => location.reload(), 1200);
       })
-      .catch(err => console.error('Error rebuilding logs:', err));
+      .catch(err => {
+        console.error('Error rebuilding logs:', err);
+        showSnackbar('Error rebuilding logs');
+      });
   });
 </script>
 `;
