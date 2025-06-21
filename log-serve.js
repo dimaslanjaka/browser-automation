@@ -2,6 +2,7 @@
 import { spawnAsync } from 'cross-spawn';
 import fssync from 'fs';
 import fs from 'fs/promises';
+import * as glob from 'glob';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,8 +10,8 @@ import { fileURLToPath } from 'url';
 // Resolve __dirname untuk ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const logFilePath = path.join(__dirname, '.cache', 'log.html');
+// Find all HTML files in .cache directory
+const htmlFiles = glob.sync('**/*.html', { cwd: path.join(__dirname, 'public'), posix: true, absolute: true });
 const staticDir = path.join(__dirname, 'public'); // Directory for static files
 
 let clients = [];
@@ -100,8 +101,22 @@ function sanitizePath(url) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.url === '/' || req.url === '/log.html') {
-      await serveHtmlFile(logFilePath, res);
+    if (req.url === '/') {
+      // Directory listing for public HTML files
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      const listItems = htmlFiles
+        .map((file) => {
+          const name = path.basename(file);
+          return `<li><a href="/${name}">${name}</a></li>`;
+        })
+        .join('\n');
+      res.end(`
+        <h1>Available Log Files</h1>
+        <ul>
+          ${listItems}
+        </ul>
+        ${customHtml}
+      `);
       return;
     }
 
@@ -183,11 +198,13 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Watch file for changes and trigger live reload
-fssync.watch(logFilePath, () => {
-  for (const client of clients) {
-    client.write('data: reload\n\n');
-  }
-});
+for (const file of htmlFiles) {
+  fssync.watch(file, () => {
+    for (const client of clients) {
+      client.write('data: reload\n\n');
+    }
+  });
+}
 
 const PORT = 3000;
 server.listen(PORT, () => {
