@@ -117,8 +117,11 @@ export function generateTableRows(logs) {
       } else if (type == 'Skipped Data') {
         rowClass = 'skipped';
         counter['skipped']++;
-      } else if (type == 'Processed Data' || type == 'Processed Skipped Data') {
+      } else if (type == 'Processed Data') {
         rowClass = 'processed';
+        counter['processed']++;
+      } else if (type == 'Processed Skipped Data') {
+        rowClass = 'processed-skipped';
         counter['processed']++;
       } else {
         throw new Error(`Unknown type: ${type}`);
