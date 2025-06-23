@@ -10,6 +10,7 @@ export interface NikTambahan {
 }
 
 export interface NikData {
+  [key: string]: string; // Generic key-value pairs for flexibility
   nik: string; // Original NIK number
   kelamin: Gender; // Gender
   lahir: string; // Birth date in "DD/MM/YYYY"
