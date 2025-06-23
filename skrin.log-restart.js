@@ -1,3 +1,4 @@
+import { deepmerge } from 'deepmerge-ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { processData, skrinLogin } from './skrin.js';
@@ -5,17 +6,22 @@ import { getPuppeteer } from './src/puppeteer_utils.js';
 import { appendLog, getLogData } from './src/utils.js';
 
 // re-test .cache/lastData.log
-// index range 7488 - 8286
+// current index range: 7488 - 8286
 
 const __filename = fileURLToPath(import.meta.url);
 
 async function createSession() {
   console.log('Creating new Puppeteer session...');
-  let { page, browser } = await getPuppeteer();
+  const { page, browser } = await getPuppeteer();
   await skrinLogin(page, browser);
   return { page, browser };
 }
 
+/**
+ * Processes data that has been skipped in the logs.
+ * @param {import('./globals.js').ExcelRowData} data
+ * @param {import('puppeteer').Browser} browser
+ */
 async function processSkippedData(data, browser) {
   try {
     const result = await processData(browser, data);
@@ -30,9 +36,11 @@ async function processSkippedData(data, browser) {
     } else {
       console.warn('Unexpected result status:', result.status, result);
     }
+    return result;
   } catch (err) {
     console.error('Exception in processSkippedData:', err, data);
   }
+  return null;
 }
 
 // from 7512
@@ -69,8 +77,9 @@ if (process.argv[1] === __filename) {
 
         const { timestamp, status, data, raw } = filteredLogs[i];
         if (status === 'skipped') {
-          await processSkippedData(data, browser);
-          appendLog(data, 'Processed Skipped Data', newLogPath);
+          const modifiedData = await processSkippedData(data, browser);
+          const mergeData = deepmerge(data, modifiedData);
+          appendLog(mergeData, 'Processed Skipped Data', newLogPath);
         } else if (status === 'invalid') {
           console.warn('Invalid data found in log:', { timestamp, data, raw });
           appendLog(data, 'Invalid Data', newLogPath);
