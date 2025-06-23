@@ -243,6 +243,15 @@ export async function generateHTML(logs) {
   return minifiedHTML;
 }
 
+/**
+ * Parses a log file, generates HTML from it, and saves the result to the public directory.
+ *
+ * @async
+ * @function
+ * @param {string} logPath - Path to the log file to be parsed.
+ * @param {string} fileName - Name of the output HTML file to be saved.
+ * @returns {Promise<void>} Resolves when the HTML file is successfully written.
+ */
 async function generateAndSave(logPath, fileName) {
   const logs = parseLogFile(logPath);
   const publicDir = path.join(__dirname, 'public');
