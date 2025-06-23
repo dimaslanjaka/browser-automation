@@ -4,6 +4,7 @@ import moment from 'moment';
 import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { geocodeWithNominatim } from './src/address/nominatim.js';
 import { playMp3FromUrl } from './src/beep.js';
 import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
@@ -180,6 +181,7 @@ export async function processData(browser, data) {
 
   console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
   if (await isNikErrorVisible(page)) {
+    waitEnter('Please check NIK error notification. Press Enter to continue...');
     throw new Error('NIK error notification visible, please re-check. Aborting...');
   }
 
@@ -231,10 +233,28 @@ export async function processData(browser, data) {
 
       await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
 
-      const { kotakab, kecamatan, provinsi } = data.parsed_nik;
-      await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
-      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
-      await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
+      if (data.alamat && data.alamat.length > 0) {
+        const address = await geocodeWithNominatim(data.alamat);
+        data._address = address;
+        let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
+        if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
+          console.log(address);
+          kelurahan = address.address?.village || address.address?.hamlet || '';
+          kecamatan = address.address?.suburb || address.address?.city_district || '';
+          kotakab = address.address?.city || address.address?.town || address.address?.village || 'Kota Surabaya';
+          provinsi = address.address?.state || address.address?.province || 'Jawa Timur';
+          if (kotakab.toLowerCase().includes('surabaya')) {
+            kotakab = 'Kota Surabaya';
+          }
+          if (kotakab.length === 0 || kecamatan.length === 0) {
+            throw new Error("❌ Failed to take the patient's city or town");
+          }
+        }
+        await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
+        await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
+        await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
+        await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
+      }
       if (!data.alamat || data.alamat.length === 0) {
         throw new Error("❌ Failed to take the patient's address");
       }
