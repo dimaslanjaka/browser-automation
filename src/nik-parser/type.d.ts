@@ -1,6 +1,7 @@
 export type Gender = 'LAKI-LAKI' | 'PEREMPUAN';
 
 export interface NikTambahan {
+  [keyof: string]: string; // Additional fields can be added as needed
   kodepos: string; // Postal code
   pasaran: string; // Javanese market day (e.g., "Senin Kliwon, 01 Januari 1990")
   usia: string; // Age in "X Tahun Y Bulan Z Hari"
