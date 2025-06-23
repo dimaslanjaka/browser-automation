@@ -103,7 +103,18 @@ export function getLogData(logFilePath = null) {
       try {
         data = JSON.parse(jsonStr);
       } catch (_e) {
-        data = { error: 'Invalid JSON', raw: jsonStr };
+        data = { error: 'Invalid JSON', raw: jsonStr, line };
+      }
+
+      if (!data || typeof data !== 'object') {
+        throw new Error(
+          `Invalid data format at line ${log.split('\n').indexOf(line)}: "${line}" (Log path: ${logFilePath})`
+        );
+      }
+      if (data.error) {
+        throw new Error(
+          `Error parsing log line at index ${log.split('\n').indexOf(line)}: ${data.error}. Line: "${line}" (Log path: ${logFilePath})`
+        );
       }
 
       if (!data.parsed_nik && data.nik) {
