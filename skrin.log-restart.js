@@ -30,23 +30,19 @@ async function createSession() {
  * Resolves with the result of processing, or throws an error if an exception occurs.
  */
 async function processSkippedData(data, browser) {
-  try {
-    const result = await processData(browser, data);
-    if (result.status === 'error') {
-      console.error('Error processing data:', {
-        error: result.error || result.message || 'Unknown error',
-        data,
-        result
-      });
-    } else if (result.status === 'success') {
-      console.log('Data processed successfully:', result.data);
-    } else {
-      console.warn('Unexpected result status:', result.status, result);
-    }
-    return result;
-  } catch (err) {
-    throw new Error(`Exception in processSkippedData: ${err}\nData: ${JSON.stringify(data)}`);
+  const result = await processData(browser, data);
+  if (result.status === 'error') {
+    console.error('Error processing data:', {
+      error: result.error || result.message || 'Unknown error',
+      data,
+      result
+    });
+  } else if (result.status === 'success') {
+    console.log('Data processed successfully:', result.data);
+  } else {
+    console.warn('Unexpected result status:', result.status, result);
   }
+  return result;
 }
 
 // from 7512
