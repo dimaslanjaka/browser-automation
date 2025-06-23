@@ -1,46 +1,14 @@
-import { U } from './U.js';
 import { G } from './G.js';
 import { R } from './R.js';
 import { T } from './T.js';
-
-/**
- * @typedef {'LAKI-LAKI' | 'PEREMPUAN'} Gender
- */
-
-/**
- * @typedef {Object} NikTambahan
- * @property {string} kodepos - Postal code
- * @property {string} pasaran - Javanese market day (e.g., "Senin Kliwon, 01 Januari 1990")
- * @property {string} usia - Age in "X Tahun Y Bulan Z Hari"
- * @property {string} ultah - Birthday countdown (e.g., "2 Bulan 14 Hari Lagi")
- * @property {string} zodiak - Zodiac sign (e.g., "Capricorn")
- */
-
-/**
- * @typedef {Object} NikData
- * @property {string} nik - Original NIK number
- * @property {Gender} kelamin - Gender
- * @property {string} lahir - Birth date in "DD/MM/YYYY"
- * @property {string} provinsi - Province name
- * @property {string} kotakab - City or Regency name
- * @property {string} kecamatan - District name
- * @property {string} uniqcode - Unique code (last 4 digits)
- * @property {NikTambahan} tambahan - Additional info
- */
-
-/**
- * @typedef {Object} NikResult
- * @property {'success' | 'error'} status - Result status
- * @property {string} pesan - Human-readable message
- * @property {NikData} [data] - Parsed data (only if success)
- */
+import { U } from './U.js';
 
 /**
  * Parses an Indonesian National Identity Number (NIK) into personal and regional data.
  *
  * @param {string|number} nik - The 16-digit NIK to be parsed.
- * @param {(res: NikResult) => void} [callback] - Optional callback to handle the result.
- * @returns {NikResult} The result object containing status, message, and parsed data if successful.
+ * @param {(res: import('./type').NikResult) => void} [callback] - Optional callback to handle the result.
+ * @returns {import('./type').NikResult} The result object containing status, message, and parsed data if successful.
  */
 export function nikParse(nik, callback) {
   // Output NIK tidak valid
