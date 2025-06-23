@@ -1,4 +1,5 @@
 import { deepmerge } from 'deepmerge-ts';
+import moment from 'moment';
 import region_controller from 'nik-parser-jurusid';
 import { G } from './G.js';
 import { R } from './R.js';
@@ -201,6 +202,15 @@ export function nikParse(nik, callback) {
       pesan: 'NIK valid',
       data: cleanedData
     });
+  }
+
+  if (res.data.lahir && !moment(res.data.lahir, 'DD/MM/YYYY', true).isValid()) {
+    const dateParse = moment(res.data.lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
+    if (dateParse.isValid()) {
+      res.data.lahir = dateParse.format('DD/MM/YYYY');
+    } else {
+      console.warn(`Tanggal lahir ${nik} tidak valid: ${res.data.lahir}`);
+    }
   }
 
   if (typeof callback === 'function') callback(res);
