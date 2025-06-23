@@ -14,6 +14,7 @@ import { U } from './U.js';
  * @returns {import('./type').NikResult} The result object containing status, message, and parsed data if successful.
  */
 export function nikParse(nik, callback) {
+  /** @type {import('./type').NikResult} */
   let res = {
     status: 'error',
     pesan: 'NIK tidak valid'
@@ -204,12 +205,23 @@ export function nikParse(nik, callback) {
     });
   }
 
+  // Enforce date format for data.lahir
   if (res.data.lahir && !moment(res.data.lahir, 'DD/MM/YYYY', true).isValid()) {
     const dateParse = moment(res.data.lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
     if (dateParse.isValid()) {
       res.data.lahir = dateParse.format('DD/MM/YYYY');
     } else {
       console.warn(`Tanggal lahir ${nik} tidak valid: ${res.data.lahir}`);
+    }
+  }
+
+  // Enforce date format for data.lahir if exists
+  if (res.data.lahir && !moment(res.data.lahir, 'DD/MM/YYYY', true).isValid()) {
+    const dateParse = moment(res.data.lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
+    if (dateParse.isValid()) {
+      res.data.lahir = dateParse.format('DD/MM/YYYY');
+    } else {
+      console.warn(`Tanggal lahir (lahir) ${nik} tidak valid: ${res.data.lahir}`);
     }
   }
 
