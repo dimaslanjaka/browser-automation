@@ -78,6 +78,9 @@ if (process.argv[1] === __filename) {
         const { timestamp, status, data, raw } = filteredLogs[i];
         if (status === 'skipped') {
           const modifiedData = await processSkippedData(data, browser);
+          if (!modifiedData) {
+            throw new Error(`No modified data returned for skipped item: ${JSON.stringify(filteredLogs[i])}`);
+          }
           const mergeData = deepmerge(data, modifiedData);
           appendLog(mergeData, 'Processed Skipped Data', newLogPath);
         } else if (status === 'invalid') {
