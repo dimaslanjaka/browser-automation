@@ -18,9 +18,16 @@ async function createSession() {
 }
 
 /**
- * Processes data that has been skipped in the logs.
- * @param {import('./globals.js').ExcelRowData} data
- * @param {import('puppeteer').Browser} browser
+ * Attempts to reprocess a previously skipped log entry.
+ *
+ * Logs the result or error details, and returns the outcome of the `processData` function.
+ *
+ * @async
+ * @function
+ * @param {import('./globals.js').ExcelRowData} data - The data entry to be reprocessed.
+ * @param {import('puppeteer').Browser} browser - An instance of the Puppeteer browser.
+ * @returns {Promise<{status: 'success' | 'error', data?: any, error?: any, message?: string}>}
+ * Resolves with the result of processing, or throws an error if an exception occurs.
  */
 async function processSkippedData(data, browser) {
   try {
@@ -38,9 +45,8 @@ async function processSkippedData(data, browser) {
     }
     return result;
   } catch (err) {
-    console.error('Exception in processSkippedData:', err, data);
+    throw new Error(`Exception in processSkippedData: ${err}\nData: ${JSON.stringify(data)}`);
   }
-  return null;
 }
 
 // from 7512
