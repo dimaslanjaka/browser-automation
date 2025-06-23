@@ -233,31 +233,39 @@ export async function processData(browser, data) {
 
       await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
 
-      if (data.alamat && data.alamat.length > 0) {
-        const address = await geocodeWithNominatim(data.alamat);
-        data._address = address;
-        let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
-        if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
-          console.log(address);
-          kelurahan = address.address?.village || address.address?.hamlet || '';
-          kecamatan = address.address?.suburb || address.address?.city_district || '';
-          kotakab = address.address?.city || address.address?.town || address.address?.village || 'Kota Surabaya';
-          provinsi = address.address?.state || address.address?.province || 'Jawa Timur';
-          if (kotakab.toLowerCase().includes('surabaya')) {
-            kotakab = 'Kota Surabaya';
-          }
-          if (kotakab.length === 0 || kecamatan.length === 0) {
-            throw new Error("❌ Failed to take the patient's city or town");
-          }
-        }
-        await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
-        await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
-        await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
-        await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
-      }
       if (!data.alamat || data.alamat.length === 0) {
         throw new Error("❌ Failed to take the patient's address");
       }
+
+      const address = await geocodeWithNominatim(data.alamat);
+      data._address = address;
+
+      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
+
+      if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
+        console.log(`Fetching address from Nominatim for: ${data.alamat}`);
+        console.log('Nominatim result:', address);
+
+        const addr = address.address || {};
+
+        kelurahan = kelurahan || addr.village || addr.hamlet || '';
+        kecamatan = kecamatan || addr.suburb || addr.city_district || '';
+        kotakab = kotakab || addr.city || addr.town || addr.village || 'Kota Surabaya';
+        provinsi = provinsi || addr.state || addr.province || 'Jawa Timur';
+
+        if (kotakab.toLowerCase().includes('surabaya')) {
+          kotakab = 'Kota Surabaya';
+        }
+
+        if (kotakab.length === 0 || kecamatan.length === 0) {
+          throw new Error("❌ Failed to take the patient's city or town");
+        }
+      }
+
+      await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
+      await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
+      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
+      await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
       await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', data.alamat);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
