@@ -166,30 +166,41 @@ export function nikParse(nik, callback) {
   }
 
   const externalResult = region_controller.nikParser(nik);
+
   if (externalResult.status === 'success' || !res.data || !res.data.kelamin) {
-    // If the NIK is valid, return the parsed data
-    const kelamin = externalResult.data.kelamin === 'L' ? 'LAKI-LAKI' : 'PEREMPUAN';
-    if (res.data && kelamin.toLowerCase() !== res.data.kelamin.toLowerCase()) {
+    const extKelamin = externalResult.data.kelamin || '';
+    const parsedKelamin = extKelamin.toUpperCase() === 'L' ? 'LAKI-LAKI' : 'PEREMPUAN';
+
+    if (res.data && res.data.kelamin && parsedKelamin !== res.data.kelamin.toUpperCase()) {
       throw new Error('Jenis kelamin tidak sesuai dengan NIK');
     }
 
-    res = deepmerge(
-      res,
-      { data: externalResult.data },
-      {
-        status: 'success',
-        pesan: 'NIK valid',
-        data: {
-          nik: nik,
-          kelamin: externalResult.data.kelamin.toUpperCase() == 'L' ? 'LAKI-LAKI' : 'PEREMPUAN',
-          lahir: externalResult.data.lahir,
-          provinsi: externalResult.data.provinsi,
-          kotakab: externalResult.data.kotakab,
-          kecamatan: externalResult.data.namaKec,
-          uniqcode: externalResult.data.uniqcode
-        }
-      }
-    );
+    const rawData = {
+      kelamin: parsedKelamin,
+      lahir: externalResult.data.lahir,
+      provinsi: externalResult.data.provinsi,
+      kotakab: externalResult.data.kotakab,
+      kecamatan: externalResult.data.namaKec,
+      uniqcode: externalResult.data.uniqcode
+    };
+
+    const isEmpty = (val) => {
+      return (
+        val === '' ||
+        val === null ||
+        val === undefined ||
+        (Array.isArray(val) && val.length === 0) ||
+        (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0)
+      );
+    };
+
+    const cleanedData = Object.fromEntries(Object.entries(rawData).filter(([_, v]) => !isEmpty(v)));
+
+    res = deepmerge(res, {
+      status: 'success',
+      pesan: 'NIK valid',
+      data: cleanedData
+    });
   }
 
   if (typeof callback === 'function') callback(res);

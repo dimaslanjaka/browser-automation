@@ -1,6 +1,6 @@
-import region_controller from 'nik-parser-jurusid';
+import { nikParse } from '../src/nik-parser/index.js';
+// import region_controller from 'nik-parser-jurusid';
 
-const nik = '1509120703930001';
-const result = region_controller.nikParser(nik);
-console.log(region_controller.nikParser('3174084509980002'));
+const nik = '3678101007220001';
+const result = nikParse(nik);
 console.log(result);
