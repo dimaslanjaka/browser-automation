@@ -1,3 +1,5 @@
+import { deepmerge } from 'deepmerge-ts';
+import region_controller from 'nik-parser-jurusid';
 import { G } from './G.js';
 import { R } from './R.js';
 import { T } from './T.js';
@@ -11,7 +13,6 @@ import { U } from './U.js';
  * @returns {import('./type').NikResult} The result object containing status, message, and parsed data if successful.
  */
 export function nikParse(nik, callback) {
-  // Output NIK tidak valid
   let res = {
     status: 'error',
     pesan: 'NIK tidak valid'
@@ -162,6 +163,33 @@ export function nikParse(nik, callback) {
         }
       }
     };
+  }
+
+  const externalResult = region_controller.nikParser(nik);
+  if (externalResult.status === 'success' || !res.data || !res.data.kelamin) {
+    // If the NIK is valid, return the parsed data
+    const kelamin = externalResult.data.kelamin === 'L' ? 'LAKI-LAKI' : 'PEREMPUAN';
+    if (res.data && kelamin.toLowerCase() !== res.data.kelamin.toLowerCase()) {
+      throw new Error('Jenis kelamin tidak sesuai dengan NIK');
+    }
+
+    res = deepmerge(
+      res,
+      { data: externalResult.data },
+      {
+        status: 'success',
+        pesan: 'NIK valid',
+        data: {
+          nik: nik,
+          kelamin: externalResult.data.kelamin.toUpperCase() == 'L' ? 'LAKI-LAKI' : 'PEREMPUAN',
+          lahir: externalResult.data.lahir,
+          provinsi: externalResult.data.provinsi,
+          kotakab: externalResult.data.kotakab,
+          kecamatan: externalResult.data.namaKec,
+          uniqcode: externalResult.data.uniqcode
+        }
+      }
+    );
   }
 
   if (typeof callback === 'function') callback(res);
