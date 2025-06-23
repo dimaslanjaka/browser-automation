@@ -237,23 +237,22 @@ export async function processData(browser, data) {
         throw new Error("❌ Failed to take the patient's address");
       }
 
-      const address = await geocodeWithNominatim(
-        `${data.alamat} ${data.parsed_nik.kelurahan || ''} ${data.parsed_nik.kecamatan || ''} ${data.parsed_nik.kotakab || ''} ${data.parsed_nik.provinsi || ''}`.trim()
-      );
+      const keywordAddr = `${data.alamat} Surabaya, Jawa Timur`.trim();
+      const address = await geocodeWithNominatim(keywordAddr);
       data._address = address;
 
       let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
 
       if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
-        console.log(`Fetching address from Nominatim for: ${data.alamat}`);
+        console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
         console.log('Nominatim result:', address);
 
         const addr = address.address || {};
 
-        kelurahan = kelurahan || addr.village || addr.hamlet || '';
-        kecamatan = kecamatan || addr.suburb || addr.city_district || '';
-        kotakab = kotakab || addr.city || addr.town || addr.village || 'Kota Surabaya';
-        provinsi = provinsi || addr.state || addr.province || 'Jawa Timur';
+        if (kelurahan.length === 0) kelurahan = addr.village || addr.hamlet || '';
+        if (kecamatan.length === 0) kecamatan = addr.suburb || addr.city_district || '';
+        if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
+        if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
 
         if (kotakab.toLowerCase().includes('surabaya')) {
           kotakab = 'Kota Surabaya';

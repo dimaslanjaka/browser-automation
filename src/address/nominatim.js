@@ -93,10 +93,11 @@ if (process.argv[1] === __filename) {
   (async () => {
     const addresses = [
       { keyword: 'TEMBOK GEDE I/51-H SURABAYA', method: 'GET' },
-      { keyword: 'LEBAK REJO UTARA 1/8 SURABAYA', method: 'GET' }
+      { keyword: 'LEBAK REJO UTARA 1/8 SURABAYA', method: 'GET' },
+      { keyword: 'KAPAS GADING MADYA 3D/2' }
     ];
 
-    for (const { keyword, method } of addresses) {
+    for (const { keyword, method = 'GET' } of addresses) {
       try {
         const result = await geocodeWithNominatim(keyword, method);
         console.log(result);
