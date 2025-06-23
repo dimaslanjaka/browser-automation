@@ -10,15 +10,16 @@ if not exist "%CACHE_DIR%" (
     mkdir "%CACHE_DIR%"
 )
 
-:: Validate input
+:: Show help if no arguments or --help is passed
 if "%~1"=="" (
-    echo [X] Error: No argument provided
-    echo Usage: git-diff filename ^| --staged-only
-    exit /b 1
+    goto :showHelp
+)
+if /I "%~1"=="--help" (
+    goto :showHelp
 )
 
 :: Handle --staged-only
-if "%~1"=="--staged-only" (
+if /I "%~1"=="--staged-only" (
     git --no-pager diff --staged > "%OUTPUT%"
     if exist "%OUTPUT%" (
         echo [✓] Full staged diff saved to "%OUTPUT%"
@@ -38,4 +39,15 @@ if exist "%OUTPUT%" (
     echo [X] Failed to generate diff for "%FILE%"
 )
 
-endlocal
+exit /b
+
+:showHelp
+echo Git Diff Helper
+echo ----------------------------
+echo Usage:
+echo   git-diff FILE             Show staged diff of specified file
+echo   git-diff --staged-only    Show staged diff of all files
+echo   git-diff --help           Show this help message
+echo.
+echo Output is saved to: %OUTPUT%
+exit /b 0
