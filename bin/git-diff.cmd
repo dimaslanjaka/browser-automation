@@ -1,23 +1,41 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
-:: Check if file argument is provided
+:: Output path
+set "CACHE_DIR=.cache\git"
+set "OUTPUT=%CACHE_DIR%\diff.txt"
+
+:: Ensure output directory exists
+if not exist "%CACHE_DIR%" (
+    mkdir "%CACHE_DIR%"
+)
+
+:: Validate input
 if "%~1"=="" (
-    echo [X] Error: No file specified
-    echo Usage: git-diff filename
+    echo [X] Error: No argument provided
+    echo Usage: git-diff filename ^| --staged-only
     exit /b 1
 )
 
-set "FILE=%~1"
-set "OUTPUT=.cache\git\diff.txt"
-
-:: Create output directory if it doesn't exist
-if not exist .cache\git (
-    mkdir .cache\git
+:: Handle --staged-only
+if "%~1"=="--staged-only" (
+    git --no-pager diff --staged > "%OUTPUT%"
+    if exist "%OUTPUT%" (
+        echo [✓] Full staged diff saved to "%OUTPUT%"
+    ) else (
+        echo [X] Failed to save staged diff
+    )
+    exit /b
 )
 
-:: Save the staged diff to file
-git --no-pager diff --cached "%FILE%" > "%OUTPUT%"
+:: Handle specific file diff
+set "FILE=%~1"
+git --no-pager diff --cached -- "%FILE%" > "%OUTPUT%"
 
-echo [✓] Staged diff of "%FILE%" saved to "%OUTPUT%"
+if exist "%OUTPUT%" (
+    echo [✓] Staged diff of "%FILE%" saved to "%OUTPUT%"
+) else (
+    echo [X] Failed to generate diff for "%FILE%"
+)
+
 endlocal
