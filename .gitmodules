@@ -1,0 +1,4 @@
+[submodule "packages/nik-parser"]
+	path = packages/nik-parser
+	url = https://gitlab.com/dimaslanjaka/nikparser.git
+	branch = master
