@@ -222,22 +222,14 @@ export async function processData(browser, data) {
       console.log(`Gender ${parsed_nik_gender} detected from NIK`);
       await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', parsed_nik_gender);
 
-      // Attempt to parse the birth date assuming MM/DD/YYYY format (common in US data)
-      // If valid, convert and reformat to DD/MM/YYYY (standard format expected in our system)
-      const parseMMDDYYYY = moment(data.parsed_nik.lahir, 'MM/DD/YYYY', true);
-      if (parseMMDDYYYY.isValid()) {
-        data.parsed_nik.lahir = parseMMDDYYYY.format('DD/MM/YYYY');
-        console.warn(`⚠️\tDetected MM/DD/YYYY format, converted to DD/MM/YYYY: ${data.parsed_nik.lahir}`);
-      }
-
       // Validate final birth date format to ensure it's in DD/MM/YYYY
       // If invalid, throw an error with context for easier debugging
-      const parsedLahir = moment(data.parsed_nik.lahir, 'DD/MM/YYYY', true);
+      const parsedLahir = moment(data.tgl_lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
       if (!parsedLahir.isValid()) {
-        throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${data.parsed_nik.lahir}`);
+        throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${data.tgl_lahir}`);
       }
 
-      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', data.parsed_nik.lahir);
+      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
 
       const { kotakab, kecamatan, provinsi } = data.parsed_nik;
       await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
