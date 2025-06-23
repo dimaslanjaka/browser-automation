@@ -386,7 +386,7 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
     allSheetsData[sheetName] = allSheetsData[sheetName].map((row, _index) => {
       if (row.tgl_lahir && row.parsed_nik && row.parsed_nik.lahir) {
         // Enforce row.parsed_nik.lahir from row.tgl_lahir
-        row.parsed_nik.tambahan.original_lahir = row.parsed_nik.lahir; // backup original value
+        row.parsed_nik.original_lahir = row.parsed_nik.lahir; // backup original value
         row.parsed_nik.lahir = row.tgl_lahir;
       }
       // Enforce tgl_lahir to be in DD/MM/YYYY format
@@ -402,24 +402,6 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
           );
         }
       }
-
-      // if (row.parsed_nik && row.parsed_nik.tambahan && row.parsed_nik.tambahan.usia) {
-      //   // Parse usia string like "2 Tahun 7 Bulan 17 Hari"
-      //   let usiaStr = row.parsed_nik.tambahan.usia || '';
-      //   let years = 0,
-      //     months = 0,
-      //     days = 0;
-      //   const yearMatch = usiaStr.match(/(\d+)\s*Tahun/i);
-      //   const monthMatch = usiaStr.match(/(\d+)\s*Bulan/i);
-      //   const dayMatch = usiaStr.match(/(\d+)\s*Hari/i);
-      //   if (yearMatch) years = parseInt(yearMatch[1], 10);
-      //   if (monthMatch) months = parseInt(monthMatch[1], 10);
-      //   if (dayMatch) days = parseInt(dayMatch[1], 10);
-      //   // Calculate birth date by subtracting from today
-      //   const calculatedLahir = moment().subtract(years, 'years').subtract(months, 'months').subtract(days, 'days');
-      //   row.calculated_lahir = calculatedLahir.format('DD/MM/YYYY');
-      //   console.log(`tgl_lahir: ${row.tgl_lahir}, umur: ${usiaStr}, calculated_lahir: ${row.calculated_lahir}`);
-      // }
 
       return row;
     });
