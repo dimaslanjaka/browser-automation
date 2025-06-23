@@ -5,6 +5,7 @@ import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { playMp3FromUrl } from './src/beep.js';
+import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import {
   confirmIdentityModal,
@@ -115,6 +116,10 @@ export async function processData(browser, data) {
 
   if (!data) {
     throw new Error('No more data to process.');
+  }
+  if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
+    console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
+    data.parsed_nik = nikParse(data.nik);
   }
 
   console.log('Processing:', data);
