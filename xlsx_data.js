@@ -1,14 +1,14 @@
-import fs from 'node:fs';
+import dotenv from 'dotenv';
 import * as glob from 'glob';
 import moment from 'moment-timezone';
 import nodeXlsx from 'node-xlsx';
+import fs from 'node:fs';
 import path from 'node:path';
+import { array_random } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
-import dotenv from 'dotenv';
-import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
-import { array_random } from 'sbg-utility';
 import { SharedPrefs } from './src/SharedPrefs.js';
+import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
 import { nikParse } from './src/nik-parser/index.js';
 
 // Get the absolute path of the current script
@@ -262,6 +262,7 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
   }
 
   const workbook = XLSX.read(fs.readFileSync(files[0]), { cellDates: true });
+  /** @type {Record<string, Record<string, any>[]>} */
   const allSheetsData = {};
   let customRangeData = {};
 
@@ -381,6 +382,22 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
 
       return transformedRow;
     });
+
+    // Enforce tgl_lahir format DD/MM/YYYY
+    allSheetsData[sheetName] = allSheetsData[sheetName].map((row, _index) => {
+      console.log(row.tgl_lahir, row.rowIndex);
+      if (!moment(row.tgl_lahir, 'DD/MM/YYYY', true).isValid()) {
+        if (row.tgl_lahir.includes('-')) {
+          const transform = moment(row.tgl_lahir, 'YYYY-MM-DD', true);
+          if (transform.isValid()) {
+            row.tgl_lahir = transform.format('DD/MM/YYYY');
+            return row;
+          }
+        }
+        throw new Error(`Invalid date format in row ${row.rowIndex} of sheet '${sheetName}': ${row.tgl_lahir}`);
+      }
+    });
+
     customRangeData = allSheetsData[sheetName].filter((row) => row.rowIndex >= startIndex && row.rowIndex <= lastIndex);
   });
 
