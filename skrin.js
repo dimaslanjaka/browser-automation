@@ -222,7 +222,7 @@ export async function processData(browser, data) {
       const parseMMDDYYYY = moment(data.parsed_nik.lahir, 'MM/DD/YYYY', true);
       if (parseMMDDYYYY.isValid()) {
         data.parsed_nik.lahir = parseMMDDYYYY.format('DD/MM/YYYY');
-        console.warn(`⚠️ Detected MM/DD/YYYY format, converted to DD/MM/YYYY: ${data.parsed_nik.lahir}`);
+        console.warn(`⚠️\tDetected MM/DD/YYYY format, converted to DD/MM/YYYY: ${data.parsed_nik.lahir}`);
       }
 
       // Validate final birth date format to ensure it's in DD/MM/YYYY

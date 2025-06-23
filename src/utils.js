@@ -122,7 +122,12 @@ export function getLogData(logFilePath = null) {
         // If parsed_nik is not present, parse the NIK
         const nik_parser_result = nikParse(data.nik);
         if (nik_parser_result.status === 'success') {
-          data.parsed_nik = nik_parser_result.data || {};
+          if (nik_parser_result.data) {
+            data.parsed_nik = nik_parser_result.data;
+          }
+        }
+        if (!data.parsed_nik) {
+          throw new Error(`NIK parsing failed for NIK: ${data.nik} at line: "${line}"`);
         }
       }
 
