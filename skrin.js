@@ -119,7 +119,7 @@ export async function processData(browser, data) {
   }
   if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
     console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
-    data.parsed_nik = nikParse(data.nik);
+    data.parsed_nik = nikParse(data.nik).data;
   }
 
   console.log('Processing:', data);

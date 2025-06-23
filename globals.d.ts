@@ -9,7 +9,7 @@ export interface ExcelRowData {
   batuk: string;
   diabetes: string;
   alamat?: string;
-  parsed_nik?: {
+  parsed_nik?: null | {
     nama: string;
     kelamin: string;
     lahir: string;
