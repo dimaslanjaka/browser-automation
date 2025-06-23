@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writefile } from 'sbg-utility';
+import { newLogPath } from './skrin.log-restart.js';
 import { defaultLogFilePath } from './src/utils.js';
 
 // Define __filename and __dirname
@@ -242,15 +243,21 @@ export async function generateHTML(logs) {
   return minifiedHTML;
 }
 
+async function generateAndSave(logPath, fileName) {
+  const logs = parseLogFile(logPath);
+  const publicDir = path.join(__dirname, 'public');
+  const generatedHtml = await generateHTML(logs);
+  const publicFilePath = path.join(publicDir, fileName);
+  writefile(publicFilePath, generatedHtml);
+  console.log(`✅ Minified HTML file generated: ${publicFilePath}.`);
+}
+
 if (process.argv[1] === __filename) {
   (async function () {
-    const publicDir = path.join(process.cwd(), 'public');
-    // Parse log data and generate HTML output
-    const logs = parseLogFile(defaultLogFilePath);
-    const generatedHtml = await generateHTML(logs);
-    const publicFileName = 'log-' + logs.at(0).minIndex + '-' + process.env.index_end + '.html';
-    const publicFilePath = path.join(publicDir, publicFileName);
-    writefile(publicFilePath, generatedHtml);
-    console.log(`✅ Minified HTML file generated: ${publicFilePath}.`);
+    const logs1 = parseLogFile(defaultLogFilePath);
+    const logs2 = parseLogFile(newLogPath);
+
+    await generateAndSave(defaultLogFilePath, `log-${logs1.at(0).minIndex}-${process.env.index_end}.html`);
+    await generateAndSave(newLogPath, `new-log-${logs2.at(0).minIndex}-${process.env.index_end}.html`);
   })();
 }

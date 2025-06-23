@@ -174,15 +174,7 @@ const server = http.createServer(async (req, res) => {
       // Trigger log file rebuild
       if (!building) {
         building = true;
-        spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' })
-          .then(() => {
-            spawnAsync('node', [path.join(__dirname, 'new-log-builder.js')], { stdio: 'inherit' })
-              .then(() => {
-                building = false;
-              })
-              .catch(console.error);
-          })
-          .catch(console.error);
+        spawnAsync('node', [path.join(__dirname, 'log-builder.js')], { stdio: 'inherit' }).catch(console.error);
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('Log files rebuilt in background. Check console for details.');
       } else {
