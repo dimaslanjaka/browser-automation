@@ -84,7 +84,14 @@ if (process.argv[1] === __filename) {
             throw new Error(`No modified data returned for skipped item: ${JSON.stringify(filteredLogs[i])}`);
           }
           const mergeData = deepmerge(data, modifiedData);
-          appendLog(mergeData, 'Processed Skipped Data', newLogPath);
+          if (modifiedData.status === 'error') {
+            console.error('Error processing skipped data:', modifiedData.error || modifiedData.message);
+            appendLog(mergeData, 'Error Processing Skipped Data', newLogPath);
+          } else if (modifiedData.status === 'success') {
+            appendLog(mergeData, 'Processed Skipped Data', newLogPath);
+          } else {
+            throw new Error(`Unexpected status from processData: ${modifiedData.status}`);
+          }
         } else if (status === 'invalid') {
           console.warn('Invalid data found in log:', { timestamp, data, raw });
           appendLog(data, 'Invalid Data', newLogPath);
