@@ -237,7 +237,9 @@ export async function processData(browser, data) {
         throw new Error("❌ Failed to take the patient's address");
       }
 
-      const address = await geocodeWithNominatim(data.alamat);
+      const address = await geocodeWithNominatim(
+        `${data.alamat} ${data.parsed_nik.kelurahan || ''} ${data.parsed_nik.kecamatan || ''} ${data.parsed_nik.kotakab || ''} ${data.parsed_nik.provinsi || ''}`.trim()
+      );
       data._address = address;
 
       let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
