@@ -1,12 +1,11 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { google } from 'googleapis';
 import { authenticate } from '@google-cloud/local-auth';
 import axios from 'axios';
-import { URL, URLSearchParams } from 'url';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
+import path from 'path';
+import { fileURLToPath, URL, URLSearchParams } from 'url';
 
 // Load environment variables
 dotenv.config();
@@ -83,12 +82,11 @@ async function getClient() {
     if (newToken?.token !== token.access_token) {
       fs.writeFileSync(TOKEN_PATH, JSON.stringify(oAuth2Client.credentials));
     }
-
-    return oAuth2Client;
   } catch (err) {
-    console.error('Error loading token:', err);
-    throw new Error('Missing or invalid token. Run an initial browser login flow to generate token.json.');
+    console.error('Error loading token:', err.message);
   }
+
+  return oAuth2Client;
 }
 
 /**
