@@ -45,10 +45,12 @@
   "[twig]": {
     "editor.defaultFormatter": "vscode.html-language-features"
   },
-  "autopep8.args": ["--ignore", "E401,E402,E211,E501"],
+  "autopep8.args": [
+    "--ignore",
+    "E401,E402,E211,E501"
+  ],
   "code-runner.clearPreviousOutput": true,
   "code-runner.executorMapByGlob": {
-    "*.js": "node --no-warnings=ExperimentalWarning --loader ./.vscode/js-hook.js",
     "electron-*.ts": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
     "*.py": "py2 -u",
     "*.electron.js": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
@@ -62,6 +64,9 @@
     "*.bat": "cmd /c",
     "*.cmd": "cmd /c",
     "*.ps1": "powershell -ExecutionPolicy ByPass -File"
+  },
+  "code-runner.executorMap": {
+    "javascript": "node --no-warnings=ExperimentalWarning --loader ./.vscode/js-hook.js"
   },
   "code-runner.ignoreSelection": true,
   "code-runner.respectShebang": true,
@@ -116,7 +121,10 @@
   "git.useCommitInputAsStashMessage": true,
   "intelephense.diagnostics.run": "onSave",
   "intelephense.environment.documentRoot": "${workspaceFolder}",
-  "intelephense.environment.includePaths": ["${workspaceFolder}/src", "${workspaceFolder}/vendor"],
+  "intelephense.environment.includePaths": [
+    "${workspaceFolder}/src",
+    "${workspaceFolder}/vendor"
+  ],
   "intelephense.environment.phpVersion": "7.4.33",
   "intelephense.files.exclude": [
     "**/.git/**",
@@ -154,7 +162,10 @@
       "icon": "terminal-powershell"
     },
     "Command Prompt": {
-      "path": ["${env:windir}\\Sysnative\\cmd.exe", "${env:windir}\\System32\\cmd.exe"],
+      "path": [
+        "${env:windir}\\Sysnative\\cmd.exe",
+        "${env:windir}\\System32\\cmd.exe"
+      ],
       "args": [],
       "icon": "terminal-cmd"
     },
@@ -163,7 +174,10 @@
     },
     "Cygwin": {
       "path": "C:\\cygwin64\\bin\\bash.exe",
-      "args": ["--login", "-i"],
+      "args": [
+        "--login",
+        "-i"
+      ],
       "env": {
         "CHERE_INVOKING": "1"
       }
