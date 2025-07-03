@@ -48,6 +48,7 @@
     "@types/node": "^22.13.10",
     "@typescript-eslint/eslint-plugin": "^8.27.0",
     "@typescript-eslint/parser": "^8.27.0",
+    "binary-collections": "^2.0.6",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
@@ -62,9 +63,9 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/463f3fe14fd732715e7637d38e34746473beccd6/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/53b089eeece3a15550d13fc6de88c9ebbd6fef9d/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/4442db4cc58bf12f9c93382a446419ef1c0a5994/packages/sbg-utility/release/sbg-utility.tgz"
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/7696e66ab84f319909c5dab9054303e91f898454/packages/sbg-utility/release/sbg-utility.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
