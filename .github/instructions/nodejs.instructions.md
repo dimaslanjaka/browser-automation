@@ -9,3 +9,4 @@ Coding standards, domain knowledge, and preferences that AI should follow.
 - Linter using `eslint` and formatter using `prettier`.
 - Using `jest` for testing.
 - When running shell commands that produce output files, direct these outputs to the `tmp` directory and review the complete results for thorough debugging, especially for long-running processes.
+- Test files should be placed in the `test/` directory.
