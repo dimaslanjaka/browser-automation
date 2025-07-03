@@ -7,7 +7,8 @@
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "init:docs": "node ./init-gh-pages.js",
     "postinstall": "npm run build:packages && npm run init:docs",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose",
+    "test:coverage": "npm run test -- --coverage",
     "serve-xlsx": "node xlsx-web-server.js | tee tmp/xlsx-server.log",
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
     "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log"
@@ -47,12 +48,13 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sbg-utility": "^2.0.8",
     "upath": "^2.0.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
-    "@jest/globals": "^30.0.2",
+    "@jest/globals": "^30.0.4",
     "@types/node": "^22.13.10",
     "@typescript-eslint/eslint-plugin": "^8.27.0",
     "@typescript-eslint/parser": "^8.27.0",
