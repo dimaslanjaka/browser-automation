@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { SharedPrefs } from './src/SharedPrefs.js';
 import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
 import { clearFetchXlsxData3Cache, fetchXlsxData3 } from './src/fetchXlsxData3.js';
+import { matchFirstAndLastData } from './src/xlsx-helper.js';
 
 // Re-export for backward compatibility
 export { clearFetchXlsxData3Cache, fetchXlsxData3 };
@@ -320,51 +321,6 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
   return Math.max(0, age);
 }
 
-/**
- * Matches the first and last data against expected values
- * @param {import('./globals').ExcelRowData[]} datas - Array of Excel data
- * @param {Object} matchData - Expected first and last data
- * @returns {Object} Matching results
- */
-function matchFirstAndLastData(datas, matchData) {
-  const firstItem = datas.at(0);
-  const lastItem = datas.at(-1);
-
-  const firstMatch = {
-    nikMatch: firstItem?.nik === matchData.first.nik,
-    namaMatch: firstItem?.nama === matchData.first.nama,
-    actualNik: firstItem?.nik,
-    actualNama: firstItem?.nama,
-    expectedNik: matchData.first.nik,
-    expectedNama: matchData.first.nama
-  };
-
-  const lastMatch = {
-    nikMatch: lastItem?.nik === matchData.last.nik,
-    namaMatch: lastItem?.nama === matchData.last.nama,
-    actualNik: lastItem?.nik,
-    actualNama: lastItem?.nama,
-    expectedNik: matchData.last.nik,
-    expectedNama: matchData.last.nama
-  };
-
-  return {
-    first: firstMatch,
-    last: lastMatch,
-    overallMatch: firstMatch.nikMatch && firstMatch.namaMatch && lastMatch.nikMatch && lastMatch.namaMatch
-  };
-}
-
-/**
- * Find data rows by NIK
- * @param {import('./globals').ExcelRowData[]} datas - Array of Excel data
- * @param {string} targetNik - NIK to search for
- * @returns {import('./globals').ExcelRowData|null} Found data or null
- */
-function findByNik(datas, targetNik) {
-  return datas.find((item) => item.nik === targetNik) || null;
-}
-
 if (process.argv[1] === __filename) {
   (async () => {
     // Test caching functionality
@@ -388,12 +344,28 @@ if (process.argv[1] === __filename) {
       const matchResult = matchFirstAndLastData(datas, matchData);
       console.log('\n=== DATA MATCHING RESULTS ===');
       console.log('First data match:');
-      console.log('  NIK:', matchResult.first.nikMatch ? '✓' : '✗', `Expected: ${matchResult.first.expectedNik}, Actual: ${matchResult.first.actualNik}`);
-      console.log('  Name:', matchResult.first.namaMatch ? '✓' : '✗', `Expected: ${matchResult.first.expectedNama}, Actual: ${matchResult.first.actualNama}`);
+      console.log(
+        '  NIK:',
+        matchResult.first.nikMatch ? '✓' : '✗',
+        `Expected: ${matchResult.first.expectedNik}, Actual: ${matchResult.first.actualNik}`
+      );
+      console.log(
+        '  Name:',
+        matchResult.first.namaMatch ? '✓' : '✗',
+        `Expected: ${matchResult.first.expectedNama}, Actual: ${matchResult.first.actualNama}`
+      );
 
       console.log('\nLast data match:');
-      console.log('  NIK:', matchResult.last.nikMatch ? '✓' : '✗', `Expected: ${matchResult.last.expectedNik}, Actual: ${matchResult.last.actualNik}`);
-      console.log('  Name:', matchResult.last.namaMatch ? '✓' : '✗', `Expected: ${matchResult.last.expectedNama}, Actual: ${matchResult.last.actualNama}`);
+      console.log(
+        '  NIK:',
+        matchResult.last.nikMatch ? '✓' : '✗',
+        `Expected: ${matchResult.last.expectedNik}, Actual: ${matchResult.last.actualNik}`
+      );
+      console.log(
+        '  Name:',
+        matchResult.last.namaMatch ? '✓' : '✗',
+        `Expected: ${matchResult.last.expectedNama}, Actual: ${matchResult.last.actualNama}`
+      );
 
       console.log('\nOverall match:', matchResult.overallMatch ? '✓ PASS' : '✗ FAIL');
     });
