@@ -9,6 +9,7 @@ yarn.lock
 .yarn/unplugged/
 .yarn/build-state.yml
 .yarn/*.gz
+package-lock.json
 
 # Logs
 npm-debug.log*
@@ -66,3 +67,4 @@ Thumbs.db
 
 # Private
 *.*private*.*
+deobfuscate/

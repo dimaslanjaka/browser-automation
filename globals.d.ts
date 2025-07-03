@@ -25,3 +25,16 @@ export interface ExcelRowData {
     };
   };
 }
+
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      skrin_username: string;
+      skrin_password: string;
+      SPREADSHEET_ID: string;
+      index_start: string;
+      index_end: string;
+      GITHUB_TOKEN: string;
+    }
+  }
+}
