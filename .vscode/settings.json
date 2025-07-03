@@ -48,6 +48,7 @@
   "autopep8.args": ["--ignore", "E401,E402,E211,E501"],
   "code-runner.clearPreviousOutput": true,
   "code-runner.executorMapByGlob": {
+    "*.js": "node --no-warnings=ExperimentalWarning --loader ./.vscode/js-hook.js",
     "electron-*.ts": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
     "*.py": "py2 -u",
     "*.electron.js": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
