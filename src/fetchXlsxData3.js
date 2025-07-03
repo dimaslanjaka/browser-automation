@@ -1,86 +1,38 @@
 import * as glob from 'glob';
 import moment from 'moment-timezone';
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { array_random } from 'sbg-utility';
+import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import { SharedPrefs } from './SharedPrefs.js';
 import { containsMonth, extractMonthName, getDatesWithoutSundays } from './date.js';
 import { nikParse } from './nik-parser/index.js';
+import { getCacheKey, getCachedData, getFileHash, saveCachedData } from './xlsx-helper.js';
+
+// Get the absolute path of the current script for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const shared_prefs = new SharedPrefs('sheets', '.cache/shared_prefs');
 const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output.json');
 
 /**
- * Generates a hash for the given file
- * @param {string} filePath - Path to the file
- * @returns {string} SHA256 hash of the file
- */
-function getFileHash(filePath) {
-  const fileBuffer = fs.readFileSync(filePath);
-  return crypto.createHash('sha256').update(fileBuffer).digest('hex');
-}
-
-/**
- * Generates a cache key for fetchXlsxData3
- * @param {string} fileHash - Hash of the Excel file
- * @param {number} startIndex - Start index
- * @param {number} lastIndex - Last index
- * @returns {string} Cache key
- */
-function getCacheKey(fileHash, startIndex, lastIndex) {
-  const shortHash = fileHash.substring(0, 7); // Use first 7 characters of hash
-  return `fetchXlsxData3_${shortHash}_${startIndex}_${lastIndex}`;
-}
-
-/**
- * Gets cached data if available and valid
- * @param {string} cacheKey - Cache key
- * @returns {Object|null} Cached data or null if not found/invalid
- */
-function getCachedData(cacheKey) {
-  try {
-    const cacheFile = path.join(process.cwd(), '.cache/temp', `${cacheKey}.json`);
-    if (fs.existsSync(cacheFile)) {
-      const cachedData = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-      console.log(`Cache hit: ${cacheKey}`);
-      return cachedData;
-    }
-  } catch (error) {
-    console.warn(`Cache read error for ${cacheKey}:`, error.message);
-  }
-  return null;
-}
-
-/**
- * Saves data to cache
- * @param {string} cacheKey - Cache key
- * @param {any} data - Data to cache
- */
-function saveCachedData(cacheKey, data) {
-  try {
-    const cacheDir = path.join(process.cwd(), '.cache/temp');
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-    }
-
-    const cacheFile = path.join(cacheDir, `${cacheKey}.json`);
-    fs.writeFileSync(cacheFile, JSON.stringify(data, null, 2), 'utf-8');
-    console.log(`Cache saved: ${cacheKey}`);
-  } catch (error) {
-    console.warn(`Cache save error for ${cacheKey}:`, error.message);
-  }
-}
-
-/**
  * Reads Excel (.xlsx) files in the current directory and extracts data.
  *
- * @param {number} [startIndex=0] - The starting row index to extract data from.
- * @param {number} [lastIndex=Number.MAX_SAFE_INTEGER] - The ending row index to extract data until.
+ * @param {number|string} [startIndex=0] - The starting row index to extract data from.
+ * @param {number|string} [lastIndex=Number.MAX_SAFE_INTEGER] - The ending row index to extract data until.
  * @returns {Promise<import('../globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
 export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER) {
+  // Parse parameters to ensure they are numbers
+  const parsedStartIndex = typeof startIndex === 'string' ? parseInt(startIndex, 10) : startIndex;
+  const parsedLastIndex = typeof lastIndex === 'string' ? parseInt(lastIndex, 10) : lastIndex;
+
+  // Validate parsed parameters
+  const finalStartIndex = isNaN(parsedStartIndex) ? 0 : parsedStartIndex;
+  const finalLastIndex = isNaN(parsedLastIndex) ? Number.MAX_SAFE_INTEGER : parsedLastIndex;
+
   const files = await glob.glob('.cache/sheets/*.xlsx', {
     cwd: process.cwd(),
     absolute: true
@@ -92,7 +44,7 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
 
   // Generate file hash and cache key
   const fileHash = getFileHash(files[0]);
-  const cacheKey = getCacheKey(fileHash, startIndex, lastIndex);
+  const cacheKey = getCacheKey('fetchXlsxData3', fileHash, finalStartIndex, finalLastIndex);
 
   // Check cache first
   const cachedData = getCachedData(cacheKey);
@@ -246,7 +198,9 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
       return row;
     });
 
-    customRangeData = allSheetsData[sheetName].filter((row) => row.rowIndex >= startIndex && row.rowIndex <= lastIndex);
+    customRangeData = allSheetsData[sheetName].filter(
+      (row) => row.rowIndex >= finalStartIndex && row.rowIndex <= finalLastIndex
+    );
   });
 
   fs.writeFileSync(outputSheetJsonFile, JSON.stringify(allSheetsData, null, 2), 'utf8');
@@ -257,33 +211,11 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
   return customRangeData;
 }
 
-/**
- * Clears cache files for fetchXlsxData3
- * @param {string} [pattern] - Optional pattern to match specific cache files, defaults to all fetchXlsxData3 cache
- */
-export function clearFetchXlsxData3Cache(pattern = 'fetchXlsxData3_*.json') {
-  try {
-    const cacheDir = path.join(process.cwd(), '.cache/temp');
-    if (!fs.existsSync(cacheDir)) {
-      console.log('Cache directory does not exist');
-      return;
-    }
-
-    const cacheFiles = glob.globSync(pattern, { cwd: cacheDir, absolute: true });
-    let deletedCount = 0;
-
-    cacheFiles.forEach(file => {
-      try {
-        fs.unlinkSync(file);
-        deletedCount++;
-        console.log(`Deleted cache file: ${path.basename(file)}`);
-      } catch (error) {
-        console.warn(`Failed to delete ${file}:`, error.message);
-      }
-    });
-
-    console.log(`Cleared ${deletedCount} cache file(s)`);
-  } catch (error) {
-    console.warn('Cache clear error:', error.message);
-  }
+if (process.argv[1] === __filename) {
+  (async () => {
+    const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+    console.log(`Fetched ${datas.length} rows of data from Excel files.`);
+    console.log('First row:', datas[0]);
+    console.log('Last row:', datas[datas.length - 1]);
+  })();
 }

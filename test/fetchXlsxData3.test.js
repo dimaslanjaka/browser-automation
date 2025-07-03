@@ -1,19 +1,36 @@
-import { afterEach, beforeEach, describe, expect, test } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
 import fs from 'node:fs';
 import path from 'node:path';
-import { clearFetchXlsxData3Cache, fetchXlsxData3 } from '../src/fetchXlsxData3.js';
+import { fetchXlsxData3 } from '../src/fetchXlsxData3.js';
+import { clearCache } from '../src/xlsx-helper.js';
 
 describe('fetchXlsxData3', () => {
   const testCacheDir = path.join(process.cwd(), '.cache/temp');
+  const logFile = path.join(process.cwd(), '.cache/temp/test-logs.txt');
 
-  beforeEach(() => {
-    // Clean up cache before each test
-    clearFetchXlsxData3Cache();
+  let consoleLogSpy;
+  let logMessages = [];
+
+  beforeAll(() => {
+    // Capture console.log messages to array and optionally to file
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args) => {
+      const message = args.join(' ');
+      logMessages.push(message);
+    });
   });
 
-  afterEach(() => {
-    // Clean up cache after each test
-    clearFetchXlsxData3Cache();
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+
+    // Write all captured logs to file at the end
+    if (logMessages.length > 0) {
+      const logDir = path.dirname(logFile);
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      fs.writeFileSync(logFile, logMessages.join('\n') + '\n');
+      console.log(`Test logs written to: ${logFile}`);
+    }
   });
 
   test('should throw error when no Excel files found', async () => {
@@ -37,8 +54,7 @@ describe('fetchXlsxData3', () => {
 
   test('should return cached data on second call', async () => {
     // Skip if no Excel files available
-    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets'))
-      .filter(file => file.endsWith('.xlsx'));
+    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets')).filter((file) => file.endsWith('.xlsx'));
 
     if (files.length === 0) {
       console.log('Skipping test: No Excel files found');
@@ -65,15 +81,13 @@ describe('fetchXlsxData3', () => {
     expect(duration2).toBeLessThan(duration1 / 2);
 
     // Cache file should exist
-    const cacheFiles = fs.readdirSync(testCacheDir)
-      .filter(file => file.startsWith('fetchXlsxData3_'));
+    const cacheFiles = fs.readdirSync(testCacheDir).filter((file) => file.startsWith('fetchXlsxData3_'));
     expect(cacheFiles.length).toBeGreaterThan(0);
   });
 
   test('should process data correctly', async () => {
     // Skip if no Excel files available
-    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets'))
-      .filter(file => file.endsWith('.xlsx'));
+    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets')).filter((file) => file.endsWith('.xlsx'));
 
     if (files.length === 0) {
       console.log('Skipping test: No Excel files found');
@@ -101,8 +115,7 @@ describe('fetchXlsxData3', () => {
 
   test('should clear cache correctly', async () => {
     // Skip if no Excel files available
-    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets'))
-      .filter(file => file.endsWith('.xlsx'));
+    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets')).filter((file) => file.endsWith('.xlsx'));
 
     if (files.length === 0) {
       console.log('Skipping test: No Excel files found');
@@ -113,23 +126,20 @@ describe('fetchXlsxData3', () => {
     await fetchXlsxData3(7488, 7490);
 
     // Verify cache exists
-    let cacheFiles = fs.readdirSync(testCacheDir)
-      .filter(file => file.startsWith('fetchXlsxData3_'));
+    let cacheFiles = fs.readdirSync(testCacheDir).filter((file) => file.startsWith('fetchXlsxData3_'));
     expect(cacheFiles.length).toBeGreaterThan(0);
 
     // Clear cache
-    clearFetchXlsxData3Cache();
+    clearCache('fetchXlsxData3_*.json');
 
     // Verify cache is cleared
-    cacheFiles = fs.readdirSync(testCacheDir)
-      .filter(file => file.startsWith('fetchXlsxData3_'));
+    cacheFiles = fs.readdirSync(testCacheDir).filter((file) => file.startsWith('fetchXlsxData3_'));
     expect(cacheFiles.length).toBe(0);
   });
 
   test('should handle different index ranges', async () => {
     // Skip if no Excel files available
-    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets'))
-      .filter(file => file.endsWith('.xlsx'));
+    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets')).filter((file) => file.endsWith('.xlsx'));
 
     if (files.length === 0) {
       console.log('Skipping test: No Excel files found');
@@ -140,8 +150,7 @@ describe('fetchXlsxData3', () => {
     const result2 = await fetchXlsxData3(7491, 7493);
 
     // Different ranges should create different cache entries
-    const cacheFiles = fs.readdirSync(testCacheDir)
-      .filter(file => file.startsWith('fetchXlsxData3_'));
+    const cacheFiles = fs.readdirSync(testCacheDir).filter((file) => file.startsWith('fetchXlsxData3_'));
     expect(cacheFiles.length).toBe(2);
 
     // Results should be different
@@ -150,5 +159,30 @@ describe('fetchXlsxData3', () => {
     if (result1.length > 0 && result2.length > 0) {
       expect(result1[0].rowIndex).not.toBe(result2[0].rowIndex);
     }
+  });
+
+  test('should handle string parameters correctly', async () => {
+    // Skip if no Excel files available
+    const files = fs.readdirSync(path.join(process.cwd(), '.cache/sheets')).filter((file) => file.endsWith('.xlsx'));
+
+    if (files.length === 0) {
+      console.log('Skipping test: No Excel files found');
+      return;
+    }
+
+    // Test with string parameters
+    const resultWithStrings = await fetchXlsxData3('7488', '7490');
+
+    // Test with number parameters for comparison
+    const resultWithNumbers = await fetchXlsxData3(7488, 7490);
+
+    // Results should be identical
+    expect(resultWithStrings).toEqual(resultWithNumbers);
+
+    // Test with invalid string parameters (should default to fallback values)
+    const resultWithInvalidStrings = await fetchXlsxData3('invalid', 'also_invalid');
+    const resultWithDefaults = await fetchXlsxData3(0, Number.MAX_SAFE_INTEGER);
+
+    expect(resultWithInvalidStrings).toEqual(resultWithDefaults);
   });
 });
