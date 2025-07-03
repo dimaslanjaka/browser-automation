@@ -47,6 +47,14 @@ function initGitRepository() {
         console.log('Fetching all branches...');
         execSync('git fetch --all', { stdio: 'inherit' });
 
+        // Stash any local changes before reset
+        console.log('Stashing local changes...');
+        try {
+            execSync('git stash', { stdio: 'inherit' });
+        } catch (error) {
+            console.log('No local changes to stash or stash failed, continuing...');
+        }
+
         // Reset to origin/gh-pages
         console.log('Resetting to origin/gh-pages...');
         try {
@@ -54,6 +62,15 @@ function initGitRepository() {
         } catch (error) {
             console.warn('Warning: Could not reset to origin/gh-pages. Branch might not exist on remote yet.');
             console.warn('This is normal for a new gh-pages branch.');
+        }
+
+        // Restore stashed changes and enforce them
+        console.log('Restoring stashed changes...');
+        try {
+            execSync('git stash pop', { stdio: 'inherit' });
+            console.log('Local changes restored and enforced over remote changes.');
+        } catch (error) {
+            console.log('No stashed changes to restore or stash pop failed, continuing...');
         }
 
         console.log('✅ Git repository setup completed successfully!');

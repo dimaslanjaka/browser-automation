@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build:packages": "yarn workspaces foreach --no-private --all run build",
+    "init:docs": "node ./init-gh-pages.js",
+    "postinstall": "npm run build:packages && npm run init:docs",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "serve-xlsx": "node xlsx-web-server.js | tee tmp/xlsx-server.log",
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
