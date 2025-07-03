@@ -593,6 +593,51 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
   return Math.max(0, age);
 }
 
+/**
+ * Matches the first and last data against expected values
+ * @param {import('./globals').ExcelRowData[]} datas - Array of Excel data
+ * @param {Object} matchData - Expected first and last data
+ * @returns {Object} Matching results
+ */
+function matchFirstAndLastData(datas, matchData) {
+  const firstItem = datas.at(0);
+  const lastItem = datas.at(-1);
+
+  const firstMatch = {
+    nikMatch: firstItem?.nik === matchData.first.nik,
+    namaMatch: firstItem?.nama === matchData.first.nama,
+    actualNik: firstItem?.nik,
+    actualNama: firstItem?.nama,
+    expectedNik: matchData.first.nik,
+    expectedNama: matchData.first.nama
+  };
+
+  const lastMatch = {
+    nikMatch: lastItem?.nik === matchData.last.nik,
+    namaMatch: lastItem?.nama === matchData.last.nama,
+    actualNik: lastItem?.nik,
+    actualNama: lastItem?.nama,
+    expectedNik: matchData.last.nik,
+    expectedNama: matchData.last.nama
+  };
+
+  return {
+    first: firstMatch,
+    last: lastMatch,
+    overallMatch: firstMatch.nikMatch && firstMatch.namaMatch && lastMatch.nikMatch && lastMatch.namaMatch
+  };
+}
+
+/**
+ * Find data rows by NIK
+ * @param {import('./globals').ExcelRowData[]} datas - Array of Excel data
+ * @param {string} targetNik - NIK to search for
+ * @returns {import('./globals').ExcelRowData|null} Found data or null
+ */
+function findByNik(datas, targetNik) {
+  return datas.find((item) => item.nik === targetNik) || null;
+}
+
 if (process.argv[1] === __filename) {
   (async () => {
     // Test caching functionality
@@ -600,12 +645,30 @@ if (process.argv[1] === __filename) {
     const startTime1 = Date.now();
     await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
       const endTime1 = Date.now();
+      const matchData = {
+        first: { nik: '3578102908210001', nama: 'NI NYOMAN ANINDYA MAHESWARI' },
+        last: { nik: '3578105808210002', nama: 'MUHAMMAD PRANADIPTA' }
+      };
+
       let lastItem = datas.at(-1);
       let firstItem = datas.at(0);
       console.log('total data:', datas.length);
       console.log('first data:', firstItem);
       console.log('last data:', lastItem);
       console.log(`First run took: ${endTime1 - startTime1}ms`);
+
+      // Match the data
+      const matchResult = matchFirstAndLastData(datas, matchData);
+      console.log('\n=== DATA MATCHING RESULTS ===');
+      console.log('First data match:');
+      console.log('  NIK:', matchResult.first.nikMatch ? '✓' : '✗', `Expected: ${matchResult.first.expectedNik}, Actual: ${matchResult.first.actualNik}`);
+      console.log('  Name:', matchResult.first.namaMatch ? '✓' : '✗', `Expected: ${matchResult.first.expectedNama}, Actual: ${matchResult.first.actualNama}`);
+
+      console.log('\nLast data match:');
+      console.log('  NIK:', matchResult.last.nikMatch ? '✓' : '✗', `Expected: ${matchResult.last.expectedNik}, Actual: ${matchResult.last.actualNik}`);
+      console.log('  Name:', matchResult.last.namaMatch ? '✓' : '✗', `Expected: ${matchResult.last.expectedNama}, Actual: ${matchResult.last.actualNama}`);
+
+      console.log('\nOverall match:', matchResult.overallMatch ? '✓ PASS' : '✗ FAIL');
     });
 
     console.log('\n=== Second run (should hit cache) ===');
