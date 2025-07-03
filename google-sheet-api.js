@@ -34,6 +34,12 @@ const TOKEN_PATH = path.join(process.cwd(), '.cache', 'token.json');
  */
 function saveToken(auth, customCredentials = null) {
   try {
+    // Ensure the .cache directory exists
+    const tokenDir = path.dirname(TOKEN_PATH);
+    if (!fs.existsSync(tokenDir)) {
+      fs.mkdirSync(tokenDir, { recursive: true });
+    }
+
     fs.writeFileSync(
       TOKEN_PATH,
       JSON.stringify(customCredentials ? customCredentials : auth.credentials, null, 2),
@@ -64,14 +70,19 @@ function loadSavedToken() {
  *
  * @async
  * @function getClient
- * @returns {Promise<OAuth2Client>} An authenticated OAuth2Client instance with refreshed access token if needed.
- * @throws {Error} If the token file is missing or invalid.
+ * @returns {Promise<OAuth2Client|null>} An authenticated OAuth2Client instance with refreshed access token if needed, or null if no token exists.
  */
 async function getClient() {
   const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf-8'));
   const { client_id, client_secret, redirect_uris } = credentials.installed;
 
   const oAuth2Client = new OAuth2Client(client_id, client_secret, redirect_uris[0]);
+
+  // Check if token file exists
+  if (!fs.existsSync(TOKEN_PATH)) {
+    console.log('Token file does not exist, will need fresh authentication');
+    return null;
+  }
 
   try {
     const token = JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf-8'));
@@ -80,13 +91,15 @@ async function getClient() {
     // Optional: Refresh token if expired
     const newToken = await oAuth2Client.getAccessToken();
     if (newToken?.token !== token.access_token) {
-      fs.writeFileSync(TOKEN_PATH, JSON.stringify(oAuth2Client.credentials));
+      saveToken(oAuth2Client);
+      console.log('Updated access token saved to', TOKEN_PATH);
     }
+
+    return oAuth2Client;
   } catch (err) {
     console.error('Error loading token:', err.message);
+    return null; // Return null instead of throwing
   }
-
-  return oAuth2Client;
 }
 
 /**
@@ -96,47 +109,55 @@ async function getClient() {
  */
 async function authorize() {
   console.log('Authorizing with Google Sheets API...');
-  /**
-   * @type {Promise<import('google-auth-library').OAuth2Client>}
-   */
-  let auth = await getClient();
 
-  const savedToken = loadSavedToken();
-  if (savedToken) {
-    auth.setCredentials(savedToken);
+  let auth;
+
+  // Try to use existing saved token first
+  auth = await getClient();
+
+  if (auth) {
+    console.log('Using existing saved token.');
   } else {
+    // If no saved token or error loading it, perform fresh authentication
+    console.log('No valid saved token found. Performing fresh authentication...');
     auth = await authenticate({
       keyfilePath: CREDENTIALS_PATH,
       scopes: SCOPES
     });
+
+    // Save the new token immediately after authentication
+    saveToken(auth);
+    console.log('New token saved to', TOKEN_PATH);
   }
 
-  // Persist any updated tokens (access or refresh)
+  // Set up token refresh handler for future token updates
   auth.on('tokens', (tokens) => {
     const combined = { ...auth.credentials, ...tokens };
     try {
       saveToken(auth, combined);
-      console.log('Updated token saved to', TOKEN_PATH);
+      console.log('Token updated and saved to', TOKEN_PATH);
     } catch (err) {
       console.error('Failed to write updated token:', err);
     }
   });
 
-  // Refresh the access token if expired
+  // Check and refresh token if expired
   const { expiry_date = false } = auth.credentials;
   const isExpired = !expiry_date || expiry_date <= Date.now();
   console.log(`Token expiry date: ${expiry_date ? new Date(expiry_date).toISOString() : 'N/A'}`);
   console.log(`Token is ${isExpired ? 'expired' : 'valid'}.`);
-  // If the token is expired, attempt to refresh it
-  // and save the new credentials
+
   if (isExpired) {
     try {
+      console.log('Refreshing expired access token...');
       const newToken = await auth.refreshAccessToken();
       auth.setCredentials(newToken.credentials);
       saveToken(auth);
       console.log('Access token refreshed and saved.');
     } catch (err) {
       console.error('Failed to refresh access token:', err);
+      // If refresh fails, might need fresh authentication
+      throw err;
     }
   } else {
     console.log('Cached access token is still valid.');
