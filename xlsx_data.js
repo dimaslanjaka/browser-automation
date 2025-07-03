@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import * as glob from 'glob';
 import moment from 'moment-timezone';
 import nodeXlsx from 'node-xlsx';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { array_random } from 'sbg-utility';
@@ -20,6 +21,66 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const shared_prefs = new SharedPrefs('sheets', '.cache/shared_prefs');
 const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output.json');
+
+/**
+ * Generates a hash for the given file
+ * @param {string} filePath - Path to the file
+ * @returns {string} SHA256 hash of the file
+ */
+function getFileHash(filePath) {
+  const fileBuffer = fs.readFileSync(filePath);
+  return crypto.createHash('sha256').update(fileBuffer).digest('hex');
+}
+
+/**
+ * Generates a cache key for fetchXlsxData3
+ * @param {string} fileHash - Hash of the Excel file
+ * @param {number} startIndex - Start index
+ * @param {number} lastIndex - Last index
+ * @returns {string} Cache key
+ */
+function getCacheKey(fileHash, startIndex, lastIndex) {
+  return `fetchXlsxData3_${fileHash}_${startIndex}_${lastIndex}`;
+}
+
+/**
+ * Gets cached data if available and valid
+ * @param {string} cacheKey - Cache key
+ * @returns {Object|null} Cached data or null if not found/invalid
+ */
+function getCachedData(cacheKey) {
+  try {
+    const cacheFile = path.join(process.cwd(), '.cache/temp', `${cacheKey}.json`);
+    if (fs.existsSync(cacheFile)) {
+      const cachedData = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      console.log(`Cache hit: ${cacheKey}`);
+      return cachedData;
+    }
+  } catch (error) {
+    console.warn(`Cache read error for ${cacheKey}:`, error.message);
+  }
+  return null;
+}
+
+/**
+ * Saves data to cache
+ * @param {string} cacheKey - Cache key
+ * @param {any} data - Data to cache
+ */
+function saveCachedData(cacheKey, data) {
+  try {
+    const cacheDir = path.join(process.cwd(), '.cache/temp');
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
+    const cacheFile = path.join(cacheDir, `${cacheKey}.json`);
+    fs.writeFileSync(cacheFile, JSON.stringify(data, null, 2), 'utf-8');
+    console.log(`Cache saved: ${cacheKey}`);
+  } catch (error) {
+    console.warn(`Cache save error for ${cacheKey}:`, error.message);
+  }
+}
 
 function getFormattedDate(date) {
   var year = date.getFullYear();
@@ -261,6 +322,17 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
     throw new Error('No Excel files found.');
   }
 
+  // Generate file hash and cache key
+  const fileHash = getFileHash(files[0]);
+  const cacheKey = getCacheKey(fileHash, startIndex, lastIndex);
+
+  // Check cache first
+  const cachedData = getCachedData(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  console.log(`Cache miss: ${cacheKey} - Processing Excel file...`);
   const workbook = XLSX.read(fs.readFileSync(files[0]), { cellDates: true });
   /** @type {Record<string, { [key: string], parsed_nik?: import('./src/nik-parser/type').NikData }[]>} */
   const allSheetsData = {};
@@ -411,7 +483,41 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
 
   fs.writeFileSync(outputSheetJsonFile, JSON.stringify(allSheetsData, null, 2), 'utf8');
 
+  // Save to cache
+  saveCachedData(cacheKey, customRangeData);
+
   return customRangeData;
+}
+
+/**
+ * Clears cache files for fetchXlsxData3
+ * @param {string} [pattern] - Optional pattern to match specific cache files, defaults to all fetchXlsxData3 cache
+ */
+export function clearFetchXlsxData3Cache(pattern = 'fetchXlsxData3_*.json') {
+  try {
+    const cacheDir = path.join(process.cwd(), '.cache/temp');
+    if (!fs.existsSync(cacheDir)) {
+      console.log('Cache directory does not exist');
+      return;
+    }
+
+    const cacheFiles = glob.globSync(pattern, { cwd: cacheDir, absolute: true });
+    let deletedCount = 0;
+
+    cacheFiles.forEach(file => {
+      try {
+        fs.unlinkSync(file);
+        deletedCount++;
+        console.log(`Deleted cache file: ${path.basename(file)}`);
+      } catch (error) {
+        console.warn(`Failed to delete ${file}:`, error.message);
+      }
+    });
+
+    console.log(`Cleared ${deletedCount} cache file(s)`);
+  } catch (error) {
+    console.warn('Cache clear error:', error.message);
+  }
 }
 
 /**
@@ -489,19 +595,29 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
 
 if (process.argv[1] === __filename) {
   (async () => {
-    // await fetchXlsxData2();
-    // let datas = getXlsxData(process.env.index_start, process.env.index_end);
-    // let lastItem = datas.at(-1);
-    // let firstItem = datas.at(0);
-    // console.log('total data:', datas.length);
-    // console.log('first data:', firstItem);
-    // console.log('last data:', lastItem);
+    // Test caching functionality
+    console.log('=== First run (should miss cache) ===');
+    const startTime1 = Date.now();
     await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
+      const endTime1 = Date.now();
       let lastItem = datas.at(-1);
       let firstItem = datas.at(0);
       console.log('total data:', datas.length);
       console.log('first data:', firstItem);
       console.log('last data:', lastItem);
+      console.log(`First run took: ${endTime1 - startTime1}ms`);
+    });
+
+    console.log('\n=== Second run (should hit cache) ===');
+    const startTime2 = Date.now();
+    await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
+      const endTime2 = Date.now();
+      let lastItem = datas.at(-1);
+      let firstItem = datas.at(0);
+      console.log('total data:', datas.length);
+      console.log('first data:', firstItem);
+      console.log('last data:', lastItem);
+      console.log(`Second run took: ${endTime2 - startTime2}ms`);
     });
   })();
 }
