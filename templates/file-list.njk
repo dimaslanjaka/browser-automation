@@ -1,0 +1,26 @@
+{% extends "base.njk" %}
+
+{% block title %}XLSX File Viewer{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 XLSX File Viewer</h1>
+    <p>Available spreadsheet files:</p>
+</div>
+
+{% if files.length === 0 %}
+    <div class="no-files">
+        <p>No XLSX files found.</p>
+        <p>Run <code>node google-sheet-api.js</code> to download sheets.</p>
+    </div>
+{% else %}
+    <ul class="file-list">
+        {% for file in files %}
+        <li class="file-item">
+            <a href="{{ file.path }}">{{ file.name }}</a>
+            <div class="file-size">{{ file.sizeKB }} KB</div>
+        </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

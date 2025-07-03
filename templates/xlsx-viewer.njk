@@ -1,0 +1,204 @@
+{% extends "base.njk" %}
+
+{% block title %}{{ filename }} - XLSX Viewer{% endblock %}
+
+{% block styles %}
+<style>
+.pagination-info {
+    background: #e3f2fd;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 10px 0;
+    border-left: 4px solid #2196f3;
+}
+.pagination-info a {
+    padding: 6px 12px;
+    background: #007acc;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-right: 8px;
+    display: inline-block;
+    font-size: 0.9em;
+}
+.pagination-info a:hover {
+    background: #005a9e;
+}
+.pagination-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+.pagination-controls a, .pagination-controls button {
+    padding: 8px 16px;
+    background: #007acc;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+.pagination-controls a:hover, .pagination-controls button:hover {
+    background: #005a9e;
+}
+.pagination-controls .current {
+    background: #666;
+    cursor: default;
+}
+.pagination-controls select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.data-info {
+    color: #666;
+    font-size: 0.9em;
+    margin: 10px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 {{ filename }}</h1>
+    <a href="/" class="back-link">← Back to file list</a>
+</div>
+
+{% if pagination.hasLargeData %}
+<div class="pagination-info">
+    <strong>📋 Large Dataset Detected</strong><br>
+    This file contains a large amount of data. Showing {{ pagination.limit }} rows per page for better performance.
+    <br><br>
+    <strong>Quick Navigation:</strong>
+    <div style="margin-top: 8px;">
+        <a href="?page=1&limit={{ pagination.limit }}" style="margin-right: 10px;">⏮️ First Page</a>
+        {% if pagination.currentPage > 1 %}
+            <a href="?page={{ pagination.currentPage - 1 }}&limit={{ pagination.limit }}" style="margin-right: 10px;">⬅️ Previous</a>
+        {% endif %}
+        {% if pagination.currentPage < pagination.totalPages %}
+            <a href="?page={{ pagination.currentPage + 1 }}&limit={{ pagination.limit }}" style="margin-right: 10px;">➡️ Next</a>
+        {% endif %}
+        <a href="?page={{ pagination.totalPages }}&limit={{ pagination.limit }}">⏭️ Last Page</a>
+    </div>
+</div>
+{% endif %}
+
+{% if sheetNames.length > 1 %}
+<div class="nav-tabs">
+    {% for sheetName in sheetNames %}
+    <button class="nav-tab" onclick="showSheet('{{ sheetName }}')">{{ sheetName }}</button>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% for sheet in sheets %}
+<div class="sheet-container" id="sheet-container-{{ sheet.name }}" style="display:none">
+    <h2 class="sheet-title">{{ sheet.name }}</h2>
+
+    {% if sheet.isLimited %}
+    <div class="data-info">
+        📊 Total rows: {{ sheet.totalRows | number }} |
+        Showing page {{ sheet.currentPage }} of {{ sheet.totalPages }}
+        ({{ sheet.limit }} rows per page)
+    </div>
+
+    <div class="pagination-controls">
+        {% if sheet.currentPage > 1 %}
+            <a href="?page=1&limit={{ sheet.limit }}">⏮️ First</a>
+            <a href="?page={{ sheet.currentPage - 1 }}&limit={{ sheet.limit }}">← Previous</a>
+        {% endif %}
+
+        <span>Page {{ sheet.currentPage }} of {{ sheet.totalPages }}</span>
+
+        {% if sheet.currentPage < sheet.totalPages %}
+            <a href="?page={{ sheet.currentPage + 1 }}&limit={{ sheet.limit }}">Next →</a>
+            <a href="?page={{ sheet.totalPages }}&limit={{ sheet.limit }}">⏭️ Last</a>
+        {% endif %}
+
+        <form style="display: inline-flex; gap: 5px; align-items: center;" method="get">
+            <label>Rows per page:</label>
+            <select name="limit" onchange="this.form.submit()">
+                <option value="50" {% if sheet.limit == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if sheet.limit == 100 %}selected{% endif %}>100</option>
+                <option value="250" {% if sheet.limit == 250 %}selected{% endif %}>250</option>
+                <option value="500" {% if sheet.limit == 500 %}selected{% endif %}>500</option>
+                <option value="1000" {% if sheet.limit == 1000 %}selected{% endif %}>1000</option>
+            </select>
+            <input type="hidden" name="page" value="1">
+        </form>
+
+        <form style="display: inline-flex; gap: 5px; align-items: center;" method="get">
+            <label>Go to page:</label>
+            <input type="number" name="page" min="1" max="{{ sheet.totalPages }}" value="{{ sheet.currentPage }}" style="width: 60px; padding: 4px;">
+            <input type="hidden" name="limit" value="{{ sheet.limit }}">
+            <button type="submit">Go</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="table-container">
+        {{ sheet.htmlTable | safe }}
+    </div>
+
+    {% if sheet.isLimited %}
+    <div class="pagination-controls">
+        {% if sheet.currentPage > 1 %}
+            <a href="?page=1&limit={{ sheet.limit }}">⏮️ First</a>
+            <a href="?page={{ sheet.currentPage - 1 }}&limit={{ sheet.limit }}">← Previous</a>
+        {% endif %}
+
+        <span>Page {{ sheet.currentPage }} of {{ sheet.totalPages }}</span>
+
+        {% if sheet.currentPage < sheet.totalPages %}
+            <a href="?page={{ sheet.currentPage + 1 }}&limit={{ sheet.limit }}">Next →</a>
+            <a href="?page={{ sheet.totalPages }}&limit={{ sheet.limit }}">⏭️ Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showSheet(sheetName) {
+    // Hide all sheets
+    document.querySelectorAll('.sheet-container').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    // Remove active class from all tabs
+    document.querySelectorAll('.nav-tab').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Show selected sheet
+    document.getElementById('sheet-container-' + sheetName).style.display = 'block';
+
+    // Add active class to clicked tab
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+}
+
+window.onload = function() {
+    // Show first sheet by default
+    const firstSheet = document.querySelector('.sheet-container');
+    const firstTab = document.querySelector('.nav-tab');
+
+    if (firstSheet) {
+        firstSheet.style.display = 'block';
+        if (firstTab) {
+            firstTab.classList.add('active');
+        }
+    }
+
+    // Hide all other sheets
+    document.querySelectorAll('.sheet-container').forEach((el, index) => {
+        if (index > 0) el.style.display = 'none';
+    });
+}
+</script>
+{% endblock %}

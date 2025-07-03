@@ -68,3 +68,4 @@ Thumbs.db
 # Private
 *.*private*.*
 deobfuscate/
+**/tmp/**

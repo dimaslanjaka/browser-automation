@@ -1,0 +1,26 @@
+{% extends "base.njk" %}
+
+{% block title %}Error - XLSX Viewer{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>❌ Error</h1>
+    <a href="/" class="back-link">← Back to file list</a>
+</div>
+
+<div class="sheet-container">
+    <div class="table-container">
+        <h2>{{ errorTitle | default("An error occurred") }}</h2>
+        <p>{{ errorMessage }}</p>
+
+        {% if suggestions %}
+        <h3>Suggestions:</h3>
+        <ul>
+            {% for suggestion in suggestions %}
+            <li>{{ suggestion }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

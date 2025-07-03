@@ -1,0 +1,61 @@
+{% extends "base.njk" %}
+
+{% block title %}Example Template - XLSX Viewer{% endblock %}
+
+{% block styles %}
+<style>
+    /* Custom styles for this specific template */
+    .custom-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .custom-button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .custom-button:hover {
+        background: #764ba2;
+    }
+</style>
+{% endblock %}
+
+{% block head %}
+<!-- Additional head elements like meta tags, external CSS, etc. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+{% endblock %}
+
+{% block content %}
+<div class="header custom-header">
+    <h1>🎨 Example Template</h1>
+    <p>This demonstrates proper Nunjucks block usage</p>
+</div>
+
+<div class="sheet-container">
+    <div class="table-container">
+        <h2>Template Structure</h2>
+        <p>This example shows how to:</p>
+        <ul>
+            <li>Add custom styles using the {% raw %}{% block styles %}{% endraw %} block</li>
+            <li>Add custom scripts using the {% raw %}{% block scripts %}{% endraw %} block</li>
+            <li>Add head elements using the {% raw %}{% block head %}{% endraw %} block</li>
+            <li>Avoid putting Nunjucks code inside &lt;style&gt; or &lt;script&gt; tags</li>
+        </ul>
+        <button class="custom-button" onclick="showAlert()">Test Custom Script</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Custom JavaScript for this specific template
+    function showAlert() {
+        alert('Custom script working! No VSCode errors 🎉');
+    }
+
+    console.log('Example template loaded successfully');
+</script>
+{% endblock %}
