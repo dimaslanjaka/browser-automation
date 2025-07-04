@@ -157,6 +157,9 @@ if (process.argv[1] === __filename) {
       }
 
       console.log(`\nProcessing completed. Processed ${currentRow} rows total.`);
+
+      // force exit after processing
+      process.exit(0);
     } catch (error) {
       console.error(error);
     }
