@@ -1,7 +1,6 @@
 import { spawnAsync } from 'cross-spawn';
 import dotenv from 'dotenv';
 import moment from 'moment';
-import readline from 'node:readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from './src/address/nominatim.js';
@@ -20,7 +19,7 @@ import {
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep, ucwords } from './src/utils.js';
+import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, ucwords, waitEnter } from './src/utils.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -28,25 +27,6 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-/**
- * Prompts the user to press Enter with an optional sound beep before continuing execution.
- *
- * @param {string} message - The message to display in the terminal prompt.
- * @param {boolean} [sound=true] - Whether to play a beep sound before prompting.
- * @returns {Promise<void>} A promise that resolves when the user presses Enter.
- */
-function waitEnter(message, sound = true) {
-  return new Promise(function (resolve) {
-    if (sound) singleBeep();
-    rl.question(message, resolve);
-  });
-}
 
 /**
  * Executes scripts to build and analyze the HTML log.
@@ -559,7 +539,6 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
   }
 
   console.log('All data processed.');
-  rl.close();
 
   // Build HTML log
   buildHtmlLog();

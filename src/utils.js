@@ -2,8 +2,36 @@ import { exec } from 'child_process';
 import fs from 'fs-extra';
 import moment from 'moment';
 import path from 'node:path';
+import readline from 'node:readline';
 import { readfile } from 'sbg-utility';
 import { nikParse } from './nik-parser/index.js';
+
+/**
+ * @type {import('readline').Interface | null}
+ */
+let rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// Close readline interface on process exit to avoid open handlers
+export function closeReadline() {
+  if (rl) {
+    rl.close();
+    rl = null;
+  }
+}
+
+// Register cleanup handlers
+process.on('exit', closeReadline);
+process.on('SIGINT', () => {
+  closeReadline();
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  closeReadline();
+  process.exit(0);
+});
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
@@ -21,6 +49,31 @@ export function multiBeep() {
  */
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Prompts the user to press Enter with an optional sound beep before continuing execution.
+ *
+ * @param {string} message - The message to display in the terminal prompt.
+ * @param {boolean} [sound=true] - Whether to play a beep sound before prompting.
+ * @returns {Promise<void>} A promise that resolves when the user presses Enter.
+ */
+export function waitEnter(message, sound = true) {
+  return new Promise(function (resolve) {
+    if (sound) singleBeep();
+    if (!rl) {
+      throw new Error('Readline interface is not available. It may have been closed.');
+    }
+    rl.question(message, resolve);
+  });
+}
+
+/**
+ * Manually close the readline interface.
+ * This is useful when you want to close it before the process naturally exits.
+ */
+export function closeReadlineInterface() {
+  closeReadline();
 }
 
 /**
