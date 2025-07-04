@@ -12,3 +12,27 @@ export async function skrinLogin(page) {
   await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
   console.log('Login successful');
 }
+
+/**
+ * Navigates to the skrining page and initiates the process to add a new skrining entry.
+ * This function first goes to the main skrining page, waits for and clicks the "Add" button,
+ * then navigates to the add skrining form page.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance to navigate
+ * @returns {Promise<void>} A promise that resolves when navigation to the add skrining page is complete
+ * @throws {Error} If navigation fails or required elements are not found within the timeout period
+ */
+export async function enterSkriningPage(page) {
+  await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
+    waitUntil: 'networkidle2',
+    timeout: 120000
+  });
+
+  await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
+  await page.click('#btnAdd_ta_skrining');
+
+  await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
+    waitUntil: 'networkidle2',
+    timeout: 120000
+  });
+}

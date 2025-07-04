@@ -8,7 +8,7 @@ import { playMp3FromUrl } from './src/beep.js';
 import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
 import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
-import { skrinLogin } from './src/skrin_puppeteer.js';
+import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import {
   confirmIdentityModal,
   fixTbAndBb,
@@ -74,18 +74,7 @@ export async function processData(browser, data) {
   }
 
   try {
-    await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
-      waitUntil: 'networkidle2',
-      timeout: 120000
-    });
-
-    await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
-    await page.click('#btnAdd_ta_skrining');
-
-    await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
-      waitUntil: 'networkidle2',
-      timeout: 120000
-    });
+    await enterSkriningPage(page);
   } catch (e) {
     await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
     console.error('Error navigating to skrining page:', e.message);
