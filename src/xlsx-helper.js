@@ -2,6 +2,7 @@ import * as glob from 'glob';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { writefile } from 'sbg-utility';
 
 /**
  * Generates a hash for the given file
@@ -142,4 +143,55 @@ export function matchFirstAndLastData(datas, matchData) {
     last: lastMatch,
     overallMatch: firstMatch.nikMatch && firstMatch.namaMatch && lastMatch.nikMatch && lastMatch.namaMatch
   };
+}
+
+/**
+ * Gets data range between two specific rows identified by NIK and NAMA.
+ * @param {(import('../globals').ExcelRowData4 | import('../globals').ExcelRowData)[]} data - Array of Excel row data
+ * @param {Object} options - Configuration object
+ * @param {string} options.fromNik - NIK of the starting row
+ * @param {string} options.fromNama - NAMA of the starting row
+ * @param {string} options.toNik - NIK of the ending row
+ * @param {string} options.toNama - NAMA of the ending row
+ * @param {string} [options.outputFile] - Optional file path to write the range data
+ * @returns {Promise<(import('../globals').ExcelRowData4 | import('../globals').ExcelRowData)[]>} - Array of rows between fromRow and toRow (inclusive)
+ */
+export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, outputFile = null }) {
+  const fromRow = data.find((row) => row.NIK === fromNik && row.NAMA === fromNama);
+  const toRow = data.find((row) => row.NIK === toNik && row.NAMA === toNama);
+
+  if (!fromRow) {
+    throw new Error(`FromRow not found: NIK=${fromNik}, NAMA=${fromNama}`);
+  }
+
+  if (!toRow) {
+    throw new Error(`ToRow not found: NIK=${toNik}, NAMA=${toNama}`);
+  }
+
+  const fromIndex = data.indexOf(fromRow);
+  const toIndex = data.indexOf(toRow);
+  const rangeData = data.slice(fromIndex, toIndex + 1);
+
+  // console.log(`\nRange: from index ${fromIndex} to index ${toIndex}`);
+  // console.log(`Total rows in range: ${rangeData.length}`);
+
+  // Write to file if outputFile is provided
+  if (outputFile) {
+    writefile(outputFile, JSON.stringify(rangeData, null, 2), 'utf8');
+    console.log(`\nRange data written to: ${outputFile}`);
+    console.log(
+      `File contains ${rangeData.length} rows from originalRowNumber ${rangeData[0]?.originalRowNumber} to ${rangeData[rangeData.length - 1]?.originalRowNumber}`
+    );
+  }
+
+  // Validation
+  if (rangeData[0] !== fromRow) {
+    throw new Error('First row in rangeData is not fromRow');
+  }
+
+  if (rangeData[rangeData.length - 1] !== toRow) {
+    throw new Error('Last row in rangeData is not toRow');
+  }
+
+  return rangeData;
 }

@@ -26,6 +26,21 @@ export interface ExcelRowData {
   };
 }
 
+export interface ExcelRowData4 {
+  'TANGGAL ENTRY': string;
+  'NAMA PASIEN': string;
+  'NIK PASIEN': string;
+  PEKERJAAN: string;
+  BB: string | number;
+  TB: number;
+  ALAMAT: string;
+  'TGL LAHIR': number | string; // Excel date serial number or formatted date
+  'PETUGAS ENTRY': string;
+  NAMA: string;
+  NIK: string;
+  originalRowNumber: number;
+}
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
