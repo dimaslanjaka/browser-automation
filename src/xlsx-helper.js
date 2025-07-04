@@ -1,8 +1,10 @@
 import * as glob from 'glob';
+import moment from 'moment';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { writefile } from 'sbg-utility';
+import { array_random, writefile } from 'sbg-utility';
+import { extractMonthName, getDatesWithoutSundays } from './date.js';
 
 /**
  * Generates a hash for the given file
@@ -194,4 +196,46 @@ export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, out
   }
 
   return rangeData;
+}
+
+/**
+ *
+ * @param {import('../globals').ExcelRowData4 | import('../globals').ExcelRowData} data
+ */
+export async function fixData(data) {
+  if (!data || !data.NIK || !data.NAMA) {
+    throw new Error('Invalid data format: NIK and NAMA are required');
+  }
+  if (data.NIK.length !== 16) {
+    throw new Error(`Invalid NIK length: ${data.NIK} (expected 16 characters)`);
+  }
+  if (data.NAMA.length < 3) {
+    throw new Error(`Invalid NAMA length: ${data.NAMA} (expected at least 3 characters)`);
+  }
+  let tanggalEntry = data.tanggal || data['TANGGAL ENTRY'];
+  if (!tanggalEntry || !moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
+    if (
+      typeof tanggalEntry === 'string' &&
+      /\b(jan(uari)?|feb(ruari)?|mar(et)?|apr(il)?|mei|jun(i|e)?|jul(i|y)?|agu(stus)?|aug(ust)?|sep(tember)?|okt(ober)?|oct(ober)?|nov(ember)?|des(ember)?|dec(ember)?|bln\s+\w+|bulan\s+\w+)\b/i.test(
+        tanggalEntry
+      )
+    ) {
+      const monthName = extractMonthName(tanggalEntry);
+      if (!monthName) {
+        throw new Error(`Month name not found in tanggalEntry: ${tanggalEntry}`);
+      } else {
+        const newDate = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
+        console.log(`Generated new date for "${tanggalEntry}": ${newDate}`);
+        tanggalEntry = newDate;
+      }
+    }
+    if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
+      throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
+    } else {
+      data.tanggal = tanggalEntry;
+      data['TANGGAL ENTRY'] = tanggalEntry; // Ensure both fields are updated
+    }
+  }
+
+  return data;
 }
