@@ -3,7 +3,6 @@ import * as glob from 'glob';
 import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import whyIsNodeRunning from 'why-is-node-running';
 import { getNumbersOnly } from './utils.js';
 import { fixData, getDataRange } from './xlsx-helper.js';
 
@@ -158,15 +157,6 @@ if (process.argv[1] === __filename) {
       }
 
       console.log(`\nProcessing completed. Processed ${currentRow} rows total.`);
-
-      // Check what's keeping Node.js running without creating new handles
-      console.log('\nChecking what is keeping Node.js running...');
-
-      // Use setImmediate instead of setTimeout to avoid creating a persistent handle
-      setImmediate(() => {
-        whyIsNodeRunning();
-        console.log("Debug check completed. If process doesn't exit naturally, there may be other handles.");
-      });
     } catch (error) {
       console.error(error);
     }

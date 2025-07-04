@@ -237,9 +237,22 @@ export async function fixData(data) {
     }
   }
 
-  // if (data['TGL LAHIR']) {
-  //   console.log(`Fixing TGL LAHIR: ${data['TGL LAHIR']}`);
-  // }
+  let tglLahir = data['TGL LAHIR'] || null;
+  if (tglLahir) {
+    // Convert Excel serial date number to a proper date string
+    if (typeof tglLahir === 'number') {
+      // Excel serial date starts from January 1, 1900, but Excel incorrectly treats 1900 as a leap year
+      const baseDate = moment('1900-01-01');
+      let days = tglLahir - 1;
+      if (days > 59) days--; // Adjust for Excel's leap year bug
+      data['TGL LAHIR'] = baseDate.add(days, 'days').format('DD/MM/YYYY');
+    } else if (typeof tglLahir === 'string') {
+      // Validate string date format (expecting DD/MM/YYYY)
+      if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
+        throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
+      }
+    }
+  }
 
   return data;
 }
