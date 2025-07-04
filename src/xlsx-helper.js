@@ -225,7 +225,7 @@ export async function fixData(data) {
         throw new Error(`Month name not found in tanggalEntry: ${tanggalEntry}`);
       } else {
         const newDate = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
-        console.log(`Generated new date for "${tanggalEntry}": ${newDate}`);
+        // console.log(`Generated new date for "${tanggalEntry}": ${newDate}`);
         tanggalEntry = newDate;
       }
     }
@@ -236,6 +236,10 @@ export async function fixData(data) {
       data['TANGGAL ENTRY'] = tanggalEntry; // Ensure both fields are updated
     }
   }
+
+  // if (data['TGL LAHIR']) {
+  //   console.log(`Fixing TGL LAHIR: ${data['TGL LAHIR']}`);
+  // }
 
   return data;
 }
