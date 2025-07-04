@@ -3,6 +3,8 @@ import * as glob from 'glob';
 import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import whyIsNodeRunning from 'why-is-node-running';
+import { getNumbersOnly } from './utils.js';
 import { fixData, getDataRange } from './xlsx-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,6 +71,7 @@ export async function fetchXlsxData4() {
         if (header && value !== undefined && value !== null && value !== '') {
           // Convert Excel serial date numbers to proper date strings for TGL LAHIR
           if (header === 'TGL LAHIR' && typeof value === 'number') {
+            // console.log(`Row ${rowNumber} has TGL LAHIR as number:`, value, allValues);
             // Excel serial date starts from January 1, 1900, but Excel incorrectly treats 1900 as a leap year
             const baseDate = moment('1900-01-01');
             const daysSinceBase = value - 1; // Subtract 1 because Excel serial date 1 = January 1, 1900
@@ -112,35 +115,60 @@ if (process.argv[1] === __filename) {
         outputFile
       });
 
-      console.log(`\nSuccessfully extracted ${rangeData.length} rows`);
+      process.stdout.write(`\nSuccessfully extracted ${rangeData.length} rows\n`);
 
-      const matches = [
+      const actualDatas = [
         { index: 0, 'TGL LAHIR': '23/11/2020', NAMA: 'NI NYOMAN ANINDYA MAHESWARI', NIK: '3578106311200003' },
         {
           index: 10,
           'TGL LAHIR': moment('2022-05-10', 'YYYY-MM-DD').format('DD/MM/YYYY'),
           NAMA: 'SADDAM AQSABYAN',
           NIK: '3578101005220004'
+        },
+        {
+          NIK: '3578100610230010',
+          NAMA: 'SEO EVELYN NABUD',
+          'TGL LAHIR': moment('2023-10-06', 'YYYY-MM-DD').format('DD/MM/YYYY')
         }
       ];
 
-      for (let i = 0; i < rangeData.length; i++) {
-        const data = rangeData[i];
-        const actualData = matches.find((m) => m.index === i);
+      const totalRows = rangeData.length;
+      let currentRow = 0;
+
+      while (rangeData.length > 0) {
+        const data = rangeData.shift();
+        if (!data) continue;
+        process.stdout.write(`\rProcessing row ${currentRow} of ${totalRows}`);
+
+        const actualData = actualDatas.find(
+          (item) =>
+            item.index === currentRow ||
+            (item.NAMA && data.NAMA && item.NAMA.trim().toLowerCase() === data.NAMA.trim().toLowerCase()) ||
+            (item.NIK && data.NIK && getNumbersOnly(item.NIK) === getNumbersOnly(data.NIK))
+        );
+
         if (actualData) {
-          // console.log(`Row ${i} matches:`, match);
           const get = await fixData(data);
-          console.log(
-            `TGL LAHIR (fixed): ${get['TGL LAHIR']} | Expected: ${actualData['TGL LAHIR']} | Match: ${get['TGL LAHIR'] === actualData['TGL LAHIR']}`
+          process.stdout.write(
+            `\nRow ${currentRow}:\n\tTGL LAHIR (fixed): ${get['TGL LAHIR']} | Expected: ${actualData['TGL LAHIR']} | Match: ${get['TGL LAHIR'] === actualData['TGL LAHIR']}\n\tNAMA: ${get['NAMA']} | Expected: ${actualData['NAMA']} | Match: ${get['NAMA'] === actualData['NAMA']}\n`
           );
         }
+
+        currentRow++;
       }
 
-      // const fix = await fixData(rangeData.at(0));
-      // const actualDate = moment('2022-05-10', 'YYYY-MM-DD').format('DD/MM/YYYY');
-      // console.log(`\nFixed data:`, fix);
+      console.log(`\nProcessing completed. Processed ${currentRow} rows total.`);
+
+      // Check what's keeping Node.js running without creating new handles
+      console.log('\nChecking what is keeping Node.js running...');
+
+      // Use setImmediate instead of setTimeout to avoid creating a persistent handle
+      setImmediate(() => {
+        whyIsNodeRunning();
+        console.log("Debug check completed. If process doesn't exit naturally, there may be other handles.");
+      });
     } catch (error) {
       console.error(error);
     }
-  })();
+  })().catch(console.error);
 }
