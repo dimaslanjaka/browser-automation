@@ -9,11 +9,8 @@ import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import { SharedPrefs } from './src/SharedPrefs.js';
 import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
-import { clearFetchXlsxData3Cache, fetchXlsxData3 } from './src/fetchXlsxData3.js';
+import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
 import { matchFirstAndLastData } from './src/xlsx-helper.js';
-
-// Re-export for backward compatibility
-export { clearFetchXlsxData3Cache, fetchXlsxData3 };
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
@@ -323,27 +320,30 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
 
 if (process.argv[1] === __filename) {
   (async () => {
-    // Test caching functionality
-    console.log('=== First run (should miss cache) ===');
-    const startTime1 = Date.now();
-    await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
-      const endTime1 = Date.now();
+    console.log('=== Fetching Excel data ===');
+    const startTime = Date.now();
+
+    try {
+      const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+      const endTime = Date.now();
+
       const matchData = {
         first: { nik: '3578102908210001', nama: 'NI NYOMAN ANINDYA MAHESWARI' },
         last: { nik: '3578105808210002', nama: 'MUHAMMAD PRANADIPTA' }
       };
 
-      let lastItem = datas.at(-1);
-      let firstItem = datas.at(0);
-      console.log('total data:', datas.length);
-      console.log('first data:', firstItem);
-      console.log('last data:', lastItem);
-      console.log(`First run took: ${endTime1 - startTime1}ms`);
+      const lastItem = datas.at(-1);
+      const firstItem = datas.at(0);
 
-      // Match the data
+      console.log('Total data:', datas.length);
+      console.log('First data:', firstItem);
+      console.log('Last data:', lastItem);
+      console.log(`Execution took: ${endTime - startTime}ms`);
+
+      // Validate the data
       const matchResult = matchFirstAndLastData(datas, matchData);
-      console.log('\n=== DATA MATCHING RESULTS ===');
-      console.log('First data match:');
+      console.log('\n=== DATA VALIDATION RESULTS ===');
+      console.log('First data validation:');
       console.log(
         '  NIK:',
         matchResult.first.nikMatch ? '✓' : '✗',
@@ -355,7 +355,7 @@ if (process.argv[1] === __filename) {
         `Expected: ${matchResult.first.expectedNama}, Actual: ${matchResult.first.actualNama}`
       );
 
-      console.log('\nLast data match:');
+      console.log('\nLast data validation:');
       console.log(
         '  NIK:',
         matchResult.last.nikMatch ? '✓' : '✗',
@@ -367,19 +367,10 @@ if (process.argv[1] === __filename) {
         `Expected: ${matchResult.last.expectedNama}, Actual: ${matchResult.last.actualNama}`
       );
 
-      console.log('\nOverall match:', matchResult.overallMatch ? '✓ PASS' : '✗ FAIL');
-    });
-
-    console.log('\n=== Second run (should hit cache) ===');
-    const startTime2 = Date.now();
-    await fetchXlsxData3(process.env.index_start, process.env.index_end).then((datas) => {
-      const endTime2 = Date.now();
-      let lastItem = datas.at(-1);
-      let firstItem = datas.at(0);
-      console.log('total data:', datas.length);
-      console.log('first data:', firstItem);
-      console.log('last data:', lastItem);
-      console.log(`Second run took: ${endTime2 - startTime2}ms`);
-    });
+      console.log('\nOverall validation:', matchResult.overallMatch ? '✓ PASS' : '✗ FAIL');
+    } catch (error) {
+      console.error('Error fetching Excel data:', error.message);
+      process.exit(1);
+    }
   })();
 }

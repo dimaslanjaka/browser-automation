@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from './src/address/nominatim.js';
 import { playMp3FromUrl } from './src/beep.js';
+import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
 import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import {
@@ -19,7 +20,6 @@ import {
   isSuccessNotificationVisible
 } from './src/skrin_utils.js';
 import { appendLog, extractNumericWithComma, getNumbersOnly, singleBeep, sleep, ucwords } from './src/utils.js';
-import { fetchXlsxData3 } from './xlsx_data.js';
 
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);

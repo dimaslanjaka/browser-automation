@@ -106,7 +106,7 @@ export function clearCache(pattern, cacheDir = '.cache/temp') {
  * @returns {import('../globals').ExcelRowData|null} Found data or null
  */
 export function findByNik(datas, targetNik) {
-  return datas.find((item) => item.nik === targetNik) || null;
+  return datas.find((item) => item.nik === targetNik || `${item.nik}`.trim().includes(targetNik)) || null;
 }
 
 /**

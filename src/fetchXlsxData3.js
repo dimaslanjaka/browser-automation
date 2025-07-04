@@ -213,9 +213,27 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
 
 if (process.argv[1] === __filename) {
   (async () => {
-    const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
-    console.log(`Fetched ${datas.length} rows of data from Excel files.`);
-    console.log('First row:', datas[0]);
-    console.log('Last row:', datas[datas.length - 1]);
+    console.log(
+      `Fetching data from Excel files... (start index: ${process.env.index_start}, end index: ${process.env.index_end})`
+    );
+    const datas = await fetchXlsxData3(0, 90000);
+    // console.log(`Fetched ${datas.length} rows of data from Excel files.`);
+    // console.log('First row:', datas[0]);
+    // console.log('Last row:', datas[datas.length - 1]);
+    // MUHAMMAD NATHAN ALFATIR 3578101502250001
+    // 3578106311200003 NI NYOMAN ANINDYA MAHESWARI
+    // const findFirst = findByNik(datas, '3578106311200003');
+    // console.log('Find first:', findFirst);
+    // const findLast = findByNik(datas, '3578101502250001');
+    // console.log('Find last:', findLast);
+    for (const data of datas) {
+      if (data.nik && !/^\d+$/.test(data.nik)) {
+        throw new Error(`data.nik is not numeric at rowIndex ${data.rowIndex}: ${data.nik}`);
+      }
+      if (data.nik.trim() == '3578106311200003') {
+        console.log('Found special NIK:', data.nik, 'at rowIndex:', data.rowIndex);
+        console.log('Data:', data);
+      }
+    }
   })();
 }
