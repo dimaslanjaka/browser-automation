@@ -9,6 +9,7 @@ import { playMp3FromUrl } from './src/beep.js';
 import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
 import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
+import { skrinLogin } from './src/skrin_puppeteer.js';
 import {
   confirmIdentityModal,
   fixTbAndBb,
@@ -518,14 +519,6 @@ export async function processData(browser, data) {
     status: 'success',
     data
   };
-}
-
-export async function skrinLogin(page) {
-  await page.goto('https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
-  await page.type('input[name="username"]', process.env.skrin_username);
-  await page.type('input[name="password"]', process.env.skrin_password);
-  await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
-  console.log('Login successful');
 }
 
 /**
