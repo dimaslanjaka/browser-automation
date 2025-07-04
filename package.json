@@ -69,6 +69,7 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^16.0.0",
     "jest": "^30.0.2",
+    "nodemon": "^3.1.10",
     "prettier": "^3.5.3",
     "prettier-plugin-embed": "^0.5.0",
     "ts-node": "^10.9.2",
@@ -79,7 +80,7 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/53b089eeece3a15550d13fc6de88c9ebbd6fef9d/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/e73454764075e483d02ab7296509b2639e442dcb/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/7696e66ab84f319909c5dab9054303e91f898454/packages/sbg-utility/release/sbg-utility.tgz"
   },

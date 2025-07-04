@@ -272,3 +272,106 @@ export async function typeAndTriggerIframe(page, iframeSelector, elementSelector
   // Add a small delay after typing completion
   await sleep(300);
 }
+
+/**
+ * Check if an element exists and is visible inside an iframe
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} iframeSelector - CSS selector for the iframe
+ * @param {string} elementSelector - CSS selector for the target element inside the iframe (use #id for IDs)
+ * @param {Object} options - Options object
+ * @param {boolean} options.checkVisibility - Whether to check if element is visible (default: true)
+ * @returns {Promise<boolean>} - Returns true if the element exists and is visible inside the iframe
+ */
+export async function isIframeElementVisible(page, iframeSelector, elementSelector, options = {}) {
+  const { checkVisibility = true } = options;
+
+  try {
+    return await page.evaluate(
+      ({ iframeSelector, elementSelector, checkVisibility }) => {
+        const iframe = document.querySelector(iframeSelector);
+        if (!iframe || !iframe.contentDocument) {
+          return false;
+        }
+
+        const element = iframe.contentDocument.querySelector(elementSelector);
+
+        if (!element) {
+          return false;
+        }
+
+        // If we don't need to check visibility, just return true since element exists
+        if (!checkVisibility) {
+          return true;
+        }
+
+        // Check if element is visible using the iframe's window for getComputedStyle
+        const style = iframe.contentWindow.getComputedStyle(element);
+        const isVisible =
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          element.offsetWidth > 0 &&
+          element.offsetHeight > 0 &&
+          style.opacity !== '0';
+
+        return isVisible;
+      },
+      { iframeSelector, elementSelector, checkVisibility }
+    );
+  } catch (_error) {
+    // If there's an error (e.g., iframe not accessible), return false
+    return false;
+  }
+}
+
+/**
+ * Click an element inside an iframe
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} iframeSelector - CSS selector for the iframe
+ * @param {string} elementSelector - CSS selector for the target element inside the iframe
+ * @param {Object} options - Options object
+ * @param {boolean} options.checkVisibility - Whether to check if element is visible before clicking (default: true)
+ * @returns {Promise<boolean>} - Returns true if click was successful, false otherwise
+ */
+export async function clickIframeElement(page, iframeSelector, elementSelector, options = {}) {
+  const { checkVisibility = true } = options;
+
+  try {
+    return await page.evaluate(
+      ({ iframeSelector, elementSelector, checkVisibility }) => {
+        const iframe = document.querySelector(iframeSelector);
+        if (!iframe || !iframe.contentDocument) {
+          throw new Error(`Iframe not found or not accessible: ${iframeSelector}`);
+        }
+
+        const element = iframe.contentDocument.querySelector(elementSelector);
+
+        if (!element) {
+          throw new Error(`Element not found: ${elementSelector}`);
+        }
+
+        // Check visibility if requested
+        if (checkVisibility) {
+          const style = iframe.contentWindow.getComputedStyle(element);
+          const isVisible =
+            style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            element.offsetWidth > 0 &&
+            element.offsetHeight > 0 &&
+            style.opacity !== '0';
+
+          if (!isVisible) {
+            throw new Error(`Element is not visible: ${elementSelector}`);
+          }
+        }
+
+        // Click the element
+        element.click();
+        return true;
+      },
+      { iframeSelector, elementSelector, checkVisibility }
+    );
+  } catch (error) {
+    console.error(`Failed to click iframe element: ${error.message}`);
+    return false;
+  }
+}
