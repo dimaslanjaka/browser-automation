@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.ts'
+applyTo: '**/*.{js,jsx,ts,tsx,mjs,cjs}'
 ---
 # Node.js Configuration Loader Instructions
 
