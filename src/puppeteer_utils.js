@@ -199,3 +199,76 @@ export async function setIframeElementValue(page, iframeSelector, elementSelecto
     { iframeSelector, elementSelector, value, byId, triggerEvents, handleDisabled }
   );
 }
+
+/**
+ * Clears an input field inside an iframe, types a value into it, and triggers input and change events.
+ * This is the iframe-compatible version of typeAndTrigger.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} iframeSelector - CSS selector for the iframe.
+ * @param {string} elementSelector - CSS selector for the input field inside the iframe (use #id for IDs, .class for classes, etc.).
+ * @param {string} value - The value to type into the input field.
+ * @param {Object} options - Options object
+ * @param {number} options.delay - Typing delay in milliseconds
+ * @param {boolean} options.clearFirst - Whether to clear the field before typing
+ * @returns {Promise<void>} - A promise that resolves after typing and triggering events.
+ */
+export async function typeAndTriggerIframe(page, iframeSelector, elementSelector, value, options = {}) {
+  const { delay = 100, clearFirst = true } = options;
+
+  await page.evaluate(
+    ({ iframeSelector, elementSelector, value, delay, clearFirst }) => {
+      const iframe = document.querySelector(iframeSelector);
+      if (!iframe || !iframe.contentDocument) {
+        throw new Error(`Iframe not found or not accessible: ${iframeSelector}`);
+      }
+
+      const element = iframe.contentDocument.querySelector(elementSelector);
+
+      if (!element) {
+        throw new Error(`Element not found: ${elementSelector}`);
+      }
+
+      // Focus the element
+      element.focus();
+
+      // Clear the field if requested
+      if (clearFirst) {
+        element.value = '';
+        element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
+      }
+
+      // Type the value character by character with delay
+      let currentValue = element.value;
+      const typeChar = (char, index) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            currentValue += char;
+            element.value = currentValue;
+
+            // Trigger input event for each character
+            element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
+            resolve();
+          }, index * delay);
+        });
+      };
+
+      // Type all characters
+      const typePromises = Array.from(value).map((char, index) => typeChar(char, index));
+
+      return Promise.all(typePromises).then(() => {
+        // After typing is complete, trigger change event
+        element.dispatchEvent(new iframe.contentWindow.Event('change', { bubbles: true }));
+
+        // Simulate tab key press by blurring the element
+        element.blur();
+
+        return true;
+      });
+    },
+    { iframeSelector, elementSelector, value, delay, clearFirst }
+  );
+
+  // Add a small delay after typing completion
+  await sleep(300);
+}
