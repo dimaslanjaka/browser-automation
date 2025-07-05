@@ -297,3 +297,25 @@ export function enforceDateFormat(dateStr, formats, context = '') {
 
   return parsed.format('DD/MM/YYYY');
 }
+
+/**
+ * Logs a message inline, overwriting the current line in the console.
+ * Useful for progress indicators or status updates that should replace the previous message.
+ * @function logInline
+ * @param {string} message - The message to log inline.
+ * @returns {void}
+ */
+export function logInline(message) {
+  process.stdout.write(`\r${message}`);
+}
+
+/**
+ * Logs a message on a new line in the console.
+ * Standard logging function for messages that should appear on separate lines.
+ * @function logLine
+ * @param {string} message - The message to log on a new line.
+ * @returns {void}
+ */
+export function logLine(message) {
+  process.stdout.write(`\n${message}`);
+}
