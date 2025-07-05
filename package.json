@@ -11,7 +11,9 @@
     "test:coverage": "npm run test -- --coverage",
     "serve-xlsx": "node xlsx-web-server.js | tee tmp/xlsx-server.log",
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
-    "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log"
+    "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log",
+    "update:resolutions": "node package-resolution-updater.js",
+    "update:dependencies": "npx npm-check-updates -u"
   },
   "keywords": [],
   "author": "",
@@ -80,7 +82,7 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/e73454764075e483d02ab7296509b2639e442dcb/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/becb8c2c64cc669b29df8ccdd6dd086be9d47ccd/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/7696e66ab84f319909c5dab9054303e91f898454/packages/sbg-utility/release/sbg-utility.tgz"
   },
