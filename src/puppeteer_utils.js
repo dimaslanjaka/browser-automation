@@ -149,23 +149,20 @@ export async function isElementVisible(page, selector) {
  * @param {string} elementSelector - CSS selector for the target element (use #id for IDs)
  * @param {string} value - Value to set
  * @param {Object} options - Options object
- * @param {boolean} options.byId - Whether to use getElementById (true) or querySelector (false)
  * @param {boolean} options.triggerEvents - Whether to trigger change/input events
  * @param {boolean} options.handleDisabled - Whether to temporarily enable disabled elements
  */
 export async function setIframeElementValue(page, iframeSelector, elementSelector, value, options = {}) {
-  const { byId = false, triggerEvents = true, handleDisabled = true } = options;
+  const { triggerEvents = true, handleDisabled = true } = options;
 
   await page.evaluate(
-    ({ iframeSelector, elementSelector, value, byId, triggerEvents, handleDisabled }) => {
+    ({ iframeSelector, elementSelector, value, triggerEvents, handleDisabled }) => {
       const iframe = document.querySelector(iframeSelector);
       if (!iframe || !iframe.contentDocument) {
         throw new Error(`Iframe not found or not accessible: ${iframeSelector}`);
       }
 
-      const element = byId
-        ? iframe.contentDocument.getElementById(elementSelector)
-        : iframe.contentDocument.querySelector(elementSelector);
+      const element = iframe.contentDocument.querySelector(elementSelector);
 
       if (!element) {
         throw new Error(`Element not found: ${elementSelector}`);
@@ -196,7 +193,7 @@ export async function setIframeElementValue(page, iframeSelector, elementSelecto
 
       return true;
     },
-    { iframeSelector, elementSelector, value, byId, triggerEvents, handleDisabled }
+    { iframeSelector, elementSelector, value, triggerEvents, handleDisabled }
   );
 }
 
