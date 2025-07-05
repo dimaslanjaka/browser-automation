@@ -302,20 +302,22 @@ export function enforceDateFormat(dateStr, formats, context = '') {
  * Logs a message inline, overwriting the current line in the console.
  * Useful for progress indicators or status updates that should replace the previous message.
  * @function logInline
- * @param {string} message - The message to log inline.
+ * @param {any} message - The message to log inline. Objects and arrays will be JSON stringified.
  * @returns {void}
  */
 export function logInline(message) {
-  process.stdout.write(`\r${message}`);
+  const output = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+  process.stdout.write(`\r${output}`);
 }
 
 /**
  * Logs a message on a new line in the console.
  * Standard logging function for messages that should appear on separate lines.
  * @function logLine
- * @param {string} message - The message to log on a new line.
+ * @param {any} message - The message to log on a new line. Objects and arrays will be JSON stringified.
  * @returns {void}
  */
 export function logLine(message) {
-  process.stdout.write(`${message}\n`);
+  const output = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+  process.stdout.write(`${output}\n`);
 }
