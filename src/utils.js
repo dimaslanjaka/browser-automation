@@ -317,5 +317,5 @@ export function logInline(message) {
  * @returns {void}
  */
 export function logLine(message) {
-  process.stdout.write(`\n${message}`);
+  process.stdout.write(`${message}\n`);
 }
