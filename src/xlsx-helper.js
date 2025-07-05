@@ -212,8 +212,11 @@ export async function fixData(data) {
   if (data.NAMA.length < 3) {
     throw new Error(`Invalid NAMA length: ${data.NAMA} (expected at least 3 characters)`);
   }
+
   let tanggalEntry = data.tanggal || data['TANGGAL ENTRY'];
-  if (!tanggalEntry || !moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
+  if (!tanggalEntry) {
+    throw new Error('Tanggal entry is required');
+  } else if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
     if (
       typeof tanggalEntry === 'string' &&
       /\b(jan(uari)?|feb(ruari)?|mar(et)?|apr(il)?|mei|jun(i|e)?|jul(i|y)?|agu(stus)?|aug(ust)?|sep(tember)?|okt(ober)?|oct(ober)?|nov(ember)?|des(ember)?|dec(ember)?|bln\s+\w+|bulan\s+\w+)\b/i.test(
@@ -229,7 +232,10 @@ export async function fixData(data) {
         tanggalEntry = newDate;
       }
     }
-    if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
+    const reparseTglLahir = moment(tanggalEntry, 'DD/MM/YYYY', true);
+    if (reparseTglLahir.day() === 0) {
+      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
+    } else if (!reparseTglLahir.isValid()) {
       throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
     } else {
       data.tanggal = tanggalEntry;
@@ -245,12 +251,17 @@ export async function fixData(data) {
       const baseDate = moment('1900-01-01');
       let days = tglLahir - 1;
       if (days > 59) days--; // Adjust for Excel's leap year bug
-      data['TGL LAHIR'] = baseDate.add(days, 'days').format('DD/MM/YYYY');
+      tglLahir = baseDate.add(days, 'days').format('DD/MM/YYYY');
     } else if (typeof tglLahir === 'string') {
       // Validate string date format (expecting DD/MM/YYYY)
       if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
         throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
       }
+    }
+    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
+      throw new Error(`Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)`);
+    } else {
+      data['TGL LAHIR'] = tglLahir; // Ensure TGL LAHIR is updated
     }
   }
 
