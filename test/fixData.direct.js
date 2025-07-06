@@ -13,6 +13,7 @@ import { fixData } from '../src/xlsx-helper.js';
       console.log('Skipping row with invalid or excluded NIK:', row);
       continue;
     }
+
     /** @type {Awaited<ReturnType<typeof fixData>>} */
     let _result;
     try {
@@ -21,6 +22,10 @@ import { fixData } from '../src/xlsx-helper.js';
       console.log('Error in fixData for row:', JSON.stringify(row, null, 2));
       throw err;
     }
+
+    // Single test
+    if (!_result.nik !== '3578104211230003') continue; // Skip if NIK
+
     if (!_result.pekerjaan) {
       console.log('Row data:', JSON.stringify(row, null, 2));
       throw new Error(`Pekerjaan not found for NIK: ${_result.nik}`);

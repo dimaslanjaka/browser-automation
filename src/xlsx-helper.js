@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { array_random, writefile } from 'sbg-utility';
 import { getAge } from '../src/date.js';
+import { geocodeWithNominatim } from './address/nominatim.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
 import { logLine } from './utils.js';
 
@@ -207,21 +208,26 @@ export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, out
  * Handles both ExcelRowData (lowercase) and ExcelRowData4 (uppercase) field naming conventions.
  *
  * @param {import('../globals').ExcelRowData4 | import('../globals').ExcelRowData | null} data - The data object to fix and validate
- * @returns {Promise<import('../globals').fixDataResult>} The validated and potentially modified data object
+ * @returns The validated and potentially modified data object
  * @throws {Error} When required fields are missing or invalid
  */
 export async function fixData(data) {
-  if (!data) throw new Error('Invalid data format: data is required');
+  /** @type {import('../globals').fixDataResult} */
+  const initialData = data || null;
+  if (!initialData) throw new Error('Invalid data format: data is required');
 
   // Normalize key fields
-  const nik = data.NIK || data.nik || null;
-  const nama = data.NAMA || data.nama || null;
+  const nik = initialData.NIK || initialData.nik || null;
+  const nama = initialData.NAMA || initialData.nama || null;
   if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
   if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
   if (nama.length < 3) throw new Error(`Invalid NAMA length: ${nama} (expected at least 3 characters)`);
 
-  data.nik = nik; // Ensure both lowercase and uppercase keys are set
-  data.NIK = nik; // Ensure both lowercase and uppercase keys are set
+  initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
+  initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
+
+  initialData.nama = nama; // Ensure both lowercase and uppercase keys are set
+  initialData.NAMA = nama; // Ensure both lowercase and uppercase keys are set
 
   // Parse NIK
   const parsed_nik = nikParserStrict(nik);
@@ -233,10 +239,10 @@ export async function fixData(data) {
       parsed_nik.data.lahir = momentParseNik.format('DD/MM/YYYY');
     }
   }
-  data.parsed_nik = parsed_nik.status === 'success' ? parsed_nik.data : null;
+  initialData.parsed_nik = parsed_nik.status === 'success' ? parsed_nik : null;
 
   // Tanggal entry normalization
-  let tanggalEntry = data.tanggal || data['TANGGAL ENTRY'];
+  let tanggalEntry = initialData.tanggal || initialData['TANGGAL ENTRY'];
   if (!tanggalEntry) throw new Error('Tanggal entry is required');
   if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
     if (
@@ -256,15 +262,15 @@ export async function fixData(data) {
     if (reparseTglLahir.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
     if (!reparseTglLahir.isValid())
       throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
-    data.tanggal = tanggalEntry;
-    data['TANGGAL ENTRY'] = tanggalEntry;
+    initialData.tanggal = tanggalEntry;
+    initialData['TANGGAL ENTRY'] = tanggalEntry;
   } else {
     const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
     if (parsedDate.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
   }
 
   // TGL LAHIR normalization
-  let tglLahir = data['TGL LAHIR'] || null;
+  let tglLahir = initialData['TGL LAHIR'] || null;
   if (tglLahir) {
     if (typeof tglLahir === 'number') {
       const baseDate = moment('1900-01-01');
@@ -277,17 +283,25 @@ export async function fixData(data) {
     }
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid())
       throw new Error(`Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)`);
-    data['TGL LAHIR'] = tglLahir;
+    initialData['TGL LAHIR'] = tglLahir;
   }
 
+  // Gender
+  let gender = parsed_nik.status === 'success' ? parsed_nik?.data.kelamin : 'Tidak Diketahui';
+  if (gender.toLowerCase() === 'l' || gender.toLowerCase() === 'laki-laki') {
+    gender = 'Laki-laki';
+  } else if (gender.toLowerCase() === 'p' || gender.toLowerCase() === 'perempuan') {
+    gender = 'Perempuan';
+  }
+  initialData.gender = gender; // fixData gender result
+
   // Pekerjaan normalization
-  let pekerjaan = data.pekerjaan || data.PEKERJAAN || null;
+  let pekerjaan = initialData.pekerjaan || initialData.PEKERJAAN || null;
   if (!pekerjaan) {
     let age = 0;
 
-    const gender = parsed_nik.status === 'success' ? parsed_nik?.data.kelamin : 'Tidak Diketahui';
-    if (data['TGL LAHIR']) {
-      age = getAge(data['TGL LAHIR'], 'DD/MM/YYYY');
+    if (initialData['TGL LAHIR']) {
+      age = getAge(initialData['TGL LAHIR'], 'DD/MM/YYYY');
       logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
     } else {
       age = getAge(parsed_nik?.data.lahir);
@@ -320,8 +334,8 @@ export async function fixData(data) {
       }
     }
     if (pekerjaan) {
-      data.pekerjaan = pekerjaan;
-      data.PEKERJAAN = pekerjaan;
+      initialData.pekerjaan = pekerjaan;
+      initialData.PEKERJAAN = pekerjaan;
       logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
     } else {
       throw new Error(`Pekerjaan could not be determined for NIK: ${nik}`);
@@ -329,5 +343,51 @@ export async function fixData(data) {
   } else {
     logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
   }
-  return data;
+
+  // Fix alamat
+  let alamat = initialData.alamat || initialData.ALAMAT || null;
+  if (!alamat) {
+    if (initialData.parsed_nik && initialData.parsed_nik.status === 'success') {
+      const parsed_data = initialData.parsed_nik.data;
+      alamat = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, ${parsed_data.kotakab}, ${parsed_data.provinsi}`;
+      logLine(`${ansiColors.cyan('[fixData]')} Alamat from parsed NIK: ${alamat}`);
+      const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
+      const address = await geocodeWithNominatim(keywordAddr);
+      data._address = address;
+
+      let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_data;
+
+      if (kotakab.length === 0 || namaKec.length === 0 || provinsi.length === 0) {
+        console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
+        console.log('Nominatim result:', address);
+
+        const addr = address.address || {};
+
+        if (kelurahan.length === 0) kelurahan = [addr.village || addr.hamlet || ''];
+        if (namaKec.length === 0) namaKec = addr.suburb || addr.city_district || '';
+        if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
+        if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
+
+        if (kotakab.toLowerCase().includes('surabaya')) {
+          kotakab = 'Kota Surabaya';
+        }
+
+        if (kotakab.length === 0 || namaKec.length === 0) {
+          throw new Error("❌ Failed to take the patient's city or town");
+        }
+
+        parsed_data.kelurahan = kelurahan;
+        parsed_data.namaKec = namaKec;
+        parsed_data.kotakab = kotakab;
+        parsed_data.provinsi = provinsi;
+        initialData.parsed_nik.data = parsed_data; // Update parsed_nik with new
+      }
+    } else {
+      throw new Error(`Alamat is required for NIK: ${nik}`);
+    }
+  }
+  initialData.alamat = alamat; // Ensure both lowercase and uppercase keys are set
+  initialData.ALAMAT = alamat; // Ensure both lowercase and uppercase keys are set
+
+  return initialData;
 }
