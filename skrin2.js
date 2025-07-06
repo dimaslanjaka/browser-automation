@@ -5,7 +5,6 @@ import {
   clickIframeElement,
   getPuppeteer,
   isIframeElementVisible,
-  setIframeElementValue,
   typeAndTriggerIframe,
   typeToIframe
 } from './src/puppeteer_utils.js';
@@ -27,6 +26,7 @@ async function processData(page, data) {
   const fixedData = await fixData(data);
   const NIK = getNumbersOnly(fixedData.NIK);
   let isManualInput = false;
+  logLine('Processing', fixedData);
 
   await enterSkriningPage(page, false);
 
@@ -47,17 +47,17 @@ async function processData(page, data) {
 
   logLine('Iframe loaded and datepicker element is ready');
 
-  logLine(`Processing data for NIK: ${NIK}, NAMA: ${fixedData.NAMA}`);
-
   const tanggalEntry = fixedData.tanggal || fixedData['TANGGAL ENTRY'];
 
   // Set the date value in the iframe's datepicker element
   if (tanggalEntry) {
-    await setIframeElementValue(page, '.k-window-content iframe.k-content-frame', '#dt_tgl_skrining', tanggalEntry, {
-      triggerEvents: true,
-      handleDisabled: true
-    });
+    // await setIframeElementValue(page, '.k-window-content iframe.k-content-frame', '#dt_tgl_skrining', tanggalEntry, {
+    //   triggerEvents: true,
+    //   handleDisabled: true
+    // });
+    typeAndTriggerIframe(page, '.k-window-content iframe.k-content-frame', '#dt_tgl_skrining', tanggalEntry);
     logLine(`Date ${tanggalEntry} applied to #dt_tgl_skrining`);
+    await sleep(1000); // Wait for the datepicker to process the input
   }
 
   await typeAndTriggerIframe(page, '.k-window-content iframe.k-content-frame', '#nik', NIK);
@@ -99,7 +99,6 @@ async function processData(page, data) {
     // Proceed with manual input
 
     logLine(`Proceeding with manual input for NIK: ${NIK}`);
-    logLine('Row data', fixedData);
 
     // Insert default skrining inputs
     await typeAndTriggerIframe(
@@ -162,7 +161,6 @@ async function processData(page, data) {
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik;
       if (kotakab.length > 0 && namaKec.length > 0 && provinsi.length > 0 && kelurahan.length > 0) {
         const selectedKelurahan = kelurahan[0];
-        logLine(`Parsed NIK data: ${JSON.stringify(parsed_nik, null, 2)}`);
         logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
 
         // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
