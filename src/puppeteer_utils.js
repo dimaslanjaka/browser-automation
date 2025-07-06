@@ -1,4 +1,5 @@
-import path from 'node:path';
+import fs from 'fs';
+import path from 'path';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
@@ -43,14 +44,18 @@ let browser = null;
  */
 export async function getPuppeteer() {
   if (!browser || !browser.connected) {
+    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+    if (!fs.existsSync(chromePath)) {
+      throw new Error(`Chrome executable not found at: ${chromePath}`);
+    }
     browser = await puppeteer.launch({
       headless: false,
       userDataDir,
-      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      executablePath: chromePath,
       args: [
-        '--disable-features=HeavyAdIntervention', // Disable Chrome's blocking of intrusive ads
-        '--disable-features=AdInterestGroupAPI', // Prevents blocking based on ad interest group
-        '--disable-popup-blocking', // Disable pop-up blocking
+        '--disable-features=HeavyAdIntervention',
+        '--disable-features=AdInterestGroupAPI',
+        '--disable-popup-blocking',
         '--no-default-browser-check',
         '--no-first-run',
         '--ignore-certificate-errors',
