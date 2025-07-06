@@ -403,3 +403,55 @@ export async function clickIframeElement(page, iframeSelector, elementSelector, 
     return false;
   }
 }
+
+/**
+ * Extracts attribute values and common properties from input and textarea elements.
+ *
+ * @param {(HTMLInputElement | HTMLTextAreaElement)[]} elements - Array of input or textarea elements.
+ * @returns {Array<Record<string, string>>} Array of flattened objects containing all attributes plus name, value, id, and disabled.
+ */
+function extractFormValues(elements) {
+  return elements.map((el) => {
+    const attrs = Array.from(el.attributes).reduce((acc, attr) => {
+      acc[attr.name] = String(attr.value);
+      return acc;
+    }, {});
+    return {
+      ...attrs,
+      name: el.name || '',
+      value: el.value,
+      id: el.id || '',
+      disabled: String(el.disabled)
+    };
+  });
+}
+
+/**
+ * Get values of all input and textarea elements within a container.
+ * Works with both Page and Frame contexts.
+ *
+ * @param {import('puppeteer').Page|import('puppeteer').Frame} context - The Puppeteer page or frame instance.
+ * @param {string} containerSelector - The CSS selector for the container.
+ * @returns {Promise<Array<Record<string, string>>>} - Returns an array of objects containing name, value, id, disabled, and all attributes of each input/textarea.
+ */
+export async function getFormValues(context, containerSelector) {
+  return await context.$$eval(`${containerSelector} input, ${containerSelector} textarea`, extractFormValues);
+}
+
+/**
+ * Get values of all input and textarea elements within a container inside an iframe.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} iframeSelector - The CSS selector for the iframe.
+ * @param {string} containerSelector - The CSS selector for the container inside the iframe.
+ * @returns {Promise<Array<Record<string, string>>>}
+ */
+export async function getFormValuesFromFrame(page, iframeSelector, containerSelector) {
+  const iframeElement = await page.$(iframeSelector);
+  if (!iframeElement) throw new Error(`Iframe not found: ${iframeSelector}`);
+
+  const frame = await iframeElement.contentFrame();
+  if (!frame) throw new Error(`Failed to get frame from iframe element`);
+
+  return await getFormValues(frame, containerSelector);
+}
