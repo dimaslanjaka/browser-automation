@@ -13,7 +13,8 @@
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
     "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log",
     "update:resolutions": "node package-resolution-updater.js",
-    "update:dependencies": "npx npm-check-updates -u"
+    "update:dependencies": "npx npm-check-updates -u",
+    "download:google-sheet": "node download-google-sheet.js"
   },
   "keywords": [],
   "author": "",
@@ -76,15 +77,16 @@
     "prettier-plugin-embed": "^0.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2",
-    "why-is-node-running": "^3.2.2"
+    "why-is-node-running": "^3.2.2",
+    "wtfnode": "^0.10.0"
   },
   "workspaces": [
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/becb8c2c64cc669b29df8ccdd6dd086be9d47ccd/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/579fa7588b2db83b33ac46626bb496feb6081e0d/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/7696e66ab84f319909c5dab9054303e91f898454/packages/sbg-utility/release/sbg-utility.tgz"
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/e568350db1b2286a87b54ddf5c6d2d5d6b6cc7c1/packages/sbg-utility/release/sbg-utility.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
