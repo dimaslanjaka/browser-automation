@@ -9,7 +9,7 @@ export interface ExcelRowData {
   batuk: string;
   diabetes: string;
   alamat?: string;
-  parsed_nik?: null | import('./src/nik-parser/type').NikResult;
+  parsed_nik?: null | import('nik-parser-jurusid').NikParseResult;
 }
 
 export interface ExcelRowData4 {
