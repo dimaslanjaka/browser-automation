@@ -299,6 +299,15 @@ export async function typeToIframe(page, iframeSelector, elementSelector, value,
     await iframe.type(elementSelector, '', { delay });
   }
   await iframe.type(elementSelector, value, { delay });
+  await iframe.evaluate((selector) => {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }, elementSelector);
+  await page.keyboard.press('Tab'); // Simulate tab key press to blur
+  await sleep(300); // Wait for any potential UI updates after typing
 }
 
 /**
