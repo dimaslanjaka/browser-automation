@@ -9,21 +9,7 @@ export interface ExcelRowData {
   batuk: string;
   diabetes: string;
   alamat?: string;
-  parsed_nik?: null | {
-    nama: string;
-    kelamin: string;
-    lahir: string;
-    kotakab: string;
-    kecamatan: string;
-    uniqcode: string;
-    provinsi: string;
-    nik: string;
-    tambahan: {
-      kodepos: string;
-      usia: string;
-      ultah: string;
-    };
-  };
+  parsed_nik?: null | import('./src/nik-parser/type').NikResult;
 }
 
 export interface ExcelRowData4 {
