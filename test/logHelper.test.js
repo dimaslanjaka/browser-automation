@@ -1,9 +1,14 @@
-import { beforeEach, describe, expect, test } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, test } from '@jest/globals';
 import { addLog, getLogById, getLogs, removeLog } from '../src/logHelper.js';
 
 describe('logHelper', () => {
   beforeEach(() => {
-    // Clear logs by removing all current logs
+    // Clear logs before each test
+    getLogs().forEach((log) => removeLog(log.id));
+  });
+
+  afterEach(() => {
+    // Remove all logs after each test to ensure clean state
     getLogs().forEach((log) => removeLog(log.id));
   });
 
