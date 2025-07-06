@@ -418,6 +418,17 @@ function extractFormValues(elements) {
     }, {});
 
     const isVisible = !!(el.offsetParent || el.offsetWidth > 0 || el.offsetHeight > 0);
+    let textLabel = '';
+    let currentEl = el; // Start from the target element
+
+    for (let i = 0; i < 6 && currentEl; i++) {
+      const labelEl = currentEl.querySelector('.form-item-label');
+      if (labelEl) {
+        textLabel = labelEl.textContent.trim();
+        break;
+      }
+      currentEl = currentEl.parentElement; // Move one level up
+    }
 
     return {
       ...attrs,
@@ -425,7 +436,8 @@ function extractFormValues(elements) {
       value: el.value,
       id: el.id || '',
       disabled: String(el.disabled),
-      isVisible: String(isVisible)
+      isVisible: String(isVisible),
+      label: textLabel
     };
   });
 }
