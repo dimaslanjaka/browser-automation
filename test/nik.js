@@ -1,6 +1,11 @@
-import { nikParse } from '../src/nik-parser/index.js';
-// import region_controller from 'nik-parser-jurusid';
+import region_controller from 'nik-parser-jurusid';
 
-const nik = '3678101007220001';
-const result = nikParse(nik);
-console.log(result);
+const niks = ['4360000000000658', '3678101007220001'];
+
+const nik = niks[0]; // Change this to test different NIKs
+const regionResult = region_controller(nik);
+
+console.log({
+  nik,
+  region: regionResult
+});

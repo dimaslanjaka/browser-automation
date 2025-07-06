@@ -1,5 +1,6 @@
 import * as glob from 'glob';
 import moment from 'moment-timezone';
+import nikParse from 'nik-parser-jurusid';
 import fs from 'node:fs';
 import path from 'node:path';
 import { array_random } from 'sbg-utility';
@@ -7,7 +8,6 @@ import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import { SharedPrefs } from './SharedPrefs.js';
 import { containsMonth, extractMonthName, getDatesWithoutSundays } from './date.js';
-import { nikParse } from './nik-parser/index.js';
 import { getCacheKey, getCachedData, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 // Get the absolute path of the current script for ES modules

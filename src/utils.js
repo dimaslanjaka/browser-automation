@@ -1,10 +1,10 @@
 import { exec } from 'child_process';
 import fs from 'fs-extra';
 import moment from 'moment';
+import nikParse from 'nik-parser-jurusid';
 import path from 'node:path';
 import readline from 'node:readline';
 import { readfile } from 'sbg-utility';
-import { nikParse } from './nik-parser/index.js';
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });

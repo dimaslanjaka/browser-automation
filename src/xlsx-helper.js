@@ -1,10 +1,14 @@
+import ansiColors from 'ansi-colors';
 import * as glob from 'glob';
 import moment from 'moment';
+import { nikParserStrict } from 'nik-parser-jurusid';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { array_random, writefile } from 'sbg-utility';
+import { getAge } from '../src/date.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
+import { logLine } from './utils.js';
 
 /**
  * Generates a hash for the given file
@@ -199,24 +203,42 @@ export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, out
 }
 
 /**
+ * Fixes and validates data object by normalizing field access and validating required fields.
+ * Handles both ExcelRowData (lowercase) and ExcelRowData4 (uppercase) field naming conventions.
  *
- * @param {import('../globals').ExcelRowData4 | import('../globals').ExcelRowData} data
+ * @param {import('../globals').ExcelRowData4 | import('../globals').ExcelRowData | null} data - The data object to fix and validate
+ * @returns {Promise<import('../globals').fixDataResult>} The validated and potentially modified data object
+ * @throws {Error} When required fields are missing or invalid
  */
 export async function fixData(data) {
-  if (!data || !data.NIK || !data.NAMA) {
-    throw new Error('Invalid data format: NIK and NAMA are required');
-  }
-  if (data.NIK.length !== 16) {
-    throw new Error(`Invalid NIK length: ${data.NIK} (expected 16 characters)`);
-  }
-  if (data.NAMA.length < 3) {
-    throw new Error(`Invalid NAMA length: ${data.NAMA} (expected at least 3 characters)`);
-  }
+  if (!data) throw new Error('Invalid data format: data is required');
 
+  // Normalize key fields
+  const nik = data.NIK || data.nik || null;
+  const nama = data.NAMA || data.nama || null;
+  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
+  if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
+  if (nama.length < 3) throw new Error(`Invalid NAMA length: ${nama} (expected at least 3 characters)`);
+
+  data.nik = nik; // Ensure both lowercase and uppercase keys are set
+  data.NIK = nik; // Ensure both lowercase and uppercase keys are set
+
+  // Parse NIK
+  const parsed_nik = nikParserStrict(nik);
+  if (parsed_nik.status == 'success' && parsed_nik.data.lahir) {
+    // Normalize date format for lahir
+    parsed_nik.data.originalLahir = parsed_nik.data.lahir;
+    const momentParseNik = moment(parsed_nik.data.lahir, 'YYYY-MM-DD', true);
+    if (momentParseNik.isValid()) {
+      parsed_nik.data.lahir = momentParseNik.format('DD/MM/YYYY');
+    }
+  }
+  data.parsed_nik = parsed_nik.status === 'success' ? parsed_nik.data : null;
+
+  // Tanggal entry normalization
   let tanggalEntry = data.tanggal || data['TANGGAL ENTRY'];
-  if (!tanggalEntry) {
-    throw new Error('Tanggal entry is required');
-  } else if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
+  if (!tanggalEntry) throw new Error('Tanggal entry is required');
+  if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
     if (
       typeof tanggalEntry === 'string' &&
       /\b(jan(uari)?|feb(ruari)?|mar(et)?|apr(il)?|mei|jun(i|e)?|jul(i|y)?|agu(stus)?|aug(ust)?|sep(tember)?|okt(ober)?|oct(ober)?|nov(ember)?|des(ember)?|dec(ember)?|bln\s+\w+|bulan\s+\w+)\b/i.test(
@@ -224,46 +246,88 @@ export async function fixData(data) {
       )
     ) {
       const monthName = extractMonthName(tanggalEntry);
-      if (!monthName) {
-        throw new Error(`Month name not found in tanggalEntry: ${tanggalEntry}`);
-      } else {
-        const newDate = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
-        // console.log(`Generated new date for "${tanggalEntry}": ${newDate}`);
-        tanggalEntry = newDate;
-      }
+      if (!monthName) throw new Error(`Month name not found in tanggalEntry: ${tanggalEntry}`);
+      tanggalEntry = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
+      logLine(
+        `${ansiColors.cyan('[fixData]')} Generated new date for "${tanggalEntry}" from month name in entry: ${tanggalEntry}`
+      );
     }
     const reparseTglLahir = moment(tanggalEntry, 'DD/MM/YYYY', true);
-    if (reparseTglLahir.day() === 0) {
-      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
-    } else if (!reparseTglLahir.isValid()) {
+    if (reparseTglLahir.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
+    if (!reparseTglLahir.isValid())
       throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
-    } else {
-      data.tanggal = tanggalEntry;
-      data['TANGGAL ENTRY'] = tanggalEntry; // Ensure both fields are updated
-    }
+    data.tanggal = tanggalEntry;
+    data['TANGGAL ENTRY'] = tanggalEntry;
+  } else {
+    const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
+    if (parsedDate.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
   }
 
+  // TGL LAHIR normalization
   let tglLahir = data['TGL LAHIR'] || null;
   if (tglLahir) {
-    // Convert Excel serial date number to a proper date string
     if (typeof tglLahir === 'number') {
-      // Excel serial date starts from January 1, 1900, but Excel incorrectly treats 1900 as a leap year
       const baseDate = moment('1900-01-01');
       let days = tglLahir - 1;
-      if (days > 59) days--; // Adjust for Excel's leap year bug
+      if (days > 59) days--;
       tglLahir = baseDate.add(days, 'days').format('DD/MM/YYYY');
-    } else if (typeof tglLahir === 'string') {
-      // Validate string date format (expecting DD/MM/YYYY)
-      if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-        throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
-      }
+      logLine(`${ansiColors.cyan('[fixData]')} Converted Excel serial date to: ${tglLahir}`);
+    } else if (typeof tglLahir === 'string' && !moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
+      throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
     }
-    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
+    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid())
       throw new Error(`Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)`);
-    } else {
-      data['TGL LAHIR'] = tglLahir; // Ensure TGL LAHIR is updated
-    }
+    data['TGL LAHIR'] = tglLahir;
   }
 
+  // Pekerjaan normalization
+  let pekerjaan = data.pekerjaan || data.PEKERJAAN || null;
+  if (!pekerjaan) {
+    let age = 0;
+
+    const gender = parsed_nik.status === 'success' ? parsed_nik?.data.kelamin : 'Tidak Diketahui';
+    if (data['TGL LAHIR']) {
+      age = getAge(data['TGL LAHIR'], 'DD/MM/YYYY');
+      logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
+    } else {
+      age = getAge(parsed_nik?.data.lahir);
+      logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
+    }
+    if (!pekerjaan) {
+      if (age > 55 || age <= 20) {
+        pekerjaan = 'Tidak Bekerja';
+      } else {
+        pekerjaan = gender && gender.toLowerCase() === 'perempuan' ? 'IRT' : 'Wiraswasta';
+      }
+    }
+    const jobMappings = [
+      { pattern: /rumah\s*tangga|irt/i, value: 'IRT' },
+      { pattern: /swasta|pedagang/i, value: 'Wiraswasta' },
+      { pattern: /tukang|buruh/i, value: 'Buruh ' },
+      { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/i, value: 'Tidak Bekerja' },
+      { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/i, value: 'PNS ' },
+      { pattern: /guru|dosen/i, value: 'Guru/ Dosen' },
+      { pattern: /perawat|dokter/i, value: 'Tenaga Profesional Medis ' },
+      { pattern: /pengacara|wartawan/i, value: 'Tenaga Profesional Non Medis ' },
+      { pattern: /pelajar|siswa|siswi|sekolah/i, value: 'Pelajar/ Mahasiswa' },
+      { pattern: /s[o,u]pir/i, value: 'Sopir ' }
+    ];
+    for (const { pattern, value } of jobMappings) {
+      if (pattern.test(pekerjaan)) {
+        pekerjaan = value;
+        logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
+        break;
+      }
+    }
+    if (pekerjaan) {
+      data.pekerjaan = pekerjaan;
+      data.PEKERJAAN = pekerjaan;
+      logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
+    } else {
+      throw new Error(`Pekerjaan could not be determined for NIK: ${nik}`);
+    }
+  } else {
+    logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
+  }
   return data;
 }

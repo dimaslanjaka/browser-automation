@@ -27,6 +27,11 @@ export interface ExcelRowData4 {
   originalRowNumber: number;
 }
 
+export type fixDataResult = ExcelRowData4 &
+  ExcelRowData & {
+    parsed_nik: ReturnType<(typeof import('nik-parser-jurusid'))['nikParserStrict']> | null;
+  };
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
