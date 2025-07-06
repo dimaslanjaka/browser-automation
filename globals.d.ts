@@ -27,11 +27,10 @@ export interface ExcelRowData4 {
   originalRowNumber: number;
 }
 
-export type fixDataResult = ExcelRowData4 &
-  ExcelRowData & {
-    parsed_nik: ReturnType<(typeof import('nik-parser-jurusid'))['nikParserStrict']> | null;
-    gender: 'Laki-laki' | 'Perempuan' | 'Tidak Diketahui';
-  };
+export interface fixDataResult extends ExcelRowData, ExcelRowData4 {
+  parsed_nik: ReturnType<(typeof import('nik-parser-jurusid'))['nikParserStrict']> | null;
+  gender: 'Laki-laki' | 'Perempuan' | 'Tidak Diketahui';
+}
 
 declare global {
   namespace NodeJS {
