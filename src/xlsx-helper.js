@@ -389,5 +389,13 @@ export async function fixData(data) {
   initialData.alamat = alamat; // Ensure both lowercase and uppercase keys are set
   initialData.ALAMAT = alamat; // Ensure both lowercase and uppercase keys are set
 
+  // Fix tinggi and berat badan
+  let tinggi = initialData.tinggi || initialData.TINGGI || null;
+  let berat = initialData.berat || initialData.BERAT || null;
+  initialData.tb = tinggi; // Ensure both lowercase and uppercase keys are set
+  initialData.TB = tinggi; // Ensure both lowercase and uppercase keys are set
+  initialData.bb = berat; // Ensure both lowercase and uppercase keys are set
+  initialData.BB = berat; // Ensure both lowercase and uppercase keys are set
+
   return initialData;
 }
