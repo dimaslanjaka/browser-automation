@@ -24,22 +24,6 @@ console.clear();
  * @param {Awaited<ReturnType<typeof getDataRange>>[number]} data - A single data row from getDataRange (already fixed by fixData).
  * @returns {Promise<void>} Resolves when processing is complete.
  */
-
-/**
- * Test function to fill out the skrining form with sample data.
- *
- * @async
- * @param {import('puppeteer').Page} page - Puppeteer page instance to operate on.
- * @returns {Promise<void>} Resolves when the test is complete.
- */
-
-/**
- * Main entry point for the skrining automation script.
- *
- * @async
- * @function
- * @returns {Promise<void>} Resolves when the script has finished running.
- */
 async function processData(page, data) {
   const fixedData = await fixData(data);
   const NIK = getNumbersOnly(fixedData.NIK);
@@ -49,7 +33,6 @@ async function processData(page, data) {
     return;
   }
 
-  let isManualInput = false;
   logLine('Processing', fixedData);
 
   const iframeSelector = '.k-window-content iframe.k-content-frame';
@@ -125,6 +108,10 @@ async function processData(page, data) {
     await sleep(1000); // Wait for the datepicker to process the input
   }
 
+  // Insert default skrining inputs
+
+  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+  await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
   await typeAndTriggerIframe(page, iframeSelector, '#nik', NIK);
 
   await sleep(4000); // Wait for the NIK input to process
@@ -137,6 +124,8 @@ async function processData(page, data) {
   const isNIKNotFoundModalVisible = async () =>
     await isIframeElementVisible(page, iframeSelector, '[aria-labelledby="dialogconfirm_wnd_title"]');
 
+  // Check NIK not found modal visibility
+  let isManualInput = false;
   if (await isNIKNotFoundModalVisible()) {
     logLine(`Confirmation modal is visible - Data tidak ditemukan`);
 
@@ -158,20 +147,49 @@ async function processData(page, data) {
         logLine(`Failed to click Yes button`);
       }
     }
-  } else {
-    logLine(`Confirmation modal is not visible - Data found or no confirmation needed`);
   }
 
-  // Insert default skrining inputs
+  // Check if the NIK is already registered, then confirm identity
+  if (await isIdentityModalVisible()) {
+    logLine(`Identity modal is visible - NIK is already registered. Confirming identity...`);
 
-  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
-  await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
-  await iframeType('#field_item_nama_peserta input[type="text"]', fixedData.nama);
+    const innerFrameElement = await iframe.$('#dialog iframe.k-content-frame');
+    const innerFrameContent = await innerFrameElement.contentFrame();
+    await innerFrameContent.waitForSelector('body', { visible: true, timeout: 10000 });
+    const pilihBtn = await innerFrameContent.$('#pilih');
+    if (pilihBtn) {
+      const isVisible = await innerFrameContent
+        .$eval('#pilih', (el) => {
+          const style = window.getComputedStyle(el);
+          return style && style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+        })
+        .catch(() => false);
+      if (isVisible) {
+        await innerFrameContent.$eval('#pilih', (el) => el.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+        await pilihBtn.click({ delay: 100 });
+        logLine('Clicked pilih button to confirm identity.');
+      } else {
+        throw new Error('Pilih button is not visible in identity modal.');
+      }
+    } else {
+      throw new Error('Pilih button not found in identity modal.');
+    }
+    // Refactored: Check if #pilih is still visible after clicking
+    const pilihStillVisible = await innerFrameContent
+      .$eval('#pilih', (el) => !!el && el.offsetParent !== null)
+      .catch(() => false);
+    if (pilihStillVisible) {
+      throw new Error('Pilih button still visible after clicking, identity confirmation failed.');
+    }
+  }
 
   if (isManualInput) {
     // Proceed with manual input
 
     logLine(`Proceeding with manual input for NIK: ${NIK}`);
+
+    // Input name manually
+    await iframeType('#field_item_nama_peserta input[type="text"]', fixedData.nama);
 
     if (fixedData.gender !== 'Tidak Diketahui') {
       // Input gender
