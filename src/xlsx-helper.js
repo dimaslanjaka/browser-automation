@@ -295,18 +295,21 @@ export async function fixData(data) {
   }
   initialData.gender = gender; // fixData gender result
 
+  // Age calculation
+  let age = 0;
+
+  if (initialData['TGL LAHIR']) {
+    age = getAge(initialData['TGL LAHIR'], 'DD/MM/YYYY');
+    logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
+  } else {
+    age = getAge(parsed_nik?.data.lahir);
+    logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
+  }
+  data.age = age; // Ensure age is set in the data object
+
   // Pekerjaan normalization
   let pekerjaan = initialData.pekerjaan || initialData.PEKERJAAN || null;
   if (!pekerjaan) {
-    let age = 0;
-
-    if (initialData['TGL LAHIR']) {
-      age = getAge(initialData['TGL LAHIR'], 'DD/MM/YYYY');
-      logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
-    } else {
-      age = getAge(parsed_nik?.data.lahir);
-      logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
-    }
     if (!pekerjaan) {
       if (age > 55 || age <= 20) {
         pekerjaan = 'Tidak Bekerja';
