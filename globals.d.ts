@@ -30,6 +30,7 @@ export interface ExcelRowData4 {
 export type fixDataResult = ExcelRowData4 &
   ExcelRowData & {
     parsed_nik: ReturnType<(typeof import('nik-parser-jurusid'))['nikParserStrict']> | null;
+    gender: 'Laki-laki' | 'Perempuan' | 'Tidak Diketahui';
   };
 
 declare global {
