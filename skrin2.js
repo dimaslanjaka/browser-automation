@@ -3,6 +3,7 @@ import moment from 'moment';
 import { fetchXlsxData4 } from './src/fetchXlsxData4.js';
 import {
   clickIframeElement,
+  getFormValuesFromFrame,
   getPuppeteer,
   isIframeElementVisible,
   typeAndTriggerIframe,
@@ -226,9 +227,13 @@ async function processData(page, data) {
     fixedData.diabetes ? 'Ya' : 'Tidak',
     tidakOptions
   );
+  // detach from active element
+  await page.keyboard.press('Tab');
 
   if (fixedData.gender.toLowerCase().trim() === 'perempuan') {
     await typeToIframe(page, iframeSelector, '#field_item_risiko_9_id input[type="text"]', 'Tidak', tidakOptions);
+    // detach from active element
+    await page.keyboard.press('Tab');
   }
 
   if (!fixedData.batuk) {
@@ -277,6 +282,37 @@ async function processData(page, data) {
 
   // detach from any active element
   await page.keyboard.press('Tab');
+
+  const formValues = (await getFormValuesFromFrame(page, '.k-window-content iframe.k-content-frame', '#main-container'))
+    .map((item) => {
+      if (!item.name || item.name.trim().length === 0) {
+        return null; // Skip items without a name
+      }
+      if (item.isVisible.toLowerCase() === 'false') {
+        return null; // Skip invisible elements
+      }
+      let valueLabel = item.value || '';
+      if (valueLabel.trim().length === 0) {
+        valueLabel = '<empty>';
+      }
+      let keyLabel = '';
+      if (item.name && item.name.trim().length > 0) {
+        keyLabel = `[name="${item.name}"]`;
+      } else if (item.id && item.id.trim().length > 0) {
+        keyLabel = `#${item.id}`;
+      } else {
+        keyLabel = '<empty-key>';
+      }
+      const isDisabled = item.disabled?.toLowerCase() === 'true';
+      return {
+        selector: keyLabel,
+        value: valueLabel,
+        disabled: isDisabled,
+        label: item.label
+      };
+    })
+    .filter((item) => item !== null);
+  fixedData.formValues = formValues;
 }
 
 const main = async () => {
