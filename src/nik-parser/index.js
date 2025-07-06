@@ -204,7 +204,7 @@ export function nikParse(nik, callback) {
     });
   }
 
-  res = deepmerge(res, { data: { nik: nik } });
+  res = deepmerge(res, { data: { nik: nik, externalResult } });
 
   if (typeof callback === 'function') callback(res);
   return res;

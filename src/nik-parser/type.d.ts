@@ -19,6 +19,7 @@ export interface NikData {
   kecamatan: string; // District name
   uniqcode: string; // Unique code (last 4 digits)
   tambahan: NikTambahan; // Additional info
+  externalResult: import('nik-parser-jurusid').NikParseResult; // Result from nik-parser-jurusid
 }
 
 export interface NikResult {
