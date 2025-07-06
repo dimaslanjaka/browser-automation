@@ -166,7 +166,7 @@ export function nikParse(nik, callback) {
     };
   }
 
-  const externalResult = region_controller.nikParser(nik);
+  const externalResult = region_controller(nik);
 
   if (externalResult.status === 'success' || !res.data || !res.data.kelamin) {
     const extKelamin = externalResult.data.kelamin || '';
