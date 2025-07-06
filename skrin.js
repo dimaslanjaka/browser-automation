@@ -233,10 +233,11 @@ export async function processData(browser, data) {
         }
       }
 
-      await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
+      // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
       await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
       await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
       await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
+      await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
       await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', data.alamat);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
