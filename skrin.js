@@ -1,12 +1,12 @@
 import { spawnAsync } from 'cross-spawn';
 import dotenv from 'dotenv';
 import moment from 'moment';
+import nikParse from 'nik-parser-jurusid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from './src/address/nominatim.js';
 import { playMp3FromUrl } from './src/beep.js';
 import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
-import { nikParse } from './src/nik-parser/index.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import {
