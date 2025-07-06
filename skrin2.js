@@ -127,6 +127,7 @@ async function processData(page, data) {
   // Check NIK not found modal visibility
   let isManualInput = false;
   if (await isNIKNotFoundModalVisible()) {
+    // NIK not found, handle confirmation modal then proceed with manual input
     logLine(`Confirmation modal is visible - Data tidak ditemukan`);
 
     // You can check for specific buttons too
@@ -147,10 +148,8 @@ async function processData(page, data) {
         logLine(`Failed to click Yes button`);
       }
     }
-  }
-
-  // Check if the NIK is already registered, then confirm identity
-  if (await isIdentityModalVisible()) {
+  } else if (await isIdentityModalVisible()) {
+    // NIK is already registered, handle identity confirmation modal
     logLine(`Identity modal is visible - NIK is already registered. Confirming identity...`);
 
     const innerFrameElement = await iframe.$('#dialog iframe.k-content-frame');
@@ -251,6 +250,12 @@ async function processData(page, data) {
           '#field_item_alamat_ktp textarea[type="text"]',
           String(fixedData.alamat)
         );
+      } else {
+        // Throw error if any address component is empty
+        throw new Error(
+          `Address data is incomplete for NIK: ${NIK}. ` +
+            `provinsi: "${provinsi}", kotakab: "${kotakab}", namaKec: "${namaKec}", kelurahan: "${kelurahan && kelurahan.length > 0 ? kelurahan[0].name : ''}"`
+        );
       }
     }
   }
@@ -327,37 +332,6 @@ async function processData(page, data) {
   // detach from any active element
   await page.keyboard.press('Tab');
 
-  const formValues = (await getFormValuesFromFrame(page, iframeSelector, '#main-container'))
-    .map((item) => {
-      if (!item.name || item.name.trim().length === 0) {
-        return null; // Skip items without a name
-      }
-      if (item.isVisible.toLowerCase() === 'false') {
-        return null; // Skip invisible elements
-      }
-      let valueLabel = item.value || '';
-      if (valueLabel.trim().length === 0) {
-        valueLabel = '<empty>';
-      }
-      let keyLabel = '';
-      if (item.name && item.name.trim().length > 0) {
-        keyLabel = `[name="${item.name}"]`;
-      } else if (item.id && item.id.trim().length > 0) {
-        keyLabel = `#${item.id}`;
-      } else {
-        keyLabel = '<empty-key>';
-      }
-      const isDisabled = item.disabled?.toLowerCase() === 'true';
-      return {
-        selector: keyLabel,
-        value: valueLabel,
-        disabled: isDisabled,
-        label: item.label
-      };
-    })
-    .filter((item) => item !== null);
-  fixedData.formValues = formValues;
-
   await sleep(3000); // Wait for the form to stabilize
 
   // Prepare submit data
@@ -419,6 +393,36 @@ async function processData(page, data) {
 
   if (!(await isElementVisible(page, iframeSelector))) {
     logLine(`Data for NIK: ${NIK} submitted successfully.`);
+    const formValues = (await getFormValuesFromFrame(page, iframeSelector, '#main-container'))
+      .map((item) => {
+        if (!item.name || item.name.trim().length === 0) {
+          return null; // Skip items without a name
+        }
+        if (item.isVisible.toLowerCase() === 'false') {
+          return null; // Skip invisible elements
+        }
+        let valueLabel = item.value || '';
+        if (valueLabel.trim().length === 0) {
+          valueLabel = '<empty>';
+        }
+        let keyLabel = '';
+        if (item.name && item.name.trim().length > 0) {
+          keyLabel = `[name="${item.name}"]`;
+        } else if (item.id && item.id.trim().length > 0) {
+          keyLabel = `#${item.id}`;
+        } else {
+          keyLabel = '<empty-key>';
+        }
+        const isDisabled = item.disabled?.toLowerCase() === 'true';
+        return {
+          selector: keyLabel,
+          value: valueLabel,
+          disabled: isDisabled,
+          label: item.label
+        };
+      })
+      .filter((item) => item !== null);
+    fixedData.formValues = formValues;
     addLog({
       id: NIK,
       data: { ...fixedData, status: 'success' },
