@@ -1,16 +1,18 @@
 import 'dotenv/config';
 import moment from 'moment';
+import { array_random } from 'sbg-utility';
 import { fetchXlsxData4 } from './src/fetchXlsxData4.js';
 import {
   clickIframeElement,
   getFormValuesFromFrame,
   getPuppeteer,
+  isElementVisible,
   isIframeElementVisible,
   typeAndTriggerIframe,
   typeToIframe
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, logLine, sleep, ucwords, waitEnter } from './src/utils.js';
+import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, ucwords, waitEnter } from './src/utils.js';
 import { fixData, getDataRange } from './src/xlsx-helper.js';
 
 console.clear();
@@ -63,15 +65,30 @@ async function processData(page, data) {
 
   await typeAndTriggerIframe(page, '.k-window-content iframe.k-content-frame', '#nik', NIK);
 
-  await sleep(2000); // Wait for the NIK input to process
+  await sleep(4000); // Wait for the NIK input to process
 
-  if (
+  const isInvalidAlertVisible = async () =>
+    await isIframeElementVisible(
+      page,
+      '.k-window-content iframe.k-content-frame',
+      '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg'
+    );
+  const isIdentityModalVisible = async () =>
+    await isIframeElementVisible(
+      page,
+      '.k-window-content iframe.k-content-frame',
+      '.k-widget.k-window.k-window-maximized'
+    );
+  const isNikErrorVisible = async () =>
+    await isIframeElementVisible(page, '.k-window-content iframe.k-content-frame', '.k-notification-error');
+  const isNIKNotFoundModalVisible = async () =>
     await isIframeElementVisible(
       page,
       '.k-window-content iframe.k-content-frame',
       '[aria-labelledby="dialogconfirm_wnd_title"]'
-    )
-  ) {
+    );
+
+  if (await isNIKNotFoundModalVisible()) {
     logLine(`Confirmation modal is visible - Data tidak ditemukan`);
 
     // You can check for specific buttons too
@@ -313,6 +330,73 @@ async function processData(page, data) {
     })
     .filter((item) => item !== null);
   fixedData.formValues = formValues;
+
+  await sleep(3000); // Wait for the form to stabilize
+
+  // Prepare submit data
+
+  const isAllowedToSubmit = async () => {
+    const identityModalVisible = await isIdentityModalVisible(page);
+    const invalidAlertVisible = await isInvalidAlertVisible(page);
+    const nikErrorVisible = await isNikErrorVisible(page);
+    const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
+
+    console.log('identityModalVisible:', identityModalVisible);
+    console.log('invalidAlertVisible:', invalidAlertVisible);
+    console.log('nikErrorVisible:', nikErrorVisible);
+    console.log('nikNotFoundModalVisible:', nikNotFoundModalVisible);
+    return !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
+  };
+
+  console.log('isAllowedToSubmit:', await isAllowedToSubmit());
+
+  if (await isAllowedToSubmit()) {
+    logLine(`Submitting data for NIK: ${NIK}`);
+    const iframeElement = await page.$(iframeSelector);
+    const iframe = await iframeElement.contentFrame();
+
+    // Scroll to submit button
+    await iframe.$eval('#save', (el) => el.scrollIntoView());
+    // Click the submit button
+    await clickIframeElement(page, iframeSelector, '#save');
+    // Wait for the confirmation modal to appear
+    await sleep(2000); // Wait for the modal to appear
+
+    let counter = 0; // Counter for waiting for confirmation
+
+    while (!(await isIframeElementVisible(page, iframeSelector, '#yesButton'))) {
+      logInline(`Yes button is not visible for NIK: ${NIK} after ${counter}s. Please check the form for errors.`);
+      await sleep(1000);
+      counter++;
+    }
+
+    counter = 0; // Reset counter
+    logLine(`Yes button is now visible for NIK: ${NIK}. Waiting for submission...`);
+
+    while (!isAllowedToSubmit()) {
+      logInline(`Submission not allowed for NIK: ${NIK} after ${counter}s. Please check the form for errors.`);
+      await sleep(1000);
+      counter++;
+    }
+
+    counter = 0; // Reset counter
+    logLine(`Submission allowed for NIK: ${NIK}. Clicking Yes to confirm...`);
+
+    // Click the Yes button to confirm submission
+    await clickIframeElement(page, iframeSelector, '#yesButton');
+  } else {
+    logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
+    // Wait for user to fix data
+    await waitEnter(`Please fix data for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
+  }
+
+  await sleep(2000); // Wait for the submission to process
+
+  if (!(await isElementVisible(page, iframeSelector))) {
+    logLine(`Data for NIK: ${NIK} submitted successfully.`);
+  } else {
+    logLine(`Data for NIK: ${NIK} submission failed. Please check the form for errors.`);
+  }
 }
 
 const main = async () => {
@@ -326,7 +410,7 @@ const main = async () => {
     toNama: 'MUHAMMAD NATHAN ALFATIR'
   });
 
-  await processData(page, rangeData.at(0));
+  await processData(page, array_random(rangeData));
 };
 
 main();
