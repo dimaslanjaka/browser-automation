@@ -310,7 +310,11 @@ async function processData(page, data) {
     return !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
   };
 
-  console.log('isAllowedToSubmit:', await isAllowedToSubmit());
+  while (!(await isAllowedToSubmit())) {
+    logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
+    // Wait for user to fix data
+    await waitEnter(`Please fix data for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
+  }
 
   if (await isAllowedToSubmit()) {
     logLine(`Submitting data for NIK: ${NIK}`);
@@ -347,10 +351,6 @@ async function processData(page, data) {
 
     // Click the Yes button to confirm submission
     await clickIframeElement(page, iframeSelector, '#yesButton');
-  } else {
-    logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
-    // Wait for user to fix data
-    await waitEnter(`Please fix data for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
   }
 
   await sleep(2000); // Wait for the submission to process
