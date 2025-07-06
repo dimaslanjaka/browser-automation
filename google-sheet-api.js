@@ -51,21 +51,6 @@ function saveToken(auth, customCredentials = null) {
 }
 
 /**
- * Loads previously saved OAuth2 credentials from the local file system.
- *
- * @returns {import('google-auth-library').Credentials|null} The saved credentials object,
- * or null if the file doesn't exist or cannot be parsed.
- */
-function loadSavedToken() {
-  try {
-    const content = fs.readFileSync(TOKEN_PATH, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Loads an OAuth2Client using saved credentials and refresh tokens.
  *
  * @async
