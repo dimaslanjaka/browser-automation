@@ -297,27 +297,6 @@ export function getXlsxData(startIndex, lastIndex, sheetName = 'Sheet1') {
   return fixedData.slice(startIndex, lastIndex);
 }
 
-/**
- * Calculates the age in years from a given birth date string using a specified format.
- *
- * @param {string} dateString - The birth date as a string.
- * @param {string} [dateFormat='DD/MM/YYYY'] - The expected format of the input date string (default is 'DD/MM/YYYY').
- * @returns {number} The age in years. Returns 0 if the date is in the future.
- * @throws {Error} If the input date string is not valid according to the given format.
- */
-export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
-  let birthDate = moment(dateString, dateFormat, true); // Strict parsing
-
-  if (!birthDate.isValid()) {
-    throw new Error(`Invalid date format: "${dateString}". Expected format: ${dateFormat}`);
-  }
-
-  let age = moment().diff(birthDate, 'years');
-
-  // Ensure age is never negative (handles future dates)
-  return Math.max(0, age);
-}
-
 if (process.argv[1] === __filename) {
   (async () => {
     console.log('=== Fetching Excel data ===');
