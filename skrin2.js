@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import moment from 'moment';
-import { array_random } from 'sbg-utility';
 import { fetchXlsxData4 } from './src/fetchXlsxData4.js';
 import { addLog, getLogById } from './src/logHelper.js';
 import {
@@ -135,12 +134,12 @@ async function processData(page, data) {
 
     // Try to find the birth date field in fixedData
     let tglLahir = fixedData['TGL LAHIR'];
-    logLine('Resolved tglLahir: ' + tglLahir);
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(`Invalid date format for TGL LAHIR: ${tglLahir} (NIK: ${NIK})`);
     } else {
       await typeAndTriggerIframe(page, iframeSelector, '#field_item_tgl_lahir input[type="text"]', tglLahir);
     }
+    logLine('Resolved tglLahir: ' + tglLahir);
 
     // Input data job
     await typeAndTriggerIframe(page, iframeSelector, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
@@ -378,7 +377,13 @@ const main = async () => {
     toNama: 'MUHAMMAD NATHAN ALFATIR'
   });
 
-  await processData(page, array_random(rangeData));
+  while (rangeData.length > 0) {
+    const currentData = rangeData.shift();
+    if (!currentData) {
+      throw new Error('No data to process');
+    }
+    await processData(page, currentData);
+  }
 };
 
 main();
