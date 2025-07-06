@@ -56,16 +56,24 @@ export function getNumbersOnly(str) {
 }
 
 /**
- * Extracts numeric characters from a string while preserving and converting decimal dots to commas.
+ * Extracts a number (integer or float) from a string, preserving decimal separator as comma.
+ * If the input is already a number, returns it as a string (with comma if float).
+ *
  * @function extractNumericWithComma
- * @param {string} str - The input string.
- * @returns {string} A string containing only numeric characters and commas.
+ * @param {string|number} str - The input string or number.
+ * @returns {string} A string containing the numeric value, with decimal comma if applicable.
  */
 export function extractNumericWithComma(str) {
-  return `${str}`
-    .replace(/\./g, ',') // Convert dots to commas
-    .replace(/[^\d,]/g, '') // Remove all non-numeric and non-comma characters
-    .trim();
+  if (typeof str === 'number') {
+    // Convert number to string, replace dot with comma if float
+    return String(str).replace('.', ',');
+  }
+  const match = `${str}`.match(/\d+[.,]?\d*/);
+  if (match) {
+    // Replace decimal dot with comma
+    return match[0].replace('.', ',');
+  }
+  return '';
 }
 
 export const defaultLogFilePath = path.join(process.cwd(), '.cache/lastData.log');
