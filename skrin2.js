@@ -31,10 +31,12 @@ async function processData(page, data) {
   let isManualInput = false;
   logLine('Processing', fixedData);
 
+  const iframeSelector = '.k-window-content iframe.k-content-frame';
+
   await enterSkriningPage(page, false);
 
   // Wait for the dialog window iframe to appear
-  await page.waitForSelector('.k-window-content iframe.k-content-frame', { visible: true, timeout: 30000 });
+  await page.waitForSelector(iframeSelector, { visible: true, timeout: 30000 });
 
   // Wait for the iframe to load and the datepicker element to be ready
   await page.waitForFunction(
@@ -53,54 +55,42 @@ async function processData(page, data) {
   const tanggalEntry = fixedData.tanggal || fixedData['TANGGAL ENTRY'];
 
   // Set the date value in the iframe's datepicker element
+
   if (tanggalEntry) {
-    // await setIframeElementValue(page, '.k-window-content iframe.k-content-frame', '#dt_tgl_skrining', tanggalEntry, {
+    // await setIframeElementValue(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry, {
     //   triggerEvents: true,
     //   handleDisabled: true
     // });
-    typeAndTriggerIframe(page, '.k-window-content iframe.k-content-frame', '#dt_tgl_skrining', tanggalEntry);
+    typeAndTriggerIframe(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry);
     logLine(`Date ${tanggalEntry} applied to #dt_tgl_skrining`);
     await sleep(1000); // Wait for the datepicker to process the input
   }
 
-  await typeAndTriggerIframe(page, '.k-window-content iframe.k-content-frame', '#nik', NIK);
+  await typeAndTriggerIframe(page, iframeSelector, '#nik', NIK);
 
   await sleep(4000); // Wait for the NIK input to process
 
   const isInvalidAlertVisible = async () =>
-    await isIframeElementVisible(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg'
-    );
+    await isIframeElementVisible(page, iframeSelector, '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');
   const isIdentityModalVisible = async () =>
-    await isIframeElementVisible(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      '.k-widget.k-window.k-window-maximized'
-    );
-  const isNikErrorVisible = async () =>
-    await isIframeElementVisible(page, '.k-window-content iframe.k-content-frame', '.k-notification-error');
+    await isIframeElementVisible(page, iframeSelector, '.k-widget.k-window.k-window-maximized');
+  const isNikErrorVisible = async () => await isIframeElementVisible(page, iframeSelector, '.k-notification-error');
   const isNIKNotFoundModalVisible = async () =>
-    await isIframeElementVisible(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      '[aria-labelledby="dialogconfirm_wnd_title"]'
-    );
+    await isIframeElementVisible(page, iframeSelector, '[aria-labelledby="dialogconfirm_wnd_title"]');
 
   if (await isNIKNotFoundModalVisible()) {
     logLine(`Confirmation modal is visible - Data tidak ditemukan`);
 
     // You can check for specific buttons too
-    const hasYesButton = await isIframeElementVisible(page, '.k-window-content iframe.k-content-frame', '#yesButton');
-    const hasNoButton = await isIframeElementVisible(page, '.k-window-content iframe.k-content-frame', '#noButton');
+    const hasYesButton = await isIframeElementVisible(page, iframeSelector, '#yesButton');
+    const hasNoButton = await isIframeElementVisible(page, iframeSelector, '#noButton');
 
     if (hasYesButton && hasNoButton) {
       logLine(`Both Yes and No buttons are available`);
       // Here you can click on the appropriate button
 
       // Click the Yes button to continue with manual input
-      const clickSuccess = await clickIframeElement(page, '.k-window-content iframe.k-content-frame', '#yesButton');
+      const clickSuccess = await clickIframeElement(page, iframeSelector, '#yesButton');
 
       if (clickSuccess) {
         logLine(`Successfully clicked Yes button - continuing with manual input`);
@@ -119,31 +109,16 @@ async function processData(page, data) {
     logLine(`Proceeding with manual input for NIK: ${NIK}`);
 
     // Insert default skrining inputs
-    await typeAndTriggerIframe(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      'input[name="metode_id_input"]',
-      'Tunggal'
-    );
-    await typeAndTriggerIframe(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      'input[name="tempat_skrining_id_input"]',
-      'Puskesmas'
-    );
 
-    await typeAndTriggerIframe(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      '#field_item_nama_peserta input[type="text"]',
-      fixedData.nama
-    );
+    await typeAndTriggerIframe(page, iframeSelector, 'input[name="metode_id_input"]', 'Tunggal');
+    await typeAndTriggerIframe(page, iframeSelector, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
+    await typeAndTriggerIframe(page, iframeSelector, '#field_item_nama_peserta input[type="text"]', fixedData.nama);
 
     if (fixedData.gender !== 'Tidak Diketahui') {
       // Input gender
       await typeAndTriggerIframe(
         page,
-        '.k-window-content iframe.k-content-frame',
+        iframeSelector,
         '#field_item_jenis_kelamin_id input[type="text"]',
         fixedData.gender
       );
@@ -157,21 +132,11 @@ async function processData(page, data) {
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(`Invalid date format for TGL LAHIR: ${tglLahir} (NIK: ${NIK})`);
     } else {
-      await typeAndTriggerIframe(
-        page,
-        '.k-window-content iframe.k-content-frame',
-        '#field_item_tgl_lahir input[type="text"]',
-        tglLahir
-      );
+      await typeAndTriggerIframe(page, iframeSelector, '#field_item_tgl_lahir input[type="text"]', tglLahir);
     }
 
     // Input data job
-    await typeAndTriggerIframe(
-      page,
-      '.k-window-content iframe.k-content-frame',
-      'input[name="pekerjaan_id_input"]',
-      fixedData.pekerjaan
-    );
+    await typeAndTriggerIframe(page, iframeSelector, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
     // input address
     if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
@@ -184,31 +149,31 @@ async function processData(page, data) {
         // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
         await typeAndTriggerIframe(
           page,
-          '.k-window-content iframe.k-content-frame',
+          iframeSelector,
           '#field_item_provinsi_ktp_id input[type="text"]',
           ucwords(provinsi)
         );
         await typeAndTriggerIframe(
           page,
-          '.k-window-content iframe.k-content-frame',
+          iframeSelector,
           '#field_item_kabupaten_ktp_id input[type="text"]',
           ucwords(kotakab)
         );
         await typeAndTriggerIframe(
           page,
-          '.k-window-content iframe.k-content-frame',
+          iframeSelector,
           '#field_item_kecamatan_ktp_id input[type="text"]',
           ucwords(namaKec)
         );
         await typeAndTriggerIframe(
           page,
-          '.k-window-content iframe.k-content-frame',
+          iframeSelector,
           '#field_item_kelurahan_ktp_id input[type="text"]',
           ucwords(selectedKelurahan.name)
         );
         await typeAndTriggerIframe(
           page,
-          '.k-window-content iframe.k-content-frame',
+          iframeSelector,
           '#field_item_alamat_ktp textarea[type="text"]',
           fixedData.alamat
         );
@@ -220,21 +185,11 @@ async function processData(page, data) {
   const bb = fixedData.bb || fixedData.BB || null;
   const tb = fixedData.tb || fixedData.TB || null;
   logLine(`Inputting berat badan (${bb}) dan tinggi badan (${tb}) untuk NIK: ${NIK}`);
-  await typeToIframe(
-    page,
-    '.k-window-content iframe.k-content-frame',
-    '#field_item_berat_badan input[type="text"]',
-    extractNumericWithComma(bb)
-  );
-  await typeToIframe(
-    page,
-    '.k-window-content iframe.k-content-frame',
-    '#field_item_tinggi_badan input[type="text"]',
-    extractNumericWithComma(tb)
-  );
+
+  await typeToIframe(page, iframeSelector, '#field_item_berat_badan input[type="text"]', extractNumericWithComma(bb));
+  await typeToIframe(page, iframeSelector, '#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(tb));
 
   // Input tidak
-  const iframeSelector = '.k-window-content iframe.k-content-frame';
   const tidakOptions = { clearFirst: true };
 
   await typeToIframe(
@@ -300,7 +255,7 @@ async function processData(page, data) {
   // detach from any active element
   await page.keyboard.press('Tab');
 
-  const formValues = (await getFormValuesFromFrame(page, '.k-window-content iframe.k-content-frame', '#main-container'))
+  const formValues = (await getFormValuesFromFrame(page, iframeSelector, '#main-container'))
     .map((item) => {
       if (!item.name || item.name.trim().length === 0) {
         return null; // Skip items without a name
@@ -352,6 +307,7 @@ async function processData(page, data) {
 
   if (await isAllowedToSubmit()) {
     logLine(`Submitting data for NIK: ${NIK}`);
+
     const iframeElement = await page.$(iframeSelector);
     const iframe = await iframeElement.contentFrame();
 
