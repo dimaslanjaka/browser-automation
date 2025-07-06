@@ -1,4 +1,4 @@
-import { getAge } from '../xlsx_data.js';
+import { getAge } from '../src/date.js';
 import { typeAndTrigger } from './puppeteer_utils.js';
 
 /**
@@ -45,7 +45,7 @@ export async function isIdentityModalVisible(page) {
  *
  * @async
  * @function
- * @param {import('puppeteer').Page} page - The Puppeteer Page instance representing the browser tab.
+ * @param {import('puppeteer').Page|import('puppeteer').Frame} page - The Puppeteer Page instance representing the browser tab.
  * @returns {Promise<void>} Resolves when the click is attempted or logs an appropriate error.
  */
 export async function confirmIdentityModal(page) {
