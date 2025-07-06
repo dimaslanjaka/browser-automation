@@ -8,8 +8,7 @@ import {
   getPuppeteer,
   isElementVisible,
   isIframeElementVisible,
-  typeAndTriggerIframe,
-  typeToIframe
+  typeAndTriggerIframe
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, ucwords, waitEnter } from './src/utils.js';
@@ -24,6 +23,22 @@ console.clear();
  * @param {import('puppeteer').Page} page - Puppeteer page instance to operate on.
  * @param {Awaited<ReturnType<typeof getDataRange>>[number]} data - A single data row from getDataRange (already fixed by fixData).
  * @returns {Promise<void>} Resolves when processing is complete.
+ */
+
+/**
+ * Test function to fill out the skrining form with sample data.
+ *
+ * @async
+ * @param {import('puppeteer').Page} page - Puppeteer page instance to operate on.
+ * @returns {Promise<void>} Resolves when the test is complete.
+ */
+
+/**
+ * Main entry point for the skrining automation script.
+ *
+ * @async
+ * @function
+ * @returns {Promise<void>} Resolves when the script has finished running.
  */
 async function processData(page, data) {
   const fixedData = await fixData(data);
@@ -58,16 +73,54 @@ async function processData(page, data) {
 
   logLine('Iframe loaded and datepicker element is ready');
 
+  // Get the iframe element and its content frame
+  const iframeElement = await page.$(iframeSelector);
+  const iframe = await iframeElement.contentFrame();
+  const iframeType = async (selector, value) => {
+    // Skip if element is hidden
+    const isVisible = await iframe.$eval(selector, (el) => {
+      const style = window.getComputedStyle(el);
+      return style && style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+    });
+    if (!isVisible) {
+      logLine(`Element ${selector} is not visible, skipping typing.`);
+      return;
+    }
+    // Scroll to the element before typing
+    await iframe.$eval(selector, (el) => el.scrollIntoView({ behavior: 'auto', block: 'center' }));
+    // Focus the element before typing
+    await iframe.focus(selector);
+    // Reset existing value before typing
+    await page.evaluate(
+      (iframeSelector, selector) => {
+        const iframe = document.querySelector(iframeSelector);
+        const element = iframe.contentDocument.querySelector(selector);
+        element.value = '';
+        element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
+      },
+      iframeSelector,
+      selector
+    );
+    // Type the value into the input field
+    await iframe.type(selector, value, { delay: 100 });
+    // Trigger input and change events
+    await iframe.$eval(selector, (el) => {
+      const event = new Event('change', { bubbles: true });
+      el.dispatchEvent(event);
+    });
+    // Wait for the input to stabilize
+    await sleep(1000);
+  };
+
   const tanggalEntry = fixedData.tanggal || fixedData['TANGGAL ENTRY'];
 
   // Set the date value in the iframe's datepicker element
 
   if (tanggalEntry) {
-    // await setIframeElementValue(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry, {
-    //   triggerEvents: true,
-    //   handleDisabled: true
-    // });
-    typeAndTriggerIframe(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry);
+    await iframe.focus('#dt_tgl_skrining');
+    await iframe.$eval('#dt_tgl_skrining', (e) => e.removeAttribute('readonly'));
+    await typeAndTriggerIframe(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry);
+    await iframe.$eval('#dt_tgl_skrining', (e) => e.setAttribute('readonly', 'true'));
     logLine(`Date ${tanggalEntry} applied to #dt_tgl_skrining`);
     await sleep(1000); // Wait for the datepicker to process the input
   }
@@ -109,16 +162,16 @@ async function processData(page, data) {
     logLine(`Confirmation modal is not visible - Data found or no confirmation needed`);
   }
 
+  // Insert default skrining inputs
+
+  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+  await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
+  await iframeType('#field_item_nama_peserta input[type="text"]', fixedData.nama);
+
   if (isManualInput) {
     // Proceed with manual input
 
     logLine(`Proceeding with manual input for NIK: ${NIK}`);
-
-    // Insert default skrining inputs
-
-    await typeAndTriggerIframe(page, iframeSelector, 'input[name="metode_id_input"]', 'Tunggal');
-    await typeAndTriggerIframe(page, iframeSelector, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
-    await typeAndTriggerIframe(page, iframeSelector, '#field_item_nama_peserta input[type="text"]', fixedData.nama);
 
     if (fixedData.gender !== 'Tidak Diketahui') {
       // Input gender
@@ -140,9 +193,6 @@ async function processData(page, data) {
       await typeAndTriggerIframe(page, iframeSelector, '#field_item_tgl_lahir input[type="text"]', tglLahir);
     }
     logLine('Resolved tglLahir: ' + tglLahir);
-
-    // Input data job
-    await typeAndTriggerIframe(page, iframeSelector, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
     // input address
     if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
@@ -181,49 +231,47 @@ async function processData(page, data) {
           page,
           iframeSelector,
           '#field_item_alamat_ktp textarea[type="text"]',
-          fixedData.alamat
+          String(fixedData.alamat)
         );
       }
     }
   }
+
+  // Input pekerjaan
+  logLine(`Inputting pekerjaan: ${fixedData.pekerjaan} for NIK: ${NIK}`);
+  await iframeType('input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
   // Input berat badan and tinggi badan
   const bb = fixedData.bb || fixedData.BB || null;
   const tb = fixedData.tb || fixedData.TB || null;
   logLine(`Inputting berat badan (${bb}) dan tinggi badan (${tb}) untuk NIK: ${NIK}`);
 
-  await typeToIframe(page, iframeSelector, '#field_item_berat_badan input[type="text"]', extractNumericWithComma(bb));
-  await typeToIframe(page, iframeSelector, '#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(tb));
+  await iframeType('#field_item_berat_badan input[type="text"]', extractNumericWithComma(bb));
+  await iframeType('#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(tb));
 
   // Input tidak
   const tidakOptions = { clearFirst: true };
 
-  await typeToIframe(
-    page,
-    iframeSelector,
-    '#field_item_risiko_6_id input[type="text"]',
-    fixedData.diabetes ? 'Ya' : 'Tidak',
-    tidakOptions
-  );
+  await iframeType('#field_item_risiko_6_id input[type="text"]', fixedData.diabetes ? 'Ya' : 'Tidak', tidakOptions);
   // detach from active element
   await page.keyboard.press('Tab');
 
   if (fixedData.gender.toLowerCase().trim() === 'perempuan') {
-    await typeToIframe(page, iframeSelector, '#field_item_risiko_9_id input[type="text"]', 'Tidak', tidakOptions);
+    await iframeType('#field_item_risiko_9_id input[type="text"]', 'Tidak', tidakOptions);
     // detach from active element
     await page.keyboard.press('Tab');
   }
 
   if (!fixedData.batuk) {
     logLine(`Inputting batuk: Tidak ${fixedData.NAMA} (${NIK})`);
-    await typeToIframe(page, iframeSelector, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak', tidakOptions);
+    await iframeType('#field_item_gejala_2_1_id input[type="text"]', 'Tidak', tidakOptions);
     // detach from active element
     await page.keyboard.press('Tab');
   } else {
     let keteranganBatuk = fixedData.batuk.replace(/ya,/, 'batuk');
     logLine(`Inputting batuk: ${keteranganBatuk} ${fixedData.NAMA} (${NIK})`);
     if (/\d/m.test(keteranganBatuk)) {
-      await typeToIframe(page, iframeSelector, '#field_item_keterangan textarea', keteranganBatuk, tidakOptions);
+      await iframeType('#field_item_keterangan textarea', keteranganBatuk, tidakOptions);
       logLine(`Keterangan batuk contains a number for NIK: ${NIK}, waiting for user to fix data...`);
       await waitEnter(`Please fix data batuk/demam for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
     }
@@ -253,7 +301,7 @@ async function processData(page, data) {
   }
 
   for (const selector of tidakFields) {
-    await typeToIframe(page, iframeSelector, selector, 'Tidak', tidakOptions);
+    await iframeType(selector, 'Tidak', tidakOptions);
     // detach from active element
     await page.keyboard.press('Tab');
   }
@@ -318,9 +366,6 @@ async function processData(page, data) {
   if (await isAllowedToSubmit()) {
     logLine(`Submitting data for NIK: ${NIK}`);
 
-    const iframeElement = await page.$(iframeSelector);
-    const iframe = await iframeElement.contentFrame();
-
     // Scroll to submit button
     await iframe.$eval('#save', (el) => el.scrollIntoView());
     // Click the submit button
@@ -366,6 +411,79 @@ async function processData(page, data) {
   }
 }
 
+/**
+ *
+ * @param {import('puppeteer').Page} page
+ */
+async function _test(page) {
+  await enterSkriningPage(page, false);
+
+  await sleep(3000);
+
+  const iframeSelector = '.k-window-content iframe.k-content-frame';
+  const iframeElement = await page.$(iframeSelector);
+  const iframe = await iframeElement.contentFrame();
+  const iframeType = async (selector, value) => {
+    // Skip if element is hidden
+    const isVisible = await iframe.$eval(selector, (el) => {
+      const style = window.getComputedStyle(el);
+      return style && style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+    });
+    if (!isVisible) {
+      logLine(`Element ${selector} is not visible, skipping typing.`);
+      return;
+    }
+    // Scroll to the element before typing
+    await iframe.$eval(selector, (el) => el.scrollIntoView({ behavior: 'auto', block: 'center' }));
+    // Focus the element before typing
+    await iframe.focus(selector);
+    // Reset existing value before typing
+    await page.evaluate(
+      (iframeSelector, selector) => {
+        const iframe = document.querySelector(iframeSelector);
+        const element = iframe.contentDocument.querySelector(selector);
+        element.value = '';
+        element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
+      },
+      iframeSelector,
+      selector
+    );
+    // Type the value into the input field
+    await iframe.type(selector, value, { delay: 100 });
+    // Trigger input and change events
+    await iframe.$eval(selector, (el) => {
+      const event = new Event('change', { bubbles: true });
+      el.dispatchEvent(event);
+    });
+    // Wait for the input to stabilize
+    await sleep(1000);
+  };
+  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+  await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
+  await iframeType('#field_item_nama_peserta input[type="text"]', 'MUHAMMAD NATHAN ALFATIR');
+  const tidakFields = [
+    '#field_item_cxr_pemeriksaan_id input[type="text"]',
+    '#field_item_gejala_2_3_id input[type="text"]',
+    '#field_item_gejala_2_4_id input[type="text"]',
+    '#field_item_gejala_2_5_id input[type="text"]',
+    '#field_item_gejala_6_id input[type="text"]',
+    '#field_item_risiko_1_id input[type="text"]',
+    '#field_item_risiko_10_id input[type="text"]',
+    '#field_item_risiko_11_id input[type="text"]',
+    '#field_item_risiko_4_id input[type="text"]',
+    '#field_item_risiko_5_id input[type="text"]',
+    '#field_item_risiko_7_id input[type="text"]',
+    '#field_item_riwayat_kontak_tb_id input[type="text"]',
+    '#field_item_gejala_1_1_id input[type="text"]',
+    '#field_item_gejala_1_3_id input[type="text"]',
+    '#form_item_gejala_1_4_id input[type="text"]',
+    '#field_item_gejala_1_5_id input[type="text"]'
+  ];
+  for (const selector of tidakFields) {
+    await iframeType(selector, 'Tidak');
+  }
+}
+
 const main = async () => {
   const { page } = await getPuppeteer();
   await skrinLogin(page);
@@ -379,11 +497,10 @@ const main = async () => {
 
   while (rangeData.length > 0) {
     const currentData = rangeData.shift();
-    if (!currentData) {
-      throw new Error('No data to process');
-    }
-    await processData(page, currentData);
+    if (currentData) await processData(page, currentData);
   }
+
+  // await _test(page);
 };
 
 main();
