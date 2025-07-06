@@ -25,6 +25,15 @@ export function removeLog(id) {
 }
 
 /**
+ * Get a log entry by id
+ * @param {string} id
+ * @returns {object | undefined}
+ */
+export function getLogById(id) {
+  return logs.get(id);
+}
+
+/**
  * Get all logs or filtered logs
  * @param {(log: object) => boolean} [filterFn]
  * @returns {Array}

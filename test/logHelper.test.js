@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from '@jest/globals';
-import { addLog, getLogs, removeLog } from '../src/logHelper';
+import { addLog, getLogById, getLogs, removeLog } from '../src/logHelper.js';
 
 describe('logHelper', () => {
   beforeEach(() => {
@@ -27,6 +27,18 @@ describe('logHelper', () => {
     expect(getLogs().length).toBe(1);
     removeLog('2');
     expect(getLogs().length).toBe(0);
+  });
+
+  test('getLogById returns the correct log entry', () => {
+    addLog({ id: '5', data: { foo: 'baz' }, message: 'Find me' });
+    const log = getLogById('5');
+    expect(log).toBeDefined();
+    expect(log).toMatchObject({
+      id: '5',
+      data: { foo: 'baz' },
+      message: 'Find me'
+    });
+    expect(typeof log.timestamp).toBe('string');
   });
 
   test('getLogs returns filtered logs', () => {
