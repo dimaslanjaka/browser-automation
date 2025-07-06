@@ -9,7 +9,7 @@ import { array_random, writefile } from 'sbg-utility';
 import { getAge } from '../src/date.js';
 import { geocodeWithNominatim } from './address/nominatim.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
-import { logLine } from './utils.js';
+import { getNumbersOnly, logLine } from './utils.js';
 
 /**
  * Generates a hash for the given file
@@ -217,9 +217,10 @@ export async function fixData(data) {
   if (!initialData) throw new Error('Invalid data format: data is required');
 
   // Normalize key fields
-  const nik = initialData.NIK || initialData.nik || null;
+  let nik = initialData.NIK || initialData.nik || null;
   const nama = initialData.NAMA || initialData.nama || null;
   if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
+  nik = getNumbersOnly(nik);
   if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
   if (nama.length < 3) throw new Error(`Invalid NAMA length: ${nama} (expected at least 3 characters)`);
 
