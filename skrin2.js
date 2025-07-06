@@ -2,6 +2,7 @@ import 'dotenv/config';
 import moment from 'moment';
 import { array_random } from 'sbg-utility';
 import { fetchXlsxData4 } from './src/fetchXlsxData4.js';
+import { addLog, getLogById } from './src/logHelper.js';
 import {
   clickIframeElement,
   getFormValuesFromFrame,
@@ -28,6 +29,12 @@ console.clear();
 async function processData(page, data) {
   const fixedData = await fixData(data);
   const NIK = getNumbersOnly(fixedData.NIK);
+  const cachedData = getLogById(NIK);
+  if (cachedData && cachedData.data && cachedData.data.status === 'success') {
+    logLine(`Data for NIK: ${NIK} already processed. Skipping...`);
+    return;
+  }
+
   let isManualInput = false;
   logLine('Processing', fixedData);
 
@@ -350,6 +357,11 @@ async function processData(page, data) {
 
   if (!(await isElementVisible(page, iframeSelector))) {
     logLine(`Data for NIK: ${NIK} submitted successfully.`);
+    addLog({
+      id: NIK,
+      data: { ...fixedData, status: 'success' },
+      message: `Data for NIK: ${NIK} submitted successfully.`
+    });
   } else {
     logLine(`Data for NIK: ${NIK} submission failed. Please check the form for errors.`);
   }
