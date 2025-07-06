@@ -44,5 +44,12 @@ import { fixData } from '../src/xlsx-helper.js';
         throw new Error(`Invalid date format for parsed_nik.lahir: '${parsedNikLahir}' (NIK: ${_result.nik})`);
       }
     }
+
+    const bb = _result.bb || _result.BB || null;
+    const tb = _result.tb || _result.TB || null;
+    if (!bb || !tb) {
+      console.log('Row data:', JSON.stringify(row, null, 2));
+      throw new Error(`Berat badan or tinggi badan not found for NIK: ${_result.nik}`);
+    }
   }
 })();
