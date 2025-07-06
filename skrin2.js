@@ -497,6 +497,11 @@ const main = async () => {
 
   while (rangeData.length > 0) {
     const currentData = rangeData.shift();
+    // Check if the data for this NIK has already been processed
+    if (getLogById(getNumbersOnly(currentData.NIK))) {
+      logLine(`Data for NIK: ${currentData.NIK} already processed. Skipping...`);
+      continue;
+    }
     // Close the first page if there are more than 3 pages open
     if ((await browser.pages()).length > 3) {
       const pages = await browser.pages();
