@@ -271,6 +271,37 @@ export async function typeAndTriggerIframe(page, iframeSelector, elementSelector
 }
 
 /**
+ * Types a value into an input field inside an iframe using Puppeteer's Frame API.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} iframeSelector - CSS selector for the iframe.
+ * @param {string} elementSelector - CSS selector for the input field inside the iframe.
+ * @param {string} value - The value to type into the input field.
+ * @param {Object} [options] - Options object.
+ * @param {number} [options.delay=100] - Typing delay in milliseconds.
+ * @param {boolean} [options.clearFirst=false] - Whether to clear the field before typing.
+ * @returns {Promise<void>} - A promise that resolves after typing is complete.
+ */
+export async function typeToIframe(page, iframeSelector, elementSelector, value, options = {}) {
+  const { delay = 100, clearFirst = false } = options;
+  const iframeElement = await page.$(iframeSelector);
+  const iframe = await iframeElement.contentFrame();
+  await iframe.focus(elementSelector);
+  if (clearFirst) {
+    // Clear the input field inside the iframe
+    await iframe.evaluate((selector) => {
+      const el = document.querySelector(selector);
+      if (el) {
+        el.value = '';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, elementSelector);
+    await iframe.type(elementSelector, '', { delay });
+  }
+  await iframe.type(elementSelector, value, { delay });
+}
+
+/**
  * Check if an element exists and is visible inside an iframe
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
  * @param {string} iframeSelector - CSS selector for the iframe
