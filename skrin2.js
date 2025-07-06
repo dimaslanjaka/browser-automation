@@ -485,7 +485,7 @@ async function _test(page) {
 }
 
 const main = async () => {
-  const { page } = await getPuppeteer();
+  const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
 
   const rangeData = await getDataRange(await fetchXlsxData4(), {
@@ -497,7 +497,13 @@ const main = async () => {
 
   while (rangeData.length > 0) {
     const currentData = rangeData.shift();
-    if (currentData) await processData(page, currentData);
+    // Close the first page if there are more than 3 pages open
+    if ((await browser.pages()).length > 3) {
+      const pages = await browser.pages();
+      await pages[0].close();
+    }
+    // Start new page for each data entry
+    if (currentData) await processData(await browser.newPage(), currentData);
   }
 
   // await _test(page);
