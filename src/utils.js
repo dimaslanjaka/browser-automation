@@ -268,25 +268,59 @@ export function enforceDateFormat(dateStr, formats, context = '') {
 }
 
 /**
- * Logs a message inline, overwriting the current line in the console.
+ * Logs one or more messages inline, overwriting the current line in the console.
  * Useful for progress indicators or status updates that should replace the previous message.
  * @function logInline
- * @param {any} message - The message to log inline. Objects and arrays will be JSON stringified.
+ * @param {...any} args - The messages to log inline. Objects and arrays will be JSON stringified.
  * @returns {void}
  */
-export function logInline(message) {
-  const output = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+export function logInline(...args) {
+  let output;
+  if (args.length > 1) {
+    output = args
+      .map((arg) => {
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg, null, 2);
+          } catch (_e) {
+            return '[Unserializable Object]';
+          }
+        }
+        return String(arg);
+      })
+      .join(' ');
+  } else {
+    const message = args[0];
+    output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
+  }
   process.stdout.write(`\r${output}`);
 }
 
 /**
- * Logs a message on a new line in the console.
+ * Logs one or more messages on a new line in the console.
  * Standard logging function for messages that should appear on separate lines.
  * @function logLine
- * @param {any} message - The message to log on a new line. Objects and arrays will be JSON stringified.
+ * @param {...any} args - The messages to log on a new line. Objects and arrays will be JSON stringified.
  * @returns {void}
  */
-export function logLine(message) {
-  const output = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+export function logLine(...args) {
+  let output;
+  if (args.length > 1) {
+    output = args
+      .map((arg) => {
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg, null, 2);
+          } catch (_e) {
+            return '[Unserializable Object]';
+          }
+        }
+        return String(arg);
+      })
+      .join(' ');
+  } else {
+    const message = args[0];
+    output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
+  }
   process.stdout.write(`${output}\n`);
 }
