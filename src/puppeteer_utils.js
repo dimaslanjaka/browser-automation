@@ -408,7 +408,7 @@ export async function clickIframeElement(page, iframeSelector, elementSelector, 
  * Extracts attribute values and common properties from input and textarea elements.
  *
  * @param {(HTMLInputElement | HTMLTextAreaElement)[]} elements - Array of input or textarea elements.
- * @returns {Array<Record<string, string>>} Array of flattened objects containing all attributes plus name, value, id, and disabled.
+ * @returns {Array<Record<string, string>>} Array of flattened objects containing all attributes plus name, value, id, disabled, and isVisible.
  */
 function extractFormValues(elements) {
   return elements.map((el) => {
@@ -416,12 +416,16 @@ function extractFormValues(elements) {
       acc[attr.name] = String(attr.value);
       return acc;
     }, {});
+
+    const isVisible = !!(el.offsetParent || el.offsetWidth > 0 || el.offsetHeight > 0);
+
     return {
       ...attrs,
       name: el.name || '',
       value: el.value,
       id: el.id || '',
-      disabled: String(el.disabled)
+      disabled: String(el.disabled),
+      isVisible: String(isVisible)
     };
   });
 }
@@ -432,7 +436,7 @@ function extractFormValues(elements) {
  *
  * @param {import('puppeteer').Page|import('puppeteer').Frame} context - The Puppeteer page or frame instance.
  * @param {string} containerSelector - The CSS selector for the container.
- * @returns {Promise<Array<Record<string, string>>>} - Returns an array of objects containing name, value, id, disabled, and all attributes of each input/textarea.
+ * @returns {Promise<ReturnType<typeof extractFormValues>>} - Returns an array of objects containing name, value, id, disabled, and all attributes of each input/textarea.
  */
 export async function getFormValues(context, containerSelector) {
   return await context.$$eval(`${containerSelector} input, ${containerSelector} textarea`, extractFormValues);
@@ -444,7 +448,7 @@ export async function getFormValues(context, containerSelector) {
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
  * @param {string} iframeSelector - The CSS selector for the iframe.
  * @param {string} containerSelector - The CSS selector for the container inside the iframe.
- * @returns {Promise<Array<Record<string, string>>>}
+ * @returns {Promise<ReturnType<typeof getFormValues>>}
  */
 export async function getFormValuesFromFrame(page, iframeSelector, containerSelector) {
   const iframeElement = await page.$(iframeSelector);
