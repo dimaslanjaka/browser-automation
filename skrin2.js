@@ -342,10 +342,10 @@ async function processData(page, data) {
     const nikErrorVisible = await isNikErrorVisible(page);
     const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
 
-    console.log('identityModalVisible:', identityModalVisible);
-    console.log('invalidAlertVisible:', invalidAlertVisible);
-    console.log('nikErrorVisible:', nikErrorVisible);
-    console.log('nikNotFoundModalVisible:', nikNotFoundModalVisible);
+    logLine('identityModalVisible:', identityModalVisible);
+    logLine('invalidAlertVisible:', invalidAlertVisible);
+    logLine('nikErrorVisible:', nikErrorVisible);
+    logLine('nikNotFoundModalVisible:', nikNotFoundModalVisible);
     return !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
   };
 
