@@ -1,5 +1,4 @@
 import ExcelJS from 'exceljs';
-import * as glob from 'glob';
 import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -17,12 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
  *   A promise that resolves to an array of parsed Excel row objects, each with originalRowNumber and headerRegion. Rows after 7488 are ExcelRowData4.
  */
 export async function fetchXlsxData4() {
-  const xlsxFile = (
-    await glob.glob('**/*.xlsx', {
-      cwd: path.join(process.cwd(), '.cache', 'sheets'),
-      absolute: true
-    })
-  )[0];
+  const xlsxFile = path.join(process.cwd(), '.cache', 'sheets', 'spreadsheet-' + process.env.SPREADSHEET_ID + '.xlsx');
 
   if (!xlsxFile) {
     throw new Error('No Excel files found in .cache/sheets directory');
