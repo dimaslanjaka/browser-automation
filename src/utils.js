@@ -1,3 +1,4 @@
+import ansiColors from 'ansi-colors';
 import { exec } from 'child_process';
 import fs from 'fs-extra';
 import moment from 'moment';
@@ -289,17 +290,33 @@ export function logInline(...args) {
       .map((arg) => {
         if (typeof arg === 'object' && arg !== null) {
           try {
-            return JSON.stringify(arg, null, 2);
+            return ansiColors.cyan(JSON.stringify(arg, null, 2));
           } catch (_e) {
-            return '[Unserializable Object]';
+            return ansiColors.red('[Unserializable Object]');
           }
+        } else if (typeof arg === 'number') {
+          return ansiColors.yellow(arg);
+        } else if (typeof arg === 'boolean') {
+          return ansiColors.magenta(arg);
         }
         return String(arg);
       })
       .join(' ');
   } else {
     const message = args[0];
-    output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
+    if (typeof message === 'object' && message !== null) {
+      try {
+        output = ansiColors.cyan(JSON.stringify(message, null, 2));
+      } catch (_e) {
+        output = ansiColors.red('[Unserializable Object]');
+      }
+    } else if (typeof message === 'number') {
+      output = ansiColors.yellow(message);
+    } else if (typeof message === 'boolean') {
+      output = ansiColors.magenta(message);
+    } else {
+      output = String(message);
+    }
   }
   process.stdout.write(`\r${output}`);
   global.__lastLogWasInline = true;
@@ -319,17 +336,33 @@ export function logLine(...args) {
       .map((arg) => {
         if (typeof arg === 'object' && arg !== null) {
           try {
-            return JSON.stringify(arg, null, 2);
+            return ansiColors.cyan(JSON.stringify(arg, null, 2));
           } catch (_e) {
-            return '[Unserializable Object]';
+            return ansiColors.red('[Unserializable Object]');
           }
+        } else if (typeof arg === 'number') {
+          return ansiColors.yellow(arg);
+        } else if (typeof arg === 'boolean') {
+          return ansiColors.magenta(arg);
         }
         return String(arg);
       })
       .join(' ');
   } else {
     const message = args[0];
-    output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
+    if (typeof message === 'object' && message !== null) {
+      try {
+        output = ansiColors.cyan(JSON.stringify(message, null, 2));
+      } catch (_e) {
+        output = ansiColors.red('[Unserializable Object]');
+      }
+    } else if (typeof message === 'number') {
+      output = ansiColors.yellow(message);
+    } else if (typeof message === 'boolean') {
+      output = ansiColors.magenta(message);
+    } else {
+      output = String(message);
+    }
   }
   // Only prepend a newline if the last log was inline
   const prefix = global.__lastLogWasInline ? '\n' : '';
