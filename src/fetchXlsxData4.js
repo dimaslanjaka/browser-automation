@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs';
 import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getNumbersOnly } from './utils.js';
+import { getNumbersOnly, logInline, logLine } from './utils.js';
 import { fixData, getCacheKey, getCachedData, getDataRange, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -172,7 +172,7 @@ if (process.argv[1] === __filename) {
         outputFile
       });
 
-      process.stdout.write(`\nSuccessfully extracted ${rangeData.length} rows\n`);
+      logLine(`\nSuccessfully extracted ${rangeData.length} rows`);
 
       const actualDatas = [
         { index: 0, 'TGL LAHIR': '23/11/2020', NAMA: 'NI NYOMAN ANINDYA MAHESWARI', NIK: '3578106311200003' },
@@ -195,7 +195,7 @@ if (process.argv[1] === __filename) {
       while (rangeData.length > 0) {
         const data = rangeData.shift();
         if (!data) continue;
-        process.stdout.write(`\rProcessing row ${currentRow} of ${totalRows}`);
+        logInline(`Processing row ${currentRow} of ${totalRows}`);
 
         const actualData = actualDatas.find(
           (item) =>
@@ -206,20 +206,20 @@ if (process.argv[1] === __filename) {
 
         if (actualData) {
           const get = await fixData(data);
-          process.stdout.write(
-            `\nRow ${currentRow}:\n\tTGL LAHIR (fixed): ${get['TGL LAHIR']} | Expected: ${actualData['TGL LAHIR']} | Match: ${get['TGL LAHIR'] === actualData['TGL LAHIR']}\n\tNAMA: ${get['NAMA']} | Expected: ${actualData['NAMA']} | Match: ${get['NAMA'] === actualData['NAMA']}\n`
+          logLine(
+            `\nRow ${currentRow}:\n\tTGL LAHIR (fixed): ${get['TGL LAHIR']} | Expected: ${actualData['TGL LAHIR']} | Match: ${get['TGL LAHIR'] === actualData['TGL LAHIR']}\n\tNAMA: ${get['NAMA']} | Expected: ${actualData['NAMA']} | Match: ${get['NAMA'] === actualData['NAMA']}`
           );
         }
 
         currentRow++;
       }
 
-      console.log(`\nProcessing completed. Processed ${currentRow} rows total.`);
+      logLine(`\nProcessing completed. Processed ${currentRow} rows total.`);
 
       // force exit after processing
       process.exit(0);
     } catch (error) {
-      console.error(error);
+      logLine(error);
     }
-  })().catch(console.error);
+  })().catch(logLine);
 }
