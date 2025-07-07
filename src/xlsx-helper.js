@@ -164,8 +164,13 @@ export function matchFirstAndLastData(datas, matchData) {
  * @returns {Promise<(import('../globals').ExcelRowData4 | import('../globals').ExcelRowData)[]>} - Array of rows between fromRow and toRow (inclusive)
  */
 export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, outputFile = null }) {
-  const fromRow = data.find((row) => row.NIK === fromNik && row.NAMA === fromNama);
-  const toRow = data.find((row) => row.NIK === toNik && row.NAMA === toNama);
+  // Support both uppercase and lowercase keys for NIK and NAMA
+  const fromRow = data.find(
+    (row) => (row.NIK === fromNik || row.nik === fromNik) && (row.NAMA === fromNama || row.nama === fromNama)
+  );
+  const toRow = data.find(
+    (row) => (row.NIK === toNik || row.nik === toNik) && (row.NAMA === toNama || row.nama === toNama)
+  );
 
   if (!fromRow) {
     throw new Error(`FromRow not found: NIK=${fromNik}, NAMA=${fromNama}`);
@@ -185,8 +190,8 @@ export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, out
   // Write to file if outputFile is provided
   if (outputFile) {
     writefile(outputFile, JSON.stringify(rangeData, null, 2), 'utf8');
-    console.log(`\nRange data written to: ${outputFile}`);
-    console.log(
+    logLine(`\nRange data written to: ${outputFile}`);
+    logLine(
       `File contains ${rangeData.length} rows from originalRowNumber ${rangeData[0]?.originalRowNumber} to ${rangeData[rangeData.length - 1]?.originalRowNumber}`
     );
   }
@@ -356,7 +361,9 @@ export async function fixData(data) {
   if (!alamat) {
     if (initialData.parsed_nik && initialData.parsed_nik.status === 'success') {
       const parsed_data = initialData.parsed_nik.data;
-      alamat = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, ${parsed_data.kotakab}, ${parsed_data.provinsi}`;
+      alamat = [parsed_data.kelurahan?.[0]?.name, parsed_data.namaKec, parsed_data.kotakab, parsed_data.provinsi]
+        .filter((part) => part !== undefined && part !== null && part !== '')
+        .join(', ');
       logLine(`${ansiColors.cyan('[fixData]')} Alamat from parsed NIK: ${alamat}`);
       const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
       const address = await geocodeWithNominatim(keywordAddr);
@@ -365,8 +372,8 @@ export async function fixData(data) {
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_data;
 
       if (kotakab.length === 0 || namaKec.length === 0 || provinsi.length === 0) {
-        console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
-        console.log('Nominatim result:', address);
+        logLine(`Fetching address from Nominatim for: ${keywordAddr}`);
+        logLine('Nominatim result:', address);
 
         const addr = address.address || {};
 
