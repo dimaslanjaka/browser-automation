@@ -276,6 +276,41 @@ export function enforceDateFormat(dateStr, formats, context = '') {
   return parsed.format('DD/MM/YYYY');
 }
 
+function colorizeJson(value, indent = 2, level = 0) {
+  const space = ' '.repeat(indent * level);
+  if (value === null) return ansiColors.gray('null');
+  if (Array.isArray(value)) {
+    if (value.length === 0) return ansiColors.cyan('[]');
+    const items = value.map((item) => space + ' '.repeat(indent) + colorizeJson(item, indent, level + 1)).join(',\n');
+    return ansiColors.cyan('[\n') + items + '\n' + space + ansiColors.cyan(']');
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value);
+    if (keys.length === 0) return ansiColors.cyan('{}');
+    const items = keys
+      .map(
+        (key) =>
+          space +
+          ' '.repeat(indent) +
+          ansiColors.green('"' + key + '"') +
+          ansiColors.cyan(': ') +
+          colorizeJson(value[key], indent, level + 1)
+      )
+      .join(',\n');
+    return ansiColors.cyan('{\n') + items + '\n' + space + ansiColors.cyan('}');
+  }
+  if (typeof value === 'string') {
+    return ansiColors.yellow('"' + value + '"');
+  }
+  if (typeof value === 'number') {
+    return ansiColors.magenta(value);
+  }
+  if (typeof value === 'boolean') {
+    return ansiColors.blue(value);
+  }
+  return String(value);
+}
+
 /**
  * Logs one or more messages inline, overwriting the current line in the console.
  * Useful for progress indicators or status updates that should replace the previous message.
@@ -288,32 +323,36 @@ export function logInline(...args) {
   if (args.length > 1) {
     output = args
       .map((arg) => {
-        if (typeof arg === 'object' && arg !== null) {
+        if (arg === null) {
+          return ansiColors.gray('null');
+        } else if (typeof arg === 'object' && arg !== null) {
           try {
-            return ansiColors.cyan(JSON.stringify(arg, null, 2));
+            return colorizeJson(arg);
           } catch (_e) {
             return ansiColors.red('[Unserializable Object]');
           }
         } else if (typeof arg === 'number') {
-          return ansiColors.yellow(arg);
-        } else if (typeof arg === 'boolean') {
           return ansiColors.magenta(arg);
+        } else if (typeof arg === 'boolean') {
+          return ansiColors.blue(arg);
         }
         return String(arg);
       })
       .join(' ');
   } else {
     const message = args[0];
-    if (typeof message === 'object' && message !== null) {
+    if (message === null) {
+      output = ansiColors.gray('null');
+    } else if (typeof message === 'object' && message !== null) {
       try {
-        output = ansiColors.cyan(JSON.stringify(message, null, 2));
+        output = colorizeJson(message);
       } catch (_e) {
         output = ansiColors.red('[Unserializable Object]');
       }
     } else if (typeof message === 'number') {
-      output = ansiColors.yellow(message);
-    } else if (typeof message === 'boolean') {
       output = ansiColors.magenta(message);
+    } else if (typeof message === 'boolean') {
+      output = ansiColors.blue(message);
     } else {
       output = String(message);
     }
@@ -334,32 +373,36 @@ export function logLine(...args) {
   if (args.length > 1) {
     output = args
       .map((arg) => {
-        if (typeof arg === 'object' && arg !== null) {
+        if (arg === null) {
+          return ansiColors.gray('null');
+        } else if (typeof arg === 'object' && arg !== null) {
           try {
-            return ansiColors.cyan(JSON.stringify(arg, null, 2));
+            return colorizeJson(arg);
           } catch (_e) {
             return ansiColors.red('[Unserializable Object]');
           }
         } else if (typeof arg === 'number') {
-          return ansiColors.yellow(arg);
-        } else if (typeof arg === 'boolean') {
           return ansiColors.magenta(arg);
+        } else if (typeof arg === 'boolean') {
+          return ansiColors.blue(arg);
         }
         return String(arg);
       })
       .join(' ');
   } else {
     const message = args[0];
-    if (typeof message === 'object' && message !== null) {
+    if (message === null) {
+      output = ansiColors.gray('null');
+    } else if (typeof message === 'object' && message !== null) {
       try {
-        output = ansiColors.cyan(JSON.stringify(message, null, 2));
+        output = colorizeJson(message);
       } catch (_e) {
         output = ansiColors.red('[Unserializable Object]');
       }
     } else if (typeof message === 'number') {
-      output = ansiColors.yellow(message);
-    } else if (typeof message === 'boolean') {
       output = ansiColors.magenta(message);
+    } else if (typeof message === 'boolean') {
+      output = ansiColors.blue(message);
     } else {
       output = String(message);
     }
