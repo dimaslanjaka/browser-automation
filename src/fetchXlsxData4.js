@@ -3,7 +3,7 @@ import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getNumbersOnly } from './utils.js';
-import { fixData, getDataRange } from './xlsx-helper.js';
+import { fixData, getCacheKey, getCachedData, getDataRange, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -20,6 +20,16 @@ export async function fetchXlsxData4() {
 
   if (!xlsxFile) {
     throw new Error('No Excel files found in .cache/sheets directory');
+  }
+
+  // Generate file hash and cache key
+  const fileHash = getFileHash(xlsxFile);
+  const cacheKey = getCacheKey('fetchXlsxData4', fileHash);
+
+  // Check cache first
+  const cachedData = getCachedData(cacheKey);
+  if (cachedData) {
+    return cachedData;
   }
 
   // Read and parse the xlsx file using streaming reader
@@ -142,6 +152,9 @@ export async function fetchXlsxData4() {
     }
     return newRow;
   });
+
+  // Save to cache
+  saveCachedData(cacheKey, mapped);
 
   return mapped;
 }
