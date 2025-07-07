@@ -6,9 +6,12 @@ export interface ExcelRowData {
   pekerjaan: string;
   bb: number;
   tb: number;
-  batuk: string;
-  diabetes: string;
+  batuk?: string;
+  diabetes?: string;
+  tgl_lahir?: string;
   alamat?: string;
+  jenis_kelamin?: string;
+  petugas?: string;
   parsed_nik?: null | import('nik-parser-jurusid').NikParseResult;
 }
 
