@@ -75,8 +75,8 @@ export async function fetchXlsxData4() {
       values.forEach((value, index) => {
         const header = usedHeaders && usedHeaders[index];
         if (header && value !== undefined && value !== null && value !== '') {
-          // Convert Excel serial date numbers to proper date strings for TGL LAHIR
-          if (header === 'TGL LAHIR' && typeof value === 'number') {
+          if ((header === 'TGL LAHIR' || header === 'TANGGAL') && typeof value === 'number') {
+            // Convert Excel serial date numbers to proper birth date strings for TGL LAHIR
             const baseDate = moment('1900-01-01');
             const daysSinceBase = value - 1;
             const adjustedDays = daysSinceBase > 59 ? daysSinceBase - 1 : daysSinceBase;
