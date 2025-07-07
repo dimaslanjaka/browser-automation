@@ -9,9 +9,12 @@ import { fixData, getDataRange } from './xlsx-helper.js';
 const __filename = fileURLToPath(import.meta.url);
 
 /**
- * Reads Excel (.xlsx) files from the .cache/sheets directory and extracts data starting from row 7488 (header row).
+ * Reads Excel (.xlsx) files from the .cache/sheets directory and extracts data from all header regions.
  *
- * @returns {Promise<import('../globals').ExcelRowData4[]>} - A promise that resolves to an array of parsed Excel row objects.
+ * For rows after 7488, the returned object type is ExcelRowData4 (plus originalRowNumber and headerRegion).
+ *
+ * @returns {Promise<Array<Object & { originalRowNumber: number, headerRegion: number } | import('../globals').ExcelRowData4 & { originalRowNumber: number, headerRegion: number }>>}
+ *   A promise that resolves to an array of parsed Excel row objects, each with originalRowNumber and headerRegion. Rows after 7488 are ExcelRowData4.
  */
 export async function fetchXlsxData4() {
   const xlsxFile = (
@@ -28,56 +31,61 @@ export async function fetchXlsxData4() {
   // Read and parse the xlsx file using streaming reader
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(xlsxFile);
   const jsonData = [];
-  let headers = [];
+  let before7488Headers = null;
+  let after7488Headers = null;
+  const nikMap = new Map();
 
   for await (const worksheetReader of workbookReader) {
     let rowNumber = 0;
 
     for await (const row of worksheetReader) {
       rowNumber++;
-
-      if (rowNumber === 7488) {
-        // Row 7488 contains the actual headers
-        const allHeaders = row.values.slice(1); // slice(1) to remove the first empty element
-
-        // Use only the second set of headers (cleaner ones)
-        // Headers: TANGGAL ENTRY, NAMA, NIK, TGL LAHIR, ALAMAT, BB, TB, PETUGAS ENTRY
-        headers = allHeaders.slice(9, 17); // Take only the second set
-
-        // console.log(`Found headers at row ${rowNumber}:`, headers);
-        continue;
-      }
-
-      // Skip rows before 7488 and the header row itself
-      if (rowNumber <= 7488) {
-        continue;
-      }
-
-      // Process data rows (starting from 7489)
-      const rowData = {};
       const allValues = row.values.slice(1); // slice(1) to remove the first empty element
 
-      // Use only the second set of data columns (matching the headers we're using)
-      const values = allValues.slice(9, 17); // Take only the second set of data
+      // Detect header rows
+      if (rowNumber === 1) {
+        // Assume first non-empty row is header for region 0
+        if (allValues.some((v) => v && v !== '')) {
+          before7488Headers = allValues;
+          continue;
+        }
+      }
+      if (rowNumber === 7488) {
+        // Row 7488 contains the actual headers for region 1
+        after7488Headers = allValues.slice(9, 17); // Take only the second set
+        // Do not parse this row as data, just set headers and continue
+        continue;
+      }
+
+      // For rows before 7488, use before7488Headers; after, use after7488Headers
+      let values, usedHeaders, currentRegion;
+      if (rowNumber < 7488) {
+        usedHeaders = before7488Headers;
+        values = allValues;
+        currentRegion = 0;
+      } else if (rowNumber > 7488) {
+        usedHeaders = after7488Headers;
+        values = allValues.slice(9, 17);
+        currentRegion = 1;
+      } else {
+        // Skip header rows
+        continue;
+      }
 
       // Skip empty rows
       if (!values || values.length === 0 || values.every((v) => v === undefined || v === null || v === '')) {
         continue;
       }
 
+      const rowData = {};
       values.forEach((value, index) => {
-        const header = headers[index];
+        const header = usedHeaders && usedHeaders[index];
         if (header && value !== undefined && value !== null && value !== '') {
           // Convert Excel serial date numbers to proper date strings for TGL LAHIR
           if (header === 'TGL LAHIR' && typeof value === 'number') {
-            // console.log(`Row ${rowNumber} has TGL LAHIR as number:`, value, allValues);
-            // Excel serial date starts from January 1, 1900, but Excel incorrectly treats 1900 as a leap year
             const baseDate = moment('1900-01-01');
-            const daysSinceBase = value - 1; // Subtract 1 because Excel serial date 1 = January 1, 1900
-
-            // Account for Excel's leap year bug (Excel thinks 1900 is a leap year but it's not)
+            const daysSinceBase = value - 1;
             const adjustedDays = daysSinceBase > 59 ? daysSinceBase - 1 : daysSinceBase;
-
             const resultDate = baseDate.clone().add(adjustedDays, 'days');
             rowData[header] = resultDate.format('DD/MM/YYYY');
           } else {
@@ -88,17 +96,24 @@ export async function fetchXlsxData4() {
 
       // Only add row if it has meaningful data
       if (Object.keys(rowData).length > 0) {
-        // Add the actual row number for reference
         rowData.originalRowNumber = rowNumber;
-        jsonData.push(rowData);
+        rowData.headerRegion = currentRegion;
+        // Deduplicate by NIK: always keep the latest (region 1 if exists)
+        if (rowData.NIK) {
+          const nikKey = getNumbersOnly(rowData.NIK);
+          const existing = nikMap.get(nikKey);
+          if (!existing || rowData.headerRegion === 1) {
+            nikMap.set(nikKey, rowData);
+          }
+        } else {
+          jsonData.push(rowData); // fallback for rows without NIK
+        }
       }
     }
-
-    // Only process the first worksheet
     break;
   }
-
-  return jsonData;
+  // Combine deduped NIK rows and any rows without NIK
+  return [...nikMap.values(), ...jsonData];
 }
 
 if (process.argv[1] === __filename) {
