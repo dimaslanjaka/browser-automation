@@ -10,10 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 /**
  * Reads Excel (.xlsx) files from the .cache/sheets directory and extracts data from all header regions.
  *
- * For rows after 7488, the returned object type is ExcelRowData4 (plus originalRowNumber and headerRegion).
+ * Returns an array of row objects, each with an `originalRowNumber` and `headerRegion` property. The shape of each row depends on the detected region headers and may be a partial ExcelRowData.
  *
- * @returns {Promise<Array<Object & { originalRowNumber: number, headerRegion: number } | import('../globals').ExcelRowData4 & { originalRowNumber: number, headerRegion: number }>>}
- *   A promise that resolves to an array of parsed Excel row objects, each with originalRowNumber and headerRegion. Rows after 7488 are ExcelRowData4.
+ * @returns {Promise<import('../globals').FetchXlsxData4Result>}
+ *   A promise that resolves to an array of parsed Excel row objects, each with originalRowNumber and headerRegion.
  */
 export async function fetchXlsxData4() {
   const xlsxFile = path.join(process.cwd(), '.cache', 'sheets', 'spreadsheet-' + process.env.SPREADSHEET_ID + '.xlsx');
@@ -106,8 +106,44 @@ export async function fetchXlsxData4() {
     }
     break;
   }
+
   // Combine deduped NIK rows and any rows without NIK
-  return [...nikMap.values(), ...jsonData];
+  const deduped = [...nikMap.values(), ...jsonData];
+  const keyMap = {
+    TANGGAL: 'tanggal',
+    'TANGGAL ENTRY': 'tanggal',
+    NAMA: 'nama',
+    'NAMA PASIEN': 'nama',
+    NIK: 'nik',
+    'NIK PASIEN': 'nik',
+    PEKERJAAN: 'pekerjaan',
+    'BERAT BADAN': 'bb',
+    BB: 'bb',
+    'TINGGI BADAN': 'tb',
+    TB: 'tb',
+    BATUK: 'batuk',
+    DM: 'diabetes',
+    'TGL LAHIR': 'tgl_lahir',
+    'TANGGAL LAHIR': 'tgl_lahir',
+    'TANGGAL LAHIR PASIEN': 'tgl_lahir',
+    ALAMAT: 'alamat',
+    'ALAMAT PASIEN': 'alamat',
+    'JENIS KELAMIN': 'jenis_kelamin',
+    'PETUGAS YG MENG ENTRY': 'petugas',
+    'PETUGAS ENTRY': 'petugas'
+  };
+
+  // Map keys according to keyMap
+  const mapped = deduped.map((row) => {
+    const newRow = {};
+    for (const key in row) {
+      const mappedKey = keyMap[key] || key;
+      newRow[mappedKey] = row[key];
+    }
+    return newRow;
+  });
+
+  return mapped;
 }
 
 if (process.argv[1] === __filename) {

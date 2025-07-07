@@ -36,6 +36,10 @@ export interface fixDataResult extends ExcelRowData, ExcelRowData4 {
   age: number;
 }
 
+export type Region0Row = Partial<ExcelRowData> & { headerRegion: 0; originalRowNumber: number };
+export type Region1Row = Partial<ExcelRowData> & { headerRegion: 1; originalRowNumber: number };
+export type FetchXlsxData4Result = Array<Region0Row | Region1Row>;
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
