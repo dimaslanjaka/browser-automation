@@ -204,12 +204,12 @@ export function uniqueArrayObjByKey(data, key) {
  * @example
  * // Get weekdays without debug info
  * const weekdays = getWeekdaysOfCurrentMonth();
- * console.log(weekdays);
+ * logLine(weekdays);
  *
  * @example
  * // Get weekdays with debug info
  * const weekdaysWithDebug = getWeekdaysOfCurrentMonth(true);
- * console.log(weekdaysWithDebug);
+ * logLine(weekdaysWithDebug);
  */
 export function getWeekdaysOfCurrentMonth(debug = false) {
   const now = new Date();
@@ -230,7 +230,7 @@ export function getWeekdaysOfCurrentMonth(debug = false) {
     const formattedDate = `${dd}/${mm}/${yyyy}`;
 
     if (debug) {
-      console.log(`Date: ${formattedDate}, Day: ${dayName}`);
+      logLine(`Date: ${formattedDate}, Day: ${dayName}`);
     }
 
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
@@ -302,6 +302,7 @@ export function logInline(...args) {
     output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
   }
   process.stdout.write(`\r${output}`);
+  global.__lastLogWasInline = true;
 }
 
 /**
@@ -330,5 +331,8 @@ export function logLine(...args) {
     const message = args[0];
     output = typeof message === 'object' && message !== null ? JSON.stringify(message, null, 2) : String(message);
   }
-  process.stdout.write(`${output}\n`);
+  // Only prepend a newline if the last log was inline
+  const prefix = global.__lastLogWasInline ? '\n' : '';
+  process.stdout.write(`${prefix}${output}\n`);
+  global.__lastLogWasInline = false;
 }
