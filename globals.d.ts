@@ -42,6 +42,8 @@ declare global {
       index_start: string;
       index_end: string;
       GITHUB_TOKEN: string;
+      GITLAB_TOKEN: string;
+      OPENAI_KEY: string;
     }
   }
 }
