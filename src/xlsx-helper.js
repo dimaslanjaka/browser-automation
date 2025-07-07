@@ -244,7 +244,10 @@ export async function fixData(data) {
 
   // Tanggal entry normalization
   let tanggalEntry = initialData.tanggal || initialData['TANGGAL ENTRY'];
-  if (!tanggalEntry) throw new Error('Tanggal entry is required');
+  if (!tanggalEntry) {
+    console.log('\nTanggal entry is required', initialData, '\n');
+    process.exit(1);
+  }
   if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
     if (
       typeof tanggalEntry === 'string' &&
