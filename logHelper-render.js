@@ -15,11 +15,14 @@ nunjucks.configure(templatesPath, { autoescape: true, watch: true, noCache: true
 
 // ExpressJS for live rendering
 const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'njk');
 app.set('views', templatesPath);
 
 app.get('/', (req, res) => {
   const liveLogs = getLogs();
+  const outPath = path.resolve(__dirname, 'public/log-juli-2025.html');
+  const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outPath)}`;
   // Count success and fail logs (case-insensitive)
   const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
   const failCount = liveLogs.filter((log) => log.data && log.data.status !== 'success').length;
@@ -31,9 +34,9 @@ app.get('/', (req, res) => {
     logs: liveLogs,
     successCount,
     failCount,
-    pageTitle
+    pageTitle,
+    canonicalUrl
   });
-  const outPath = path.resolve(__dirname, 'tmp/log-viewer.html');
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
   res.send(liveHtml);
