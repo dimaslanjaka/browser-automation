@@ -2,14 +2,14 @@ import express from 'express';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { writefile } from 'sbg-utility';
-import { getLogs } from '../src/logHelper.js';
+import { getLogs } from './src/logHelper.js';
 
 let __filename = new URL(import.meta.url).pathname;
 if (process.platform === 'win32' && __filename.startsWith('/')) {
   __filename = __filename.slice(1);
 }
 const __dirname = path.dirname(__filename);
-const templatesPath = path.join(__dirname, '../templates');
+const templatesPath = path.join(__dirname, 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: true, noCache: true });
 
 // ExpressJS for live rendering
@@ -19,8 +19,15 @@ app.set('views', templatesPath);
 
 app.get('/', (req, res) => {
   const liveLogs = getLogs();
-  const liveHtml = nunjucks.render('log-viewer.njk', { logs: liveLogs });
-  const outPath = path.resolve(__dirname, '../tmp/log-viewer.html');
+  // Count success and fail logs (case-insensitive)
+  const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
+  const failCount = liveLogs.filter((log) => log.data && log.data.status !== 'success').length;
+  const liveHtml = nunjucks.render('log-viewer.njk', {
+    logs: liveLogs,
+    successCount,
+    failCount
+  });
+  const outPath = path.resolve(__dirname, 'tmp/log-viewer.html');
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
   res.send(liveHtml);
