@@ -85,7 +85,7 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/579fa7588b2db83b33ac46626bb496feb6081e0d/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/1f2448701e4f926e73e91ad73860a1bc6e5ef25b/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/e568350db1b2286a87b54ddf5c6d2d5d6b6cc7c1/packages/sbg-utility/release/sbg-utility.tgz"
   },
