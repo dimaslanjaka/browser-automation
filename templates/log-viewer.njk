@@ -17,6 +17,10 @@
 <body>
   <div class="container">
     <h1 class="my-4">Log Viewer</h1>
+    <div class="mb-4">
+      <span class="badge bg-success">Success: {{ successCount }}</span>
+      <span class="badge bg-danger ms-2">Not Success: {{ failCount }}</span>
+    </div>
     <div class="accordion" id="logAccordion">
       {% for log in logs %}
         <div class="accordion-item">
