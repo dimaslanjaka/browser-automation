@@ -12,10 +12,13 @@ const __filename = fileURLToPath(import.meta.url);
  *
  * Returns an array of row objects, each with an `originalRowNumber` and `headerRegion` property. The shape of each row depends on the detected region headers and may be a partial ExcelRowData.
  *
+ * @param {Object} [options]
+ * @param {boolean} [options.noCache=false] - If true, disables cache and always reads from file.
  * @returns {Promise<import('../globals').FetchXlsxData4Result>}
  *   A promise that resolves to an array of parsed Excel row objects, each with originalRowNumber and headerRegion.
  */
-export async function fetchXlsxData4() {
+export async function fetchXlsxData4(options = {}) {
+  const { noCache = false } = options;
   const xlsxFile = path.join(process.cwd(), '.cache', 'sheets', 'spreadsheet-' + process.env.SPREADSHEET_ID + '.xlsx');
 
   if (!xlsxFile) {
@@ -27,9 +30,11 @@ export async function fetchXlsxData4() {
   const cacheKey = getCacheKey('fetchXlsxData4', fileHash);
 
   // Check cache first
-  const cachedData = getCachedData(cacheKey);
-  if (cachedData) {
-    return cachedData;
+  if (!noCache) {
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
   }
 
   // Read and parse the xlsx file using streaming reader
