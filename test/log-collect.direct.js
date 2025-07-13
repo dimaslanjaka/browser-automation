@@ -10,7 +10,7 @@ if (process.platform === 'win32' && __filename.startsWith('/')) {
 }
 const __dirname = path.dirname(__filename);
 const templatesPath = path.join(__dirname, '../templates');
-nunjucks.configure(templatesPath, { autoescape: true });
+nunjucks.configure(templatesPath, { autoescape: true, watch: true, noCache: true });
 
 // ExpressJS for live rendering
 const app = express();
