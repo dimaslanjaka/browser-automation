@@ -3,6 +3,7 @@ import nunjucks from 'nunjucks';
 import path from 'path';
 import { writefile } from 'sbg-utility';
 import { getLogs } from './src/logHelper.js';
+import { ucwords } from './src/utils.js';
 
 let __filename = new URL(import.meta.url).pathname;
 if (process.platform === 'win32' && __filename.startsWith('/')) {
@@ -22,10 +23,15 @@ app.get('/', (req, res) => {
   // Count success and fail logs (case-insensitive)
   const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
   const failCount = liveLogs.filter((log) => log.data && log.data.status !== 'success').length;
+  let pageTitle = 'Log Viewer';
+  if (req.query.pageTitle || req.query.pagetitle) {
+    pageTitle = ucwords(req.query.pageTitle || req.query.pagetitle);
+  }
   const liveHtml = nunjucks.render('log-viewer.njk', {
     logs: liveLogs,
     successCount,
-    failCount
+    failCount,
+    pageTitle
   });
   const outPath = path.resolve(__dirname, 'tmp/log-viewer.html');
   writefile(outPath, liveHtml);
