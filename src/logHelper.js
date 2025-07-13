@@ -17,8 +17,12 @@ db.prepare(
 ).run();
 
 /**
- * Add a log entry
- * @param {{id: string, data: any, message: string}} param0
+ * Add a log entry to the database.
+ *
+ * @param {Object} param0 - Log entry object.
+ * @param {string} param0.id - Unique log identifier.
+ * @param {any} param0.data - Log data (can be any type, supports circular refs).
+ * @param {string} param0.message - Log message.
  */
 export function addLog({ id, data, message }) {
   const timestamp = moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ssZ');
@@ -31,8 +35,10 @@ export function addLog({ id, data, message }) {
 }
 
 /**
- * Remove a log entry by id
- * @param {string} id
+ * Remove a log entry by its id.
+ *
+ * @param {string} id - Unique log identifier.
+ * @returns {boolean} True if a log was removed, false otherwise.
  */
 export function removeLog(id) {
   const info = db.prepare('DELETE FROM logs WHERE id = ?').run(id);
@@ -40,9 +46,10 @@ export function removeLog(id) {
 }
 
 /**
- * Get a log entry by id
- * @param {string} id
- * @returns {object | undefined}
+ * Get a log entry by its id.
+ *
+ * @param {string} id - Unique log identifier.
+ * @returns {{id: string, data: any, message: string, timestamp: string} | undefined} Log object or undefined if not found.
  */
 export function getLogById(id) {
   const row = db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
@@ -56,9 +63,10 @@ export function getLogById(id) {
 }
 
 /**
- * Get all logs or filtered logs
- * @param {(log: object) => boolean} [filterFn]
- * @returns {Array}
+ * Get all logs or filtered logs from the database.
+ *
+ * @param {function({id: string, data: any, message: string, timestamp: string}): boolean} [filterFn] - Optional filter function to filter logs.
+ * @returns {Array<{id: string, data: any, message: string, timestamp: string}>} Array of log objects with keys: id, data, message, timestamp.
  */
 export function getLogs(filterFn = () => true) {
   const rows = db.prepare('SELECT * FROM logs').all();
