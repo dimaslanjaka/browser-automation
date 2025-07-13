@@ -248,7 +248,7 @@ export async function fixData(data) {
   initialData.parsed_nik = parsed_nik.status === 'success' ? parsed_nik : null;
 
   // Tanggal entry normalization
-  let tanggalEntry = initialData.tanggal || initialData['TANGGAL ENTRY'];
+  let tanggalEntry = initialData['TANGGAL ENTRY'] || initialData.tanggal;
   if (!tanggalEntry) {
     console.log('\nTanggal entry is required', initialData, '\n');
     process.exit(1);
@@ -275,7 +275,14 @@ export async function fixData(data) {
     initialData['TANGGAL ENTRY'] = tanggalEntry;
   } else {
     const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
-    if (parsedDate.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
+    // Check if the date is a Sunday
+    if (parsedDate.day() === 0) {
+      throw new Error(`Tanggal entry ${nik} cannot be a Sunday: ${tanggalEntry}`);
+    }
+    // Check if the date is not greater than today
+    if (parsedDate.isAfter(moment())) {
+      throw new Error(`Tanggal entry ${nik} cannot be in the future: ${tanggalEntry}`);
+    }
   }
 
   // TGL LAHIR normalization
