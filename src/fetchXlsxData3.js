@@ -22,12 +22,24 @@ const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output
  *
  * @param {number|string} [startIndex=0] - The starting row index to extract data from.
  * @param {number|string} [lastIndex=Number.MAX_SAFE_INTEGER] - The ending row index to extract data until.
+ * @param {Object} [options] - Optional settings.
+ * @param {boolean} [options.noCache=false] - If true, disables cache and always reads from file.
  * @returns {Promise<import('../globals').ExcelRowData[]>} - A promise that resolves to an array of extracted data objects.
  */
-export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER) {
-  // Parse parameters to ensure they are numbers
-  const parsedStartIndex = typeof startIndex === 'string' ? parseInt(startIndex, 10) : startIndex;
-  const parsedLastIndex = typeof lastIndex === 'string' ? parseInt(lastIndex, 10) : lastIndex;
+export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE_INTEGER, options = {}) {
+  // Handle null/undefined for startIndex and lastIndex
+  const parsedStartIndex =
+    startIndex === null || startIndex === undefined
+      ? 0
+      : typeof startIndex === 'string'
+        ? parseInt(startIndex, 10)
+        : startIndex;
+  const parsedLastIndex =
+    lastIndex === null || lastIndex === undefined
+      ? Number.MAX_SAFE_INTEGER
+      : typeof lastIndex === 'string'
+        ? parseInt(lastIndex, 10)
+        : lastIndex;
 
   // Validate parsed parameters
   const finalStartIndex = isNaN(parsedStartIndex) ? 0 : parsedStartIndex;
@@ -47,12 +59,15 @@ export async function fetchXlsxData3(startIndex = 0, lastIndex = Number.MAX_SAFE
   const cacheKey = getCacheKey('fetchXlsxData3', fileHash, finalStartIndex, finalLastIndex);
 
   // Check cache first
-  const cachedData = getCachedData(cacheKey);
-  if (cachedData) {
-    return cachedData;
+  if (!options.noCache) {
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
   }
 
-  console.log(`Cache miss: ${cacheKey} - Processing Excel file...`);
+  // show cache miss message when options.noCache is false
+  if (!options.noCache) console.log(`Cache miss: ${cacheKey} - Processing Excel file...`);
   const workbook = XLSX.read(fs.readFileSync(files[0]), { cellDates: true });
   /** @type {Record<string, { [key: string], parsed_nik?: import('./nik-parser/type').NikData }[]>} */
   const allSheetsData = {};
