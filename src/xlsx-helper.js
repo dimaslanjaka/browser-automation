@@ -333,34 +333,34 @@ export async function fixData(data) {
         pekerjaan = gender && gender.toLowerCase() === 'perempuan' ? 'IRT' : 'Wiraswasta';
       }
     }
-    const jobMappings = [
-      { pattern: /rumah\s*tangga|irt/i, value: 'IRT' },
-      { pattern: /swasta|pedagang/i, value: 'Wiraswasta' },
-      { pattern: /tukang|buruh/i, value: 'Buruh ' },
-      { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/i, value: 'Tidak Bekerja' },
-      { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/i, value: 'PNS ' },
-      { pattern: /guru|dosen/i, value: 'Guru/ Dosen' },
-      { pattern: /perawat|dokter/i, value: 'Tenaga Profesional Medis ' },
-      { pattern: /pengacara|wartawan/i, value: 'Tenaga Profesional Non Medis ' },
-      { pattern: /pelajar|siswa|siswi|sekolah/i, value: 'Pelajar/ Mahasiswa' },
-      { pattern: /s[o,u]pir/i, value: 'Sopir ' }
-    ];
-    for (const { pattern, value } of jobMappings) {
-      if (pattern.test(pekerjaan)) {
-        pekerjaan = value;
-        logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
-        break;
-      }
-    }
-    if (pekerjaan) {
-      initialData.pekerjaan = pekerjaan;
-      initialData.PEKERJAAN = pekerjaan;
-      logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
-    } else {
-      throw new Error(`Pekerjaan could not be determined for NIK: ${nik}`);
-    }
   } else {
     logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
+  }
+  const jobMappings = [
+    { pattern: /rumah\s*tangga|irt/i, value: 'IRT' },
+    { pattern: /swasta|pedagang/i, value: 'Wiraswasta' },
+    { pattern: /tukang|buruh/i, value: 'Buruh ' },
+    { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun|belum\/tidak\s*bekerja/i, value: 'Tidak Bekerja' },
+    { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/i, value: 'PNS ' },
+    { pattern: /guru|dosen/i, value: 'Guru/ Dosen' },
+    { pattern: /perawat|dokter/i, value: 'Tenaga Profesional Medis ' },
+    { pattern: /pengacara|wartawan/i, value: 'Tenaga Profesional Non Medis ' },
+    { pattern: /pelajar|siswa|siswi|sekolah/i, value: 'Pelajar/ Mahasiswa' },
+    { pattern: /s[o,u]pir/i, value: 'Sopir ' }
+  ];
+  for (const { pattern, value } of jobMappings) {
+    if (pattern.test(pekerjaan.toLowerCase())) {
+      pekerjaan = value;
+      logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
+      break;
+    }
+  }
+  if (pekerjaan) {
+    initialData.pekerjaan = pekerjaan;
+    initialData.PEKERJAAN = pekerjaan;
+    logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
+  } else {
+    throw new Error(`Pekerjaan could not be determined for NIK: ${nik}`);
   }
 
   // Fix alamat
