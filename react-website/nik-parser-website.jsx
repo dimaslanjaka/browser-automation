@@ -1,4 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import hljs from 'highlight.js/lib/core';
 import jsonLang from 'highlight.js/lib/languages/json';
 import 'highlight.js/styles/github.css';
@@ -53,7 +52,9 @@ export default function App() {
                 <Card className="mt-3">
                   <Card.Body>
                     <Card.Title>Result</Card.Title>
-                    <pre ref={resultRef} className="hljs language-json">{JSON.stringify(result, null, 2)}</pre>
+                    <pre ref={resultRef} className="hljs language-json">
+                      {JSON.stringify(result, null, 2)}
+                    </pre>
                   </Card.Body>
                 </Card>
               )}
