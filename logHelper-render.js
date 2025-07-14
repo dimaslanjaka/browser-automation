@@ -75,7 +75,11 @@ app.get('/', async (req, res) => {
   }
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
-  res.send(liveHtml + '<script src="/socket.io/socket.io.js"></script>' + '<script src="/reload.js"></script>');
+  // Inject live reload scripts only if ?live=true is present
+  if (req.query.live === 'true') {
+    liveHtml += '<script src="/socket.io/socket.io.js"></script>' + '<script src="/reload.js"></script>';
+  }
+  res.send(liveHtml);
 });
 
 // Watch for changes in logs and notify clients
