@@ -103,6 +103,11 @@ async function processData(page, data) {
     await iframe.focus('#dt_tgl_skrining');
     await iframe.$eval('#dt_tgl_skrining', (e) => e.removeAttribute('readonly'));
     await typeAndTriggerIframe(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry);
+    // Explicitly trigger change event after typing
+    await iframe.$eval('#dt_tgl_skrining', (el) => {
+      const event = new Event('change', { bubbles: true });
+      el.dispatchEvent(event);
+    });
     await iframe.$eval('#dt_tgl_skrining', (e) => e.setAttribute('readonly', 'true'));
     logLine(`Date ${tanggalEntry} applied to #dt_tgl_skrining`);
     await sleep(1000); // Wait for the datepicker to process the input
