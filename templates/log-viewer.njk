@@ -111,6 +111,10 @@
           <span class="badge bg-success" style="font-size:0.95em; padding:0.35em 0.8em;">Success: {{ successCount }}</span>
           <span class="badge bg-danger ms-2" style="font-size:0.95em; padding:0.35em 0.8em;">Not Success: {{ failCount }}</span>
         </div>
+        <div class="input-group mb-3" id="log-search-group">
+          <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" class="form-control" id="logSearchInput" placeholder="Search logs..." autocomplete="off" />
+        </div>
         <div class="accordion" id="logAccordion" style="max-height: 70vh; overflow-y: auto"></div>
         <nav aria-label="Log pagination" class="my-3">
           <ul class="pagination justify-content-center" id="logPagination"></ul>
@@ -224,8 +228,28 @@
         </div>`;
         return html;
       }
+      function getFilteredLogs() {
+        const query = (document.getElementById('logSearchInput')?.value || '').trim().toLowerCase();
+        if (!query) return window._logViewerData.logs;
+        return window._logViewerData.logs.filter(log => {
+          // Search in NIK, nama, message, and basic data fields
+          const fields = [
+            log.data?.nik,
+            log.data?.nama,
+            log.message,
+            log.data?.tanggal,
+            log.data?.alamat,
+            log.data?.petugas,
+            log.data?.status,
+            log.data?.gender,
+            log.data?.age,
+            log.data?.pekerjaan
+          ];
+          return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(query));
+        });
+      }
       function renderPage(page) {
-        const logs = window._logViewerData.logs;
+        const logs = getFilteredLogs();
         const start = (page - 1) * batch;
         const end = Math.min(start + batch, logs.length);
         accordion.innerHTML = '';
@@ -251,7 +275,7 @@
       document.getElementById('logPagination').addEventListener('click', function (e) {
         if (e.target.tagName === 'A') {
           e.preventDefault();
-          const logs = window._logViewerData.logs;
+          const logs = getFilteredLogs();
           const totalPages = Math.ceil(logs.length / batch);
           let page = currentPage;
           if (e.target.dataset.page === 'prev') {
@@ -266,6 +290,11 @@
             renderPage(currentPage);
           }
         }
+      });
+      // Search input event
+      document.getElementById('logSearchInput').addEventListener('input', function () {
+        currentPage = 1;
+        renderPage(currentPage);
       });
       // Initial render
       renderPage(currentPage);
