@@ -1,3 +1,7 @@
 <script>
-  window.location.replace('/browser-automation' + window.location.pathname + window.location.search + window.location.hash);
+  var base = '/browser-automation';
+  var path = window.location.pathname;
+  if (!path.startsWith(base)) {
+    window.location.replace(base + path + window.location.search + window.location.hash);
+  }
 </script>
