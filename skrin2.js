@@ -211,52 +211,60 @@ async function processData(page, data) {
     }
     logLine('Resolved tglLahir: ' + tglLahir);
 
-    // input address
+    // input address: provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
     if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
       const parsed_nik = fixedData.parsed_nik.data;
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik;
-      if (kotakab.length > 0 && namaKec.length > 0 && provinsi.length > 0 && kelurahan.length > 0) {
-        const selectedKelurahan = kelurahan[0];
-        logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
 
-        // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
+      if (provinsi.length > 0) {
         await typeAndTriggerIframe(
           page,
           iframeSelector,
           '#field_item_provinsi_ktp_id input[type="text"]',
           ucwords(provinsi)
         );
+      }
+
+      if (kotakab.length > 0) {
         await typeAndTriggerIframe(
           page,
           iframeSelector,
           '#field_item_kabupaten_ktp_id input[type="text"]',
           ucwords(kotakab)
         );
+      }
+
+      if (namaKec.length > 0) {
         await typeAndTriggerIframe(
           page,
           iframeSelector,
           '#field_item_kecamatan_ktp_id input[type="text"]',
           ucwords(namaKec)
         );
-        await typeAndTriggerIframe(
-          page,
-          iframeSelector,
-          '#field_item_kelurahan_ktp_id input[type="text"]',
-          ucwords(selectedKelurahan.name)
-        );
-        await typeAndTriggerIframe(
-          page,
-          iframeSelector,
-          '#field_item_alamat_ktp textarea[type="text"]',
-          String(fixedData.alamat)
-        );
-      } else {
-        // Throw error if any address component is empty
-        throw new Error(
-          `Address data is incomplete for NIK: ${NIK}. ` +
-            `provinsi: "${provinsi}", kotakab: "${kotakab}", namaKec: "${namaKec}", kelurahan: "${kelurahan && kelurahan.length > 0 && kelurahan[0] ? kelurahan[0].name : ''}"`
-        );
       }
+
+      if (kelurahan.length > 0) {
+        const selectedKelurahan = kelurahan[0];
+        if (selectedKelurahan && selectedKelurahan.name) {
+          logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
+
+          await typeAndTriggerIframe(
+            page,
+            iframeSelector,
+            '#field_item_kelurahan_ktp_id input[type="text"]',
+            ucwords(selectedKelurahan.name)
+          );
+        }
+      }
+    }
+
+    if (fixedData.alamat) {
+      await typeAndTriggerIframe(
+        page,
+        iframeSelector,
+        '#field_item_alamat_ktp textarea[type="text"]',
+        String(fixedData.alamat)
+      );
     }
   }
 
