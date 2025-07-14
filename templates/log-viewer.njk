@@ -127,11 +127,25 @@
       const loading = document.getElementById('log-loading');
       let currentPage = 1;
       const batch = 20;
+      // Helper function to capitalize log names
+      function capitalizeName(name) {
+        if (!name) return '';
+        return name
+          .split(' ')
+          .map(
+            (w) =>
+              w.length > 0
+                ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+                : ''
+          )
+          .join(' ');
+      }
+
       function renderLogItem(log, idx) {
         let html = `<div class="accordion-item">
           <div class="accordion-header" id="heading${idx}">
             <button class="accordion-button collapsed ${log.data && log.data.status === 'success' ? 'bg-success text-white' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}" aria-expanded="false" aria-controls="collapse${idx}">
-              ${log.data?.nik || ''} - ${log.data?.nama || ''}
+              ${log.data?.nik || ''} - ${capitalizeName(log.data?.nama || '')}
             </button>
           </div>
           <div id="collapse${idx}" class="accordion-collapse collapse" aria-labelledby="heading${idx}" data-bs-parent="#logAccordion">
@@ -141,7 +155,7 @@
               <span class="section-title">Basic Data</span>
               <table class="table table-bordered table-striped mb-3">
                 <tr><th>Tanggal</th><td>${log.data?.tanggal || ''}</td></tr>
-                <tr><th>Nama</th><td>${log.data?.nama || ''}</td></tr>
+                <tr><th>Nama</th><td>${capitalizeName(log.data?.nama || '')}</td></tr>
                 <tr><th>Tgl Lahir</th><td>${log.data?.tgl_lahir || ''}</td></tr>
                 <tr><th>Alamat</th><td>${log.data?.alamat || ''}</td></tr>
                 <tr><th>BB</th><td>${log.data?.bb || ''}</td></tr>
