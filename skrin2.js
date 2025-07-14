@@ -360,6 +360,9 @@ async function processData(page, data) {
   await sleep(2000); // Wait for the form to stabilize
 
   while (!(await isAllowedToSubmit())) {
+    if (await isIframeElementVisible(page, iframeSelector, '#yesButton')) {
+      break; // If the Yes button is visible, we can proceed
+    }
     logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
     // Wait for user to fix data
     await waitEnter(`Please fix data for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
