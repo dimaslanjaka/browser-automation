@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import moment from 'moment';
-import { fetchXlsxData4 } from './src/fetchXlsxData4.js';
+import { dataKunto } from './data/index.js';
 import { addLog, getLogById } from './src/logHelper.js';
 import {
   clickIframeElement,
@@ -12,7 +12,7 @@ import {
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, ucwords, waitEnter } from './src/utils.js';
-import { fixData, getDataRange } from './src/xlsx-helper.js';
+import { fixData } from './src/xlsx-helper.js';
 
 console.clear();
 
@@ -21,12 +21,12 @@ console.clear();
  *
  * @async
  * @param {import('puppeteer').Page} page - Puppeteer page instance to operate on.
- * @param {Awaited<ReturnType<typeof getDataRange>>[number]} data - A single data row from getDataRange (already fixed by fixData).
+ * @param {import('./globals').ExcelRowData} data - A single data row from getDataRange (already fixed by fixData).
  * @returns {Promise<void>} Resolves when processing is complete.
  */
 async function processData(page, data) {
   const fixedData = await fixData(data);
-  const NIK = getNumbersOnly(fixedData.NIK);
+  const NIK = getNumbersOnly(fixedData.nik);
   const cachedData = getLogById(NIK);
   if (cachedData && cachedData.data && cachedData.data.status === 'success') {
     logLine(`Data for NIK: ${NIK} already processed. Skipping...`);
@@ -95,7 +95,7 @@ async function processData(page, data) {
     await sleep(1000);
   };
 
-  const tanggalEntry = fixedData.tanggal || fixedData['TANGGAL ENTRY'];
+  const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
 
   // Set the date value in the iframe's datepicker element
 
@@ -203,7 +203,7 @@ async function processData(page, data) {
     }
 
     // Try to find the birth date field in fixedData
-    let tglLahir = fixedData['TGL LAHIR'];
+    let tglLahir = fixedData['TGL LAHIR'] || fixedData.tgl_lahir;
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(`Invalid date format for TGL LAHIR: ${tglLahir} (NIK: ${NIK})`);
     } else {
@@ -254,7 +254,7 @@ async function processData(page, data) {
         // Throw error if any address component is empty
         throw new Error(
           `Address data is incomplete for NIK: ${NIK}. ` +
-            `provinsi: "${provinsi}", kotakab: "${kotakab}", namaKec: "${namaKec}", kelurahan: "${kelurahan && kelurahan.length > 0 ? kelurahan[0].name : ''}"`
+            `provinsi: "${provinsi}", kotakab: "${kotakab}", namaKec: "${namaKec}", kelurahan: "${kelurahan && kelurahan.length > 0 && kelurahan[0] ? kelurahan[0].name : ''}"`
         );
       }
     }
@@ -349,6 +349,8 @@ async function processData(page, data) {
     return !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
   };
 
+  await sleep(2000); // Wait for the form to stabilize
+
   while (!(await isAllowedToSubmit())) {
     logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
     // Wait for user to fix data
@@ -385,14 +387,8 @@ async function processData(page, data) {
     counter = 0; // Reset counter
     logLine(`Submission allowed for NIK: ${NIK}. Clicking Yes to confirm...`);
 
-    // Click the Yes button to confirm submission
-    await clickIframeElement(page, iframeSelector, '#yesButton');
-  }
-
-  await sleep(2000); // Wait for the submission to process
-
-  if (!(await isElementVisible(page, iframeSelector))) {
-    logLine(`Data for NIK: ${NIK} submitted successfully.`);
+    // get form values before submission
+    logLine(`Getting form values for NIK: ${NIK} before submission...`);
     const formValues = (await getFormValuesFromFrame(page, iframeSelector, '#main-container'))
       .map((item) => {
         if (!item.name || item.name.trim().length === 0) {
@@ -423,6 +419,16 @@ async function processData(page, data) {
       })
       .filter((item) => item !== null);
     fixedData.formValues = formValues;
+
+    // Click the Yes button to confirm submission
+    await clickIframeElement(page, iframeSelector, '#yesButton');
+  }
+
+  await sleep(2000); // Wait for the submission to process
+
+  if (!(await isElementVisible(page, iframeSelector))) {
+    logLine(`Data for NIK: ${NIK} submitted successfully.`);
+    // Get the form values after submission
     addLog({
       id: NIK,
       data: { ...fixedData, status: 'success' },
@@ -510,20 +516,14 @@ const main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
 
-  const rangeData = await getDataRange(await fetchXlsxData4(), {
-    fromNik: '3578106311200003',
-    fromNama: 'NI NYOMAN ANINDYA MAHESWARI',
-    toNik: '3578101502250001',
-    toNama: 'MUHAMMAD NATHAN ALFATIR'
+  const unprocessedData = dataKunto.filter((item) => {
+    // Check if the data for this NIK has already been processed
+    const nik = getNumbersOnly(item.nik);
+    return !getLogById(nik) || getLogById(nik).data.status !== 'success';
   });
 
-  while (rangeData.length > 0) {
-    const currentData = rangeData.shift();
-    // Check if the data for this NIK has already been processed
-    if (getLogById(getNumbersOnly(currentData.NIK))) {
-      logLine(`Data for NIK: ${currentData.NIK} already processed. Skipping...`);
-      continue;
-    }
+  while (unprocessedData.length > 0) {
+    const currentData = unprocessedData.shift();
     // Close the first page if there are more than 3 pages open
     if ((await browser.pages()).length > 3) {
       const pages = await browser.pages();
