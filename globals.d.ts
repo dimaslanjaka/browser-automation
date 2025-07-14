@@ -54,3 +54,7 @@ declare global {
     }
   }
 }
+// AdSense global declaration
+interface Window {
+  adsbygoogle?: unknown[];
+}
