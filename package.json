@@ -54,6 +54,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sbg-utility": "^2.0.8",
+    "socket.io": "^4.8.1",
     "unzipper": "^0.12.3",
     "upath": "^2.0.1",
     "xlsx": "^0.18.5",

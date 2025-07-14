@@ -1,8 +1,11 @@
 import crypto from 'crypto';
 import express from 'express';
+import fs from 'fs';
+import http from 'http';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { writefile } from 'sbg-utility';
+import { Server as SocketIOServer } from 'socket.io';
 import { dataKunto } from './data/index.js';
 import { dbPath, getLogs } from './src/logHelper.js';
 import { ucwords } from './src/utils.js';
@@ -20,6 +23,10 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'njk');
 app.set('views', templatesPath);
+
+// Live reload integration
+const server = http.createServer(app);
+const io = new SocketIOServer(server);
 
 app.get('/', (req, res) => {
   let liveLogs = getLogs();
@@ -53,7 +60,30 @@ app.get('/', (req, res) => {
   });
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
-  res.send(liveHtml);
+  res.send(
+    liveHtml +
+      `<script src="/socket.io/socket.io.js"></script>
+<script src="/reload.js"></script>`
+  );
+});
+
+// Watch for changes in logs and notify clients
+fs.watch(dbPath, { persistent: true }, (eventType) => {
+  if (eventType === 'change') {
+    io.emit('reload');
+  }
+});
+
+// Serve a small client script for live reload
+app.get('/reload.js', (req, res) => {
+  res.type('application/javascript').send(`
+    (() => {
+      const socket = window.io ? window.io() : (window.io = window.io || require('socket.io-client'))();
+      socket.on('reload', () => {
+        window.location.reload();
+      });
+    })();
+  `);
 });
 
 app.get('/stats', (req, res) => {
@@ -65,6 +95,6 @@ app.get('/stats', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Express server running at http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Express server with live reload running at http://localhost:${PORT}`);
 });
