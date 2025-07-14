@@ -210,12 +210,10 @@
                   <tr>
                     <th>Label</th>
                     <th>Value</th>
-                    <th>Selector</th>
-                    <th>Disabled</th>
                   </tr>
                 </thead>
                 <tbody>
-                ${log.data.formValues.map((field) => `<tr><td>${field.label || ''}</td><td>${field.value || ''}</td><td>${field.selector || ''}</td><td>${field.disabled ? 'Yes' : 'No'}</td></tr>`).join('')}
+                ${log.data.formValues.map((field) => `<tr><td>${field.label || ''}</td><td>${field.value || '<empty>'}</td></tr>`).join('')}
                 </tbody>
               </table>
               `
