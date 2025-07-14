@@ -257,15 +257,16 @@ async function processData(page, data) {
         }
       }
     }
+  }
 
-    if (fixedData.alamat) {
-      await typeAndTriggerIframe(
-        page,
-        iframeSelector,
-        '#field_item_alamat_ktp textarea[type="text"]',
-        String(fixedData.alamat)
-      );
-    }
+  // Always input alamat
+  if (fixedData.alamat && String(fixedData.alamat).trim() !== '') {
+    await typeAndTriggerIframe(
+      page,
+      iframeSelector,
+      '#field_item_alamat_ktp textarea[type="text"]',
+      String(fixedData.alamat)
+    );
   }
 
   // Input pekerjaan
