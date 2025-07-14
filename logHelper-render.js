@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
+import { minify as minifyHtml } from 'html-minifier-terser';
 import http from 'http';
 import nunjucks from 'nunjucks';
 import path from 'path';
@@ -28,7 +29,7 @@ app.set('views', templatesPath);
 const server = http.createServer(app);
 const io = new SocketIOServer(server);
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   let liveLogs = getLogs();
   // Sort liveLogs by item.data.nik order as in dataKunto
   if (Array.isArray(dataKunto) && Array.isArray(liveLogs)) {
@@ -50,7 +51,7 @@ app.get('/', (req, res) => {
   if (req.query.pageTitle || req.query.pagetitle) {
     pageTitle = ucwords(req.query.pageTitle || req.query.pagetitle);
   }
-  const liveHtml = nunjucks.render('log-viewer.njk', {
+  let liveHtml = nunjucks.render('log-viewer.njk', {
     logs: liveLogs,
     successCount,
     failCount,
@@ -58,13 +59,22 @@ app.get('/', (req, res) => {
     canonicalUrl,
     logsJson: JSON.stringify(liveLogs)
   });
+  if (req.query.minify) {
+    // Use html-minifier-terser for proper HTML minification
+    liveHtml = await minifyHtml(liveHtml, {
+      collapseWhitespace: true,
+      removeComments: true,
+      minifyCSS: true,
+      minifyJS: true,
+      removeRedundantAttributes: true,
+      removeEmptyAttributes: true,
+      useShortDoctype: true,
+      removeOptionalTags: true
+    });
+  }
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
-  res.send(
-    liveHtml +
-      `<script src="/socket.io/socket.io.js"></script>
-<script src="/reload.js"></script>`
-  );
+  res.send(liveHtml + '<script src="/socket.io/socket.io.js"></script>' + '<script src="/reload.js"></script>');
 });
 
 // Watch for changes in logs and notify clients
