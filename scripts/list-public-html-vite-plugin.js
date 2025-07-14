@@ -11,7 +11,7 @@ function writeHtmlList() {
   const tmpDir = path.join(__dirname, '../tmp');
   const outputFile = path.join(tmpDir, 'html-files.json');
   const files = fs.readdirSync(publicDir);
-  const htmlFiles = files.filter((f) => f.endsWith('.html'));
+  const htmlFiles = files.filter((f) => f.endsWith('.html') && f !== '404.html');
   writefile(outputFile, JSON.stringify(htmlFiles, null, 2));
   console.log(`Found ${htmlFiles.length} HTML files. List written to html-files.json.`);
 }
