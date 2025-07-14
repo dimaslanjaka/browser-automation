@@ -2,6 +2,7 @@ import express from 'express';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { writefile } from 'sbg-utility';
+import { dataKunto } from './data/index.js';
 import { getLogs } from './src/logHelper.js';
 import { ucwords } from './src/utils.js';
 
@@ -20,7 +21,18 @@ app.set('view engine', 'njk');
 app.set('views', templatesPath);
 
 app.get('/', (req, res) => {
-  const liveLogs = getLogs();
+  let liveLogs = getLogs();
+  // Sort liveLogs by item.data.nik order as in dataKunto
+  if (Array.isArray(dataKunto) && Array.isArray(liveLogs)) {
+    const nikOrder = dataKunto.map((item) => item.nik);
+    const nikIndex = (nik) => nikOrder.indexOf(nik);
+    liveLogs = liveLogs.slice().sort((a, b) => {
+      const nikA = a.data && a.data.nik;
+      const nikB = b.data && b.data.nik;
+      return nikIndex(nikA) - nikIndex(nikB);
+    });
+  }
+
   const outPath = path.resolve(__dirname, 'public/log-juli-2025.html');
   const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outPath)}`;
   // Count success and fail logs (case-insensitive)
