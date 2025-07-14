@@ -116,6 +116,21 @@
           <input type="text" class="form-control" id="logSearchInput" placeholder="Search logs..." autocomplete="off" />
         </div>
         <div class="accordion" id="logAccordion" style="max-height: 70vh; overflow-y: auto"></div>
+        <!-- Floating Collapse All Button -->
+        <button id="collapseAllBtn" type="button" class="btn btn-warning rounded-circle shadow position-fixed d-flex align-items-center justify-content-center" style="bottom: 2.5em; right: 1.5em; z-index: 1050; width: 2.3em; height: 2.3em; font-size: 1.2em;">
+          <i class="fa-solid fa-compress"></i>
+        </button>
+        <style>
+          @media (max-width: 600px) {
+            #collapseAllBtn {
+              width: 2.3em !important;
+              height: 2.3em !important;
+              font-size: 1.2em !important;
+              right: 1em !important;
+              bottom: 1.2em !important;
+            }
+          }
+        </style>
         <nav aria-label="Log pagination" class="my-3">
           <ul class="pagination justify-content-center" id="logPagination"></ul>
         </nav>
@@ -296,6 +311,17 @@
         currentPage = 1;
         renderPage(currentPage);
       });
+      // Collapse all accordions function
+      function collapseAllAccordions() {
+        const items = accordion.querySelectorAll('.accordion-collapse');
+        items.forEach(item => {
+          if (item.classList.contains('show')) {
+            const collapse = bootstrap.Collapse.getOrCreateInstance(item);
+            collapse.hide();
+          }
+        });
+      }
+      document.getElementById('collapseAllBtn').addEventListener('click', collapseAllAccordions);
       // Initial render
       renderPage(currentPage);
     </script>
