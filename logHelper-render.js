@@ -35,7 +35,8 @@ app.get('/', (req, res) => {
     successCount,
     failCount,
     pageTitle,
-    canonicalUrl
+    canonicalUrl,
+    logsJson: JSON.stringify(liveLogs)
   });
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);

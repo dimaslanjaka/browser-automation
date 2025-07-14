@@ -22,7 +22,8 @@
     .log-timestamp { color: #888; font-size: 0.9em; }
     .section-title { font-weight: bold; margin-top: 1em; }
     .parsed-nik-table th { background: #e0f7fa; }
-    .accordion-button { font-size: 1em; }
+    .accordion-button { font-size: 0.85em; padding-top: 0.3em; padding-bottom: 0.3em; }
+    .accordion-header { font-size: 0.9em; }
   </style>
 </head>
 <body>
@@ -32,62 +33,70 @@
       <span class="badge bg-success">Success: {{ successCount }}</span>
       <span class="badge bg-danger ms-2">Not Success: {{ failCount }}</span>
     </div>
-    <div class="accordion" id="logAccordion">
-      {% for log in logs %}
-        <div class="accordion-item">
-          <div class="accordion-header" id="heading{{ loop.index }}">
-            <button class="accordion-button collapsed {% if log.data.status == 'success' %}bg-success text-white{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
-              {{ log.data.nik }} - {{ log.data.nama }}
+    <div class="accordion" id="logAccordion" style="max-height: 70vh; overflow-y: auto;"></div>
+    <nav aria-label="Log pagination" class="my-3">
+      <ul class="pagination justify-content-center" id="logPagination"></ul>
+    </nav>
+    <div id="log-loading" class="text-center my-3" style="display:none;">
+      <span class="spinner-border text-primary"></span> Loading more logs...
+    </div>
+    <script type="application/json" id="logs-json">{{ logsJson | safe }}</script>
+    <script>
+      window._logViewerData = window._logViewerData || {};
+      window._logViewerData.logs = JSON.parse(document.getElementById('logs-json').textContent);
+      const accordion = document.getElementById('logAccordion');
+      const loading = document.getElementById('log-loading');
+      let currentPage = 1;
+      const batch = 20;
+      function renderLogItem(log, idx) {
+        let html = `<div class="accordion-item">
+          <div class="accordion-header" id="heading${idx}">
+            <button class="accordion-button collapsed ${log.data && log.data.status === 'success' ? 'bg-success text-white' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}" aria-expanded="false" aria-controls="collapse${idx}">
+              ${log.data?.nik || ''} - ${log.data?.nama || ''}
             </button>
           </div>
-          <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#logAccordion">
+          <div id="collapse${idx}" class="accordion-collapse collapse" aria-labelledby="heading${idx}" data-bs-parent="#logAccordion">
             <div class="accordion-body">
-              <div class="log-timestamp mb-2">Timestamp: {{ log.timestamp }}</div>
-              <div class="log-message mb-2">{{ log.message }}</div>
+              <div class="log-timestamp mb-2">Timestamp: ${log.timestamp || ''}</div>
+              <div class="log-message mb-2">${log.message || ''}</div>
               <span class="section-title">Basic Data</span>
               <table class="table table-bordered table-striped mb-3">
-                <tr><th>Tanggal</th><td>{{ log.data.tanggal }}</td></tr>
-                <tr><th>Nama</th><td>{{ log.data.nama }}</td></tr>
-                <tr><th>Tgl Lahir</th><td>{{ log.data.tgl_lahir }}</td></tr>
-                <tr><th>Alamat</th><td>{{ log.data.alamat }}</td></tr>
-                <tr><th>BB</th><td>{{ log.data.bb }}</td></tr>
-                <tr><th>TB</th><td>{{ log.data.tb }}</td></tr>
-                <tr><th>Petugas</th><td>{{ log.data.petugas }}</td></tr>
-                <tr><th>Status</th><td>{{ log.data.status }}</td></tr>
-                <tr><th>Gender</th><td>{{ log.data.gender }}</td></tr>
-                <tr><th>Age</th><td>{{ log.data.age }}</td></tr>
-                <tr><th>Pekerjaan</th><td>{{ log.data.pekerjaan }}</td></tr>
+                <tr><th>Tanggal</th><td>${log.data?.tanggal || ''}</td></tr>
+                <tr><th>Nama</th><td>${log.data?.nama || ''}</td></tr>
+                <tr><th>Tgl Lahir</th><td>${log.data?.tgl_lahir || ''}</td></tr>
+                <tr><th>Alamat</th><td>${log.data?.alamat || ''}</td></tr>
+                <tr><th>BB</th><td>${log.data?.bb || ''}</td></tr>
+                <tr><th>TB</th><td>${log.data?.tb || ''}</td></tr>
+                <tr><th>Petugas</th><td>${log.data?.petugas || ''}</td></tr>
+                <tr><th>Status</th><td>${log.data?.status || ''}</td></tr>
+                <tr><th>Gender</th><td>${log.data?.gender || ''}</td></tr>
+                <tr><th>Age</th><td>${log.data?.age || ''}</td></tr>
+                <tr><th>Pekerjaan</th><td>${log.data?.pekerjaan || ''}</td></tr>
               </table>
               <span class="section-title">Parsed NIK</span>
-              {% if log.data.parsed_nik %}
+              ${log.data?.parsed_nik ? `
               <table class="table table-bordered table-hover mb-3 parsed-nik-table">
-                <tr><th>Status</th><td>{{ log.data.parsed_nik.status }}</td></tr>
-                <tr><th>Message</th><td>{{ log.data.parsed_nik.message }}</td></tr>
-                {% if log.data.parsed_nik.data %}
-                  <tr><th>NIK</th><td>{{ log.data.parsed_nik.data.nik }}</td></tr>
-                  <tr><th>Kelamin</th><td>{{ log.data.parsed_nik.data.kelamin }}</td></tr>
-                  <tr><th>Lahir</th><td>{{ log.data.parsed_nik.data.lahir }}</td></tr>
-                  <tr><th>Provinsi</th><td>{{ log.data.parsed_nik.data.provinsi }}</td></tr>
-                  <tr><th>Kota/Kab</th><td>{{ log.data.parsed_nik.data.kotakab }}</td></tr>
-                  <tr><th>Kecamatan</th><td>{{ log.data.parsed_nik.data.namaKec }}</td></tr>
-                  <tr><th>Uniqcode</th><td>{{ log.data.parsed_nik.data.uniqcode }}</td></tr>
-                  <tr><th>Original Lahir</th><td>{{ log.data.parsed_nik.data.originalLahir }}</td></tr>
+                <tr><th>Status</th><td>${log.data.parsed_nik.status || ''}</td></tr>
+                <tr><th>Message</th><td>${log.data.parsed_nik.message || ''}</td></tr>
+                ${log.data.parsed_nik.data ? `
+                  <tr><th>NIK</th><td>${log.data.parsed_nik.data.nik || ''}</td></tr>
+                  <tr><th>Kelamin</th><td>${log.data.parsed_nik.data.kelamin || ''}</td></tr>
+                  <tr><th>Lahir</th><td>${log.data.parsed_nik.data.lahir || ''}</td></tr>
+                  <tr><th>Provinsi</th><td>${log.data.parsed_nik.data.provinsi || ''}</td></tr>
+                  <tr><th>Kota/Kab</th><td>${log.data.parsed_nik.data.kotakab || ''}</td></tr>
+                  <tr><th>Kecamatan</th><td>${log.data.parsed_nik.data.namaKec || ''}</td></tr>
+                  <tr><th>Uniqcode</th><td>${log.data.parsed_nik.data.uniqcode || ''}</td></tr>
+                  <tr><th>Original Lahir</th><td>${log.data.parsed_nik.data.originalLahir || ''}</td></tr>
                   <tr><th>Kelurahan</th>
                     <td>
-                      {% if log.data.parsed_nik.data.kelurahan %}
-                        <ul class="list-group list-group-flush">
-                        {% for kel in log.data.parsed_nik.data.kelurahan %}
-                          <li class="list-group-item">{{ kel.name }} <span class="text-muted">(ID: {{ kel.id }}, District: {{ kel.district_id }})</span></li>
-                        {% endfor %}
-                        </ul>
-                      {% endif %}
+                      ${log.data.parsed_nik.data.kelurahan ? `<ul class='list-group list-group-flush'>${log.data.parsed_nik.data.kelurahan.map(kel => `<li class='list-group-item'>${kel.name} <span class='text-muted'>(ID: ${kel.id}, District: ${kel.district_id})</span></li>`).join('')}</ul>` : ''}
                     </td>
                   </tr>
-                {% endif %}
+                ` : ''}
               </table>
-              {% endif %}
+              ` : ''}
               <span class="section-title">Form Values</span>
-              {% if log.data.formValues %}
+              ${log.data?.formValues ? `
               <table class="table table-bordered table-sm mb-3">
                 <thead class="table-light">
                   <tr>
@@ -98,22 +107,63 @@
                   </tr>
                 </thead>
                 <tbody>
-                {% for field in log.data.formValues %}
-                <tr>
-                  <td>{{ field.label }}</td>
-                  <td>{{ field.value }}</td>
-                  <td>{{ field.selector }}</td>
-                  <td>{% if field.disabled %}Yes{% else %}No{% endif %}</td>
-                </tr>
-                {% endfor %}
+                ${log.data.formValues.map(field => `<tr><td>${field.label || ''}</td><td>${field.value || ''}</td><td>${field.selector || ''}</td><td>${field.disabled ? 'Yes' : 'No'}</td></tr>`).join('')}
                 </tbody>
               </table>
-              {% endif %}
+              ` : ''}
             </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
+        </div>`;
+        return html;
+      }
+      function renderPage(page) {
+        const logs = window._logViewerData.logs;
+        const start = (page - 1) * batch;
+        const end = Math.min(start + batch, logs.length);
+        accordion.innerHTML = '';
+        for (let i = start; i < end; i++) {
+          accordion.insertAdjacentHTML('beforeend', renderLogItem(logs[i], i + 1));
+        }
+        renderPagination(page, Math.ceil(logs.length / batch));
+      }
+
+      function renderPagination(page, totalPages) {
+        const pagination = document.getElementById('logPagination');
+        let html = '';
+        html += `<li class="page-item${page === 1 ? ' disabled' : ''}"><a class="page-link" href="#" data-page="prev">Previous</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === page || i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+            html += `<li class="page-item${i === page ? ' active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+          } else if (i === page - 3 || i === page + 3) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+          }
+        }
+        html += `<li class="page-item${page === totalPages ? ' disabled' : ''}"><a class="page-link" href="#" data-page="next">Next</a></li>`;
+        pagination.innerHTML = html;
+      }
+
+      document.getElementById('logPagination').addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+          e.preventDefault();
+          const logs = window._logViewerData.logs;
+          const totalPages = Math.ceil(logs.length / batch);
+          let page = currentPage;
+          if (e.target.dataset.page === 'prev') {
+            if (page > 1) page--;
+          } else if (e.target.dataset.page === 'next') {
+            if (page < totalPages) page++;
+          } else {
+            page = parseInt(e.target.dataset.page, 10);
+          }
+          if (page !== currentPage) {
+            currentPage = page;
+            renderPage(currentPage);
+          }
+        }
+      });
+      // Initial render
+      renderPage(currentPage);
+    </script>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
