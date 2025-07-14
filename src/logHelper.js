@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import path from 'path';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
 
-const dbPath = path.resolve('.cache/logs.db');
+export const dbPath = path.resolve('.cache/logs.db');
 const db = new Database(dbPath);
 
 // Create table if not exists

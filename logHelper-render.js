@@ -1,9 +1,10 @@
+import crypto from 'crypto';
 import express from 'express';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { writefile } from 'sbg-utility';
 import { dataKunto } from './data/index.js';
-import { getLogs } from './src/logHelper.js';
+import { dbPath, getLogs } from './src/logHelper.js';
 import { ucwords } from './src/utils.js';
 
 let __filename = new URL(import.meta.url).pathname;
@@ -53,6 +54,14 @@ app.get('/', (req, res) => {
   writefile(outPath, liveHtml);
   console.log(`Log HTML written to ${outPath}`);
   res.send(liveHtml);
+});
+
+app.get('/stats', (req, res) => {
+  const liveLogs = getLogs();
+  const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
+  const failCount = liveLogs.filter((log) => log.data && log.data.status !== 'success').length;
+  const dbPathChecksum = crypto.createHash('sha256').update(dbPath).digest('hex');
+  res.json({ successCount, failCount, db: { dbPath, dbPathChecksum } });
 });
 
 const PORT = process.env.PORT || 3000;
