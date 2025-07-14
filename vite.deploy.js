@@ -12,7 +12,7 @@ ghpages.publish(
   'dist',
   {
     nojekyll: true,
-    repo: 'https://dimaslanjaka:' + process.env.ACCESS_TOKEN + '@github.com/dimaslanjaka/browser-automation.git',
+    repo: 'https://github.com/dimaslanjaka/browser-automation.git',
     branch: 'gh-pages',
     user: { name: 'dimaslanjaka', email: 'dimaslanjaka@gmail.com' },
     message: `Deploying to GitHub Pages: ${new Date().toISOString()}`
