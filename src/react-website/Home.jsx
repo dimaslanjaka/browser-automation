@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Container } from 'react-bootstrap';
-import htmlFiles from '../tmp/html-files.json' with { type: 'json' }; // Assuming this file contains the list of HTML files
+import htmlFiles from '../../tmp/html-files.json' with { type: 'json' };
+import AdSense from '../components/Adsense';
 
 const _react = typeof React;
 
@@ -22,7 +23,9 @@ export default function Home() {
             </ul>
             <br />
             <a href="/browser-automation/nik-parser" className="btn btn-primary">Go to NIK Parser</a>
-            <br /><br />
+            <br />
+            <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
+            <br />
             <b>Available HTML Files:</b>
             <ul>
               {htmlFiles.map((file) => (
