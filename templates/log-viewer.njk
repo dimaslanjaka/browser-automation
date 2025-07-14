@@ -270,15 +270,21 @@
           themeSwitchText.textContent = 'Light';
         }
       }
-      // Initial state
-      let initialTheme = (localStorage.getItem('theme') || 'dark') === 'dark';
-      updateThemeSwitchUI(initialTheme);
+      // Read theme from localStorage and apply on load
+      function applyThemeFromStorage() {
+        const theme = localStorage.getItem('theme');
+        const isDark = theme === 'dark' || (!theme && 'dark');
+        updateThemeSwitchUI(isDark);
+        document.querySelectorAll('[data-bs-theme]').forEach(function (el) {
+          el.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        });
+      }
+      applyThemeFromStorage();
       // Listen to switch
       themeSwitch.addEventListener('change', function () {
         const isDark = themeSwitch.checked;
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         updateThemeSwitchUI(isDark);
-        // Update Bootstrap theme
         document.querySelectorAll('[data-bs-theme]').forEach(function (el) {
           el.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
         });
