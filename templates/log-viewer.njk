@@ -87,6 +87,10 @@
         border-radius: 0.7em;
         overflow: hidden;
       }
+      /* Generalized success color for any .text-success in dark theme */
+      [data-bs-theme="dark"] .text-success {
+        color: #4efc6e !important;
+      }
     </style>
   </head>
   <body>
@@ -142,6 +146,7 @@
       }
 
       function renderLogItem(log, idx) {
+        const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
         let html = `<div class="accordion-item">
           <div class="accordion-header" id="heading${idx}">
             <button class="accordion-button collapsed ${log.data && log.data.status === 'success' ? 'bg-success text-white' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}" aria-expanded="false" aria-controls="collapse${idx}">
@@ -151,7 +156,7 @@
           <div id="collapse${idx}" class="accordion-collapse collapse" aria-labelledby="heading${idx}" data-bs-parent="#logAccordion">
             <div class="accordion-body">
               <div class="log-timestamp mb-2">Timestamp: ${log.timestamp || ''}</div>
-              <div class="log-message mb-2">${log.message || ''}</div>
+              <div class="log-message mb-2${isSuccessMsg ? ' text-success' : ''}">${log.message || ''}</div>
               <span class="section-title">Basic Data</span>
               <table class="table table-bordered table-striped mb-3">
                 <tr><th>Tanggal</th><td>${log.data?.tanggal || ''}</td></tr>
