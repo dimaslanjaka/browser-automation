@@ -60,5 +60,5 @@ export const dataKunto = mapped.map((row) => {
   return row;
 });
 
-console.log(mapped.at(0)); // Output the first mapped record to verify mapping
-console.log(mapped.at(-1)); // Output the last mapped record to verify mapping
+// console.log(mapped.at(0)); // Output the first mapped record to verify mapping
+// console.log(mapped.at(-1)); // Output the last mapped record to verify mapping
