@@ -1,18 +1,19 @@
+
 body {
   margin: 2em;
 }
-.log-header {
+.logHeader {
   font-weight: bold;
   font-size: 1.1em;
 }
-.log-timestamp {
+.logTimestamp {
   font-size: 0.9em;
 }
-.section-title {
+.sectionTitle {
   font-weight: bold;
   margin-top: 1em;
 }
-.accordion-button {
+.accordionButton {
   font-size: 0.85em;
   padding-top: 0.15em;
   padding-bottom: 0.15em;
@@ -20,9 +21,27 @@ body {
   padding-right: 0.7em;
   min-height: 2em;
 }
-.accordion-header {
-  font-size: 0.9em;
+
+.accordionHeader {
+  font-size: 0.9em !important;
+  padding: 0.15em 0.7em !important;
+  max-height: 2em !important;
 }
+
+.accordionHeader[aria-expanded="true"] {
+  font-size: 0.9em !important;
+  padding: 0.15em 0.7em !important;
+  max-height: 2em !important;
+}
+
+:global(.accordion-button),
+:global(.accordion-button:not(.collapsed)) {
+  font-size: 0.9em !important;
+  padding: 0.15em 0.7em !important;
+  min-height: 2em !important;
+  max-height: 2em !important;
+}
+
 .container {
   border-radius: 1em;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
@@ -46,23 +65,23 @@ h1 {
   border-radius: 0.7em;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
-.accordion-item {
+.accordionItem {
   border-radius: 0.7em;
   margin-bottom: 0.25em;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
   border: none;
 }
-.accordion-body {
+.accordionBody {
   border-radius: 0.7em;
 }
 .table {
   border-radius: 0.7em;
   overflow: hidden;
 }
-[data-bs-theme="dark"] .text-success {
+[data-bs-theme="dark"] .textSuccess {
   color: #4efc6e !important;
 }
-.collapse-all-btn {
+.collapseAllBtn {
   bottom: 2.5em;
   right: 1.5em;
   z-index: 1050;
@@ -71,7 +90,7 @@ h1 {
   font-size: 1.2em;
 }
 @media (max-width: 600px) {
-  .collapse-all-btn {
+  .collapseAllBtn {
     width: 2.3em !important;
     height: 2.3em !important;
     font-size: 1.2em !important;

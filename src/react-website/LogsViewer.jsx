@@ -2,22 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
 import logs from '../../tmp/logs.json' with { type: 'json' };
 import { ucwords } from '../utils/string.js';
-import './LogsViewer.css';
+import styles from './LogsViewer.module.css';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
   return (
-    <Accordion.Item eventKey={String(idx)}>
-      <Accordion.Header>
+    <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
+      <Accordion.Header className={styles.accordionHeader}>
         <span style={{ width: '100%' }}>
           <span style={{ fontWeight: 'bold' }}>{log.data?.nik || ''}</span> - {ucwords(log.data?.nama || '')}
         </span>
       </Accordion.Header>
-      <Accordion.Body>
-        <div className="log-timestamp mb-2">Timestamp: {log.timestamp || ''}</div>
-        <div className={`log-message mb-2${isSuccessMsg ? ' text-success' : ''}`}>{log.message || ''}</div>
-        <span className="section-title">Basic Data</span>
-        <Table bordered striped className="mb-3">
+      <Accordion.Body className={styles.accordionBody}>
+        <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
+        <div className={`${styles.logMessage} mb-2${isSuccessMsg ? ' ' + styles.textSuccess : ''}`}>{log.message || ''}</div>
+        <span className={styles.sectionTitle}>Basic Data</span>
+        <Table bordered striped className={`mb-3 ${styles.table}`}>
           <tbody>
             <tr>
               <th>Tanggal</th>
@@ -163,7 +163,6 @@ function LogAccordionItem({ log, idx }) {
   );
 }
 
-// check 3578105208210001
 export default function LogsViewer({ pageTitle = 'Log Viewer', successCount = 0, failCount = 0 }) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,7 +196,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer', successCount = 0,
   }, [search]);
 
   return (
-    <div className="container mx-auto py-4 container">
+    <div className={`container mx-auto py-4 ${styles.container}`}>
       {/* Theme toggle UI omitted for brevity */}
       <h1 className="my-4">{pageTitle}</h1>
       <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
