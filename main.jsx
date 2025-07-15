@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 const Home = React.lazy(() => import('./src/react-website/Home.jsx'));
 const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-website.jsx'));
+const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));
 
 const _react = typeof React;
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -13,6 +14,7 @@ root.render(
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/nik-parser" element={<NikParserApp />} />
+        <Route path="/logs" element={<LogsViewer />} />
       </Routes>
     </React.Suspense>
   </BrowserRouter>
