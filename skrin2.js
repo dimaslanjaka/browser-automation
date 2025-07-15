@@ -11,7 +11,8 @@ import {
   typeAndTriggerIframe
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, ucwords, waitEnter } from './src/utils.js';
+import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
+import { ucwords } from './src/utils/string.js';
 import { fixData } from './src/xlsx-helper.js';
 
 console.clear();

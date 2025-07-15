@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { ucwords } from '../src/utils';
+import { ucwords } from '../src/utils/string.js';
 
 describe('ucwords', () => {
   it('should capitalize the first letter of each word', () => {
