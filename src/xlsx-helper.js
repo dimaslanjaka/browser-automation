@@ -217,7 +217,7 @@ export async function getDataRange(data, { fromNik, fromNama, toNik, toNama, out
  * @throws {Error} When required fields are missing or invalid
  */
 export async function fixData(data) {
-  /** @type {import('../globals').fixDataResult} */
+  /** @type {Partial<import('../globals').fixDataResult>} */
   const initialData = data || null;
   if (!initialData) throw new Error('Invalid data format: data is required');
 
@@ -313,12 +313,12 @@ export async function fixData(data) {
 
   // Age calculation
   let age = 0;
-
-  if (initialData['TGL LAHIR']) {
-    age = getAge(initialData['TGL LAHIR'], 'DD/MM/YYYY');
+  let birthDate = initialData.tgl_lahir || initialData['TGL LAHIR'] || null;
+  if (birthDate) {
+    age = getAge(birthDate, 'DD/MM/YYYY');
     logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
-  } else {
-    age = getAge(parsed_nik?.data.lahir);
+  } else if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
+    age = getAge(parsed_nik.data.lahir);
     logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
   }
   data.age = age; // Ensure age is set in the data object
