@@ -1,16 +1,17 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { logLine } from '../src/utils.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 function AfterBuildCopyPlugin() {
+  let isBuild = false;
   return {
     name: 'after-build-copy-index',
+    configResolved(config) {
+      isBuild = config.command === 'build';
+    },
     closeBundle() {
-      const distDir = path.join(__dirname, '../dist');
+      if (!isBuild) return;
+      const distDir = path.join(process.cwd(), 'dist');
       const src = path.join(distDir, 'index.html');
       const dests = [path.join(distDir, 'nik-parser/index.html')];
       for (const dest of dests) {
