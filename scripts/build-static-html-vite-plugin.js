@@ -23,9 +23,11 @@ export function buildStaticHtml(options) {
       return nikIndex(nikA) - nikIndex(nikB);
     });
   }
-
-  const outPath = path.resolve(process.cwd(), 'public/log-juli-2025.html');
-  const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outPath)}`;
+  const outLogsPath = path.resolve(process.cwd(), 'tmp/logs.json');
+  writefile(outLogsPath, JSON.stringify(liveLogs));
+  console.log(`Logs JSON written to ${outLogsPath}`);
+  const outHtmlPath = path.resolve(process.cwd(), 'public/log-juli-2025.html');
+  const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outHtmlPath)}`;
   // Count success and fail logs (case-insensitive)
   const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
   const failCount = liveLogs.filter((log) => log.data && log.data.status !== 'success').length;
@@ -38,8 +40,8 @@ export function buildStaticHtml(options) {
     canonicalUrl,
     logsJson: JSON.stringify(liveLogs)
   });
-  writefile(outPath, liveHtml);
-  console.log(`Log HTML written to ${outPath}`);
+  writefile(outHtmlPath, liveHtml);
+  console.log(`Log HTML written to ${outHtmlPath}`);
   return liveHtml;
 }
 
