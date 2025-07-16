@@ -5,7 +5,7 @@ import { loadCsvData } from '../data/index.js';
 import { dbPath, getLogs } from '../src/logHelper.js';
 
 const templatesPath = path.join(process.cwd(), 'templates');
-nunjucks.configure(templatesPath, { autoescape: true, watch: true, noCache: true });
+nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
 
 /**
  * Builds the static HTML log file from database logs and template.
@@ -60,18 +60,20 @@ export default function dbLogHtmlStatic() {
   return {
     name: 'db-log-html-static',
     async configureServer(server) {
-      // Run on dev server startup
+      // Dev server: generate on startup and on .db changes
       await buildStaticHtml();
-
-      // Add files to watch
       server.watcher.add([dbPath]);
-      // Listen for changes
       server.watcher.on('change', async (file) => {
-        if (file.endsWith('.db')) {
+        if (file.endsWith(path.extname(dbPath))) {
           await buildStaticHtml();
-          // server.ws.send({ type: 'full-reload' });
         }
       });
+    },
+    async buildStart() {
+      // Production build: generate once at build start
+      await buildStaticHtml();
     }
   };
 }
+
+buildStaticHtml();
