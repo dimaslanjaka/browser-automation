@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import moment from 'moment';
-import { dataKunto } from './data/index.js';
+import { loadCsvData } from './data/index.js';
 import { addLog, getLogById } from './src/logHelper.js';
 import {
   clickIframeElement,
@@ -533,7 +533,7 @@ async function _test(page) {
 const main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
-
+  const dataKunto = await loadCsvData();
   const unprocessedData = dataKunto.filter((item) => {
     // Check if the data for this NIK has already been processed
     const nik = getNumbersOnly(item.nik);

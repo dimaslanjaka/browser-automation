@@ -1,7 +1,7 @@
 import fs from 'fs';
 import nunjucks from 'nunjucks';
 import path from 'path';
-import { dataKunto } from '../data/index.js';
+import { loadCsvData } from '../data/index.js';
 import { dbPath, getLogs } from '../src/logHelper.js';
 
 const templatesPath = path.join(process.cwd(), 'templates');
@@ -9,9 +9,13 @@ nunjucks.configure(templatesPath, { autoescape: true, watch: true, noCache: true
 
 /**
  * Builds the static HTML log file from database logs and template.
- * @returns {string} The generated HTML content.
+ * @async
+ * @param {object} [options] - Optional options for HTML generation.
+ * @param {string} [options.pageTitle] - Custom page title for the HTML output.
+ * @returns {Promise<string>} The generated HTML content.
  */
-export function buildStaticHtml(options) {
+export async function buildStaticHtml(options) {
+  const dataKunto = await loadCsvData();
   let liveLogs = getLogs();
   // Sort liveLogs by item.data.nik order as in dataKunto
   if (Array.isArray(dataKunto) && Array.isArray(liveLogs)) {
@@ -55,16 +59,16 @@ export function buildStaticHtml(options) {
 export default function dbLogHtmlStatic() {
   return {
     name: 'db-log-html-static',
-    configureServer(server) {
+    async configureServer(server) {
       // Run on dev server startup
-      buildStaticHtml();
+      await buildStaticHtml();
 
       // Add files to watch
       server.watcher.add([dbPath]);
       // Listen for changes
-      server.watcher.on('change', (file) => {
+      server.watcher.on('change', async (file) => {
         if (file.endsWith('.db')) {
-          buildStaticHtml();
+          await buildStaticHtml();
           // server.ws.send({ type: 'full-reload' });
         }
       });

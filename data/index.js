@@ -1,22 +1,14 @@
-import { parse } from 'csv-parse/sync';
 import fs from 'fs';
-import moment from 'moment';
 import path from 'path';
+import moment from 'moment';
 import { fileURLToPath } from 'url';
+import csvParser from 'csv-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const csvFilePath = path.join(__dirname, 'data.csv');
-const csvContent = fs.readFileSync(csvFilePath, 'utf-8');
 
-/**
- * @type {import('../globals').ExcelRowData4[]}
- */
-const records = parse(csvContent, {
-  columns: true,
-  skip_empty_lines: true
-});
 const keyMap = {
   TANGGAL: 'tanggal',
   'TANGGAL ENTRY': 'tanggal',
@@ -40,28 +32,39 @@ const keyMap = {
   'PETUGAS YG MENG ENTRY': 'petugas',
   'PETUGAS ENTRY': 'petugas'
 };
-/**
- * @type {import('../globals').ExcelRowData[]}
- */
-const mapped = records.map((row, index) => {
-  for (const key in row) {
-    const mappedKey = keyMap[key] || key;
-    row[mappedKey] = row[key];
-    if (mappedKey !== key) {
-      delete row[key]; // Remove the old key
-    }
-  }
-  return { ...row, rowIndex: index };
-});
 
-export const dataKunto = mapped.map((row) => {
-  row.originalTglLahir = row.tgl_lahir; // Store original date for reference
-  row.tgl_lahir = moment(row.tgl_lahir, 'YYYY-MM-DD').format('DD/MM/YYYY');
-  return row;
-});
+export async function loadCsvData() {
+  return new Promise((resolve, reject) => {
+    const mappedRecords = [];
 
-fs.mkdirSync(path.join(process.cwd(), 'tmp'), { recursive: true });
-fs.writeFileSync(path.join(process.cwd(), 'tmp', 'dataKunto.json'), JSON.stringify(dataKunto), 'utf-8');
+    fs.createReadStream(csvFilePath)
+      .pipe(csvParser())
+      .on('data', (row) => {
+        const mappedRow = {};
+        for (const key in row) {
+          const mappedKey = keyMap[key] || key;
+          mappedRow[mappedKey] = row[key];
+        }
+        mappedRow.rowIndex = mappedRecords.length;
+        mappedRecords.push(mappedRow);
+      })
+      .on('end', () => {
+        const dataKunto = mappedRecords.map((row) => {
+          row.originalTglLahir = row.tgl_lahir;
+          row.tgl_lahir = moment(row.tgl_lahir, 'YYYY-MM-DD').format('DD/MM/YYYY');
+          return row;
+        });
+
+        // Save as JSON (optional)
+        const outputDir = path.join(process.cwd(), 'tmp');
+        fs.mkdirSync(outputDir, { recursive: true });
+        fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), JSON.stringify(dataKunto, null, 2), 'utf-8');
+
+        resolve(dataKunto);
+      })
+      .on('error', reject);
+  });
+}
 
 // console.log(mapped.at(0)); // Output the first mapped record to verify mapping
 // console.log(mapped.at(-1)); // Output the last mapped record to verify mapping
