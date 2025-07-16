@@ -53,6 +53,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: 'dev.webmanajemen.com',
     port: 5173,
     open: false
   }
