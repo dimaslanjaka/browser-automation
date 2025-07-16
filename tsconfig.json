@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
+    "jsx": "react",
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
@@ -15,15 +15,12 @@
     "allowJs": true,
     "checkJs": false,
     "typeRoots": [
-      "./globals.d.ts",
-      "./src/vite-env.d.ts",
+      "./types",
       "./node_modules/@types"
     ]
   },
   "include": [
-    "src",
-    "test",
-    "index.js"
+    "src/**/*"
   ],
   "exclude": [
     "**/node_modules/**",
