@@ -63,7 +63,7 @@ export default function dbLogHtmlStatic() {
       server.watcher.on('change', (file) => {
         if (file.endsWith('.db')) {
           buildStaticHtml();
-          server.ws.send({ type: 'full-reload' });
+          // server.ws.send({ type: 'full-reload' });
         }
       });
     }
