@@ -16,7 +16,17 @@ const ThemeContext = createContext({
  * @param {{ children: import('react').ReactNode }} props
  */
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
+  // Load theme from localStorage or default to 'light'
+  const [theme, setThemeState] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  // Update state and localStorage
+  const setTheme = (newTheme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }
 
