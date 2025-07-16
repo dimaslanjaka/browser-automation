@@ -22,7 +22,7 @@ async function loadHighlightAndNikParser() {
     const [hljsCore, jsonLangMod, nikParserMod] = await Promise.all([
       import('highlight.js/lib/core'),
       import('highlight.js/lib/languages/json'),
-      import('nik-parser-jurusid')
+      import('nik-parser-jurusid/region_controller_async')
     ]);
     hljs = hljsCore.default || hljsCore;
     jsonLang = jsonLangMod.default || jsonLangMod;
@@ -54,7 +54,7 @@ export default function NikParserWeb() {
       const response = await fetch('/browser-automation/assets/data/dataKunto.json');
       if (!response.ok) throw new Error('Failed to load dataKunto.json');
       const dataKunto = await response.json();
-      const parsed = nikParser(nik);
+      const parsed = await nikParser(nik);
       const result = {
         'nik-parser-result': parsed,
         'current-data': dataKunto.find((item) => item.nik === nik) || null
