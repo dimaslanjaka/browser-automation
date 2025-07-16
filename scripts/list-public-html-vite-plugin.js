@@ -9,7 +9,7 @@ function writeHtmlList() {
   const htmlFiles = files.filter((f) => f.endsWith('.html') && f !== '404.html');
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, JSON.stringify(htmlFiles, null, 2));
-  console.log(`Found ${htmlFiles.length} HTML files. List written to html-files.json.`);
+  console.log(`Found ${htmlFiles.length} HTML files.\n\tList written to ${outputFile}.`);
 }
 
 function HtmlListPlugin() {
