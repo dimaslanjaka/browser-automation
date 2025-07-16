@@ -1,7 +1,7 @@
 import ansiColors from 'ansi-colors';
 import * as glob from 'glob';
 import moment from 'moment';
-import { nikParserStrict } from 'nik-parser-jurusid';
+import { nikParserStrictSync as nikParserStrict } from 'nik-parser-jurusid';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
