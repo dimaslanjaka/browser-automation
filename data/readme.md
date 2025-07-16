@@ -1,21 +1,20 @@
 
-# data/index.js
 
-Parses and normalizes CSV data from `data.csv` with standardized keys and date formatting.
+# CSV Data Loader (`data/index.js`)
+
+This module parses and normalizes CSV data from `data.csv`, mapping various column names to standardized keys and formatting dates for consistency.
 
 ## Features
 
-- Reads `data.csv` using Node.js ESM syntax.
-- Uses [`csv-parser`](https://www.npmjs.com/package/csv-parser) for streaming CSV parsing.
-- Maps various column names to standardized keys using a `keyMap` object (e.g., `NAMA PASIEN` and `NAMA` both become `nama`).
-- Adds a `rowIndex` property to each row for easy reference.
-- Normalizes date fields (e.g., `tgl_lahir`) to `DD/MM/YYYY` format using [`moment`](https://momentjs.com/).
-- Exports a function `loadCsvData()` that returns the normalized data as an array of objects.
-- Writes the normalized data to `tmp/dataKunto.json` for debugging or further processing.
+- **ESM Syntax**: Uses modern Node.js ESM imports.
+- **Streaming CSV Parsing**: Utilizes [`csv-parser`](https://www.npmjs.com/package/csv-parser) for efficient row-by-row parsing.
+- **Column Normalization**: Maps multiple possible column names to standardized keys via a `keyMap` (e.g., `NAMA PASIEN` and `NAMA` → `nama`).
+- **Row Indexing**: Adds a `rowIndex` property to each row for easy reference.
+- **Date Formatting**: Normalizes date fields (like `tgl_lahir`) to `DD/MM/YYYY` using [`moment`](https://momentjs.com/), while preserving the original value as `originalTglLahir`.
+- **Data Export**: Writes the normalized data to `public/assets/data/dataKunto.json` for debugging or further use.
+- **TypeScript Support**: Output is typed as `ExcelRowData4[]` (see `globals.d.ts`).
 
 ## Usage
-
-Import and use the async loader:
 
 ```js
 import { loadCsvData } from './data/index.js';
@@ -24,11 +23,7 @@ const dataKunto = await loadCsvData();
 console.log(dataKunto[0]); // First row
 ```
 
-## TypeScript
-
-The parsed data is typed as `ExcelRowData4[]` (see `globals.d.ts`).
-
-## Example Output
+## Output Example
 
 Each row is an object with standardized keys:
 
@@ -50,6 +45,6 @@ Each row is an object with standardized keys:
 
 ## Notes
 
-- Update `keyMap` to support new or changed column names.
-- For debugging, you can uncomment the provided `console.log` lines in the source to inspect the first and last records.
-- The loader writes the normalized data to `tmp/dataKunto.json` on each run.
+- Update `keyMap` in `data/index.js` to support new or changed column names.
+- For debugging, you can uncomment the `console.log` lines in the source to inspect the first and last records.
+- The loader writes the normalized data to `public/assets/data/dataKunto.json` on each run.

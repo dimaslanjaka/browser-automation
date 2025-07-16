@@ -51,7 +51,9 @@ export default function NikParserWeb() {
     setLoading(true);
     try {
       await loadHighlightAndNikParser();
-      const { default: dataKunto } = await import('../../tmp/dataKunto.json', { assert: { type: 'json' } });
+      const response = await fetch('/browser-automation/assets/data/dataKunto.json');
+      if (!response.ok) throw new Error('Failed to load dataKunto.json');
+      const dataKunto = await response.json();
       const parsed = nikParser(nik);
       const result = {
         'nik-parser-result': parsed,

@@ -56,7 +56,7 @@ export async function loadCsvData() {
         });
 
         // Save as JSON (optional)
-        const outputDir = path.join(process.cwd(), 'tmp');
+        const outputDir = path.join(process.cwd(), 'public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
         fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), JSON.stringify(dataKunto, null, 2), 'utf-8');
 
