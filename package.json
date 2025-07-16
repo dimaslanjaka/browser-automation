@@ -16,7 +16,8 @@
     "update:dependencies": "npx npm-check-updates -u",
     "download:google-sheet": "node download-google-sheet.js",
     "vite:dev": "vite",
-    "vite:build": "vite build",
+    "vite:build": "vite build --mode production",
+    "vite:preview": "vite preview",
     "vite:deploy": "node vite.deploy.js"
   },
   "keywords": [],
