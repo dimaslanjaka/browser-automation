@@ -11,9 +11,9 @@ export default function Home() {
   return (
     <>
       <Header />
-      <Container className="mt-5">
+      <Container>
         {/* Hero Section */}
-        <Card className="mb-4 shadow-sm border-0 bg-primary text-white">
+        <Card className="mb-4 shadow-sm border-0">
           <Card.Body>
             <Card.Title as="h1" className="display-5 mb-3">
               Browser Automation Tools
@@ -41,10 +41,10 @@ export default function Home() {
               <li className="list-group-item">Easy integration with browser automation scripts</li>
             </ul>
             <div className="d-flex gap-3 flex-wrap mb-3">
-              <a href="/browser-automation/nik-parser" className="btn btn-primary">
+              <a href="/browser-automation/nik-parser" className="btn">
                 Go to NIK Parser
               </a>
-              <a href="/browser-automation/logs" className="btn btn-outline-secondary">
+              <a href="/browser-automation/logs" className="btn">
                 Last runner logs
               </a>
             </div>

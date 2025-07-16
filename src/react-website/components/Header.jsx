@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
-import { useTheme } from '../ThemeContext.jsx';
+import { useTheme } from './ThemeContext.jsx';
 import socialMedia from './social-media.json';
 
 export default function Header() {

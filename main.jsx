@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { ThemeProvider } from './src/react-website/ThemeContext.jsx'; // IMPORTANT: Do NOT lazy load ThemeProvider. It must wrap the app at the top level for context to work.
+import { ThemeProvider } from './src/react-website/components/ThemeContext.jsx'; // IMPORTANT: Do NOT lazy load ThemeProvider. It must wrap the app at the top level for context to work.
 const Home = React.lazy(() => import('./src/react-website/Home.jsx'));
 const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-website.jsx'));
 const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));

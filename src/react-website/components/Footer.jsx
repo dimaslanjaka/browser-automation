@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container } from 'react-bootstrap';
-import { useTheme } from '../ThemeContext.jsx';
+import { useTheme } from './ThemeContext.jsx';
 import socialMedia from './social-media.json';
 
 const _react = typeof React;
