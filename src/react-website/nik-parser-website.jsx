@@ -3,6 +3,8 @@ import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 import 'highlight.js/styles/github.css';
+import AdSense from './components/Adsense';
+import { useTheme } from './components/ThemeContext';
 
 /**
  * @type {import('highlight.js').HLJSApi | undefined}
@@ -41,6 +43,7 @@ export default function NikParserWeb() {
   const [loading, setLoading] = useState(false);
   const resultRef = useRef(null);
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   /**
    * Handle form submit and parse NIK
@@ -73,7 +76,7 @@ export default function NikParserWeb() {
     }
   }, [result]);
   return (
-    <Container className="mt-5">
+    <Container className="mt-5" data-bs-theme={theme}>
       <Row className="justify-content-center">
         <Col xs={12}>
           <Card>
@@ -81,6 +84,7 @@ export default function NikParserWeb() {
               <Button variant="outline-secondary" className="mb-3" onClick={() => navigate('/')}>
                 <i className="fa fa-arrow-left me-2" /> Back
               </Button>
+              <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
               <Card.Title className="text-center">NIK Parser React App</Card.Title>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formNik">
