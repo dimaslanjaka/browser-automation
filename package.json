@@ -18,7 +18,9 @@
     "vite:dev": "vite",
     "vite:build": "vite build --mode production",
     "vite:preview": "vite preview",
-    "vite:deploy": "node vite.deploy.js"
+    "vite:deploy": "node vite.deploy.js",
+    "clean": "rimraf node_modules/.vite dist",
+    "clean:full": "rimraf node_modules .vite dist && npm install"
   },
   "keywords": [],
   "author": "",
