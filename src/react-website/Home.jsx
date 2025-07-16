@@ -4,14 +4,17 @@ import htmlFiles from '../../tmp/html-files.json' with { type: 'json' };
 import AdSense from '../components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import { useTheme } from './components/ThemeContext';
 
 const _react = typeof React;
 
 export default function Home() {
+  const { theme } = useTheme();
+
   return (
     <>
       <Header />
-      <Container>
+      <Container data-bs-theme={theme}>
         {/* Hero Section */}
         <Card className="mb-4 shadow-sm border-0">
           <Card.Body>
@@ -41,10 +44,10 @@ export default function Home() {
               <li className="list-group-item">Easy integration with browser automation scripts</li>
             </ul>
             <div className="d-flex gap-3 flex-wrap mb-3">
-              <a href="/browser-automation/nik-parser" className="btn">
+              <a href="/browser-automation/nik-parser" className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}>
                 Go to NIK Parser
               </a>
-              <a href="/browser-automation/logs" className="btn">
+              <a href="/browser-automation/logs" className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}>
                 Last runner logs
               </a>
             </div>
@@ -61,7 +64,11 @@ export default function Home() {
             <ul className="list-group list-group-flush">
               {htmlFiles.map((file) => (
                 <li className="list-group-item" key={file}>
-                  <a href={`/browser-automation/${file}`} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={`/browser-automation/${file}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-decoration-none">
                     {file}
                   </a>
                 </li>
