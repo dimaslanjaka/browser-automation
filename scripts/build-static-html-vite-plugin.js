@@ -1,6 +1,6 @@
+import fs from 'fs';
 import nunjucks from 'nunjucks';
 import path from 'path';
-import { writefile } from 'sbg-utility';
 import { dataKunto } from '../data/index.js';
 import { dbPath, getLogs } from '../src/logHelper.js';
 
@@ -24,7 +24,8 @@ export function buildStaticHtml(options) {
     });
   }
   const outLogsPath = path.resolve(process.cwd(), 'tmp/logs.json');
-  writefile(outLogsPath, JSON.stringify(liveLogs));
+  fs.mkdirSync(path.dirname(outLogsPath), { recursive: true });
+  fs.writeFileSync(outLogsPath, JSON.stringify(liveLogs, null, 2));
   console.log(`Logs JSON written to ${outLogsPath}`);
   const outHtmlPath = path.resolve(process.cwd(), 'public/log-juli-2025.html');
   const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outHtmlPath)}`;
@@ -40,7 +41,8 @@ export function buildStaticHtml(options) {
     canonicalUrl,
     logsJson: JSON.stringify(liveLogs)
   });
-  writefile(outHtmlPath, liveHtml);
+  fs.mkdirSync(path.dirname(outHtmlPath), { recursive: true });
+  fs.writeFileSync(outHtmlPath, liveHtml);
   console.log(`Log HTML written to ${outHtmlPath}`);
   return liveHtml;
 }

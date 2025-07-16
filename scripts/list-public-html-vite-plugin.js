@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { writefile } from 'sbg-utility';
 
 function writeHtmlList() {
   const publicDir = path.join(process.cwd(), 'public');
@@ -8,7 +7,8 @@ function writeHtmlList() {
   const outputFile = path.join(tmpDir, 'html-files.json');
   const files = fs.readdirSync(publicDir);
   const htmlFiles = files.filter((f) => f.endsWith('.html') && f !== '404.html');
-  writefile(outputFile, JSON.stringify(htmlFiles, null, 2));
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.writeFileSync(outputFile, JSON.stringify(htmlFiles, null, 2));
   console.log(`Found ${htmlFiles.length} HTML files. List written to html-files.json.`);
 }
 
