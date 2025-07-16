@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
 import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
+import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automation-plugin.js';
 
 /**
  * Vite configuration for browser-automation project.
@@ -18,6 +19,7 @@ import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
  */
 export default defineConfig({
   plugins: [
+    RedirectBrowserAutomationPlugin(),
     dbLogHtmlStatic(),
     HtmlListPlugin(),
     react(),
