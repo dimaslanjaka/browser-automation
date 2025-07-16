@@ -66,5 +66,8 @@ export async function loadCsvData() {
   });
 }
 
-// console.log(mapped.at(0)); // Output the first mapped record to verify mapping
-// console.log(mapped.at(-1)); // Output the last mapped record to verify mapping
+// loadCsvData().then((data) => {
+//   console.log(`Loaded ${data.length} records from CSV.`);
+//   console.log(data.at(0)); // Output the first mapped record to verify mapping
+//   console.log(data.at(-1)); // Output the last mapped record to verify mapping
+// });
