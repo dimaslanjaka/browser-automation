@@ -4,18 +4,31 @@ import 'highlight.js/styles/github.css';
 import nikParser from 'nik-parser-jurusid';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import dataKunto from '../../tmp/dataKunto.json' with { type: 'json' };
 hljs.registerLanguage('json', jsonLang);
 
+/**
+ * NIK Parser React App
+ * @returns {React.ReactElement}
+ */
 export default function App() {
   const [nik, setNik] = useState('');
   const [result, setResult] = useState(null);
   const resultRef = useRef(null);
 
+  /**
+   * Handle form submit and parse NIK
+   * @param {React.FormEvent<HTMLFormElement>} e
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     try {
       const parsed = nikParser(nik);
-      setResult(parsed);
+      const result = {
+        'nik-parser-result': parsed,
+        'current-data': dataKunto.find((item) => item.nik === nik) || null
+      };
+      setResult(result);
     } catch (err) {
       setResult({ error: err.message });
     }
