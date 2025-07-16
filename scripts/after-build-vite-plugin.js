@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { logLine } from '../src/utils.js';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 
 const distDir = path.join(process.cwd(), 'dist');
 
