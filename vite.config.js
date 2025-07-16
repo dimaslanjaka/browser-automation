@@ -4,6 +4,18 @@ import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
 import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
 
+/**
+ * Vite configuration for browser-automation project.
+ *
+ * - Uses React and legacy browser support plugins.
+ * - Custom plugins for after-build copy, static HTML generation, and HTML listing.
+ * - Output directory: dist
+ * - Base path: /browser-automation/
+ * - Dev server: port 5173, does not auto-open browser.
+ *
+ * @see https://vitejs.dev/config/
+ * @type {import('vite').UserConfig}
+ */
 export default defineConfig({
   plugins: [
     dbLogHtmlStatic(),
@@ -21,7 +33,22 @@ export default defineConfig({
   root: '.',
   base: '/browser-automation/',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    rollupOptions: {
+      // https://rollupjs.org/configuration-options/
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          'react-router': ['react-router', 'react-router-dom'],
+          bootstrap: ['bootstrap', 'react-bootstrap'],
+          highlight: ['highlight.js'],
+          'nik-parser': ['nik-parser-jurusid'],
+          moment: ['moment', 'moment-timezone'],
+          axios: ['axios'],
+          'deepmerge-ts': ['deepmerge-ts']
+        }
+      }
+    }
   },
   server: {
     port: 5173,
