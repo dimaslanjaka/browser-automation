@@ -14,9 +14,6 @@ root.render(
     <BrowserRouter basename="/browser-automation">
       <React.Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          {/* Redirect /browser-automation to /browser-automation/ for correct routing */}
-          <Route path="/browser-automation" element={<Navigate to="/browser-automation/" replace />} />
-          {/* Homepage and others */}
           <Route path="/" element={<Home />} />
           <Route path="/nik-parser" element={<NikParserApp />} />
           <Route path="/logs" element={<LogsViewer />} />
