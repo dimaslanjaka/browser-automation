@@ -76,7 +76,7 @@
   "debug.terminal.clearBeforeReusing": true,
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "never"
   },
   "editor.formatOnPaste": false,
   "editor.formatOnSave": false,
@@ -113,7 +113,7 @@
     "**/config/**": true,
     "**/databases/**": true,
     "**/node_modules/**": true,
-    "src/database.sqlite*": true
+    "src/database.sqlite*": true,
   },
   "git.autoStash": true,
   "git.useCommitInputAsStashMessage": true,
@@ -189,7 +189,7 @@
   "typescript.tsserver.enableTracing": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "typescript.tsserver.log": "verbose",
-  "typescript.tsserver.maxTsServerMemory": 1072,
+  "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
   "typescript.tsserver.web.typeAcquisition.enabled": true
 }
