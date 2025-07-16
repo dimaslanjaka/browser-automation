@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "typeRoots": [
       "./globals.d.ts",
       "./src/vite-env.d.ts",
@@ -26,12 +26,12 @@
     "index.js"
   ],
   "exclude": [
-    "**/node_modules",
-    "**/dist",
-    "**/tmp",
-    "**/coverage",
-    "**/build",
-    "**/public",
-    "**/.cache"
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/tmp/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/public/**",
+    "**/.cache/**"
   ]
 }
