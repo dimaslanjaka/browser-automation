@@ -1,15 +1,16 @@
 import React from 'react';
 import { Card, Container } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import htmlFiles from '../../tmp/html-files.json' with { type: 'json' };
 import AdSense from '../components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import { useTheme } from './components/ThemeContext';
-
 const _react = typeof React;
 
 export default function Home() {
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -44,12 +45,20 @@ export default function Home() {
               <li className="list-group-item">Easy integration with browser automation scripts</li>
             </ul>
             <div className="d-flex gap-3 flex-wrap mb-3">
-              <a href="/browser-automation/nik-parser" className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}>
+              <button
+                type="button"
+                className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}
+                onClick={() => navigate('/nik-parser')}
+              >
                 Go to NIK Parser
-              </a>
-              <a href="/browser-automation/logs" className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}>
+              </button>
+              <button
+                type="button"
+                className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}
+                onClick={() => navigate('/logs')}
+              >
                 Last runner logs
-              </a>
+              </button>
             </div>
             <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
           </Card.Body>
