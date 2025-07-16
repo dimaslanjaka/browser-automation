@@ -137,7 +137,7 @@
   "intelephense.maxMemory": 1000,
   "intelephense.references.exclude": [],
   "intelephense.rename.exclude": [],
-  "javascript.updateImportsOnPaste.enabled": false,
+  "javascript.updateImportsOnPaste.enabled": true,
   "python.analysis.autoImportCompletions": true,
   "python.createEnvironment.contentButton": "show",
   "python.terminal.activateEnvInCurrentTerminal": true,
@@ -181,7 +181,15 @@
       }
     }
   },
-  "typescript.enablePromptUseWorkspaceTsdk": false,
+  "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": "./node_modules/typescript/lib",
-  "typescript.updateImportsOnPaste.enabled": false
+  "typescript.updateImportsOnPaste.enabled": false,
+  "javascript.updateImportsOnFileMove.enabled": "prompt",
+  "typescript.disableAutomaticTypeAcquisition": false,
+  "typescript.tsserver.enableTracing": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "typescript.tsserver.log": "verbose",
+  "typescript.tsserver.maxTsServerMemory": 1072,
+  "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
+  "typescript.tsserver.web.typeAcquisition.enabled": true
 }
