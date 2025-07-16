@@ -4,6 +4,7 @@ import 'highlight.js/styles/github.css';
 import nikParser from 'nik-parser-jurusid';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import dataKunto from '../../tmp/dataKunto.json' with { type: 'json' };
 hljs.registerLanguage('json', jsonLang);
 
@@ -11,10 +12,11 @@ hljs.registerLanguage('json', jsonLang);
  * NIK Parser React App
  * @returns {React.ReactElement}
  */
-export default function App() {
+export default function NikParserWeb() {
   const [nik, setNik] = useState('');
   const [result, setResult] = useState(null);
   const resultRef = useRef(null);
+  const navigate = useNavigate();
 
   /**
    * Handle form submit and parse NIK
@@ -39,14 +41,21 @@ export default function App() {
       hljs.highlightElement(resultRef.current);
     }
   }, [result]);
-
   return (
     <Container className="mt-5">
       <Row className="justify-content-center">
         <Col xs={12}>
           <Card>
             <Card.Body>
-              <Card.Title>NIK Parser React App</Card.Title>
+              <Button
+                variant="outline-secondary"
+                className="mb-3"
+                onClick={() => navigate('/')}
+              >
+                <i className="fa fa-arrow-left me-2" /> Back
+              </Button>
+              {/* ...existing code... */}
+              <Card.Title className="text-center">NIK Parser React App</Card.Title>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formNik">
                   <Form.Label>Input NIK</Form.Label>

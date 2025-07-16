@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import logs from '../../tmp/logs.json' with { type: 'json' };
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.css';
@@ -171,6 +172,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const batch = 20;
+  const navigate = useNavigate();
 
   const filteredLogs = useMemo(() => {
     if (!search.trim()) return logs;
@@ -201,6 +203,13 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   return (
     <div className={`container mx-auto py-4 ${styles.container}`}>
+      <button
+        type="button"
+        className="btn btn-outline-secondary mb-3"
+        onClick={() => navigate('/')}
+      >
+        <i className="fa fa-arrow-left me-2" /> Back
+      </button>
       {/* Theme toggle UI omitted for brevity */}
       <h1 className="my-4">{pageTitle}</h1>
       <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
