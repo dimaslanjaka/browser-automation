@@ -184,7 +184,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": "./node_modules/typescript/lib",
   "typescript.updateImportsOnPaste.enabled": false,
-  "javascript.updateImportsOnFileMove.enabled": "prompt",
+  "javascript.updateImportsOnFileMove.enabled": "always",
   "typescript.disableAutomaticTypeAcquisition": false,
   "typescript.tsserver.enableTracing": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
