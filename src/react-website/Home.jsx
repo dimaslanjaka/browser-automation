@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import htmlFiles from '../../tmp/html-files.json' with { type: 'json' };
-import AdSense from '../components/Adsense';
+import AdSense from './components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import { useTheme } from './components/ThemeContext';
