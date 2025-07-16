@@ -73253,6 +73253,6207 @@
     "timestamp": "2025-07-16T13:47:13+07:00"
   },
   {
+    "id": "3578231702250001",
+    "data": {
+      "tanggal": "11/07/2025",
+      "nama": "IBRAHIM ATHARI DANESWARA",
+      "nik": "3578231702250001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "6,5",
+      "tb": "62,5",
+      "alamat": "LJU 4B/14",
+      "tgl_lahir": "17/02/2025",
+      "petugas": "",
+      "rowIndex": 244,
+      "originalTglLahir": "2025-02-17",
+      "NIK": "3578231702250001",
+      "NAMA": "IBRAHIM ATHARI DANESWARA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578231702250001",
+          "kelamin": "L",
+          "lahir": "17/02/1925",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Jambangan",
+          "kelurahan": [
+            {
+              "id": "3578231001",
+              "district_id": "357823",
+              "name": "Jambangan"
+            },
+            {
+              "id": "3578231002",
+              "district_id": "357823",
+              "name": "Karah"
+            },
+            {
+              "id": "3578231003",
+              "district_id": "357823",
+              "name": "Kebonsari"
+            },
+            {
+              "id": "3578231004",
+              "district_id": "357823",
+              "name": "Pagesangan"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "1925-02-17"
+        }
+      },
+      "TANGGAL ENTRY": "11/07/2025",
+      "gender": "Laki-laki",
+      "age": 0,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LJU 4B/14",
+      "TB": "62,5",
+      "BB": "6,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "11/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578231702250001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "IBRAHIM ATHARI DANESWARA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "17/02/2025",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Jambangan",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "JAMBANGAN",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LJU 4B/14",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578231702250001 submitted successfully.",
+    "timestamp": "2025-07-16T13:59:09+07:00"
+  },
+  {
+    "id": "3578101802250004",
+    "data": {
+      "tanggal": "11/07/2025",
+      "nama": "MUHAMMAD KAIVANDRA RYUUGA ASFANDIYAR",
+      "nik": "3578101802250004",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "6,5",
+      "tb": "62,5",
+      "alamat": "LEBAK JAYA 5 UTARA RAWASAN KAV.B-5 NO.20",
+      "tgl_lahir": "18/02/2025",
+      "petugas": "",
+      "rowIndex": 245,
+      "originalTglLahir": "2025-02-18",
+      "NIK": "3578101802250004",
+      "NAMA": "MUHAMMAD KAIVANDRA RYUUGA ASFANDIYAR",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578101802250004",
+          "kelamin": "L",
+          "lahir": "18/02/1925",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0004",
+          "originalLahir": "1925-02-18"
+        }
+      },
+      "TANGGAL ENTRY": "11/07/2025",
+      "gender": "Laki-laki",
+      "age": 0,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5 UTARA RAWASAN KAV.B-5 NO.20",
+      "TB": "62,5",
+      "BB": "6,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "11/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578101802250004",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD KAIVANDRA RYUUGA ASFANDIYAR",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "18/02/2025",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5 UTARA RAWASAN KAV.B-5 NO.20",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578101802250004 submitted successfully.",
+    "timestamp": "2025-07-16T14:01:10+07:00"
+  },
+  {
+    "id": "3578100204250001",
+    "data": {
+      "tanggal": "15/07/2025",
+      "nama": "MUHAMMAD MUFFAZAL ALTHARIO YULIANTO",
+      "nik": "3578100204250001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "5,5",
+      "tb": "57,5",
+      "alamat": "LEBAK JAYA UTARA 4-A RAWASAN NO.19",
+      "tgl_lahir": "02/04/2025",
+      "petugas": "",
+      "rowIndex": 246,
+      "originalTglLahir": "2025-04-02",
+      "NIK": "3578100204250001",
+      "NAMA": "MUHAMMAD MUFFAZAL ALTHARIO YULIANTO",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100204250001",
+          "kelamin": "L",
+          "lahir": "02/04/1925",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "1925-04-02"
+        }
+      },
+      "TANGGAL ENTRY": "15/07/2025",
+      "gender": "Laki-laki",
+      "age": 0,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4-A RAWASAN NO.19",
+      "TB": "57,5",
+      "BB": "5,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "15/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100204250001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD MUFFAZAL ALTHARIO YULIANTO",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "02/04/2025",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "TAMBAKSARI",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4-A RAWASAN NO.19",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100204250001 submitted successfully.",
+    "timestamp": "2025-07-16T14:09:55+07:00"
+  },
+  {
+    "id": "3578105402240005",
+    "data": {
+      "tanggal": "17/07/2025",
+      "nama": "KAMELLIA FEBRYA ANSYANA WATI",
+      "nik": "3578105402240005",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "10,1",
+      "tb": "79",
+      "alamat": "LEBAK JAYA 5 UTARA KAV.42/111",
+      "tgl_lahir": "14/02/2024",
+      "petugas": "",
+      "rowIndex": 247,
+      "originalTglLahir": "2024-02-14",
+      "NIK": "3578105402240005",
+      "NAMA": "KAMELLIA FEBRYA ANSYANA WATI",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578105402240005",
+          "kelamin": "P",
+          "lahir": "14/02/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0005",
+          "originalLahir": "2024-02-14"
+        }
+      },
+      "TANGGAL ENTRY": "17/07/2025",
+      "gender": "Perempuan",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5 UTARA KAV.42/111",
+      "TB": "79",
+      "BB": "10,1",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "17/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578105402240005",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "KAMELLIA FEBRYA ANSYANA WATI",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Perempuan",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "14/02/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "RANGKAH",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5 UTARA KAV.42/111",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_9_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Ibu Hamil *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578105402240005 submitted successfully.",
+    "timestamp": "2025-07-17T02:52:41+07:00"
+  },
+  {
+    "id": "3578100304240009",
+    "data": {
+      "tanggal": "02/07/2025",
+      "nama": "MARSYA FELICIA RANG",
+      "nik": "3578100304240009",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "9,7",
+      "tb": "77",
+      "alamat": "LEBAK JAYA UTARA 4A/28",
+      "tgl_lahir": "03/04/2024",
+      "petugas": "",
+      "rowIndex": 248,
+      "originalTglLahir": "2024-04-03",
+      "NIK": "3578100304240009",
+      "NAMA": "MARSYA FELICIA RANG",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100304240009",
+          "kelamin": "L",
+          "lahir": "03/04/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0009",
+          "originalLahir": "2024-04-03"
+        }
+      },
+      "TANGGAL ENTRY": "02/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4A/28",
+      "TB": "77",
+      "BB": "9,7",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "02/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100304240009",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MARSYA FELICIA RANG",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "03/04/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "TAMBAKSARI",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4A/28",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100304240009 submitted successfully.",
+    "timestamp": "2025-07-17T02:53:54+07:00"
+  },
+  {
+    "id": "3578104608240001",
+    "data": {
+      "tanggal": "01/07/2025",
+      "nama": "MEDINA PUTRI RINDRATA",
+      "nik": "3578104608240001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "8,8",
+      "tb": "72,5",
+      "alamat": "LEBAK JAYA UTARA 4ANO 31",
+      "tgl_lahir": "06/08/2024",
+      "petugas": "",
+      "rowIndex": 249,
+      "originalTglLahir": "2024-08-06",
+      "NIK": "3578104608240001",
+      "NAMA": "MEDINA PUTRI RINDRATA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578104608240001",
+          "kelamin": "P",
+          "lahir": "06/08/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "2024-08-06"
+        }
+      },
+      "TANGGAL ENTRY": "01/07/2025",
+      "gender": "Perempuan",
+      "age": 0,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4ANO 31",
+      "TB": "72,5",
+      "BB": "8,8",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "01/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578104608240001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MEDINA PUTRI RINDRATA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Perempuan",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "06/08/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "TAMBAKSARI",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4ANO 31",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_9_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Ibu Hamil *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578104608240001 submitted successfully.",
+    "timestamp": "2025-07-17T02:55:17+07:00"
+  },
+  {
+    "id": "3578102902240004",
+    "data": {
+      "tanggal": "05/07/2025",
+      "nama": "M. FARHAN AKBAR",
+      "nik": "3578102902240004",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "10,1",
+      "tb": "79",
+      "alamat": "LEBAK JAYA 5B UTARA 30",
+      "tgl_lahir": "29/02/2024",
+      "petugas": "",
+      "rowIndex": 250,
+      "originalTglLahir": "2024-02-29",
+      "NIK": "3578102902240004",
+      "NAMA": "M. FARHAN AKBAR",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578102902240004",
+          "kelamin": "L",
+          "lahir": "29/02/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0004",
+          "originalLahir": "2024-02-29"
+        }
+      },
+      "TANGGAL ENTRY": "05/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5B UTARA 30",
+      "TB": "79",
+      "BB": "10,1",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "05/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578102902240004",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "M. FARHAN AKBAR",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "29/02/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5B UTARA 30",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578102902240004 submitted successfully.",
+    "timestamp": "2025-07-17T02:56:44+07:00"
+  },
+  {
+    "id": "3578100803240003",
+    "data": {
+      "tanggal": "15/07/2025",
+      "nama": "MUHAMMAD ZAYAN HISHAL OZORA",
+      "nik": "3578100803240003",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "9,9",
+      "tb": "78",
+      "alamat": "LEBAK JAYA UTARA 4-A RAWASAN NO.70",
+      "tgl_lahir": "08/03/2024",
+      "petugas": "",
+      "rowIndex": 251,
+      "originalTglLahir": "2024-03-08",
+      "NIK": "3578100803240003",
+      "NAMA": "MUHAMMAD ZAYAN HISHAL OZORA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100803240003",
+          "kelamin": "L",
+          "lahir": "08/03/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0003",
+          "originalLahir": "2024-03-08"
+        }
+      },
+      "TANGGAL ENTRY": "15/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4-A RAWASAN NO.70",
+      "TB": "78",
+      "BB": "9,9",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "15/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100803240003",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD ZAYAN HISHAL OZORA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "08/03/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "GADING",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4-A RAWASAN NO.70",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100803240003 submitted successfully.",
+    "timestamp": "2025-07-17T02:58:00+07:00"
+  },
+  {
+    "id": "3578167105240002",
+    "data": {
+      "tanggal": "02/07/2025",
+      "nama": "NATISHA AZIZI KHALISA",
+      "nik": "3578167105240002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "9,5",
+      "tb": "76",
+      "alamat": "LEBAK JAYA UTARA 4A",
+      "tgl_lahir": "31/05/2024",
+      "petugas": "",
+      "rowIndex": 252,
+      "originalTglLahir": "2024-05-31",
+      "NIK": "3578167105240002",
+      "NAMA": "NATISHA AZIZI KHALISA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578167105240002",
+          "kelamin": "P",
+          "lahir": "31/05/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Semampir",
+          "kelurahan": [
+            {
+              "id": "3578161002",
+              "district_id": "357816",
+              "name": "Pegirian"
+            },
+            {
+              "id": "3578161001",
+              "district_id": "357816",
+              "name": "Ampel"
+            },
+            {
+              "id": "3578161003",
+              "district_id": "357816",
+              "name": "Wonokusumo"
+            },
+            {
+              "id": "3578161004",
+              "district_id": "357816",
+              "name": "Ujung"
+            },
+            {
+              "id": "3578161005",
+              "district_id": "357816",
+              "name": "Sidotopo"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2024-05-31"
+        }
+      },
+      "TANGGAL ENTRY": "02/07/2025",
+      "gender": "Perempuan",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4A",
+      "TB": "76",
+      "BB": "9,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "02/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578167105240002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "NATISHA AZIZI KHALISA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Perempuan",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "31/05/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Semampir",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Pegirian",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4A",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_9_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Ibu Hamil *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578167105240002 submitted successfully.",
+    "timestamp": "2025-07-17T02:59:19+07:00"
+  },
+  {
+    "id": "3578100506240007",
+    "data": {
+      "tanggal": "08/07/2025",
+      "nama": "RYU JORDAN NATHANAEL",
+      "nik": "3578100506240007",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "9,3",
+      "tb": "75",
+      "alamat": "LEBAK REJO 2/8-A",
+      "tgl_lahir": "05/06/2024",
+      "petugas": "",
+      "rowIndex": 254,
+      "originalTglLahir": "2024-06-05",
+      "NIK": "3578100506240007",
+      "NAMA": "RYU JORDAN NATHANAEL",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100506240007",
+          "kelamin": "L",
+          "lahir": "05/06/2024",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0007",
+          "originalLahir": "2024-06-05"
+        }
+      },
+      "TANGGAL ENTRY": "08/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK REJO 2/8-A",
+      "TB": "75",
+      "BB": "9,3",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "08/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100506240007",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "RYU JORDAN NATHANAEL",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "05/06/2024",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK REJO 2/8-A",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100506240007 submitted successfully.",
+    "timestamp": "2025-07-17T03:02:35+07:00"
+  },
+  {
+    "id": "3578100511230001",
+    "data": {
+      "tanggal": "16/07/2025",
+      "nama": "IKHSAN DWI ABIMANYU",
+      "nik": "3578100511230001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "10,7",
+      "tb": "82,5",
+      "alamat": "LEBAK JAYA 5 UATAR RAWASAN/26",
+      "tgl_lahir": "05/11/2023",
+      "petugas": "",
+      "rowIndex": 255,
+      "originalTglLahir": "2023-11-05",
+      "NIK": "3578100511230001",
+      "NAMA": "IKHSAN DWI ABIMANYU",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100511230001",
+          "kelamin": "L",
+          "lahir": "05/11/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "2023-11-05"
+        }
+      },
+      "TANGGAL ENTRY": "16/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5 UATAR RAWASAN/26",
+      "TB": "82,5",
+      "BB": "10,7",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "16/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100511230001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "IKHSAN DWI ABIMANYU",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "05/11/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Dukuh Setro",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5 UATAR RAWASAN/26",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100511230001 submitted successfully.",
+    "timestamp": "2025-07-17T03:03:34+07:00"
+  },
+  {
+    "id": "3578100710230002",
+    "data": {
+      "tanggal": "16/07/2025",
+      "nama": "JOEZER KARSTEN RAYMOND",
+      "nik": "3578100710230002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "10,9",
+      "tb": "83,5",
+      "alamat": "LEBAK JAYA UTARA 5C.D7",
+      "tgl_lahir": "07/10/2023",
+      "petugas": "",
+      "rowIndex": 256,
+      "originalTglLahir": "2023-10-07",
+      "NIK": "3578100710230002",
+      "NAMA": "JOEZER KARSTEN RAYMOND",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100710230002",
+          "kelamin": "L",
+          "lahir": "07/10/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2023-10-07"
+        }
+      },
+      "TANGGAL ENTRY": "16/07/2025",
+      "gender": "Laki-laki",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 5C.D7",
+      "TB": "83,5",
+      "BB": "10,9",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "16/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100710230002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "JOEZER KARSTEN RAYMOND",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "07/10/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Dukuh Setro",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 5C.D7",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100710230002 submitted successfully.",
+    "timestamp": "2025-07-17T03:04:31+07:00"
+  },
+  {
+    "id": "3578101701230006",
+    "data": {
+      "tanggal": "09/07/2025",
+      "nama": "MANUEL ADRIEL",
+      "nik": "3578101701230006",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "12,6",
+      "tb": "91,5",
+      "alamat": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+      "tgl_lahir": "17/01/2023",
+      "petugas": "",
+      "rowIndex": 257,
+      "originalTglLahir": "2023-01-17",
+      "NIK": "3578101701230006",
+      "NAMA": "MANUEL ADRIEL",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578101701230006",
+          "kelamin": "L",
+          "lahir": "17/01/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0006",
+          "originalLahir": "2023-01-17"
+        }
+      },
+      "TANGGAL ENTRY": "09/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+      "TB": "91,5",
+      "BB": "12,6",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "09/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578101701230006",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MANUEL ADRIEL",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "17/01/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578101701230006 submitted successfully.",
+    "timestamp": "2025-07-17T03:05:49+07:00"
+  },
+  {
+    "id": "5312121606110003",
+    "data": {
+      "tanggal": "15/07/2025",
+      "nama": "MANUEL ADRIEL",
+      "nik": "5312121606110003",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "12,6",
+      "tb": "91,5",
+      "alamat": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+      "tgl_lahir": "17/01/2023",
+      "petugas": "",
+      "rowIndex": 258,
+      "originalTglLahir": "2023-01-17",
+      "NIK": "5312121606110003",
+      "NAMA": "MANUEL ADRIEL",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "5312121606110003",
+          "kelamin": "L",
+          "lahir": "16/06/2011",
+          "provinsi": "NUSA TENGGARA TIMUR",
+          "kotakab": "KAB. SUMBA BARAT",
+          "namaKec": "Lamboya",
+          "kelurahan": [
+            {
+              "id": "5312122006",
+              "district_id": "531212",
+              "name": "Lamboya Bawah"
+            },
+            {
+              "id": "5312122004",
+              "district_id": "531212",
+              "name": "Patiala Bawa"
+            },
+            {
+              "id": "5312122005",
+              "district_id": "531212",
+              "name": "Wailibo"
+            },
+            {
+              "id": "5312122007",
+              "district_id": "531212",
+              "name": "Watu Karere"
+            },
+            {
+              "id": "5312122008",
+              "district_id": "531212",
+              "name": "Kabu Karudi"
+            },
+            {
+              "id": "5312122009",
+              "district_id": "531212",
+              "name": "Rajaka"
+            },
+            {
+              "id": "5312122010",
+              "district_id": "531212",
+              "name": "Sodana"
+            },
+            {
+              "id": "5312122011",
+              "district_id": "531212",
+              "name": "Laboya Dete"
+            },
+            {
+              "id": "5312122012",
+              "district_id": "531212",
+              "name": "Ringu Rara"
+            },
+            {
+              "id": "5312122014",
+              "district_id": "531212",
+              "name": "Bodo Hula"
+            },
+            {
+              "id": "5312122015",
+              "district_id": "531212",
+              "name": "Pala Moko"
+            }
+          ],
+          "uniqcode": "0003",
+          "originalLahir": "2011-06-16"
+        }
+      },
+      "TANGGAL ENTRY": "15/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+      "TB": "91,5",
+      "BB": "12,6",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "15/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "5312121606110003",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MANUEL ADRIEL",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "17/01/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Nusa Tenggara Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kab. Sumba Barat",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Lamboya",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA RAWASAN 4A NO 9",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 5312121606110003 submitted successfully.",
+    "timestamp": "2025-07-17T03:07:12+07:00"
+  },
+  {
+    "id": "3578100407230004",
+    "data": {
+      "tanggal": "15/07/2025",
+      "nama": "MOCHAMMAD ZAVIEN ZUHDY",
+      "nik": "3578100407230004",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "11,5",
+      "tb": "86,5",
+      "alamat": "LEBAK JAYA 5 UTARA KAV 8/33",
+      "tgl_lahir": "04/07/2023",
+      "petugas": "",
+      "rowIndex": 259,
+      "originalTglLahir": "2023-07-04",
+      "NIK": "3578100407230004",
+      "NAMA": "MOCHAMMAD ZAVIEN ZUHDY",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578100407230004",
+          "kelamin": "L",
+          "lahir": "04/07/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0004",
+          "originalLahir": "2023-07-04"
+        }
+      },
+      "TANGGAL ENTRY": "15/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5 UTARA KAV 8/33",
+      "TB": "86,5",
+      "BB": "11,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "15/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578100407230004",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MOCHAMMAD ZAVIEN ZUHDY",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "04/07/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Dukuh Setro",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5 UTARA KAV 8/33",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578100407230004 submitted successfully.",
+    "timestamp": "2025-07-17T03:08:13+07:00"
+  },
+  {
+    "id": "3507201707230002",
+    "data": {
+      "tanggal": "12/07/2025",
+      "nama": "MUHAMMAD AL FATIH",
+      "nik": "3507201707230002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "11,5",
+      "tb": "86,5",
+      "alamat": "LEBAK REJO UTARA IV NO 77E",
+      "tgl_lahir": "17/07/2023",
+      "petugas": "",
+      "rowIndex": 260,
+      "originalTglLahir": "2023-07-17",
+      "NIK": "3507201707230002",
+      "NAMA": "MUHAMMAD AL FATIH",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3507201707230002",
+          "kelamin": "L",
+          "lahir": "17/07/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KAB. MALANG",
+          "namaKec": "Ngajum",
+          "kelurahan": [
+            {
+              "id": "3507202002",
+              "district_id": "350720",
+              "name": "Palaan"
+            },
+            {
+              "id": "3507202001",
+              "district_id": "350720",
+              "name": "Ngajum"
+            },
+            {
+              "id": "3507202003",
+              "district_id": "350720",
+              "name": "Ngasem"
+            },
+            {
+              "id": "3507202004",
+              "district_id": "350720",
+              "name": "Banjarsari"
+            },
+            {
+              "id": "3507202005",
+              "district_id": "350720",
+              "name": "Kranggan"
+            },
+            {
+              "id": "3507202006",
+              "district_id": "350720",
+              "name": "Kesamben"
+            },
+            {
+              "id": "3507202007",
+              "district_id": "350720",
+              "name": "Babadan"
+            },
+            {
+              "id": "3507202008",
+              "district_id": "350720",
+              "name": "Balesari"
+            },
+            {
+              "id": "3507202009",
+              "district_id": "350720",
+              "name": "Maguan"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2023-07-17"
+        }
+      },
+      "TANGGAL ENTRY": "12/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK REJO UTARA IV NO 77E",
+      "TB": "86,5",
+      "BB": "11,5",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "12/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3507201707230002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD AL FATIH",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "17/07/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kab. Malang",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Ngajum",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "PALAAN",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK REJO UTARA IV NO 77E",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3507201707230002 submitted successfully.",
+    "timestamp": "2025-07-17T03:09:36+07:00"
+  },
+  {
+    "id": "3578101003230001",
+    "data": {
+      "tanggal": "07/07/2025",
+      "nama": "MUHAMMAD ARKANZA",
+      "nik": "3578101003230001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "12,4",
+      "tb": "90,5",
+      "alamat": "LEBAK JAYA 5A/21A",
+      "tgl_lahir": "10/03/2023",
+      "petugas": "",
+      "rowIndex": 261,
+      "originalTglLahir": "2023-03-10",
+      "NIK": "3578101003230001",
+      "NAMA": "MUHAMMAD ARKANZA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578101003230001",
+          "kelamin": "L",
+          "lahir": "10/03/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "2023-03-10"
+        }
+      },
+      "TANGGAL ENTRY": "07/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5A/21A",
+      "TB": "90,5",
+      "BB": "12,4",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "07/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578101003230001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD ARKANZA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "10/03/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "TAMBAKSARI",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5A/21A",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578101003230001 submitted successfully.",
+    "timestamp": "2025-07-17T03:11:03+07:00"
+  },
+  {
+    "id": "3578261404230002",
+    "data": {
+      "tanggal": "02/07/2025",
+      "nama": "MUHAMMAD HAFY SYAFIQ",
+      "nik": "3578261404230002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "12,2",
+      "tb": "89,5",
+      "alamat": "LEBAK JAYA 5A UTARA /2",
+      "tgl_lahir": "14/04/2023",
+      "petugas": "",
+      "rowIndex": 262,
+      "originalTglLahir": "2023-04-14",
+      "NIK": "3578261404230002",
+      "NAMA": "MUHAMMAD HAFY SYAFIQ",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578261404230002",
+          "kelamin": "L",
+          "lahir": "14/04/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Mulyorejo",
+          "kelurahan": [
+            {
+              "id": "3578261002",
+              "district_id": "357826",
+              "name": "Manyar Sabrangan"
+            },
+            {
+              "id": "3578261001",
+              "district_id": "357826",
+              "name": "Mulyorejo"
+            },
+            {
+              "id": "3578261003",
+              "district_id": "357826",
+              "name": "Kejawaan Putih Tambak"
+            },
+            {
+              "id": "3578261004",
+              "district_id": "357826",
+              "name": "Kalisari"
+            },
+            {
+              "id": "3578261005",
+              "district_id": "357826",
+              "name": "Dukuh Sutorejo"
+            },
+            {
+              "id": "3578261006",
+              "district_id": "357826",
+              "name": "Kalijudan"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2023-04-14"
+        }
+      },
+      "TANGGAL ENTRY": "02/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA 5A UTARA /2",
+      "TB": "89,5",
+      "BB": "12,2",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "02/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578261404230002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "MUHAMMAD HAFY SYAFIQ",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "14/04/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Mulyorejo",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Manyar Sabrangan",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA 5A UTARA /2",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578261404230002 submitted successfully.",
+    "timestamp": "2025-07-17T03:12:21+07:00"
+  },
+  {
+    "id": "3578295711230001",
+    "data": {
+      "tanggal": "02/07/2025",
+      "nama": "NAJMI AGHNIYA ALMAHIRA",
+      "nik": "3578295711230001",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "10,7",
+      "tb": "82,5",
+      "alamat": "GADING INDAH UTARA 8/2",
+      "tgl_lahir": "17/11/2023",
+      "petugas": "",
+      "rowIndex": 263,
+      "originalTglLahir": "2023-11-17",
+      "NIK": "3578295711230001",
+      "NAMA": "NAJMI AGHNIYA ALMAHIRA",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578295711230001",
+          "kelamin": "P",
+          "lahir": "17/11/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Bulak",
+          "kelurahan": [
+            {
+              "id": "3578291001",
+              "district_id": "357829",
+              "name": "Kedung Cowek"
+            },
+            {
+              "id": "3578291003",
+              "district_id": "357829",
+              "name": "Kenjeran"
+            },
+            {
+              "id": "3578291004",
+              "district_id": "357829",
+              "name": "Bulak"
+            },
+            {
+              "id": "3578291005",
+              "district_id": "357829",
+              "name": "Sukolilo Baru"
+            }
+          ],
+          "uniqcode": "0001",
+          "originalLahir": "2023-11-17"
+        }
+      },
+      "TANGGAL ENTRY": "02/07/2025",
+      "gender": "Perempuan",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "GADING INDAH UTARA 8/2",
+      "TB": "82,5",
+      "BB": "10,7",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "02/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578295711230001",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "NAJMI AGHNIYA ALMAHIRA",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Perempuan",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "17/11/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Bulak",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Kedung Cowek",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "GADING INDAH UTARA 8/2",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_9_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Ibu Hamil *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578295711230001 submitted successfully.",
+    "timestamp": "2025-07-17T03:13:39+07:00"
+  },
+  {
+    "id": "3578101603230002",
+    "data": {
+      "tanggal": "14/07/2025",
+      "nama": "NOBERTUS JASON",
+      "nik": "3578101603230002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "12,4",
+      "tb": "90,5",
+      "alamat": "LEBAK JAYA UTARA 4/KOST",
+      "tgl_lahir": "16/03/2023",
+      "petugas": "",
+      "rowIndex": 264,
+      "originalTglLahir": "2023-03-16",
+      "NIK": "3578101603230002",
+      "NAMA": "NOBERTUS JASON",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578101603230002",
+          "kelamin": "L",
+          "lahir": "16/03/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2023-03-16"
+        }
+      },
+      "TANGGAL ENTRY": "14/07/2025",
+      "gender": "Laki-laki",
+      "age": 2,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK JAYA UTARA 4/KOST",
+      "TB": "90,5",
+      "BB": "12,4",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "14/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578101603230002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "NOBERTUS JASON",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Laki-laki",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "16/03/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Ploso",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK JAYA UTARA 4/KOST",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578101603230002 submitted successfully.",
+    "timestamp": "2025-07-17T03:14:53+07:00"
+  },
+  {
+    "id": "3578104309230002",
+    "data": {
+      "tanggal": "03/07/2025",
+      "nama": "QIANA ALULA YASMIN",
+      "nik": "3578104309230002",
+      "pekerjaan": "Tidak Bekerja",
+      "bb": "11,1",
+      "tb": "84,5",
+      "alamat": "LEBAK REJO UTARA 8/73-A",
+      "tgl_lahir": "03/09/2023",
+      "petugas": "",
+      "rowIndex": 265,
+      "originalTglLahir": "2023-09-03",
+      "NIK": "3578104309230002",
+      "NAMA": "QIANA ALULA YASMIN",
+      "parsed_nik": {
+        "status": "success",
+        "message": "NIK valid",
+        "data": {
+          "nik": "3578104309230002",
+          "kelamin": "P",
+          "lahir": "03/09/2023",
+          "provinsi": "JAWA TIMUR",
+          "kotakab": "KOTA SURABAYA",
+          "namaKec": "Tambaksari",
+          "kelurahan": [
+            {
+              "id": "3578101002",
+              "district_id": "357810",
+              "name": "Ploso"
+            },
+            {
+              "id": "3578101001",
+              "district_id": "357810",
+              "name": "Tambaksari"
+            },
+            {
+              "id": "3578101003",
+              "district_id": "357810",
+              "name": "Gading"
+            },
+            {
+              "id": "3578101004",
+              "district_id": "357810",
+              "name": "Pacarkembang"
+            },
+            {
+              "id": "3578101005",
+              "district_id": "357810",
+              "name": "Rangkah"
+            },
+            {
+              "id": "3578101006",
+              "district_id": "357810",
+              "name": "Pacarkeling"
+            },
+            {
+              "id": "3578101007",
+              "district_id": "357810",
+              "name": "Kapas Madya Baru"
+            },
+            {
+              "id": "3578101008",
+              "district_id": "357810",
+              "name": "Dukuh Setro"
+            }
+          ],
+          "uniqcode": "0002",
+          "originalLahir": "2023-09-03"
+        }
+      },
+      "TANGGAL ENTRY": "03/07/2025",
+      "gender": "Perempuan",
+      "age": 1,
+      "PEKERJAAN": "Tidak Bekerja",
+      "ALAMAT": "LEBAK REJO UTARA 8/73-A",
+      "TB": "84,5",
+      "BB": "11,1",
+      "formValues": [
+        {
+          "selector": "[name=\"dt_tgl_skrining\"]",
+          "value": "03/07/2025",
+          "disabled": false,
+          "label": "Tanggal Pelaksanaan Skrining *"
+        },
+        {
+          "selector": "[name=\"kegiatan_id_input\"]",
+          "value": "Skrining Oleh Fasyankes",
+          "disabled": false,
+          "label": "Nama Kegiatan *"
+        },
+        {
+          "selector": "[name=\"metode_id_input\"]",
+          "value": "Tunggal",
+          "disabled": false,
+          "label": "Metode Skrining *"
+        },
+        {
+          "selector": "[name=\"tempat_skrining_id_input\"]",
+          "value": "Puskesmas",
+          "disabled": false,
+          "label": "Tempat Skrining *"
+        },
+        {
+          "selector": "[name=\"warga_negara_id_input\"]",
+          "value": "WNI",
+          "disabled": false,
+          "label": "Kewarganegaraan *"
+        },
+        {
+          "selector": "[name=\"nik\"]",
+          "value": "3578104309230002",
+          "disabled": false,
+          "label": "NIK *"
+        },
+        {
+          "selector": "[name=\"nama_peserta\"]",
+          "value": "QIANA ALULA YASMIN",
+          "disabled": false,
+          "label": "Nama Peserta *"
+        },
+        {
+          "selector": "[name=\"jenis_kelamin_id_input\"]",
+          "value": "Perempuan",
+          "disabled": false,
+          "label": "Jenis Kelamin *"
+        },
+        {
+          "selector": "[name=\"dt_tgl_lahir\"]",
+          "value": "03/09/2023",
+          "disabled": false,
+          "label": "Tanggal Lahir *"
+        },
+        {
+          "selector": "[name=\"pekerjaan_id_input\"]",
+          "value": "Tidak Bekerja",
+          "disabled": false,
+          "label": "Pekerjaan *"
+        },
+        {
+          "selector": "[name=\"provinsi_ktp_id_input\"]",
+          "value": "Jawa Timur",
+          "disabled": false,
+          "label": "Provinsi KTP *"
+        },
+        {
+          "selector": "[name=\"kabupaten_ktp_id_input\"]",
+          "value": "Kota Surabaya",
+          "disabled": false,
+          "label": "Kabupaten/Kota KTP *"
+        },
+        {
+          "selector": "[name=\"kecamatan_ktp_id_input\"]",
+          "value": "Tambaksari",
+          "disabled": false,
+          "label": "Kecamatan KTP"
+        },
+        {
+          "selector": "[name=\"kelurahan_ktp_id_input\"]",
+          "value": "Ploso",
+          "disabled": false,
+          "label": "Kelurahan KTP"
+        },
+        {
+          "selector": "[name=\"alamat_ktp\"]",
+          "value": "LEBAK REJO UTARA 8/73-A",
+          "disabled": false,
+          "label": "Alamat KTP *"
+        },
+        {
+          "selector": "[name=\"status_domisili_id_input\"]",
+          "value": "Ya",
+          "disabled": false,
+          "label": "Sama Dengan Alamat Kartu Identitas *"
+        },
+        {
+          "selector": "[name=\"no_telp\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "No. HP"
+        },
+        {
+          "selector": "[name=\"status_gizi_id_input\"]",
+          "value": "Gizi baik",
+          "disabled": false,
+          "label": "Hasil Status Gizi"
+        },
+        {
+          "selector": "[name=\"riwayat_kontak_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Memiliki Riwayat Kontak dengan Pasien TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Pernah terdiagnosa/ berobat TBC *"
+        },
+        {
+          "selector": "[name=\"risiko_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Kekurangan Gizi *"
+        },
+        {
+          "selector": "[name=\"risiko_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Merokok *"
+        },
+        {
+          "selector": "[name=\"risiko_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Perokok Pasif *"
+        },
+        {
+          "selector": "[name=\"risiko_6_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Riwayat DM/ Kencing Manis *"
+        },
+        {
+          "selector": "[name=\"risiko_7_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Orang Dengan HIV *"
+        },
+        {
+          "selector": "[name=\"risiko_8_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lansia >65 tahun *"
+        },
+        {
+          "selector": "[name=\"risiko_9_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Ibu Hamil *"
+        },
+        {
+          "selector": "[name=\"risiko_10_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Warga Binaan Pemasyarakatan (WBP) *"
+        },
+        {
+          "selector": "[name=\"risiko_11_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Tinggal di wilayah padat kumuh miskin *"
+        },
+        {
+          "selector": "[name=\"gejala_1_1_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Batuk > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_3_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "BB turun tanpa penyebab jelas/BB tidak naik dalam 2 bulan sebelumnya/nafsu makan turun *"
+        },
+        {
+          "selector": "[name=\"gejala_1_4_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Demam hilang timbul tanpa sebab yang jelas > 2 minggu *"
+        },
+        {
+          "selector": "[name=\"gejala_1_5_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Lesu atau malaise, anak kurang aktif bermain *"
+        },
+        {
+          "selector": "[name=\"hasil_skrining_id_input\"]",
+          "value": "Tidak Ada Gejala dan Tanda TBC",
+          "disabled": false,
+          "label": "Hasil Skrining Gejala dan Tanda TBC *"
+        },
+        {
+          "selector": "[name=\"terduga_tb_id_input\"]",
+          "value": "Tidak",
+          "disabled": false,
+          "label": "Terduga TBC"
+        },
+        {
+          "selector": "[name=\"keterangan\"]",
+          "value": "<empty>",
+          "disabled": false,
+          "label": "Keterangan"
+        }
+      ],
+      "status": "success"
+    },
+    "message": "Data for NIK: 3578104309230002 submitted successfully.",
+    "timestamp": "2025-07-17T03:16:13+07:00"
+  },
+  {
     "id": "3506150502230006",
     "data": {
       "tanggal": "12/07/2025",
