@@ -29,6 +29,7 @@
     "**/coverage/**",
     "**/build/**",
     "**/public/**",
-    "**/.cache/**"
+    "**/.cache/**",
+    "**/packages/**"
   ]
 }
