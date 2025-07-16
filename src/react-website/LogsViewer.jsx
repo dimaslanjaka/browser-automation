@@ -15,7 +15,9 @@ function LogAccordionItem({ log, idx }) {
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
         <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
-        <div className={`${styles.logMessage} mb-2${isSuccessMsg ? ' ' + styles.textSuccess : ''}`}>{log.message || ''}</div>
+        <div className={`${styles.logMessage} mb-2${isSuccessMsg ? ' ' + styles.textSuccess : ''}`}>
+          {log.message || ''}
+        </div>
         <span className={styles.sectionTitle}>Basic Data</span>
         <Table bordered striped className={`mb-3 ${styles.table}`}>
           <tbody>
@@ -163,7 +165,9 @@ function LogAccordionItem({ log, idx }) {
   );
 }
 
-export default function LogsViewer({ pageTitle = 'Log Viewer', successCount = 0, failCount = 0 }) {
+export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
+  const successCount = logs.filter((log) => log.data && log.data.status === 'success').length;
+  const failCount = logs.filter((log) => log.data && log.data.status !== 'success').length;
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const batch = 20;
