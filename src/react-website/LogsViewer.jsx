@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import logs from '../../tmp/logs.json' with { type: 'json' };
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.css';
 
@@ -167,12 +166,33 @@ function LogAccordionItem({ log, idx }) {
 }
 
 export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
-  const successCount = logs.filter((log) => log.data && log.data.status === 'success').length;
-  const failCount = logs.filter((log) => log.data && log.data.status !== 'success').length;
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const batch = 20;
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    import('../../tmp/logs.json', { assert: { type: 'json' } })
+      .then(({ default: data }) => {
+        if (mounted) setLogs(data);
+      })
+      .catch(() => {
+        if (mounted) setLogs([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const successCount = useMemo(() => logs.filter((log) => log.data && log.data.status === 'success').length, [logs]);
+  const failCount = useMemo(() => logs.filter((log) => log.data && log.data.status !== 'success').length, [logs]);
 
   const filteredLogs = useMemo(() => {
     if (!search.trim()) return logs;
@@ -201,13 +221,13 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     setCurrentPage(1);
   }, [search]);
 
+  if (loading) {
+    return <div className="text-center my-5">Loading logs...</div>;
+  }
+
   return (
     <div className={`container mx-auto py-4 ${styles.container}`}>
-      <button
-        type="button"
-        className="btn btn-outline-secondary mb-3"
-        onClick={() => navigate('/')}
-      >
+      <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
         <i className="fa fa-arrow-left me-2" /> Back
       </button>
       {/* Theme toggle UI omitted for brevity */}

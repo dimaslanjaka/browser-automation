@@ -1,12 +1,35 @@
-import hljs from 'highlight.js/lib/core';
-import jsonLang from 'highlight.js/lib/languages/json';
-import 'highlight.js/styles/github.css';
-import nikParser from 'nik-parser-jurusid';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import dataKunto from '../../tmp/dataKunto.json' with { type: 'json' };
-hljs.registerLanguage('json', jsonLang);
+
+import 'highlight.js/styles/github.css';
+
+/**
+ * @type {import('highlight.js').HLJSApi | undefined}
+ */
+let hljs;
+/**
+ * @type {import('highlight.js').Language | undefined}
+ */
+let jsonLang;
+/**
+ * @type {((nik: string) => any) | undefined}
+ */
+let nikParser;
+
+async function loadHighlightAndNikParser() {
+  if (!hljs) {
+    const [hljsCore, jsonLangMod, nikParserMod] = await Promise.all([
+      import('highlight.js/lib/core'),
+      import('highlight.js/lib/languages/json'),
+      import('nik-parser-jurusid')
+    ]);
+    hljs = hljsCore.default || hljsCore;
+    jsonLang = jsonLangMod.default || jsonLangMod;
+    nikParser = nikParserMod.default || nikParserMod;
+    hljs.registerLanguage('json', jsonLang);
+  }
+}
 
 /**
  * NIK Parser React App
@@ -15,6 +38,7 @@ hljs.registerLanguage('json', jsonLang);
 export default function NikParserWeb() {
   const [nik, setNik] = useState('');
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
   const resultRef = useRef(null);
   const navigate = useNavigate();
 
@@ -22,9 +46,12 @@ export default function NikParserWeb() {
    * Handle form submit and parse NIK
    * @param {React.FormEvent<HTMLFormElement>} e
    */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      await loadHighlightAndNikParser();
+      const { default: dataKunto } = await import('../../tmp/dataKunto.json', { assert: { type: 'json' } });
       const parsed = nikParser(nik);
       const result = {
         'nik-parser-result': parsed,
@@ -33,11 +60,13 @@ export default function NikParserWeb() {
       setResult(result);
     } catch (err) {
       setResult({ error: err.message });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (result && resultRef.current) {
+    if (result && resultRef.current && hljs) {
       hljs.highlightElement(resultRef.current);
     }
   }, [result]);
@@ -47,14 +76,9 @@ export default function NikParserWeb() {
         <Col xs={12}>
           <Card>
             <Card.Body>
-              <Button
-                variant="outline-secondary"
-                className="mb-3"
-                onClick={() => navigate('/')}
-              >
+              <Button variant="outline-secondary" className="mb-3" onClick={() => navigate('/')}>
                 <i className="fa fa-arrow-left me-2" /> Back
               </Button>
-              {/* ...existing code... */}
               <Card.Title className="text-center">NIK Parser React App</Card.Title>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formNik">
@@ -66,8 +90,8 @@ export default function NikParserWeb() {
                     placeholder="Enter NIK"
                   />
                 </Form.Group>
-                <Button variant="primary" type="submit">
-                  Parse
+                <Button variant="primary" type="submit" disabled={loading}>
+                  {loading ? 'Parsing...' : 'Parse'}
                 </Button>
               </Form>
               {result && (
