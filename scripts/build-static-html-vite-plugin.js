@@ -27,7 +27,7 @@ export async function buildStaticHtml(options) {
       return nikIndex(nikA) - nikIndex(nikB);
     });
   }
-  const outLogsPath = path.resolve(process.cwd(), 'tmp/logs.json');
+  const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
   fs.mkdirSync(path.dirname(outLogsPath), { recursive: true });
   fs.writeFileSync(outLogsPath, JSON.stringify(liveLogs, null, 2));
   console.log(`Logs JSON written to ${outLogsPath}`);

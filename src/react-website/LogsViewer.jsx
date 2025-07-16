@@ -176,8 +176,9 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    import('../../tmp/logs.json', { assert: { type: 'json' } })
-      .then(({ default: data }) => {
+    fetch('/browser-automation/assets/data/logs.json')
+      .then((res) => res.json())
+      .then((data) => {
         if (mounted) setLogs(data);
       })
       .catch(() => {
