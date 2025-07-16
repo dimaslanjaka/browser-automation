@@ -1,4 +1,3 @@
-import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
@@ -10,13 +9,14 @@ export default defineConfig({
     dbLogHtmlStatic(),
     HtmlListPlugin(),
     react(),
-    AfterBuildCopyPlugin(),
-    legacy({
-      targets: ['defaults', 'not IE 11'],
-      additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
-      modernPolyfills: true,
-      renderLegacyChunks: true
-    })
+    AfterBuildCopyPlugin()
+    // import legacy from '@vitejs/plugin-legacy';
+    // legacy({
+    //   targets: ['defaults', 'not IE 11'],
+    //   additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
+    //   modernPolyfills: true,
+    //   renderLegacyChunks: true
+    // })
   ],
   root: '.',
   base: '/browser-automation/',
