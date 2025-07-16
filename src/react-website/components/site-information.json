@@ -1,0 +1,9 @@
+{
+  "title": "Browser Automation",
+  "description": "A React-based browser automation tool for web scraping and data extraction.",
+  "keywords": ["browser automation", "web scraping", "data extraction", "React"],
+  "author": {
+    "name": "Dimas Lanjaka",
+    "email": "dimaslanjaka@gmail.com"
+  }
+}

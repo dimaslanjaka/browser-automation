@@ -1,7 +1,8 @@
 import React from 'react';
 import { Container } from 'react-bootstrap';
 import { useTheme } from './ThemeContext.jsx';
-import socialMedia from './social-media.json';
+import siteInfo from './site-information.json' with { type: 'json' };
+import socialMedia from './social-media.json' with { type: 'json' };
 
 const _react = typeof React;
 
@@ -14,7 +15,7 @@ export default function Footer() {
     >
       <Container>
         <div className="d-flex justify-content-between align-items-center">
-          <small>&copy; 2025 My App Footer</small>
+          <small>&copy; 2025 {siteInfo.title}</small>
           <div>
             {socialMedia.facebook && (
               <a href={socialMedia.facebook} target="_blank" rel="noopener" aria-label="Facebook" className="mx-2">

@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
 import { useTheme } from './ThemeContext.jsx';
-import socialMedia from './social-media.json';
+import siteInfo from './site-information.json' with { type: 'json' };
+import socialMedia from './social-media.json' with { type: 'json' };
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
@@ -20,10 +21,9 @@ export default function Header() {
       style={{ backgroundColor: theme === 'dark' ? '#23272f' : '#f8f9fa' }}
       variant={theme === 'dark' ? 'dark' : 'light'}
       expand="lg"
-      className="mb-4 border-bottom"
-    >
+      className="mb-4 border-bottom">
       <Container>
-        <Navbar.Brand href="/browser-automation">My App Header</Navbar.Brand>
+        <Navbar.Brand href="/browser-automation">{siteInfo.title}</Navbar.Brand>
         <Nav className="ms-auto align-items-center">
           <div className="form-check form-switch me-3 d-flex align-items-center">
             <input
@@ -41,18 +41,12 @@ export default function Header() {
           </div>
           {socialMedia.facebook && (
             <Nav.Link href={socialMedia.facebook} target="_blank" rel="noopener" aria-label="Facebook">
-              <i
-                className="fab fa-facebook fa-lg"
-                style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }}
-              />
+              <i className="fab fa-facebook fa-lg" style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }} />
             </Nav.Link>
           )}
           {socialMedia.github && (
             <Nav.Link href={socialMedia.github} target="_blank" rel="noopener" aria-label="GitHub">
-              <i
-                className="fab fa-github fa-lg"
-                style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F' }}
-              />
+              <i className="fab fa-github fa-lg" style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F' }} />
             </Nav.Link>
           )}
         </Nav>
