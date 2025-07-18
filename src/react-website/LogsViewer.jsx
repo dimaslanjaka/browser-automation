@@ -6,6 +6,7 @@ import styles from './LogsViewer.module.scss';
 import { useTheme } from './components/ThemeContext.jsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
+import copyToClipboard from '../utils/copyToClipboard.js';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
@@ -25,6 +26,23 @@ function LogAccordionItem({ log, idx }) {
         </span>
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
+        {/* NIK with copy button */}
+        <div className="d-flex align-items-center mb-2">
+          <span className="fw-bold me-2">NIK:</span>
+          <span className="me-2">{log.data?.nik || ''}</span>
+          {log.data?.nik && (
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              title="Copy NIK"
+              style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+              onClick={() => {
+                copyToClipboard(log.data.nik);
+              }}
+            >
+              <i className="fa fa-copy" aria-hidden="true"></i>
+            </button>
+          )}
+        </div>
         <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
         <div className={`${styles.logMessage} mb-2 ${indicatorCLass}`}>{log.message || log.data?.message || ''}</div>
         <span className={styles.sectionTitle}>Basic Data</span>
