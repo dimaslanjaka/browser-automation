@@ -433,21 +433,21 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
           <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
             <Badge
               bg="success"
-              className="px-3 py-1 fw-normal text-center"
-              style={{ fontSize: '0.95em', minWidth: 120 }}>
-              Success: {successCount}
+              className="px-2 py-1 fw-normal text-center"
+              style={{ fontSize: '0.92em', minWidth: 70, maxWidth: 100 }}>
+              <i className="fa-solid fa-circle-check me-1" aria-hidden="true"></i> {successCount}
             </Badge>
             <Badge
               bg="danger"
-              className="px-3 py-1 fw-normal text-center"
-              style={{ fontSize: '0.95em', minWidth: 120 }}>
-              Invalid: {invalidCount}
+              className="px-2 py-1 fw-normal text-center"
+              style={{ fontSize: '0.92em', minWidth: 70, maxWidth: 100 }}>
+              <i className="fa-solid fa-circle-exclamation me-1" aria-hidden="true"></i> {invalidCount}
             </Badge>
             <Badge
               bg="secondary"
-              className="px-3 py-1 fw-normal text-center"
-              style={{ fontSize: '0.95em', minWidth: 120 }}>
-              Error: {failCount}
+              className="px-2 py-1 fw-normal text-center"
+              style={{ fontSize: '0.92em', minWidth: 70, maxWidth: 100 }}>
+              <i className="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> {failCount}
             </Badge>
           </div>
           {/* Filter UI - collapsible */}
