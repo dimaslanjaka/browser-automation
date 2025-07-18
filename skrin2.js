@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import moment from 'moment';
+import nikParserSync from 'nik-parser-jurusid';
 import { loadCsvData } from './data/index.js';
 import { addLog, getLogById } from './src/logHelper.js';
 import {
@@ -14,7 +15,6 @@ import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
 import { ucwords } from './src/utils/string.js';
 import { fixData } from './src/xlsx-helper.js';
-import * as nikUtils from 'nik-parser-jurusid/utils';
 
 console.clear();
 
@@ -578,7 +578,8 @@ const main = async () => {
 
   while (unprocessedData.length > 0) {
     const currentData = unprocessedData.shift();
-    if (!nikUtils.isValidNIK(currentData.nik)) {
+    const nikResult = nikParserSync(currentData.nik);
+    if (nikResult.status !== 'success') {
       logLine(`Skipping invalid NIK: ${currentData.nik}`);
       addLog({
         id: getNumbersOnly(currentData.nik),
