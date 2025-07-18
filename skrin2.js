@@ -188,6 +188,39 @@ async function processData(page, data) {
     }
   }
 
+  // Check if manual is false and province, kabupaten, kecamatan, and kelurahan are already filled
+  if (!isManualInput) {
+    logLine(`NIK: ${NIK} is already registered, skipping manual input.`);
+    // Check if gender field is empty to determine if form is filled
+    const isGenderEmpty = await iframe.$eval(
+      '#field_item_jenis_kelamin_id input[type="text"]',
+      (el) => !el.value || el.value.trim() === ''
+    );
+    const isKabupatenEmpty = await iframe.$eval(
+      '#field_item_kabupaten_ktp_id input[type="text"]',
+      (el) => !el.value || el.value.trim() === ''
+    );
+    const isProvinsiEmpty = await iframe.$eval(
+      '#field_item_provinsi_ktp_id input[type="text"]',
+      (el) => !el.value || el.value.trim() === ''
+    );
+    const isKecamatanEmpty = await iframe.$eval(
+      '#field_item_kecamatan_ktp_id input[type="text"]',
+      (el) => !el.value || el.value.trim() === ''
+    );
+    const isKelurahanEmpty = await iframe.$eval(
+      '#field_item_kelurahan_ktp_id input[type="text"]',
+      (el) => !el.value || el.value.trim() === ''
+    );
+    console.log(
+      `isGenderEmpty: ${isGenderEmpty}, isKabupatenEmpty: ${isKabupatenEmpty}, isProvinsiEmpty: ${isProvinsiEmpty}, isKecamatanEmpty: ${isKecamatanEmpty}, isKelurahanEmpty: ${isKelurahanEmpty}`
+    );
+    if (!isGenderEmpty || !isKabupatenEmpty || !isProvinsiEmpty || !isKecamatanEmpty || !isKelurahanEmpty) {
+      // If any field is not empty, set isManualInput to true
+      isManualInput = true;
+    }
+  }
+
   if (isManualInput) {
     // Proceed with manual input
 
