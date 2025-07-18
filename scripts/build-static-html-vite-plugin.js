@@ -3,6 +3,11 @@ import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
 import { dbPath, getLogs } from '../src/logHelper.js';
+import dotenv from 'dotenv';
+import { encryptJson } from '../src/utils/json-crypto.js';
+
+// Load .env from parent directory
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
@@ -29,7 +34,9 @@ export async function buildStaticHtml(options) {
   }
   const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
   fs.mkdirSync(path.dirname(outLogsPath), { recursive: true });
-  fs.writeFileSync(outLogsPath, JSON.stringify(liveLogs, null, 2));
+  const secret = process.env.VITE_JSON_SECRET;
+  if (!secret) throw new Error('VITE_JSON_SECRET is not set in environment variables');
+  fs.writeFileSync(outLogsPath, encryptJson(liveLogs, secret));
   console.log(`Logs JSON written to ${outLogsPath}`);
   const outHtmlPath = path.resolve(process.cwd(), 'public/log-juli-2025.html');
   const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outHtmlPath)}`;

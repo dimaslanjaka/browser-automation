@@ -176,17 +176,28 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch('/browser-automation/assets/data/logs.json')
-      .then((res) => res.json())
-      .then((data) => {
-        if (mounted) setLogs(data);
-      })
-      .catch(() => {
-        if (mounted) setLogs([]);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    import('../utils/json-crypto.js').then(({ decryptJson }) => {
+      fetch('/browser-automation/assets/data/logs.json')
+        .then((res) => res.text())
+        .then((encryptedText) => {
+          let data = [];
+          const secret = import.meta.env.VITE_JSON_SECRET;
+          console.log('Decrypting logs with secret:', secret);
+          try {
+            data = decryptJson(encryptedText, secret);
+          } catch (err) {
+            console.error('Failed to decrypt logs:', err);
+            data = [];
+          }
+          if (mounted) setLogs(data);
+        })
+        .catch(() => {
+          if (mounted) setLogs([]);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+    });
     return () => {
       mounted = false;
     };

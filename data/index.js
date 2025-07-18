@@ -3,9 +3,14 @@ import path from 'path';
 import moment from 'moment';
 import { fileURLToPath } from 'url';
 import csvParser from 'csv-parser';
+import dotenv from 'dotenv';
+import { encryptJson } from '../src/utils/json-crypto.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load .env from parent directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const csvFilePath = path.join(__dirname, 'data.csv');
 
@@ -58,7 +63,7 @@ export async function loadCsvData() {
         // Save as JSON (optional)
         const outputDir = path.join(process.cwd(), 'public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), JSON.stringify(dataKunto, null, 2), 'utf-8');
+        fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
 
         resolve(dataKunto);
       })

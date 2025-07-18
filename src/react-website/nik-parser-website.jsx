@@ -1,8 +1,8 @@
+import 'highlight.js/styles/github.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-
-import 'highlight.js/styles/github.css';
+import { decryptJson } from '../utils/json-crypto';
 import AdSense from './components/Adsense';
 import { useTheme } from './components/ThemeContext';
 
@@ -54,9 +54,16 @@ export default function NikParserWeb() {
     setLoading(true);
     try {
       await loadHighlightAndNikParser();
-      const response = await fetch('/browser-automation/assets/data/dataKunto.json');
-      if (!response.ok) throw new Error('Failed to load dataKunto.json');
-      const dataKunto = await response.json();
+      let dataKunto = [];
+      try {
+        const response = await fetch('/browser-automation/assets/data/dataKunto.json');
+        if (!response.ok) throw new Error('Failed to load dataKunto.json');
+        const encodedResponse = await response.text();
+        const secret = import.meta.env.VITE_JSON_SECRET;
+        dataKunto = decryptJson(encodedResponse, secret);
+      } catch (error) {
+        console.error('Failed to decrypt dataKunto:', error);
+      }
       const parsed = await nikParser(nik);
       const result = {
         'nik-parser-result': parsed,
