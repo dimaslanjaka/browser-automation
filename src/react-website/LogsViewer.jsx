@@ -171,6 +171,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeKeys, setActiveKeys] = useState([]); // [] means all collapsed
   const batch = 20;
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -232,7 +233,11 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   useEffect(() => {
     setCurrentPage(1);
+    setActiveKeys([]); // Reset expanded accordions on search change
   }, [search]);
+  useEffect(() => {
+    setActiveKeys([]); // Reset expanded accordions on page change
+  }, [currentPage]);
 
   if (loading) {
     return <div className="text-center my-5">Loading logs...</div>;
@@ -273,10 +278,36 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button
+              type="button"
+              className={styles.collapseAllBtn}
+              title="Collapse All"
+              onClick={() => setActiveKeys([])}
+              style={{ marginLeft: 8 }}
+            >
+              <i className="fa-solid fa-compress" /> <span className="sr-only">Collapse All</span>
+            </button>
           </InputGroup>
-          <Accordion alwaysOpen style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          <Accordion
+            style={{ maxHeight: '70vh', overflowY: 'auto' }}
+            activeKey={activeKeys}
+            onSelect={(eventKey) => {
+              if (!eventKey) return;
+              setActiveKeys((prev) => {
+                const key = String(eventKey);
+                let arr = Array.isArray(prev) ? prev : [];
+                if (arr.includes(key)) {
+                  // Collapse
+                  return arr.filter((k) => k !== key);
+                } else {
+                  // Expand
+                  return [...arr, key];
+                }
+              });
+            }}
+          >
             {paginatedLogs.map((log, idx) => (
-              <LogAccordionItem log={log} idx={idx + 1 + (currentPage - 1) * batch} key={idx} />
+              <LogAccordionItem log={log} idx={String(idx + 1 + (currentPage - 1) * batch)} key={idx} />
             ))}
           </Accordion>
           {/* Pagination */}

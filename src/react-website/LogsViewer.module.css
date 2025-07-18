@@ -84,12 +84,31 @@
 }
 
 .collapseAllBtn {
+  position: fixed;
   bottom: 2.5em;
   right: 1.5em;
   z-index: 1050;
-  width: 2.3em;
-  height: 2.3em;
-  font-size: 1.2em;
+  width: 2.8em;
+  height: 2.8em;
+  font-size: 1.3em;
+  border-radius: 50% !important;
+  background: #fff;
+  border: 1.5px solid #bbb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  transition: background 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.collapseAllBtn:hover {
+  background: #f3f3f3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  color: #222;
 }
 
 @media (max-width: 600px) {
