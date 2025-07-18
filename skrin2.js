@@ -582,7 +582,8 @@ const main = async () => {
       logLine(`Skipping invalid NIK: ${currentData.nik}`);
       addLog({
         id: getNumbersOnly(currentData.nik),
-        data: { ...currentData, status: 'invalid', message: 'Invalid NIK format' }
+        data: { ...currentData, status: 'invalid' },
+        message: 'Invalid NIK format'
       });
       continue; // Skip invalid NIKs
     }

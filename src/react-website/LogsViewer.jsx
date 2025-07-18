@@ -25,7 +25,7 @@ function LogAccordionItem({ log, idx }) {
       <Accordion.Body className={styles.accordionBody}>
         <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
         <div className={`${styles.logMessage} mb-2 ${indicatorCLass}`}>
-          {log.message || ''}
+          {log.message || log.data?.message || ''}
         </div>
         <span className={styles.sectionTitle}>Basic Data</span>
         <Table bordered striped className={`mb-3 ${styles.table}`}>
