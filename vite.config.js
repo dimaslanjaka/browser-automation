@@ -36,6 +36,7 @@ export default defineConfig({
   base: '/browser-automation/',
   build: {
     outDir: 'dist',
+    emptyOutDir: true,
     rollupOptions: {
       // https://rollupjs.org/configuration-options/
       output: {
