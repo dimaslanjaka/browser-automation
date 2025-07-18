@@ -180,8 +180,10 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const [activeKeys, setActiveKeys] = useState([]); // [] means all collapsed
+  const [filterOpen, setFilterOpen] = useState(false); // Collapsible filter state
   const batch = 20;
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -218,25 +220,73 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const successCount = useMemo(() => logs.filter((log) => log.data && log.data.status === 'success').length, [logs]);
   const failCount = useMemo(() => logs.filter((log) => log.data && log.data.status !== 'success').length, [logs]);
 
-  const filteredLogs = useMemo(() => {
-    if (!search.trim()) return logs;
-    const query = search.trim().toLowerCase();
-    return logs.filter((log) => {
-      const fields = [
-        log.data?.nik,
-        log.data?.nama,
-        log.message,
-        log.data?.tanggal,
-        log.data?.alamat,
-        log.data?.petugas,
-        log.data?.status,
-        log.data?.gender,
-        log.data?.age,
-        log.data?.pekerjaan
-      ];
-      return fields.some((f) => typeof f === 'string' && f.toLowerCase().includes(query));
+  // Collect unique values for provinsi, kotakab, kecamatan for filter dropdowns
+  const provinsiOptions = useMemo(() => {
+    const set = new Set();
+    logs.forEach(log => {
+      const val = log.data?.parsed_nik?.data?.provinsi;
+      if (val) set.add(val);
     });
-  }, [logs, search]);
+    return Array.from(set).sort();
+  }, [logs]);
+
+  const kotakabOptions = useMemo(() => {
+    const set = new Set();
+    logs.forEach(log => {
+      const val = log.data?.parsed_nik?.data?.kotakab;
+      if (val) set.add(val);
+    });
+    return Array.from(set).sort();
+  }, [logs]);
+
+  const kecamatanOptions = useMemo(() => {
+    const set = new Set();
+    logs.forEach(log => {
+      const val = log.data?.parsed_nik?.data?.namaKec;
+      if (val) set.add(val);
+    });
+    return Array.from(set).sort();
+  }, [logs]);
+
+  const filteredLogs = useMemo(() => {
+    let result = logs;
+    // Apply search
+    if (search.trim()) {
+      const query = search.trim().toLowerCase();
+      result = result.filter((log) => {
+        const fields = [
+          log.data?.nik,
+          log.data?.nama,
+          log.message,
+          log.data?.tanggal,
+          log.data?.alamat,
+          log.data?.petugas,
+          log.data?.status,
+          log.data?.gender,
+          log.data?.age,
+          log.data?.pekerjaan
+        ];
+        return fields.some((f) => typeof f === 'string' && f.toLowerCase().includes(query));
+      });
+    }
+    // Apply filters
+    if (filters.status) {
+      result = result.filter((log) => log.data?.status === filters.status);
+    }
+    if (filters.gender) {
+      result = result.filter((log) => log.data?.gender === filters.gender);
+    }
+    if (filters.provinsi) {
+      result = result.filter((log) => log.data?.parsed_nik?.data?.provinsi === filters.provinsi);
+    }
+    if (filters.kotakab) {
+      result = result.filter((log) => log.data?.parsed_nik?.data?.kotakab === filters.kotakab);
+    }
+    if (filters.kecamatan) {
+      result = result.filter((log) => log.data?.parsed_nik?.data?.namaKec === filters.kecamatan);
+    }
+    return result;
+  }, [logs, search, filters]);
 
   const totalPages = Math.ceil(filteredLogs.length / batch);
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * batch, currentPage * batch);
@@ -250,8 +300,8 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   useEffect(() => {
     setCurrentPage(1);
-    setActiveKeys([]); // Reset expanded accordions on search change
-  }, [search]);
+    setActiveKeys([]); // Reset expanded accordions on search or filter change
+  }, [search, filters]);
   useEffect(() => {
     setActiveKeys([]); // Reset expanded accordions on page change
   }, [currentPage]);
@@ -286,6 +336,113 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               Not Success: {failCount}
             </Badge>
           </div>
+          {/* Filter UI - collapsible */}
+          <div className="mb-3">
+            <button
+              type="button"
+              className={`btn btn-sm ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-2`}
+              style={{ width: '100%' }}
+              aria-expanded={filterOpen}
+              onClick={() => setFilterOpen((v) => !v)}
+            >
+              <i className={`fa ${filterOpen ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i> Filter Options
+            </button>
+            {filterOpen && (
+              <div className="row g-2">
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-status" style={{ whiteSpace: 'nowrap' }}>Status:</label>
+                    <select
+                      id="filter-status"
+                      className="form-select form-select-sm"
+                      value={filters.status}
+                      onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+                    >
+                      <option value="">All</option>
+                      <option value="success">Success</option>
+                      <option value="invalid">Invalid</option>
+                      <option value="error">Error</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-gender" style={{ whiteSpace: 'nowrap' }}>Gender:</label>
+                    <select
+                      id="filter-gender"
+                      className="form-select form-select-sm"
+                      value={filters.gender}
+                      onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))}
+                    >
+                      <option value="">All</option>
+                      <option value="L">L</option>
+                      <option value="P">P</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-provinsi" style={{ whiteSpace: 'nowrap' }}>Provinsi:</label>
+                    <select
+                      id="filter-provinsi"
+                      className="form-select form-select-sm"
+                      value={filters.provinsi}
+                      onChange={e => setFilters(f => ({ ...f, provinsi: e.target.value }))}
+                    >
+                      <option value="">All</option>
+                      {provinsiOptions.map((prov, i) => (
+                        <option value={prov} key={i}>{prov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-kotakab" style={{ whiteSpace: 'nowrap' }}>Kota/Kab:</label>
+                    <select
+                      id="filter-kotakab"
+                      className="form-select form-select-sm"
+                      value={filters.kotakab}
+                      onChange={e => setFilters(f => ({ ...f, kotakab: e.target.value }))}
+                    >
+                      <option value="">All</option>
+                      {kotakabOptions.map((kab, i) => (
+                        <option value={kab} key={i}>{kab}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-kecamatan" style={{ whiteSpace: 'nowrap' }}>Kecamatan:</label>
+                    <select
+                      id="filter-kecamatan"
+                      className="form-select form-select-sm"
+                      value={filters.kecamatan}
+                      onChange={e => setFilters(f => ({ ...f, kecamatan: e.target.value }))}
+                    >
+                      <option value="">All</option>
+                      {kecamatanOptions.map((kec, i) => (
+                        <option value={kec} key={i}>{kec}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    title="Clear Filters"
+                    onClick={() => setFilters({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' })}
+                  >
+                    <i className="fa fa-times" /> Clear Filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Search UI */}
           <InputGroup className="mb-3" id="log-search-group">
             <InputGroup.Text>
               <i className="fa-solid fa-magnifying-glass"></i>
