@@ -121,12 +121,14 @@ function LogAccordionItem({ log, idx }) {
                         {Array.isArray(log.data.parsed_nik.data.kelurahan) ? (
                           <ul className="list-group list-group-flush">
                             {log.data.parsed_nik.data.kelurahan.map((kel, i) => (
-                              <li className="list-group-item" key={i}>
-                                {kel.name}{' '}
-                                <span className="text-muted">
-                                  (ID: {kel.id}, District: {kel.district_id})
-                                </span>
-                              </li>
+                              kel && typeof kel === 'object' && kel.name ? (
+                                <li className="list-group-item" key={i}>
+                                  {kel.name}{' '}
+                                  <span className="text-muted">
+                                    (ID: {kel.id}, District: {kel.district_id})
+                                  </span>
+                                </li>
+                              ) : null
                             ))}
                           </ul>
                         ) : (
@@ -230,6 +232,13 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   const totalPages = Math.ceil(filteredLogs.length / batch);
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * batch, currentPage * batch);
+  // Debug: log the state of logs and pagination
+  useEffect(() => {
+    console.log('filteredLogs.length:', filteredLogs.length, 'totalPages:', totalPages, 'currentPage:', currentPage, 'paginatedLogs.length:', paginatedLogs.length);
+    if (currentPage > 1 && paginatedLogs.length === 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredLogs.length, totalPages, currentPage, paginatedLogs.length]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -316,11 +325,37 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
                 Previous
               </Pagination.Prev>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Pagination.Item active={page === currentPage} key={page} onClick={() => setCurrentPage(page)}>
-                  {page}
-                </Pagination.Item>
-              ))}
+              {/* Compact pagination: show first, last, current, +/-2, and ellipsis */}
+              {(() => {
+                const pages = [];
+                const pageWindow = 2; // show 2 before/after current
+                let addedLeftEllipsis = false;
+                let addedRightEllipsis = false;
+                for (let page = 1; page <= totalPages; page++) {
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - pageWindow && page <= currentPage + pageWindow)
+                  ) {
+                    pages.push(
+                      <Pagination.Item
+                        active={page === currentPage}
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Pagination.Item>
+                    );
+                  } else if (page < currentPage - pageWindow && !addedLeftEllipsis && page !== 1) {
+                    pages.push(<Pagination.Ellipsis key="left-ellipsis" disabled />);
+                    addedLeftEllipsis = true;
+                  } else if (page > currentPage + pageWindow && !addedRightEllipsis && page !== totalPages) {
+                    pages.push(<Pagination.Ellipsis key="right-ellipsis" disabled />);
+                    addedRightEllipsis = true;
+                  }
+                }
+                return pages;
+              })()}
               <Pagination.Next
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
