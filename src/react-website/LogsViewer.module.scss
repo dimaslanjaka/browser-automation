@@ -104,6 +104,22 @@
 [data-bs-theme="dark"] .textSuccess {
   color: #4efc6e !important;
 }
+[data-bs-theme="dark"] .textInvalid {
+  color: #ffb84d !important;
+}
+[data-bs-theme="dark"] .textError {
+  color: #ff5c5c !important;
+}
+
+.textSuccess {
+  color: #198754 !important; // Bootstrap green
+}
+.textInvalid {
+  color: #fd7e14 !important; // Bootstrap orange
+}
+.textError {
+  color: #dc3545 !important; // Bootstrap red
+}
 
 .collapseAllBtn {
   position: fixed;

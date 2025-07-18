@@ -7,16 +7,24 @@ import { useTheme } from './components/ThemeContext.jsx';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
+  let indicatorCLass = '';
+  if (log.data?.status === 'invalid') {
+    indicatorCLass = styles.textInvalid;
+  } else if (log.data?.status === 'success') {
+    indicatorCLass = styles.textSuccess;
+  } else {
+    indicatorCLass = styles.textError;
+  }
   return (
     <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
       <Accordion.Header className={styles.accordionHeader}>
-        <span style={{ width: '100%' }}>
-          <span style={{ fontWeight: 'bold' }}>{log.data?.nik || ''}</span> - {ucwords(log.data?.nama || '')}
+        <span className="d-block w-100">
+          <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> - {ucwords(log.data?.nama || '')}
         </span>
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
         <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
-        <div className={`${styles.logMessage} mb-2${isSuccessMsg ? ' ' + styles.textSuccess : ''}`}>
+        <div className={`${styles.logMessage} mb-2 ${indicatorCLass}`}>
           {log.message || ''}
         </div>
         <span className={styles.sectionTitle}>Basic Data</span>
@@ -267,12 +275,14 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
           <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
             <Badge
               bg="success"
-              style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
+              className="px-3 py-1 fw-normal text-center"
+              style={{ fontSize: '0.95em', minWidth: 120 }}>
               Success: {successCount}
             </Badge>
             <Badge
               bg="danger"
-              style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
+              className="px-3 py-1 fw-normal text-center"
+              style={{ fontSize: '0.95em', minWidth: 120 }}>
               Not Success: {failCount}
             </Badge>
           </div>
@@ -289,10 +299,9 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             />
             <button
               type="button"
-              className={styles.collapseAllBtn}
+              className={styles.collapseAllBtn + ' ms-2'}
               title="Collapse All"
               onClick={() => setActiveKeys([])}
-              style={{ marginLeft: 8 }}
             >
               <i className="fa-solid fa-compress" /> <span className="sr-only">Collapse All</span>
             </button>
