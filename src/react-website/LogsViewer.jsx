@@ -182,7 +182,6 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
         .then((encryptedText) => {
           let data = [];
           const secret = import.meta.env.VITE_JSON_SECRET;
-          console.log('Decrypting logs with secret:', secret);
           try {
             data = decryptJson(encryptedText, secret);
           } catch (err) {
