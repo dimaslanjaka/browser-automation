@@ -14,6 +14,7 @@ import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
 import { ucwords } from './src/utils/string.js';
 import { fixData } from './src/xlsx-helper.js';
+import * as nikUtils from 'nik-parser-jurusid/utils';
 
 console.clear();
 
@@ -572,11 +573,19 @@ const main = async () => {
   const unprocessedData = dataKunto.filter((item) => {
     // Check if the data for this NIK has already been processed
     const nik = getNumbersOnly(item.nik);
-    return !getLogById(nik) || getLogById(nik).data.status !== 'success';
+    return !getLogById(nik) || Object.hasOwn(getLogById(nik).data, 'status') === false;
   });
 
   while (unprocessedData.length > 0) {
     const currentData = unprocessedData.shift();
+    if (!nikUtils.isValidNIK(currentData.nik)) {
+      logLine(`Skipping invalid NIK: ${currentData.nik}`);
+      addLog({
+        id: getNumbersOnly(currentData.nik),
+        data: { ...currentData, status: 'invalid', message: 'Invalid NIK format' }
+      });
+      continue; // Skip invalid NIKs
+    }
     // Close the first page if there are more than 3 pages open
     if ((await browser.pages()).length > 3) {
       const pages = await browser.pages();
