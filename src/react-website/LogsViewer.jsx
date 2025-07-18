@@ -151,7 +151,7 @@ function LogAccordionItem({ log, idx }) {
             </tr>
             <tr>
               <th>Umur</th>
-              <td>{log.data?.age || ''} Tahun</td>
+              <td>{log.data?.age !== undefined && log.data?.age !== null ? `${log.data.age} Tahun` : ''}</td>
             </tr>
             <tr>
               <th>Pekerjaan</th>
