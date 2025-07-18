@@ -18,10 +18,13 @@ export default function Header() {
 
   return (
     <Navbar
-      style={{ backgroundColor: theme === 'dark' ? '#23272f' : '#f8f9fa' }}
+      className={
+        `mb-4 border-bottom bg-body-tertiary text-body` +
+        (theme === 'dark' ? ' border-dark' : ' border-light')
+      }
       variant={theme === 'dark' ? 'dark' : 'light'}
       expand="lg"
-      className="mb-4 border-bottom">
+    >
       <Container>
         <Navbar.Brand href="/browser-automation">{siteInfo.title}</Navbar.Brand>
         <Nav className="ms-auto align-items-center">

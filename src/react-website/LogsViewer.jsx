@@ -239,12 +239,12 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   }
 
   return (
-    <div className={`container mx-auto py-4 ${styles.container}`} data-bs-theme={theme}>
+    <div className={`container mx-auto py-4 bg-body-tertiary ${styles.container}`} data-bs-theme={theme}>
       <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
         <i className="fa fa-arrow-left me-2" /> Back
       </button>
       {/* Theme toggle UI omitted for brevity */}
-      <h1 className="my-4">{pageTitle}</h1>
+      <h1 className="my-4 text-body">{pageTitle}</h1>
       <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
         <Badge bg="success" style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
           Success: {successCount}

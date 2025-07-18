@@ -10,8 +10,10 @@ export default function Footer() {
   const { theme } = useTheme();
   return (
     <footer
-      style={{ backgroundColor: theme === 'dark' ? '#23272f' : '#f8f9fa' }}
-      className={`p-3 mt-4 border-top ${theme === 'dark' ? 'text-light' : 'text-dark'}`}
+      className={
+        `p-3 mt-4 border-top bg-body-tertiary text-body` +
+        (theme === 'dark' ? ' border-dark' : ' border-light')
+      }
     >
       <Container>
         <div className="d-flex justify-content-between align-items-center">

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 /**
  * ThemeContext provides global theme state and setter.
@@ -26,6 +26,11 @@ export function ThemeProvider({ children }) {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
   };
+
+  // Set data-bs-theme on body when theme changes
+  useEffect(() => {
+    document.body.setAttribute('data-bs-theme', theme);
+  }, [theme]);
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }

@@ -83,10 +83,10 @@ export default function NikParserWeb() {
     }
   }, [result]);
   return (
-    <Container className="mt-5" data-bs-theme={theme}>
+    <Container className="mt-5" data-bs-theme={theme} >
       <Row className="justify-content-center">
         <Col xs={12}>
-          <Card>
+          <Card className='bg-body-tertiary text-body' style={{ borderRadius: '0.5rem' }}>
             <Card.Body>
               <Button variant="outline-secondary" className="mb-3" onClick={() => navigate('/')}>
                 <i className="fa fa-arrow-left me-2" /> Back
