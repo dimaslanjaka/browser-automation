@@ -18,6 +18,52 @@
   )
 );
 
+// Copy button styles from Bootstrap
+.btn-copy {
+  @extend .btn;
+  @extend .btn-sm;
+  @extend .gap-2;
+
+  display: inline-flex;
+  vertical-align: middle;
+
+  color: #5f27cd;
+  background-color: transparent !important;
+  border: 1.5px solid #5f27cd;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+  box-shadow: none;
+  &:hover, &:focus {
+    background-color: #5f27cd !important;
+    color: #fff !important;
+    border-color: #5f27cd;
+    box-shadow: none;
+  }
+  &:active {
+    background-color: #4326a3 !important;
+    color: #fff !important;
+    border-color: #4326a3;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-copy {
+    color: #b6aaff;
+    background-color: transparent !important;
+    border: 1.5px solid #b6aaff;
+    &:hover, &:focus {
+      background-color: #b6aaff !important;
+      color: #222f3e !important;
+      border-color: #b6aaff;
+    }
+    &:active {
+      background-color: #6c63b5 !important;
+      color: #fff !important;
+      border-color: #6c63b5;
+    }
+  }
+}
+
 // Highlight.js theme for light mode
 /*!
   Theme: GitHub

@@ -1,3 +1,7 @@
+.nikRow :global(.btn-copy) {
+  margin-left: 0.5em;
+}
+
 .paginationScroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -31,7 +35,7 @@
   max-height: 2em !important;
 }
 
-.accordionHeader[aria-expanded="true"] {
+.accordionHeader[aria-expanded='true'] {
   font-size: 0.9em !important;
   padding: 0.15em 0.7em !important;
   max-height: 2em !important;
@@ -55,7 +59,7 @@
 
 @media (max-width: 600px) {
   .accordionHeader,
-  .accordionHeader[aria-expanded="true"],
+  .accordionHeader[aria-expanded='true'],
   .accordionButton,
   :global(.accordion-button),
   :global(.accordion-button:not(.collapsed)) {
@@ -100,14 +104,17 @@
   border-radius: 0.7em;
   overflow: hidden;
 }
+.table :global(.btn-copy) {
+  margin-left: 0.5em !important;
+}
 
-[data-bs-theme="dark"] .textSuccess {
+[data-bs-theme='dark'] .textSuccess {
   color: #4efc6e !important;
 }
-[data-bs-theme="dark"] .textInvalid {
+[data-bs-theme='dark'] .textInvalid {
   color: #ffb84d !important;
 }
-[data-bs-theme="dark"] .textError {
+[data-bs-theme='dark'] .textError {
   color: #ff5c5c !important;
 }
 
@@ -132,12 +139,14 @@
   border-radius: 50% !important;
   background: #fff;
   border: 1.5px solid #bbb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #333;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
   padding: 0 !important;
   overflow: hidden;
@@ -145,7 +154,7 @@
 
 .collapseAllBtn:hover {
   background: #f3f3f3;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   color: #222;
 }
 

@@ -27,14 +27,13 @@ function LogAccordionItem({ log, idx }) {
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
         {/* NIK with copy button */}
-        <div className="d-flex align-items-center mb-2">
+        <div className={`d-flex align-items-center mb-2 ${styles.nikRow}`}>
           <span className="fw-bold me-2">NIK:</span>
-          <span className="me-2">{log.data?.nik || ''}</span>
+          <span>{log.data?.nik || ''}</span>
           {log.data?.nik && (
             <button
-              className="btn btn-sm btn-outline-secondary"
+              className="btn btn-sm btn-copy"
               title="Copy NIK"
-              style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
               onClick={() => {
                 copyToClipboard(log.data.nik);
               }}>
@@ -52,11 +51,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tanggal || ''}
                 {log.data?.tanggal && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy Tanggal"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.tanggal)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy Tanggal"
+                      onClick={() => copyToClipboard(log.data.tanggal)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -67,11 +65,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {ucwords(log.data?.nama || '')}
                 {log.data?.nama && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy Nama"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.nama)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy Nama"
+                      onClick={() => copyToClipboard(log.data.nama)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -82,11 +79,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tgl_lahir || ''}
                 {log.data?.tgl_lahir && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy Tgl Lahir"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.tgl_lahir)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy Tgl Lahir"
+                      onClick={() => copyToClipboard(log.data.tgl_lahir)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -97,11 +93,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.alamat || ''}
                 {log.data?.alamat && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy Alamat"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.alamat)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy Alamat"
+                      onClick={() => copyToClipboard(log.data.alamat)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -112,11 +107,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.bb || ''}
                 {log.data?.bb && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy BB"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.bb)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy BB"
+                      onClick={() => copyToClipboard(log.data.bb)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -127,11 +121,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tb || ''}
                 {log.data?.tb && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy TB"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.tb)}>
+                    <button
+                      className="btn btn-sm btn-copy"
+                      title="Copy TB"
+                      onClick={() => copyToClipboard(log.data.tb)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -158,11 +151,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.pekerjaan || ''}
                 {log.data?.pekerjaan && (
-                  <button
-                    className="btn btn-sm btn-outline-secondary ms-2"
-                    title="Copy Pekerjaan"
-                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
-                    onClick={() => copyToClipboard(log.data.pekerjaan)}>
+                    <button
+                      className="btn-copy"
+                      title="Copy Pekerjaan"
+                      onClick={() => copyToClipboard(log.data.pekerjaan)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
