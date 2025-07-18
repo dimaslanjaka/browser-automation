@@ -34,7 +34,7 @@ app.get('/', async (req, res) => {
   if (req.query.pageTitle || req.query.pagetitle) {
     pageTitle = ucwords(req.query.pageTitle || req.query.pagetitle);
   }
-  let liveHtml = buildStaticHtml({ pageTitle });
+  let liveHtml = await buildStaticHtml({ pageTitle });
   if (req.query.minify) {
     // Use html-minifier-terser for proper HTML minification
     liveHtml = await minifyHtml(liveHtml, {
