@@ -3,6 +3,7 @@ import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 're
 import { useNavigate } from 'react-router-dom';
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.css';
+import { useTheme } from './components/ThemeContext.jsx';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
@@ -172,6 +173,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const batch = 20;
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   useEffect(() => {
     let mounted = true;
@@ -237,7 +239,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   }
 
   return (
-    <div className={`container mx-auto py-4 ${styles.container}`}>
+    <div className={`container mx-auto py-4 ${styles.container}`} data-bs-theme={theme}>
       <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
         <i className="fa fa-arrow-left me-2" /> Back
       </button>
