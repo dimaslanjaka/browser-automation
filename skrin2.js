@@ -184,7 +184,9 @@ async function processData(page, data) {
       .$eval('#pilih', (el) => !!el && el.offsetParent !== null)
       .catch(() => false);
     if (pilihStillVisible) {
-      throw new Error('Pilih button still visible after clicking, identity confirmation failed.');
+      await waitEnter(
+        'Pilih button still visible after clicking. Please resolve the identity confirmation manually, then press Enter to continue...'
+      );
     }
   }
 
