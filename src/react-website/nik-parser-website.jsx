@@ -1,4 +1,3 @@
-import 'highlight.js/styles/github.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -86,47 +85,50 @@ export default function NikParserWeb() {
   }, [result]);
   return (
     <>
-    <Header />
-    <Container className="mt-5" data-bs-theme={theme} >
-      <Row className="justify-content-center">
-        <Col xs={12}>
-          <Card className='bg-body-tertiary text-body' style={{ borderRadius: '0.5rem' }}>
-            <Card.Body>
-              <Button variant={`${theme === 'dark' ? 'outline-light' : 'outline-dark'}`} className="mb-3" onClick={() => navigate('/')}>
-                <i className="fa fa-arrow-left me-2" /> Back
-              </Button>
-              <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
-              <Card.Title className="text-center">NIK Parser React App</Card.Title>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3" controlId="formNik">
-                  <Form.Label>Input NIK</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={nik}
-                    onChange={(e) => setNik(e.target.value)}
-                    placeholder="Enter NIK"
-                  />
-                </Form.Group>
-                <Button variant="primary" type="submit" disabled={loading}>
-                  {loading ? 'Parsing...' : 'Parse'}
+      <Header />
+      <Container className="mt-5" data-bs-theme={theme}>
+        <Row className="justify-content-center">
+          <Col xs={12}>
+            <Card className="bg-body-tertiary text-body" style={{ borderRadius: '0.5rem' }}>
+              <Card.Body>
+                <Button
+                  variant={`${theme === 'dark' ? 'outline-light' : 'outline-dark'}`}
+                  className="mb-3"
+                  onClick={() => navigate('/')}>
+                  <i className="fa fa-arrow-left me-2" /> Back
                 </Button>
-              </Form>
-              {result && (
-                <Card className="mt-3">
-                  <Card.Body>
-                    <Card.Title>Result</Card.Title>
-                    <pre ref={resultRef} className="hljs language-json">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                  </Card.Body>
-                </Card>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
-    <Footer />
+                <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
+                <Card.Title className="text-center">NIK Parser React App</Card.Title>
+                <Form onSubmit={handleSubmit}>
+                  <Form.Group className="mb-3" controlId="formNik">
+                    <Form.Label>Input NIK</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={nik}
+                      onChange={(e) => setNik(e.target.value)}
+                      placeholder="Enter NIK"
+                    />
+                  </Form.Group>
+                  <Button variant="primary" type="submit" disabled={loading}>
+                    {loading ? 'Parsing...' : 'Parse'}
+                  </Button>
+                </Form>
+                {result && (
+                  <Card className="mt-3">
+                    <Card.Body>
+                      <Card.Title>Result</Card.Title>
+                      <pre ref={resultRef} className="hljs language-json">
+                        {JSON.stringify(result, null, 2)}
+                      </pre>
+                    </Card.Body>
+                  </Card>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+      <Footer />
     </>
   );
 }
