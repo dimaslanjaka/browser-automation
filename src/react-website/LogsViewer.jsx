@@ -22,7 +22,22 @@ function LogAccordionItem({ log, idx }) {
     <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
       <Accordion.Header className={styles.accordionHeader}>
         <span className="d-block w-100">
-          <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> - {ucwords(log.data?.nama || '')}
+          <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> - {
+            // On mobile, trim nama to fit smaller screens
+            (() => {
+              const nama = ucwords(log.data?.nama || '');
+              if (typeof window !== 'undefined') {
+                if (window.innerWidth <= 350 && nama.length > 12) {
+                  return nama.slice(0, 12).trim() + '…';
+                } else if (window.innerWidth <= 400 && nama.length > 15) {
+                  return nama.slice(0, 15).trim() + '…';
+                } else if (window.innerWidth <= 600 && nama.length > 19) {
+                  return nama.slice(0, 19).trim() + '…';
+                }
+              }
+              return nama;
+            })()
+          }
         </span>
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
