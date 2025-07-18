@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import copyToClipboard from '../utils/copyToClipboard.js';
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.scss';
-import { useTheme } from './components/ThemeContext.jsx';
-import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
-import copyToClipboard from '../utils/copyToClipboard.js';
+import Header from './components/Header.jsx';
+import { useTheme } from './components/ThemeContext.jsx';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
@@ -37,8 +37,7 @@ function LogAccordionItem({ log, idx }) {
               style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
               onClick={() => {
                 copyToClipboard(log.data.nik);
-              }}
-            >
+              }}>
               <i className="fa fa-copy" aria-hidden="true"></i>
             </button>
           )}
@@ -49,28 +48,94 @@ function LogAccordionItem({ log, idx }) {
         <Table bordered striped className={`mb-3 ${styles.table}`}>
           <tbody>
             <tr>
-              <th>Tanggal</th>
-              <td>{log.data?.tanggal || ''}</td>
+              <th>Tanggal Input</th>
+              <td>
+                {log.data?.tanggal || ''}
+                {log.data?.tanggal && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy Tanggal"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.tanggal)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
               <th>Nama</th>
-              <td>{ucwords(log.data?.nama || '')}</td>
+              <td>
+                {ucwords(log.data?.nama || '')}
+                {log.data?.nama && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy Nama"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.nama)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
-              <th>Tgl Lahir</th>
-              <td>{log.data?.tgl_lahir || ''}</td>
+              <th>Tanggal Lahir</th>
+              <td>
+                {log.data?.tgl_lahir || ''}
+                {log.data?.tgl_lahir && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy Tgl Lahir"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.tgl_lahir)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
               <th>Alamat</th>
-              <td>{log.data?.alamat || ''}</td>
+              <td>
+                {log.data?.alamat || ''}
+                {log.data?.alamat && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy Alamat"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.alamat)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
               <th>BB</th>
-              <td>{log.data?.bb || ''}</td>
+              <td>
+                {log.data?.bb || ''}
+                {log.data?.bb && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy BB"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.bb)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
               <th>TB</th>
-              <td>{log.data?.tb || ''}</td>
+              <td>
+                {log.data?.tb || ''}
+                {log.data?.tb && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy TB"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.tb)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
             <tr>
               <th>Petugas</th>
@@ -85,12 +150,23 @@ function LogAccordionItem({ log, idx }) {
               <td>{log.data?.gender || ''}</td>
             </tr>
             <tr>
-              <th>Age</th>
-              <td>{log.data?.age || ''}</td>
+              <th>Umur</th>
+              <td>{log.data?.age || ''} Tahun</td>
             </tr>
             <tr>
               <th>Pekerjaan</th>
-              <td>{log.data?.pekerjaan || ''}</td>
+              <td>
+                {log.data?.pekerjaan || ''}
+                {log.data?.pekerjaan && (
+                  <button
+                    className="btn btn-sm btn-outline-secondary ms-2"
+                    title="Copy Pekerjaan"
+                    style={{ padding: '2px 6px', fontSize: '1rem', lineHeight: 1 }}
+                    onClick={() => copyToClipboard(log.data.pekerjaan)}>
+                    <i className="fa fa-copy" aria-hidden="true"></i>
+                  </button>
+                )}
+              </td>
             </tr>
           </tbody>
         </Table>
@@ -115,7 +191,7 @@ function LogAccordionItem({ log, idx }) {
                     </tr>
                     <tr>
                       <th>Kelamin</th>
-                      <td>{log.data.parsed_nik.data.kelamin || ''}</td>
+                      <td>{(log.data.parsed_nik.data.kelamin || '') === 'P' ? 'Perempuan' : 'Laki-laki'}</td>
                     </tr>
                     <tr>
                       <th>Lahir</th>
