@@ -320,10 +320,11 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             ))}
           </Accordion>
           {/* Pagination */}
-          <div className="my-3 d-flex justify-content-center">
-            <Pagination>
+          <div className={`my-3 d-flex justify-content-center ${styles.paginationScroll}`}>
+            <Pagination size="sm">
               <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
-                Previous
+                <i className="fa fa-angle-left" aria-hidden="true"></i>
+                <span className="visually-hidden">Previous</span>
               </Pagination.Prev>
               {/* Compact pagination: show first, last, current, +/-2, and ellipsis */}
               {(() => {
@@ -359,7 +360,8 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               <Pagination.Next
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
-                Next
+                <i className="fa fa-angle-right" aria-hidden="true"></i>
+                <span className="visually-hidden">Next</span>
               </Pagination.Next>
             </Pagination>
           </div>
