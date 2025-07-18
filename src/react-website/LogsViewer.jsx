@@ -368,7 +368,14 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
       result = result.filter((log) => log.data?.status === filters.status);
     }
     if (filters.gender) {
-      result = result.filter((log) => log.data?.gender === filters.gender);
+      result = result.filter((log) => {
+        // Check gender in main data (should be 'L' or 'P')
+        const genderMain = (log.data?.gender || '').toUpperCase();
+        // Check gender in parsed_nik (kelamin, should be 'L' or 'P')
+        const genderParsed = (log.data?.parsed_nik?.data?.kelamin || '').toUpperCase();
+        const filterGender = filters.gender.toUpperCase();
+        return genderMain === filterGender || genderParsed === filterGender;
+      });
     }
     if (filters.provinsi) {
       result = result.filter((log) => log.data?.parsed_nik?.data?.provinsi === filters.provinsi);
