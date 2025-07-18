@@ -107,6 +107,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^7.0.4",
+    "vite-plugin-mkcert": "^1.17.8",
     "why-is-node-running": "^3.2.2"
   },
   "workspaces": [

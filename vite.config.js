@@ -1,6 +1,7 @@
 import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import mkcert from 'vite-plugin-mkcert';
 import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
 import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
@@ -20,6 +21,7 @@ import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automati
  */
 export default defineConfig({
   plugins: [
+    mkcert(),
     RedirectBrowserAutomationPlugin(),
     dbLogHtmlStatic(),
     HtmlListPlugin(),
