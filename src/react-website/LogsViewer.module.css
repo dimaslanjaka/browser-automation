@@ -48,24 +48,19 @@
 }
 
 @media (max-width: 600px) {
-  body {
-    margin: 0 !important;
+  .container {
+    padding: 0.5em;
+    border-radius: 0.5em;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
   }
 }
 
-h1 {
+#logs-viewer h1 {
   font-family: 'Inter', Arial, sans-serif;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-align: center;
   margin-bottom: 1.5em;
-}
-
-.badge {
-  font-size: 1.1em;
-  padding: 0.6em 1.2em;
-  border-radius: 0.7em;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
 
 .accordionItem {

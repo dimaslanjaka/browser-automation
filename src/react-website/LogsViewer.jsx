@@ -239,59 +239,70 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   }
 
   return (
-    <div id='logs-viewer' className={`container mx-auto py-4 bg-body-tertiary ${styles.container}`} data-bs-theme={theme}>
-      <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
-        <i className="fa fa-arrow-left me-2" /> Back
-      </button>
-      {/* Theme toggle UI omitted for brevity */}
-      <h1 className="my-4 text-body">{pageTitle}</h1>
-      <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
-        <Badge bg="success" style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
-          Success: {successCount}
-        </Badge>
-        <Badge bg="danger" style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
-          Not Success: {failCount}
-        </Badge>
-      </div>
-      <InputGroup className="mb-3" id="log-search-group">
-        <InputGroup.Text>
-          <i className="fa-solid fa-magnifying-glass"></i>
-        </InputGroup.Text>
-        <FormControl
-          type="text"
-          placeholder="Search logs..."
-          autoComplete="off"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </InputGroup>
-      <Accordion alwaysOpen style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-        {paginatedLogs.map((log, idx) => (
-          <LogAccordionItem log={log} idx={idx + 1 + (currentPage - 1) * batch} key={idx} />
-        ))}
-      </Accordion>
-      {/* Pagination */}
-      <div className="my-3 d-flex justify-content-center">
-        <Pagination>
-          <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
-            Previous
-          </Pagination.Prev>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Pagination.Item active={page === currentPage} key={page} onClick={() => setCurrentPage(page)}>
-              {page}
-            </Pagination.Item>
-          ))}
-          <Pagination.Next
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
-            Next
-          </Pagination.Next>
-        </Pagination>
-      </div>
-      {/* Loading spinner example (not used) */}
-      {/* <div className="text-center my-3">
+    <>
+      <div className="m-0 m-md-5">
+        <div
+          id="logs-viewer"
+          className={`container mx-auto py-4 bg-body-tertiary ${styles.container}`}
+          data-bs-theme={theme}>
+          <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
+            <i className="fa fa-arrow-left me-2" /> Back
+          </button>
+          {/* Theme toggle UI omitted for brevity */}
+          <h1 className="my-4 text-body">{pageTitle}</h1>
+          <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
+            <Badge
+              bg="success"
+              style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
+              Success: {successCount}
+            </Badge>
+            <Badge
+              bg="danger"
+              style={{ fontSize: '0.95em', padding: '0.35em 0.8em', minWidth: 120, textAlign: 'center' }}>
+              Not Success: {failCount}
+            </Badge>
+          </div>
+          <InputGroup className="mb-3" id="log-search-group">
+            <InputGroup.Text>
+              <i className="fa-solid fa-magnifying-glass"></i>
+            </InputGroup.Text>
+            <FormControl
+              type="text"
+              placeholder="Search logs..."
+              autoComplete="off"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
+          <Accordion alwaysOpen style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {paginatedLogs.map((log, idx) => (
+              <LogAccordionItem log={log} idx={idx + 1 + (currentPage - 1) * batch} key={idx} />
+            ))}
+          </Accordion>
+          {/* Pagination */}
+          <div className="my-3 d-flex justify-content-center">
+            <Pagination>
+              <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
+                Previous
+              </Pagination.Prev>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Pagination.Item active={page === currentPage} key={page} onClick={() => setCurrentPage(page)}>
+                  {page}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
+                Next
+              </Pagination.Next>
+            </Pagination>
+          </div>
+          {/* Loading spinner example (not used) */}
+          {/* <div className="text-center my-3">
           <Spinner animation="border" variant="primary" /> Loading more logs...
         </div> */}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
