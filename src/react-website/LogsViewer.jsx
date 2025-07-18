@@ -577,7 +577,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                 <div className="col-12 col-sm-6">
                   <button
                     type="button"
-                    className="btn btn-sm btn-outline-secondary w-100"
+                    className="btn btn-sm btn-outline-danger w-100"
                     title="Clear Filters"
                     onClick={() => setFilters({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' })}>
                     <i className="fa fa-times" /> Clear Filters
