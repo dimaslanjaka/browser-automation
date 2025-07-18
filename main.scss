@@ -1,0 +1,12 @@
+@use 'bootstrap/scss/bootstrap' with (
+  $theme-colors: (
+    'primary': #ff6f61,      // coral
+    'secondary': #5f27cd,   // purple
+    'success': #43a047,     // deep green
+    'info': #00b8d4,        // bright cyan
+    'warning': #ffb300,     // vivid amber
+    'danger': #e53935,      // strong red
+    'light': #f5f6fa,       // off white
+    'dark': #222f3e         // navy dark
+  )
+);
