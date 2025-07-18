@@ -312,7 +312,11 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   }, []);
 
   const successCount = useMemo(() => logs.filter((log) => log.data && log.data.status === 'success').length, [logs]);
-  const failCount = useMemo(() => logs.filter((log) => log.data && log.data.status !== 'success').length, [logs]);
+  const failCount = useMemo(
+    () => logs.filter((log) => log.data && (log.data.status === 'failed' || log.data.status === 'error')).length,
+    [logs]
+  );
+  const invalidCount = useMemo(() => logs.filter((log) => log.data && log.data.status === 'invalid').length, [logs]);
 
   // Collect unique values for provinsi, kotakab, kecamatan for filter dropdowns
   const provinsiOptions = useMemo(() => {
@@ -444,7 +448,13 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               bg="danger"
               className="px-3 py-1 fw-normal text-center"
               style={{ fontSize: '0.95em', minWidth: 120 }}>
-              Not Success: {failCount}
+              Invalid: {invalidCount}
+            </Badge>
+            <Badge
+              bg="secondary"
+              className="px-3 py-1 fw-normal text-center"
+              style={{ fontSize: '0.95em', minWidth: 120 }}>
+              Error: {failCount}
             </Badge>
           </div>
           {/* Filter UI - collapsible */}
