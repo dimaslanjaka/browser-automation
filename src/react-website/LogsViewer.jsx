@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { ucwords } from '../utils/string.js';
-import styles from './LogsViewer.module.css';
+import styles from './LogsViewer.module.scss';
 import { useTheme } from './components/ThemeContext.jsx';
 
 function LogAccordionItem({ log, idx }) {

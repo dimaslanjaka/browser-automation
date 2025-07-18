@@ -12,15 +12,6 @@
   margin-top: 1em;
 }
 
-.accordionButton {
-  font-size: 0.85em;
-  padding-top: 0.15em;
-  padding-bottom: 0.15em;
-  padding-left: 0.7em;
-  padding-right: 0.7em;
-  min-height: 2em;
-}
-
 .accordionHeader {
   font-size: 0.9em !important;
   padding: 0.15em 0.7em !important;
@@ -33,12 +24,30 @@
   max-height: 2em !important;
 }
 
+.accordionButton {
+  font-size: 0.85em;
+  padding-top: 0.15em;
+  padding-bottom: 0.15em;
+  padding-left: 0.7em;
+  padding-right: 0.7em;
+  max-height: 2em;
+}
+
 :global(.accordion-button),
 :global(.accordion-button:not(.collapsed)) {
   font-size: 0.9em !important;
   padding: 0.15em 0.7em !important;
-  min-height: 2em !important;
   max-height: 2em !important;
+}
+
+@media (max-width: 600px) {
+  .accordionHeader,
+  .accordionHeader[aria-expanded="true"],
+  .accordionButton,
+  :global(.accordion-button),
+  :global(.accordion-button:not(.collapsed)) {
+    max-height: 2.5em !important;
+  }
 }
 
 .container {
