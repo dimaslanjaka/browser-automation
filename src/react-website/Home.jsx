@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import htmlFiles from '../../tmp/html-files.json' with { type: 'json' };
 import AdSense from './components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
@@ -11,6 +10,14 @@ const _react = typeof React;
 export default function Home() {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const [htmlFiles, setHtmlFiles] = React.useState([]);
+
+  React.useEffect(() => {
+    fetch('/browser-automation/assets/data/html-files.json')
+      .then((res) => res.json())
+      .then((data) => setHtmlFiles(data))
+      .catch(() => setHtmlFiles([]));
+  }, []);
 
   return (
     <>

@@ -3,8 +3,7 @@ import path from 'path';
 
 function writeHtmlList() {
   const publicDir = path.join(process.cwd(), 'public');
-  const tmpDir = path.join(process.cwd(), 'tmp');
-  const outputFile = path.join(tmpDir, 'html-files.json');
+  const outputFile = path.join(publicDir, '/assets/data/html-files.json');
   const files = fs.readdirSync(publicDir);
   const htmlFiles = files.filter((f) => f.endsWith('.html') && f !== '404.html');
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
