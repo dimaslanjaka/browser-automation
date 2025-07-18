@@ -425,7 +425,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             <i className="fa fa-arrow-left me-2" /> Back
           </button>
           {/* Theme toggle UI omitted for brevity */}
-          <h1 className="my-4 text-body">{pageTitle}</h1>
+          <h1 className="my-4 text-body text-center">{pageTitle}</h1>
           <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
             <Badge
               bg="success"
