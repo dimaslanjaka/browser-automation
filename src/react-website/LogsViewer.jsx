@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.scss';
 import { useTheme } from './components/ThemeContext.jsx';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer.jsx';
 
 function LogAccordionItem({ log, idx }) {
   const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
@@ -24,9 +26,7 @@ function LogAccordionItem({ log, idx }) {
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
         <div className={`${styles.logTimestamp} mb-2`}>Timestamp: {log.timestamp || ''}</div>
-        <div className={`${styles.logMessage} mb-2 ${indicatorCLass}`}>
-          {log.message || log.data?.message || ''}
-        </div>
+        <div className={`${styles.logMessage} mb-2 ${indicatorCLass}`}>{log.message || log.data?.message || ''}</div>
         <span className={styles.sectionTitle}>Basic Data</span>
         <Table bordered striped className={`mb-3 ${styles.table}`}>
           <tbody>
@@ -128,7 +128,7 @@ function LogAccordionItem({ log, idx }) {
                       <td>
                         {Array.isArray(log.data.parsed_nik.data.kelurahan) ? (
                           <ul className="list-group list-group-flush">
-                            {log.data.parsed_nik.data.kelurahan.map((kel, i) => (
+                            {log.data.parsed_nik.data.kelurahan.map((kel, i) =>
                               kel && typeof kel === 'object' && kel.name ? (
                                 <li className="list-group-item" key={i}>
                                   {kel.name}{' '}
@@ -137,7 +137,7 @@ function LogAccordionItem({ log, idx }) {
                                   </span>
                                 </li>
                               ) : null
-                            ))}
+                            )}
                           </ul>
                         ) : (
                           ''
@@ -223,7 +223,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   // Collect unique values for provinsi, kotakab, kecamatan for filter dropdowns
   const provinsiOptions = useMemo(() => {
     const set = new Set();
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const val = log.data?.parsed_nik?.data?.provinsi;
       if (val) set.add(val);
     });
@@ -232,7 +232,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   const kotakabOptions = useMemo(() => {
     const set = new Set();
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const val = log.data?.parsed_nik?.data?.kotakab;
       if (val) set.add(val);
     });
@@ -241,7 +241,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   const kecamatanOptions = useMemo(() => {
     const set = new Set();
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const val = log.data?.parsed_nik?.data?.namaKec;
       if (val) set.add(val);
     });
@@ -292,7 +292,16 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * batch, currentPage * batch);
   // Debug: log the state of logs and pagination
   useEffect(() => {
-    console.log('filteredLogs.length:', filteredLogs.length, 'totalPages:', totalPages, 'currentPage:', currentPage, 'paginatedLogs.length:', paginatedLogs.length);
+    console.log(
+      'filteredLogs.length:',
+      filteredLogs.length,
+      'totalPages:',
+      totalPages,
+      'currentPage:',
+      currentPage,
+      'paginatedLogs.length:',
+      paginatedLogs.length
+    );
     if (currentPage > 1 && paginatedLogs.length === 0) {
       setCurrentPage(1);
     }
@@ -312,6 +321,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
 
   return (
     <>
+      <Header />
       <div className="m-0 m-md-5">
         <div
           id="logs-viewer"
@@ -343,21 +353,24 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               className={`btn btn-sm ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-2`}
               style={{ width: '100%' }}
               aria-expanded={filterOpen}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
+              onClick={() => setFilterOpen((v) => !v)}>
               <i className={`fa ${filterOpen ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i> Filter Options
             </button>
             {filterOpen && (
               <div className="row g-2">
                 <div className="col-12 col-sm-6">
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
-                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-status" style={{ whiteSpace: 'nowrap' }}>Status:</label>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-status"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Status:
+                    </label>
                     <select
                       id="filter-status"
                       className="form-select form-select-sm"
                       value={filters.status}
-                      onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-                    >
+                      onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
                       <option value="">All</option>
                       <option value="success">Success</option>
                       <option value="invalid">Invalid</option>
@@ -367,13 +380,17 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                 </div>
                 <div className="col-12 col-sm-6">
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
-                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-gender" style={{ whiteSpace: 'nowrap' }}>Gender:</label>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-gender"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Gender:
+                    </label>
                     <select
                       id="filter-gender"
                       className="form-select form-select-sm"
                       value={filters.gender}
-                      onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))}
-                    >
+                      onChange={(e) => setFilters((f) => ({ ...f, gender: e.target.value }))}>
                       <option value="">All</option>
                       <option value="L">L</option>
                       <option value="P">P</option>
@@ -382,48 +399,66 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                 </div>
                 <div className="col-12 col-sm-6">
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
-                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-provinsi" style={{ whiteSpace: 'nowrap' }}>Provinsi:</label>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-provinsi"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Provinsi:
+                    </label>
                     <select
                       id="filter-provinsi"
                       className="form-select form-select-sm"
                       value={filters.provinsi}
-                      onChange={e => setFilters(f => ({ ...f, provinsi: e.target.value }))}
-                    >
+                      onChange={(e) => setFilters((f) => ({ ...f, provinsi: e.target.value }))}>
                       <option value="">All</option>
                       {provinsiOptions.map((prov, i) => (
-                        <option value={prov} key={i}>{prov}</option>
+                        <option value={prov} key={i}>
+                          {prov}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div className="col-12 col-sm-6">
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
-                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-kotakab" style={{ whiteSpace: 'nowrap' }}>Kota/Kab:</label>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-kotakab"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Kota/Kab:
+                    </label>
                     <select
                       id="filter-kotakab"
                       className="form-select form-select-sm"
                       value={filters.kotakab}
-                      onChange={e => setFilters(f => ({ ...f, kotakab: e.target.value }))}
-                    >
+                      onChange={(e) => setFilters((f) => ({ ...f, kotakab: e.target.value }))}>
                       <option value="">All</option>
                       {kotakabOptions.map((kab, i) => (
-                        <option value={kab} key={i}>{kab}</option>
+                        <option value={kab} key={i}>
+                          {kab}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div className="col-12 col-sm-6">
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
-                    <label className="form-label mb-0 text-end pe-2" htmlFor="filter-kecamatan" style={{ whiteSpace: 'nowrap' }}>Kecamatan:</label>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-kecamatan"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Kecamatan:
+                    </label>
                     <select
                       id="filter-kecamatan"
                       className="form-select form-select-sm"
                       value={filters.kecamatan}
-                      onChange={e => setFilters(f => ({ ...f, kecamatan: e.target.value }))}
-                    >
+                      onChange={(e) => setFilters((f) => ({ ...f, kecamatan: e.target.value }))}>
                       <option value="">All</option>
                       {kecamatanOptions.map((kec, i) => (
-                        <option value={kec} key={i}>{kec}</option>
+                        <option value={kec} key={i}>
+                          {kec}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -433,8 +468,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                     type="button"
                     className="btn btn-sm btn-outline-secondary w-100"
                     title="Clear Filters"
-                    onClick={() => setFilters({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' })}
-                  >
+                    onClick={() => setFilters({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' })}>
                     <i className="fa fa-times" /> Clear Filters
                   </button>
                 </div>
@@ -458,8 +492,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               type="button"
               className={styles.collapseAllBtn + ' ms-2'}
               title="Collapse All"
-              onClick={() => setActiveKeys([])}
-            >
+              onClick={() => setActiveKeys([])}>
               <i className="fa-solid fa-compress" /> <span className="sr-only">Collapse All</span>
             </button>
           </InputGroup>
@@ -479,8 +512,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                   return [...arr, key];
                 }
               });
-            }}
-          >
+            }}>
             {paginatedLogs.map((log, idx) => (
               <LogAccordionItem log={log} idx={String(idx + 1 + (currentPage - 1) * batch)} key={idx} />
             ))}
@@ -505,11 +537,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                     (page >= currentPage - pageWindow && page <= currentPage + pageWindow)
                   ) {
                     pages.push(
-                      <Pagination.Item
-                        active={page === currentPage}
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                      >
+                      <Pagination.Item active={page === currentPage} key={page} onClick={() => setCurrentPage(page)}>
                         {page}
                       </Pagination.Item>
                     );
@@ -537,6 +565,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
         </div> */}
         </div>
       </div>
+      <Footer />
     </>
   );
 }

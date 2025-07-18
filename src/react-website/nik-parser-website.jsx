@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { decryptJson } from '../utils/json-crypto';
 import AdSense from './components/Adsense';
 import { useTheme } from './components/ThemeContext';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 /**
  * @type {import('highlight.js').HLJSApi | undefined}
@@ -83,6 +85,8 @@ export default function NikParserWeb() {
     }
   }, [result]);
   return (
+    <>
+    <Header />
     <Container className="mt-5" data-bs-theme={theme} >
       <Row className="justify-content-center">
         <Col xs={12}>
@@ -122,5 +126,7 @@ export default function NikParserWeb() {
         </Col>
       </Row>
     </Container>
+    <Footer />
+    </>
   );
 }
