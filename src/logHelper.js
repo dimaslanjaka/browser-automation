@@ -2,7 +2,11 @@ import Database from 'better-sqlite3';
 import moment from 'moment-timezone';
 import path from 'path';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 export const dbPath = path.resolve('.cache/logs.db');
 const db = new Database(dbPath);
 
@@ -77,4 +81,8 @@ export function getLogs(filterFn = () => true) {
     timestamp: row.timestamp
   }));
   return logsArr.filter(filterFn);
+}
+
+if (process.argv[1] === __filename) {
+  // removeLog('3578109092021005');
 }
