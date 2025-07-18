@@ -286,25 +286,26 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     let mounted = true;
     setLoading(true);
     import('../utils/json-crypto.js').then(({ decryptJson }) => {
-      fetch('/browser-automation/assets/data/logs.json')
-        .then((res) => res.text())
-        .then((encryptedText) => {
-          let data = [];
-          const secret = import.meta.env.VITE_JSON_SECRET;
-          try {
-            data = decryptJson(encryptedText, secret);
-          } catch (err) {
-            console.error('Failed to decrypt logs:', err);
-            data = [];
-          }
-          if (mounted) setLogs(data);
-        })
-        .catch(() => {
-          if (mounted) setLogs([]);
-        })
-        .finally(() => {
-          if (mounted) setLoading(false);
-        });
+      import('axios').then(({ default: axios }) => {
+        axios.get('/browser-automation/assets/data/logs.json', { responseType: 'text' })
+          .then((res) => {
+            let data = [];
+            const secret = import.meta.env.VITE_JSON_SECRET;
+            try {
+              data = decryptJson(res.data, secret);
+            } catch (err) {
+              console.error('Failed to decrypt logs:', err);
+              data = [];
+            }
+            if (mounted) setLogs(data);
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error('Failed to fetch logs:', err);
+            if (mounted) setLogs([]);
+            setLoading(false);
+          });
+      });
     });
     return () => {
       mounted = false;

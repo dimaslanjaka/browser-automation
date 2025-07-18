@@ -58,9 +58,9 @@ export default function NikParserWeb() {
       await loadHighlightAndNikParser();
       let dataKunto = [];
       try {
-        const response = await fetch('/browser-automation/assets/data/dataKunto.json');
-        if (!response.ok) throw new Error('Failed to load dataKunto.json');
-        const encodedResponse = await response.text();
+        const axios = (await import('axios')).default;
+        const response = await axios.get('/browser-automation/assets/data/dataKunto.json', { responseType: 'text' });
+        const encodedResponse = response.data;
         const secret = import.meta.env.VITE_JSON_SECRET;
         dataKunto = decryptJson(encodedResponse, secret);
       } catch (error) {

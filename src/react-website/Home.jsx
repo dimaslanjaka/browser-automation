@@ -13,10 +13,11 @@ export default function Home() {
   const [htmlFiles, setHtmlFiles] = React.useState([]);
 
   React.useEffect(() => {
-    fetch('/browser-automation/assets/data/html-files.json')
-      .then((res) => res.json())
-      .then((data) => setHtmlFiles(data))
-      .catch(() => setHtmlFiles([]));
+    import('axios').then(({ default: axios }) => {
+      axios.get('/browser-automation/assets/data/html-files.json')
+        .then((res) => setHtmlFiles(res.data))
+        .catch(() => setHtmlFiles([]));
+    });
   }, []);
 
   return (
