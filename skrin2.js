@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import moment from 'moment';
-import nikParserSync from 'nik-parser-jurusid';
+import * as nikUtils from 'nik-parser-jurusid/index';
 import { loadCsvData } from './data/index.js';
 import { addLog, getLogById } from './src/logHelper.js';
 import {
@@ -578,8 +578,7 @@ const main = async () => {
 
   while (unprocessedData.length > 0) {
     const currentData = unprocessedData.shift();
-    const nikResult = nikParserSync(currentData.nik);
-    if (nikResult.status !== 'success') {
+    if (!nikUtils.isValidNIK(currentData.nik)) {
       logLine(`Skipping invalid NIK: ${currentData.nik}`);
       addLog({
         id: getNumbersOnly(currentData.nik),
