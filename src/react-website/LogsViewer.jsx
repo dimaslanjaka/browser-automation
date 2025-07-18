@@ -432,7 +432,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
           id="logs-viewer"
           className={`container mx-auto py-4 bg-body-tertiary ${styles.container}`}
           data-bs-theme={theme}>
-          <button type="button" className="btn btn-outline-secondary mb-3" onClick={() => navigate('/')}>
+          <button type="button" className={`btn ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-3`} onClick={() => navigate('/')}>
             <i className="fa fa-arrow-left me-2" /> Back
           </button>
           {/* Theme toggle UI omitted for brevity */}

@@ -92,7 +92,7 @@ export default function NikParserWeb() {
         <Col xs={12}>
           <Card className='bg-body-tertiary text-body' style={{ borderRadius: '0.5rem' }}>
             <Card.Body>
-              <Button variant="outline-secondary" className="mb-3" onClick={() => navigate('/')}>
+              <Button variant={`${theme === 'dark' ? 'outline-light' : 'outline-dark'}`} className="mb-3" onClick={() => navigate('/')}>
                 <i className="fa fa-arrow-left me-2" /> Back
               </Button>
               <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
