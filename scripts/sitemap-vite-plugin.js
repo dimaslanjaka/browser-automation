@@ -117,17 +117,12 @@ export default function SitemapVitePlugin(options = {}) {
             }
           }
         }
-        if (!isAsset || isSitemap) {
-          console.log(`Visited URL: ${req.url}`);
-          console.log(`Visited URL count : ${visitedUrls.size}`);
-        }
 
         if (isSitemap) {
           const absOutDir = path.resolve(process.cwd(), outDir);
           const fileUrls = getAllHtmlFiles(absOutDir, baseUrl, absOutDir, excludePatterns);
           // Combine and dedupe
           const urls = Array.from(new Set([...fileUrls, ...visitedUrls]));
-          console.log(`Combined URLs for sitemap:`, urls);
           if (req.url && req.url.endsWith('sitemap.txt')) {
             res.setHeader('Content-Type', 'text/plain');
             res.end(generateSitemapTxt(urls));
