@@ -55,7 +55,11 @@ function AfterBuildCopyPlugin() {
         options.push(option);
       });
       for (const option of options) {
-        const { dest, title, canonical, thumbnail = '', author = '', description = '', icon = '' } = option;
+        const { dest = undefined, title, canonical, thumbnail = '', author = '', description = '', icon = '' } = option;
+        if (typeof dest !== 'string' || !dest) {
+          logLine('Skipped option with invalid dest:', option);
+          continue;
+        }
         if (!fs.existsSync(path.dirname(dest))) {
           fs.mkdirSync(path.dirname(dest), { recursive: true });
         }
