@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as OriginalLink } from 'react-router-dom';
-import * as safelinkify from 'safelinkify';
+import * as safelinkify from 'safelinkify/dist/safelink-browser-module';
 
 export const safelinkInstance = new safelinkify.safelink({
   // exclude patterns (dont anonymize these patterns)
