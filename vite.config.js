@@ -6,6 +6,7 @@ import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
 import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
 import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automation-plugin.js';
+import SitemapVitePlugin from './scripts/sitemap-vite-plugin.js';
 
 /**
  * Vite configuration for browser-automation project.
@@ -32,6 +33,11 @@ export default defineConfig({
       additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
       modernPolyfills: true,
       renderLegacyChunks: true
+    }),
+    SitemapVitePlugin({
+      baseUrl: 'https://www.webmanajemen.com/browser-automation',
+      outDir: 'dist',
+      exclude: ['**/404.html']
     })
   ],
   root: '.',
