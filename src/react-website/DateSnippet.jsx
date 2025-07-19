@@ -4,6 +4,7 @@ import styles from './Date.module.scss';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import AdSense from './components/Adsense';
+import Link from './components/Link';
 
 class Snippet extends React.Component {
   componentDidMount() {
@@ -73,19 +74,19 @@ class Snippet extends React.Component {
                 </table>
                 <p>
                   Used by{' '}
-                  <a rel="nofollow noopener" href="http://momentjs.com/docs/#/displaying/">
+                  <Link rel="nofollow noopener" href="http://momentjs.com/docs/#/displaying/">
                     Moment.js
-                  </a>{' '}
+                  </Link>{' '}
                   and{' '}
-                  <a rel="nofollow noopener" href="https://date-fns.org/v1.28.5/docs/format">
+                  <Link rel="nofollow noopener" href="https://date-fns.org/v1.28.5/docs/format">
                     date-fns/format
-                  </a>
+                  </Link>
                   . Similar to Java{' '}
-                  <a
+                  <Link
                     rel="nofollow noopener"
                     href="https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html">
                     SimpleDateFormat
-                  </a>
+                  </Link>
                   .
                 </p>
               </div>
