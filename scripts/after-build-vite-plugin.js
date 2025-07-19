@@ -6,20 +6,24 @@ import * as cheerio from 'cheerio';
 const distDir = path.join(process.cwd(), 'dist');
 
 /**
+ * Vite plugin to copy and update HTML files after build, including SEO and meta tags.
+ *
  * @typedef {Object} HtmlOption
- * @property {string} dest - Destination path for the HTML file.
- * @property {string} title - Title for the HTML page.
- * @property {string} canonical - Canonical URL for SEO.
- * @property {string} [thumbnail] - Thumbnail image URL for meta tags.
- * @property {string} [author] - Author name for meta tags.
- * @property {string} [description] - Description for meta tags.
- * @property {string} [icon] - Icon image URL for favicon (optional).
+ * @property {string} dest Destination path for the HTML file.
+ * @property {string} title Title for the HTML page.
+ * @property {string} canonical Canonical URL for SEO.
+ * @property {string} [thumbnail] Thumbnail image URL for meta tags.
+ * @property {string} [author] Author name for meta tags.
+ * @property {string} [description] Description for meta tags.
+ * @property {string} [icon] Icon image URL for favicon (optional).
+ *
+ * @returns {import('vite').Plugin} Vite plugin object for after-build HTML processing.
  */
-
 function AfterBuildCopyPlugin() {
   let isBuild = false;
   return {
     name: 'after-build-copy-index',
+    apply: 'build',
     configResolved(config) {
       isBuild = config.command === 'build';
     },
