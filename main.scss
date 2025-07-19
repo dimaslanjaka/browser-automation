@@ -18,6 +18,72 @@
   )
 );
 
+// Codeblock styles
+pre {
+  position: relative;
+  padding: 1.33em;
+	border-radius: 0.33em;
+  white-space: pre-wrap; /* css-3 */
+  white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+  white-space: -pre-wrap; /* Opera 4-6 */
+  white-space: -o-pre-wrap; /* Opera 7 */
+  word-wrap: break-word; /* Internet Explorer 5.5+ */
+
+  /* copy button on pre tag */
+  .copy-code-button {
+    box-sizing: inherit;
+    border-radius: 0;
+    min-width: 55px;
+    background: none repeat scroll 0 0 transparent;
+    cursor: pointer;
+    border-style: none;
+    font-size: 0.8em;
+    font-weight: normal;
+    text-align: center;
+    text-decoration: none;
+    text-indent: 0;
+    text-transform: uppercase;
+    font-weight: 500;
+    line-height: 1.42rem;
+    margin: 0;
+    // padding: 10px 8px;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+
+    span {
+      color: #f1f2f3 !important;
+    }
+
+    &::before {
+      box-sizing: inherit;
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 3px;
+      background-color: white;
+      background-size: contain;
+      background-image: url('//static.thenounproject.com/png/4565777-200.png');
+      background-repeat: no-repeat;
+      position: relative;
+      top: 3px;
+    }
+
+    &::after {
+      box-sizing: inherit;
+    }
+
+    &:focus {
+      /* Avoid an ugly focus outline on click in Chrome,
+         but darken the button for accessibility.
+         See //stackoverflow.com/a/25298082/1481479 */
+      /* background-color: #E6E6E6; */
+      outline: 0;
+    }
+  }
+}
+
 // Copy button styles from Bootstrap
 .btn-copy {
   @extend .btn;
@@ -187,7 +253,7 @@
 .hljs-property,
 .hljs-punctuation,
 .hljs-tag {
-  /* purposely ignored */
+  text-decoration: none;
 }
 
 
@@ -316,7 +382,7 @@
   .hljs-property,
   .hljs-punctuation,
   .hljs-tag {
-    /* purposely ignored */
+    text-decoration: none;
   }
 }
 
