@@ -5,6 +5,7 @@ import AdSense from './components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import { useTheme } from './components/ThemeContext';
+import HomePosts from './HomePosts';
 const _react = typeof React;
 
 export default function Home() {
@@ -14,7 +15,8 @@ export default function Home() {
 
   React.useEffect(() => {
     import('axios').then(({ default: axios }) => {
-      axios.get('/browser-automation/assets/data/html-files.json')
+      axios
+        .get('/browser-automation/assets/data/html-files.json')
         .then((res) => setHtmlFiles(res.data))
         .catch(() => setHtmlFiles([]));
     });
@@ -52,25 +54,12 @@ export default function Home() {
               <li className="list-group-item">Log viewer and analyzer</li>
               <li className="list-group-item">Easy integration with browser automation scripts</li>
             </ul>
-            <div className="d-flex gap-3 flex-wrap mb-3">
-              <button
-                type="button"
-                className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}
-                onClick={() => navigate('/nik-parser')}
-              >
-                Go to NIK Parser
-              </button>
-              <button
-                type="button"
-                className={`btn ${theme === 'dark' ? 'btn-light' : 'btn-dark'}`}
-                onClick={() => navigate('/logs')}
-              >
-                Last runner logs
-              </button>
-            </div>
             <AdSense client="ca-pub-2188063137129806" slot="8481296455" />
           </Card.Body>
         </Card>
+
+        {/* Posts Grid Section */}
+        <HomePosts />
 
         {/* HTML Files Section */}
         <Card>
