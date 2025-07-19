@@ -97,7 +97,13 @@ export default function NikParserWeb() {
                   onClick={() => navigate('/')}>
                   <i className="fa fa-arrow-left me-2" /> Back
                 </Button>
-                <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
+                <AdSense
+                  client="ca-pub-1048456668116270"
+                  slot="8640099506"
+                  style={{ display: 'block', textAlign: 'center' }}
+                  layout="in-article"
+                  format="fluid"
+                />
                 <Card.Title className="text-center">NIK Parser React App</Card.Title>
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-3" controlId="formNik">
