@@ -58,6 +58,15 @@ const generateSitemapXml = (urls) =>
   urls.map((url) => `  <url>\n    <loc>${url}</loc>\n  </url>`).join('\n') +
   '\n</urlset>\n';
 
+// Helper to check if a URL is an asset (has a file extension, but not .html)
+function isAssetRequest(url) {
+  // Ignore query/hash
+  const cleanUrl = url.split(/[?#]/)[0];
+  if (/@(vite|react)/i.test(cleanUrl)) return true; // Ignore Vite/React internal requests
+  // Ignore .html (we want to collect those)
+  return /\.[a-zA-Z0-9]+$/.test(cleanUrl) && !cleanUrl.endsWith('.html');
+}
+
 /**
  * Vite plugin to generate and serve sitemap.txt and sitemap.xml.
  * @param {object} options - Plugin options.
@@ -71,17 +80,57 @@ export default function SitemapVitePlugin(options = {}) {
   const { baseUrl = 'https://example.com', outDir = 'dist', exclude } = options;
   const excludePatterns = Array.isArray(exclude) ? exclude : defaultExclude;
 
+  // Set to collect visited non-asset URLs during dev
+  const visitedUrls = new Set();
+
   return {
     name: 'vite-plugin-sitemap',
-    apply: 'build',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const isSitemap = req.url && (req.url.endsWith('/sitemap.txt') || req.url.endsWith('/sitemap.xml'));
+        const isAsset = isAssetRequest(req.url);
+        // Record non-asset, non-sitemap requests
+        if (!isAsset && !isSitemap) {
+          // Normalize: remove trailing slash except for root
+          let url = req.url.replace(/[?#].*$/, '');
+          if (url.length > 1 && url.endsWith('/')) url = url.slice(0, -1);
+          // Add full URL
+          visitedUrls.add(baseUrl.replace(/\/$/, '') + url);
+        }
+        if (!isAsset || isSitemap) {
+          console.log(`Visited URL: ${req.url}`);
+          console.log(`Visited URL count : ${visitedUrls.size}`);
+        }
+
+        if (isSitemap) {
+          const absOutDir = path.resolve(process.cwd(), outDir);
+          const fileUrls = getAllHtmlFiles(absOutDir, baseUrl, absOutDir, excludePatterns);
+          // Combine and dedupe
+          const urls = Array.from(new Set([...fileUrls, ...visitedUrls]));
+          console.log(`Combined URLs for sitemap:`, urls);
+          if (req.url && req.url.endsWith('sitemap.txt')) {
+            res.setHeader('Content-Type', 'text/plain');
+            res.end(generateSitemapTxt(urls));
+            return;
+          }
+          if (req.url && req.url.endsWith('sitemap.xml')) {
+            res.setHeader('Content-Type', 'application/xml');
+            res.end(generateSitemapXml(urls));
+            return;
+          }
+        }
+        next();
+      });
+    },
     closeBundle() {
       const absOutDir = path.resolve(process.cwd(), outDir);
-      const urls = getAllHtmlFiles(absOutDir, baseUrl, absOutDir, excludePatterns);
-      const sitemapTxt = generateSitemapTxt(urls);
-      const sitemapXml = generateSitemapXml(urls);
+      const fileUrls = getAllHtmlFiles(absOutDir, baseUrl, absOutDir, excludePatterns);
+      // Only file URLs are written at build time
+      const sitemapTxt = generateSitemapTxt(fileUrls);
+      const sitemapXml = generateSitemapXml(fileUrls);
       fs.writeFileSync(path.join(absOutDir, 'sitemap.txt'), sitemapTxt, 'utf8');
       fs.writeFileSync(path.join(absOutDir, 'sitemap.xml'), sitemapXml, 'utf8');
-      console.log(`Sitemap generated: ${urls.length} URLs`);
+      console.log(`Sitemap generated: ${fileUrls.length} URLs`);
     },
     transformIndexHtml() {
       return [
