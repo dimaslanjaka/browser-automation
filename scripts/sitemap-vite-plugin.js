@@ -80,8 +80,18 @@ export default function SitemapVitePlugin(options = {}) {
   const { baseUrl = 'https://example.com', outDir = 'dist', exclude } = options;
   const excludePatterns = Array.isArray(exclude) ? exclude : defaultExclude;
 
-  // Set to collect visited non-asset URLs during dev
-  const visitedUrls = new Set();
+  // Set to collect visited non-asset URLs during dev, with cache support
+  const cacheFile = path.resolve(process.cwd(), 'tmp/vite-plugin/collected-urls.json');
+  let visitedUrls = new Set();
+  // Restore visitedUrls from cache if exists
+  try {
+    if (fs.existsSync(cacheFile)) {
+      const arr = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      if (Array.isArray(arr)) visitedUrls = new Set(arr);
+    }
+  } catch (e) {
+    console.warn('Could not restore collected URLs cache:', e);
+  }
 
   return {
     name: 'vite-plugin-sitemap',
@@ -95,7 +105,17 @@ export default function SitemapVitePlugin(options = {}) {
           let url = req.url.replace(/[?#].*$/, '');
           if (url.length > 1 && url.endsWith('/')) url = url.slice(0, -1);
           // Add full URL
-          visitedUrls.add(baseUrl.replace(/\/$/, '') + url);
+          const fullUrl = baseUrl.replace(/\/$/, '') + url;
+          if (!visitedUrls.has(fullUrl)) {
+            visitedUrls.add(fullUrl);
+            // Save to cache file
+            try {
+              fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+              fs.writeFileSync(cacheFile, JSON.stringify(Array.from(visitedUrls)), 'utf8');
+            } catch (e) {
+              console.warn('Could not save collected URLs cache:', e);
+            }
+          }
         }
         if (!isAsset || isSitemap) {
           console.log(`Visited URL: ${req.url}`);
