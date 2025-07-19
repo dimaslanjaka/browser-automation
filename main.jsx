@@ -6,9 +6,35 @@ import { ThemeProvider } from './src/react-website/components/ThemeContext.jsx';
 const Home = React.lazy(() => import('./src/react-website/Home.jsx'));
 const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-website.jsx'));
 const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));
+const DateSnippet = React.lazy(() => import('./src/react-website/DateSnippet.jsx'));
 
 const _react = typeof React;
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+// Add Backspace navigation handler
+window.addEventListener('keydown', function (e) {
+  // Only trigger on Backspace, not in input/textarea/contenteditable
+  if (
+    e.key === 'Backspace' &&
+    !e.repeat &&
+    !(
+      document.activeElement &&
+      (document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA' ||
+        document.activeElement.isContentEditable)
+    )
+  ) {
+    // Only go back if previous page is in same domain
+    if (window.history.length > 1) {
+      const prevUrl = document.referrer;
+      if (prevUrl && prevUrl.startsWith(window.location.origin)) {
+        e.preventDefault();
+        window.history.back();
+      }
+    }
+  }
+});
+
 root.render(
   <ThemeProvider>
     <BrowserRouter basename="/browser-automation">
