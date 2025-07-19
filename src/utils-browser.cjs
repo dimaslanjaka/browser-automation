@@ -1,5 +1,3 @@
-import { logLine } from './utils';
-
 /**
  * Pauses execution for a specified amount of time.
  * @function sleep
@@ -97,7 +95,7 @@ export function getWeekdaysOfCurrentMonth(debug = false) {
     const formattedDate = `${dd}/${mm}/${yyyy}`;
 
     if (debug) {
-      logLine(`Date: ${formattedDate}, Day: ${dayName}`);
+      console.log(`Date: ${formattedDate}, Day: ${dayName}`);
     }
 
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
