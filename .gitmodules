@@ -2,3 +2,7 @@
 	path = packages/nik-parser
 	url = https://gitlab.com/dimaslanjaka/nikparser.git
 	branch = master
+[submodule "packages/safelink"]
+	path = packages/safelink
+	url = https://github.com/dimaslanjaka/safelink.git
+	branch = monorepo
