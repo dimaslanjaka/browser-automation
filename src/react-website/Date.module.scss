@@ -1,0 +1,38 @@
+.table {
+  border: 1px solid black;
+  border-collapse: collapse;
+  border-width: 1px;
+
+  th,
+  td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    border-width: 1px;
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .table {
+    border-color: #888;
+    color: #e0e0e0;
+    th,
+    td {
+      border-color: #888;
+      color: #e0e0e0;
+    }
+  }
+}
+
+.table {
+  // align rowSpan centered text
+  // https://stackoverflow.com/a/61253797/6404439
+
+  th[rowspan]:not([rowspan='1']) {
+    vertical-align: middle;
+  }
+
+  td[rowspan]:not([rowspan='1']) {
+    vertical-align: middle;
+  }
+}

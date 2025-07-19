@@ -43,6 +43,8 @@ root.render(
           <Route path="/" element={<Home />} />
           <Route path="/nik-parser" element={<NikParserApp />} />
           <Route path="/logs" element={<LogsViewer />} />
+          <Route path="*" element={<div>Page not found</div>} />
+          <Route path="/moment/snippet" element={<DateSnippet />} />
         </Routes>
       </React.Suspense>
     </BrowserRouter>
