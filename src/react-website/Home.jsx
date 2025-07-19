@@ -68,7 +68,7 @@ export default function Home() {
                 Last runner logs
               </button>
             </div>
-            <AdSense client="ca-pub-1048456668116270" slot="3470283861" />
+            <AdSense client="ca-pub-2188063137129806" slot="8481296455" />
           </Card.Body>
         </Card>
 

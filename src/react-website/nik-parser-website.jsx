@@ -98,8 +98,8 @@ export default function NikParserWeb() {
                   <i className="fa fa-arrow-left me-2" /> Back
                 </Button>
                 <AdSense
-                  client="ca-pub-1048456668116270"
-                  slot="8640099506"
+                  client="ca-pub-2188063137129806"
+                  slot="5634823028"
                   style={{ display: 'block', textAlign: 'center' }}
                   layout="in-article"
                   format="fluid"
