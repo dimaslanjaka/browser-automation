@@ -59,7 +59,7 @@
     "*Test.php": "phpunit --verbose --debug --testdox --colors=always",
     "*.php": "php -d display_errors=1 -d error_reporting=E_ALL -d xdebug.mode=coverage -d xdebug.start_with_request=yes -d xdebug.client_port=9003 -d xdebug.log=$workspaceRoot/tmp/logs/xdebug.log $fullFileName",
     "rollup.*.{js,cjs,mjs,ts}": "rollup -c",
-    "*.test.{js,ts}": "npm test --",
+    "*.test.{js,ts,cjs,mjs,jsx}": "npm test --",
     "*.sh": "bash -c",
     "*.bat": "cmd /c",
     "*.cmd": "cmd /c",
