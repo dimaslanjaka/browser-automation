@@ -2,7 +2,8 @@ import ExcelJS from 'exceljs';
 import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getNumbersOnly, logInline, logLine } from './utils.js';
+import { logInline, logLine } from './utils.js';
+import { getNumbersOnly } from './utils-browser.cjs';
 import { fixData, getCacheKey, getCachedData, getDataRange, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);

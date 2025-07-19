@@ -9,7 +9,8 @@ import { array_random, writefile } from 'sbg-utility';
 import { getAge } from '../src/date.js';
 import { geocodeWithNominatim } from './address/nominatim.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
-import { getNumbersOnly, logLine } from './utils.js';
+import { logLine } from './utils.js';
+import { getNumbersOnly } from './utils-browser.cjs';
 
 /**
  * Generates a hash for the given file
