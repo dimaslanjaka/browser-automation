@@ -11,16 +11,14 @@
   }
 }
 
-// Dark theme support
-@media (prefers-color-scheme: dark) {
-  .table {
+// Dark theme support using data-bs-theme
+[data-bs-theme='dark'] .table {
+  border-color: #888;
+  color: #e0e0e0;
+  th,
+  td {
     border-color: #888;
     color: #e0e0e0;
-    th,
-    td {
-      border-color: #888;
-      color: #e0e0e0;
-    }
   }
 }
 

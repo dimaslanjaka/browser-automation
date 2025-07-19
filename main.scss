@@ -46,21 +46,20 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn-copy {
-    color: #b6aaff;
-    background-color: transparent !important;
-    border: 1.5px solid #b6aaff;
-    &:hover, &:focus {
-      background-color: #b6aaff !important;
-      color: #222f3e !important;
-      border-color: #b6aaff;
-    }
-    &:active {
-      background-color: #6c63b5 !important;
-      color: #fff !important;
-      border-color: #6c63b5;
-    }
+
+[data-bs-theme='dark'] .btn-copy {
+  color: #b6aaff;
+  background-color: transparent !important;
+  border: 1.5px solid #b6aaff;
+  &:hover, &:focus {
+    background-color: #b6aaff !important;
+    color: #222f3e !important;
+    border-color: #b6aaff;
+  }
+  &:active {
+    background-color: #6c63b5 !important;
+    color: #fff !important;
+    border-color: #6c63b5;
   }
 }
 
@@ -191,8 +190,9 @@
   /* purposely ignored */
 }
 
+
 // Highlight.js theme for dark mode
-@media (prefers-color-scheme: dark) {
+[data-bs-theme='dark'] {
   /*!
   Theme: GitHub Dark
   Description: Dark theme as seen on github.com
