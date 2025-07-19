@@ -16,6 +16,16 @@ const compat = new FlatCompat({
 });
 const prettierrc = jsonc.parse(fs.readFileSync(path.resolve(__dirname, '.prettierrc.json'), 'utf-8'));
 
+/**
+ * ESLint flat config array for browser-automation project.
+ *
+ * - Ignores common non-source and build files.
+ * - Extends recommended ESLint, TypeScript, Prettier, and (optionally) React rules.
+ * - Customizes globals, parser, and rules for browser, Node.js, and Jest environments.
+ * - Adds overrides for CommonJS and React/JSX files.
+ *
+ * @type {import('eslint').Linter.Config[]}
+ */
 export default [
   {
     // Ignore certain files and directories from linting
@@ -43,7 +53,9 @@ export default [
     'eslint:recommended', // Base ESLint recommended rules
     'plugin:@typescript-eslint/eslint-recommended', // TypeScript-specific recommended rules
     'plugin:@typescript-eslint/recommended', // Additional TypeScript rules
-    'plugin:prettier/recommended' // Integrate Prettier for code formatting
+    'plugin:prettier/recommended', // Integrate Prettier for code formatting
+    'plugin:react/recommended', // React recommended rules
+    'plugin:react-hooks/recommended' // React hooks recommended rules
   ),
 
   {
@@ -66,7 +78,12 @@ export default [
 
       parser: tsParser, // Use TypeScript parser
       ecmaVersion: 2020, // Specify ECMAScript version 2020
-      sourceType: 'module' // Enable ES6 modules
+      sourceType: 'module', // Enable ES6 modules
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true // Enable JSX parsing
+        }
+      }
     },
 
     rules: {
@@ -120,10 +137,22 @@ export default [
   {
     // Specific rules for JavaScript and CommonJS files
     files: ['**/*.js', '**/*.cjs'],
-
     rules: {
       '@typescript-eslint/no-var-requires': 'off', // Allow require() in CommonJS files
       '@typescript-eslint/no-require-imports': 'off' // Allow require imports
+    }
+  },
+  // React/JSX specific overrides (non-intrusive, appended at the end)
+  {
+    files: ['**/*.jsx', '**/*.tsx'],
+    rules: {
+      'react/react-in-jsx-scope': 'off', // Not needed for React 17+
+      'react/prop-types': 'off' // Disable prop-types if using TypeScript
+    },
+    settings: {
+      react: {
+        version: 'detect'
+      }
     }
   }
 ];
