@@ -8,6 +8,11 @@ const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-web
 const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));
 const DateSnippet = React.lazy(() => import('./src/react-website/DateSnippet.jsx'));
 const Outbound = React.lazy(() => import('./src/react-website/Outbound.jsx'));
+const FullTimezoneListPage = React.lazy(() =>
+  import('./src/react-website/FullTimezoneList.jsx').then((module) => ({
+    default: module.FullTimezoneListPage
+  }))
+);
 
 const _react = typeof React;
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -47,6 +52,7 @@ root.render(
           {/* <Route path="*" element={<div>Page not found</div>} /> */}
           <Route path="/moment/snippet" element={<DateSnippet />} />
           <Route path="/outbound" element={<Outbound />} />
+          <Route path="/moment/timezones" element={<FullTimezoneListPage />} />
         </Routes>
       </React.Suspense>
     </BrowserRouter>
