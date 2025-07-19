@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { logLine } from '../src/utils.js';
 import * as cheerio from 'cheerio';
+import postList from '../src/react-website/components/post-lists.json';
 
 const distDir = path.join(process.cwd(), 'dist');
 
@@ -36,18 +37,23 @@ function AfterBuildCopyPlugin() {
           dest: path.join(distDir, 'index.html'),
           title: 'Home - React App',
           canonical: 'https://www.webmanajemen.com/browser-automation/'
-        },
-        {
-          dest: path.join(distDir, 'nik-parser/index.html'),
-          title: 'Nik Parser - React App',
-          canonical: 'https://www.webmanajemen.com/browser-automation/nik-parser'
-        },
-        {
-          dest: path.join(distDir, 'logs/index.html'),
-          title: 'Logs - React App',
-          canonical: 'https://www.webmanajemen.com/browser-automation/logs'
         }
       ];
+      postList.forEach((post) => {
+        const option = {};
+        for (const key in post) {
+          if (key === 'dest') {
+            option.dest = path.join(distDir, post[key]);
+          } else if (key === 'href') {
+            option.canonical = `https://www.webmanajemen.com/browser-automation/${post[key]}`;
+          } else if (key === 'thumbnail' || key === 'image') {
+            option.thumbnail = post[key];
+          } else {
+            option[key] = post[key];
+          }
+        }
+        options.push(option);
+      });
       for (const option of options) {
         const { dest, title, canonical, thumbnail = '', author = '', description = '', icon = '' } = option;
         if (!fs.existsSync(path.dirname(dest))) {
