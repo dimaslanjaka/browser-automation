@@ -3,7 +3,7 @@ import path from 'path';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
-import { sleep } from './utils.js';
+import { sleep } from './utils-browser.cjs';
 
 /**
  * Get the absolute path of the current script.
