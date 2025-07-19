@@ -1,36 +1,6 @@
 import React from 'react';
 import { Link as OriginalLink } from 'react-router-dom';
-import * as safelinkify from 'safelinkify/dist/safelink-browser-module';
-
-export const safelinkInstance = new safelinkify.safelink({
-  // exclude patterns (dont anonymize these patterns)
-  exclude: [/([a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?[.])*webmanajemen\.com/],
-  // url redirector
-  redirect: 'https://www.webmanajemen.com/page/safelink.html?url=',
-  // debug
-  verbose: false,
-  // encryption type = 'base64' | 'aes'
-  type: 'base64',
-  // password aes, default = root
-  password: 'unique-password'
-});
-
-/**
- * validate url
- * @param {string} str
- * @returns {boolean}
- */
-export function isValidHttpUrl(str) {
-  let url;
-
-  try {
-    url = new URL(str);
-  } catch (_) {
-    return false;
-  }
-
-  return url.protocol === 'http:' || url.protocol === 'https:';
-}
+import { getSafelinkInstance, isValidHttpUrl } from './utils.cjs';
 
 /**
  * React Safelink Converter
@@ -47,10 +17,24 @@ export function isValidHttpUrl(str) {
  * @property {any} [key] - React key
  * @property {any} [otherProps] - Any other props
  */
+
 class Link extends React.Component {
   constructor(props) {
     super(props);
-    this.sf = safelinkInstance;
+    this.state = { sf: null };
+    this._isMounted = false;
+  }
+
+  async componentDidMount() {
+    this._isMounted = true;
+    const sf = await getSafelinkInstance();
+    if (this._isMounted) {
+      this.setState({ sf });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
@@ -58,9 +42,10 @@ class Link extends React.Component {
     const dest = href || to;
     let result = dest;
     let type = 'internal';
-    if (typeof dest === 'string') {
+    const { sf } = this.state;
+    if (typeof dest === 'string' && sf) {
       if (isValidHttpUrl(dest)) {
-        result = this.sf.parseUrl(dest);
+        result = sf.parseUrl(dest);
         if (result === dest) {
           type = 'internal';
         } else {
@@ -73,7 +58,7 @@ class Link extends React.Component {
 
     if (type === 'external') {
       render = (
-        <a {...props} href={result} target="_blank">
+        <a {...props} href={result} target="_blank" rel="noreferrer">
           {this.props.children}
         </a>
       );
