@@ -1,5 +1,4 @@
 import React from 'react';
-import timezones from './components/timezones.json';
 import moment from 'moment-timezone';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -7,16 +6,30 @@ import styles from './Date.module.scss';
 import HighlightElement from './components/HighlightElement';
 
 export function FullTimezoneList() {
-  // Get all unique keys from timezones for table headers
+  const [timezones, setTimezones] = React.useState([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    import('./components/timezones.json')
+      .then((module) => {
+        if (mounted) setTimezones(module.default || module);
+      })
+      .catch(() => setTimezones([]));
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const headers = React.useMemo(() => {
+    if (!timezones.length) return [];
     const keys = timezones
       .flatMap((timezone) => Object.keys(timezone))
       .filter((elem, index, self) => index === self.indexOf(elem));
     return [...keys, 'Current Time', 'Moment.js Code'];
-  }, []);
+  }, [timezones]);
 
-  // Build table body rows
   const rows = React.useMemo(() => {
+    if (!timezones.length) return null;
     return timezones.flatMap((timezone) => {
       const zones = timezone.utc || [];
       if (zones.length === 0) {
@@ -54,7 +67,7 @@ export function FullTimezoneList() {
         </tr>
       ));
     });
-  }, []);
+  }, [timezones]);
 
   return (
     <section className="mx-auto p-2">
@@ -69,40 +82,44 @@ export function FullTimezoneList() {
         {`import moment from 'moment-timezone'; // const moment = require('moment-timezone');`}
       </HighlightElement>
       <div className="table-responsive">
-        <table className={`table ${styles.table}`} id="table-timezones">
-          <thead>
-            <tr>
-              {headers.map((header) => {
-                if (header === 'Current Time') {
-                  return (
-                    <th key={header}>
-                      <i className="fal fa-clock" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
-                      {header}
-                    </th>
-                  );
-                }
-                if (header === 'Moment.js Code') {
-                  return (
-                    <th key={header}>
-                      <i className="fal fa-code" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
-                      {header}
-                    </th>
-                  );
-                }
-                if (header === 'value') {
-                  return (
-                    <th key={header}>
-                      <i className="fal fa-globe-asia" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
-                      {header}
-                    </th>
-                  );
-                }
-                return <th key={header}>{header}</th>;
-              })}
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </table>
+        {!timezones.length ? (
+          <div>Loading timezones...</div>
+        ) : (
+          <table className={`table ${styles.table}`} id="table-timezones">
+            <thead>
+              <tr>
+                {headers.map((header) => {
+                  if (header === 'Current Time') {
+                    return (
+                      <th key={header}>
+                        <i className="fal fa-clock" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                        {header}
+                      </th>
+                    );
+                  }
+                  if (header === 'Moment.js Code') {
+                    return (
+                      <th key={header}>
+                        <i className="fal fa-code" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                        {header}
+                      </th>
+                    );
+                  }
+                  if (header === 'value') {
+                    return (
+                      <th key={header}>
+                        <i className="fal fa-globe-asia" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                        {header}
+                      </th>
+                    );
+                  }
+                  return <th key={header}>{header}</th>;
+                })}
+              </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+          </table>
+        )}
       </div>
     </section>
   );
