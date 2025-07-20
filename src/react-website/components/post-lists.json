@@ -20,6 +20,13 @@
     "dest": "nik-parser/index.html"
   },
   {
+    "title": "Moment.js date formatter online",
+    "excerpt": "An online tool to format dates using Moment.js.",
+    "image": "https://i.ytimg.com/vi/nmAHDEO9RW8/maxresdefault.jpg?300x180",
+    "href": "/moment",
+    "dest": "/moment/index.html"
+  },
+  {
     "title": "Moment.js date format cheatsheet",
     "excerpt": "A cheatsheet for Moment.js date format codes.",
     "image": "https://miro.medium.com/v2/resize:fit:830/1*sSPSdbdeeSAF60otRF9rOw.png",

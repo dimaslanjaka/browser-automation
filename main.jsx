@@ -13,6 +13,7 @@ const FullTimezoneListPage = React.lazy(() =>
     default: module.FullTimezoneListPage
   }))
 );
+const DateFormatWeb = React.lazy(() => import('./src/react-website/DateFormatWeb.jsx'));
 
 const _react = typeof React;
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -51,8 +52,9 @@ root.render(
           <Route path="/logs" element={<LogsViewer />} />
           {/* <Route path="*" element={<div>Page not found</div>} /> */}
           <Route path="/moment/snippet" element={<DateSnippet />} />
-          <Route path="/outbound" element={<Outbound />} />
           <Route path="/moment/timezones" element={<FullTimezoneListPage />} />
+          <Route path="/moment" element={<DateFormatWeb />} />
+          <Route path="/outbound" element={<Outbound />} />
         </Routes>
       </React.Suspense>
     </BrowserRouter>
