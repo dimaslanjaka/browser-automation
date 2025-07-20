@@ -10,6 +10,15 @@
     <loc>https://www.webmanajemen.com/browser-automation/logs/</loc>
   </url>
   <url>
+    <loc>https://www.webmanajemen.com/browser-automation/moment/</loc>
+  </url>
+  <url>
+    <loc>https://www.webmanajemen.com/browser-automation/moment/snippet/</loc>
+  </url>
+  <url>
+    <loc>https://www.webmanajemen.com/browser-automation/moment/timezones/</loc>
+  </url>
+  <url>
     <loc>https://www.webmanajemen.com/browser-automation/nik-parser/</loc>
   </url>
 </urlset>
