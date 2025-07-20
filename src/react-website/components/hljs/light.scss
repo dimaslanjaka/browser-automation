@@ -1,0 +1,139 @@
+// -----------------------------------------------------------------------------
+// Theme: GitHub (SCSS version)
+// Description: Light theme as seen on github.com
+// Author: github.com | Maintainer: @Hirse
+// Updated: 2021-05-15
+// -----------------------------------------------------------------------------
+
+// ----------------------
+// Color Variables
+// ----------------------
+
+$color-default: #24292e;
+$color-bg: #d1d1d1;
+$color-keyword: #d73a49;
+$color-entity: #6f42c1;
+$color-constant: #005cc5;
+$color-string: #032f62;
+$color-variable: #e36209;
+$color-comment: #6a737d;
+$color-tag: #22863a;
+$color-heading: #005cc5;
+$color-list: #735c0f;
+$color-inserted: #22863a;
+$bg-inserted: #f0fff4;
+$color-deleted: #b31d28;
+$bg-deleted: #ffeef0;
+
+// ----------------------
+// Highlight.js Theme
+// ----------------------
+
+.hljs {
+  color: $color-default;
+  background: $color-bg;
+
+  // Keywords and language variables
+  &-doctag,
+  &-keyword,
+  &-meta .hljs-keyword,
+  &-template-tag,
+  &-template-variable,
+  &-type,
+  &-variable.language_ {
+    color: $color-keyword; // prettylights-syntax-keyword
+  }
+
+  // Titles and functions
+  &-title,
+  &-title.class_,
+  &-title.class_.inherited__,
+  &-title.function_ {
+    color: $color-entity; // prettylights-syntax-entity
+  }
+
+  // Constants and selectors
+  &-attr,
+  &-attribute,
+  &-literal,
+  &-meta,
+  &-number,
+  &-operator,
+  &-variable,
+  &-selector-attr,
+  &-selector-class,
+  &-selector-id {
+    color: $color-constant; // prettylights-syntax-constant
+  }
+
+  // Strings and regex
+  &-regexp,
+  &-string,
+  &-meta .hljs-string {
+    color: $color-string; // prettylights-syntax-string
+  }
+
+  // Built-in and symbols
+  &-built_in,
+  &-symbol {
+    color: $color-variable; // prettylights-syntax-variable
+  }
+
+  // Comments and code blocks
+  &-comment,
+  &-code,
+  &-formula {
+    color: $color-comment; // prettylights-syntax-comment
+  }
+
+  // Tags and quotes
+  &-name,
+  &-quote,
+  &-selector-tag,
+  &-selector-pseudo {
+    color: $color-tag; // prettylights-syntax-entity-tag
+  }
+
+  &-subst {
+    color: $color-default; // prettylights-syntax-storage-modifier-import
+  }
+
+  &-section {
+    color: $color-heading; // prettylights-syntax-markup-heading
+    font-weight: bold;
+  }
+
+  &-bullet {
+    color: $color-list; // prettylights-syntax-markup-list
+  }
+
+  &-emphasis {
+    color: $color-default; // prettylights-syntax-markup-italic
+    font-style: italic;
+  }
+
+  &-strong {
+    color: $color-default; // prettylights-syntax-markup-bold
+    font-weight: bold;
+  }
+
+  &-addition {
+    color: $color-inserted; // prettylights-syntax-markup-inserted
+    background-color: $bg-inserted;
+  }
+
+  &-deletion {
+    color: $color-deleted; // prettylights-syntax-markup-deleted
+    background-color: $bg-deleted;
+  }
+
+  // Ignored styles (intentionally left blank)
+  &-char.escape_,
+  &-link,
+  &-params,
+  &-property,
+  &-punctuation,
+  &-tag {
+    text-decoration: none;
+  }
+}
