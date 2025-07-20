@@ -7,46 +7,61 @@ import styles from './Date.module.scss';
 import HighlightElement from './components/HighlightElement';
 
 export function FullTimezoneList() {
-  React.useEffect(() => {
-    const table = document.getElementById('table-timezones');
+  // Get all unique keys from timezones for table headers
+  const headers = React.useMemo(() => {
+    const keys = timezones
+      .flatMap((timezone) => Object.keys(timezone))
+      .filter((elem, index, self) => index === self.indexOf(elem));
+    return [...keys, 'Current Time', 'Moment.js Code'];
+  }, []);
 
-    if (table) {
-      const theadInner = timezones
-        .flatMap((timezone) => {
-          return Object.keys(timezone);
-        })
-        .filter(function (elem, index, self) {
-          return index === self.indexOf(elem);
-        })
-        .map((str) => `<th>${str}</th>`)
-        .join('');
+  // Build table body rows
+  const rows = React.useMemo(() => {
+    return timezones.flatMap((timezone) => {
+      const zones = timezone.utc || [];
+      if (zones.length === 0) {
+        return [
+          <tr key={timezone.value + '-nozone'}>
+            <td>{timezone.value}</td>
+            <td>{timezone.abbr}</td>
+            <td>{timezone.offset}</td>
+            <td>{timezone.isdst}</td>
+            <td>{timezone.text}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        ];
+      }
+      return zones.map((zone, idx) => (
+        <tr key={timezone.value + '-' + zone}>
+          {idx === 0 && (
+            <>
+              <td rowSpan={zones.length}>{timezone.value}</td>
+              <td rowSpan={zones.length}>{timezone.abbr}</td>
+              <td rowSpan={zones.length}>{timezone.offset}</td>
+              <td rowSpan={zones.length}>{`${timezone.isdst}`}</td>
+              <td rowSpan={zones.length}>{timezone.text}</td>
+            </>
+          )}
+          <td>{zone}</td>
+          <td>
+            <span data-timezone={zone}>{moment().tz(zone).format()}</span>
+          </td>
+          <td>
+            <HighlightElement lang="typescript">{`moment().tz("${zone}").format()`}</HighlightElement>
+          </td>
+        </tr>
+      ));
+    });
+  }, []);
 
-      table.querySelector('thead').innerHTML = `<tr>${theadInner}<th>Current Time</th><th>Moment.js Code</th></tr>`;
-
-      const tbodyInner = timezones
-        .map((timezone) => {
-          const zones = timezone.utc || [];
-          if (zones.length === 0) {
-            return `<tr><td>${timezone.value}</td><td>${timezone.abbr}</td><td>${timezone.offset}</td><td>${timezone.isdst}</td><td>${timezone.text}</td><td></td><td></td><td></td></tr>`;
-          }
-          return zones
-            .map((zone, idx) => {
-              const baseCols =
-                idx === 0
-                  ? `<td rowspan="${zones.length}">${timezone.value}</td><td rowspan="${zones.length}">${timezone.abbr}</td><td rowspan="${zones.length}">${timezone.offset}</td><td rowspan="${zones.length}">${timezone.isdst}</td><td rowspan="${zones.length}">${timezone.text}</td>`
-                  : '';
-              return `<tr>${baseCols}<td>${zone}</td><td><span timezone="${zone}">${moment().tz(zone).format()}</span></td><td><pre class="codeblock"><code code="${zone}" class="language-typescript">moment().tz("${zone}").format()</code></pre></td></tr>`;
-            })
-            .join('');
-        })
-        .join('');
-
-      table.querySelector('tbody').innerHTML = tbodyInner;
-    }
-  });
   return (
     <section className="mx-auto p-2">
-      <h2>World-wide timezone</h2>
+      <h2>
+        <i className="fal fa-globe" aria-hidden="true" style={{ marginRight: '1em' }}></i>
+        World-wide timezone
+      </h2>
       <p>
         all timezone format for <kbd>moment-timezone</kbd>. But, you need import <kbd>moment-timezone</kbd>
       </p>
@@ -55,8 +70,38 @@ export function FullTimezoneList() {
       </HighlightElement>
       <div className="table-responsive">
         <table className={`table ${styles.table}`} id="table-timezones">
-          <thead></thead>
-          <tbody></tbody>
+          <thead>
+            <tr>
+              {headers.map((header) => {
+                if (header === 'Current Time') {
+                  return (
+                    <th key={header}>
+                      <i className="fal fa-clock" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                      {header}
+                    </th>
+                  );
+                }
+                if (header === 'Moment.js Code') {
+                  return (
+                    <th key={header}>
+                      <i className="fal fa-code" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                      {header}
+                    </th>
+                  );
+                }
+                if (header === 'value') {
+                  return (
+                    <th key={header}>
+                      <i className="fal fa-globe-asia" aria-hidden="true" style={{ marginRight: '0.5em' }}></i>
+                      {header}
+                    </th>
+                  );
+                }
+                return <th key={header}>{header}</th>;
+              })}
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
         </table>
       </div>
     </section>
