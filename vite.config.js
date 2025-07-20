@@ -66,7 +66,8 @@ export default defineConfig({
     port: 5173,
     open: false,
     watch: {
-      ignored: ['**/*', '!src/**']
+      ignored: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/packages/**'],
+      usePolling: true
     }
   }
 });
