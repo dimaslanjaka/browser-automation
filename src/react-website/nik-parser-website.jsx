@@ -6,6 +6,7 @@ import AdSense from './components/Adsense';
 import { useTheme } from './components/ThemeContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import { getViteUrl } from '../utils-browser-esm';
 
 /**
  * @type {import('highlight.js').HLJSApi | undefined}
@@ -58,7 +59,7 @@ export default function NikParserWeb() {
       let dataKunto = [];
       try {
         const axios = (await import('axios')).default;
-        const response = await axios.get('/browser-automation/assets/data/dataKunto.json', { responseType: 'text' });
+        const response = await axios.get(getViteUrl('/assets/data/dataKunto.json'), { responseType: 'text' });
         const encodedResponse = response.data;
         const secret = import.meta.env.VITE_JSON_SECRET;
         dataKunto = decryptJson(encodedResponse, secret);

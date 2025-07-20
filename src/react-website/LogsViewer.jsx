@@ -7,9 +7,9 @@ import styles from './LogsViewer.module.scss';
 import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import { useTheme } from './components/ThemeContext.jsx';
+import { getViteUrl } from '../utils-browser-esm.js';
 
 function LogAccordionItem({ log, idx }) {
-  const isSuccessMsg = typeof log.message === 'string' && log.message.toLowerCase().includes('success');
   let indicatorCLass = '';
   if (log.data?.status === 'invalid') {
     indicatorCLass = styles.textInvalid;
@@ -22,7 +22,8 @@ function LogAccordionItem({ log, idx }) {
     <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
       <Accordion.Header className={styles.accordionHeader}>
         <span className="d-block w-100">
-          <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> - {
+          <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> -{' '}
+          {
             // On mobile, trim nama to fit smaller screens
             (() => {
               const nama = ucwords(log.data?.nama || '');
@@ -66,10 +67,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tanggal || ''}
                 {log.data?.tanggal && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy Tanggal"
-                      onClick={() => copyToClipboard(log.data.tanggal)}>
+                  <button
+                    className="btn btn-sm btn-copy"
+                    title="Copy Tanggal"
+                    onClick={() => copyToClipboard(log.data.tanggal)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -80,10 +81,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {ucwords(log.data?.nama || '')}
                 {log.data?.nama && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy Nama"
-                      onClick={() => copyToClipboard(log.data.nama)}>
+                  <button
+                    className="btn btn-sm btn-copy"
+                    title="Copy Nama"
+                    onClick={() => copyToClipboard(log.data.nama)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -94,10 +95,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tgl_lahir || ''}
                 {log.data?.tgl_lahir && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy Tgl Lahir"
-                      onClick={() => copyToClipboard(log.data.tgl_lahir)}>
+                  <button
+                    className="btn btn-sm btn-copy"
+                    title="Copy Tgl Lahir"
+                    onClick={() => copyToClipboard(log.data.tgl_lahir)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -108,10 +109,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.alamat || ''}
                 {log.data?.alamat && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy Alamat"
-                      onClick={() => copyToClipboard(log.data.alamat)}>
+                  <button
+                    className="btn btn-sm btn-copy"
+                    title="Copy Alamat"
+                    onClick={() => copyToClipboard(log.data.alamat)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -122,10 +123,7 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.bb || ''}
                 {log.data?.bb && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy BB"
-                      onClick={() => copyToClipboard(log.data.bb)}>
+                  <button className="btn btn-sm btn-copy" title="Copy BB" onClick={() => copyToClipboard(log.data.bb)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -136,10 +134,7 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.tb || ''}
                 {log.data?.tb && (
-                    <button
-                      className="btn btn-sm btn-copy"
-                      title="Copy TB"
-                      onClick={() => copyToClipboard(log.data.tb)}>
+                  <button className="btn btn-sm btn-copy" title="Copy TB" onClick={() => copyToClipboard(log.data.tb)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -166,10 +161,10 @@ function LogAccordionItem({ log, idx }) {
               <td>
                 {log.data?.pekerjaan || ''}
                 {log.data?.pekerjaan && (
-                    <button
-                      className="btn-copy"
-                      title="Copy Pekerjaan"
-                      onClick={() => copyToClipboard(log.data.pekerjaan)}>
+                  <button
+                    className="btn-copy"
+                    title="Copy Pekerjaan"
+                    onClick={() => copyToClipboard(log.data.pekerjaan)}>
                     <i className="fa fa-copy" aria-hidden="true"></i>
                   </button>
                 )}
@@ -294,7 +289,8 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     setLoading(true);
     import('../utils/json-crypto.js').then(({ decryptJson }) => {
       import('axios').then(({ default: axios }) => {
-        axios.get('/browser-automation/assets/data/logs.json', { responseType: 'text' })
+        axios
+          .get(getViteUrl('/assets/data/logs.json'), { responseType: 'text' })
           .then((res) => {
             let data = [];
             const secret = import.meta.env.VITE_JSON_SECRET;
@@ -440,7 +436,10 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
           id="logs-viewer"
           className={`container mx-auto py-4 bg-body-tertiary ${styles.container}`}
           data-bs-theme={theme}>
-          <button type="button" className={`btn ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-3`} onClick={() => navigate('/')}>
+          <button
+            type="button"
+            className={`btn ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-3`}
+            onClick={() => navigate('/')}>
             <i className="fa fa-arrow-left me-2" /> Back
           </button>
           {/* Theme toggle UI omitted for brevity */}

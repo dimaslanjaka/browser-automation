@@ -1,22 +1,21 @@
 import React from 'react';
 import { Card, Container } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
 import AdSense from './components/Adsense';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import { useTheme } from './components/ThemeContext';
 import HomePosts from './HomePosts';
+import { getViteUrl } from '../utils-browser-esm';
 const _react = typeof React;
 
 export default function Home() {
   const { theme } = useTheme();
-  const navigate = useNavigate();
   const [htmlFiles, setHtmlFiles] = React.useState([]);
 
   React.useEffect(() => {
     import('axios').then(({ default: axios }) => {
       axios
-        .get('/browser-automation/assets/data/html-files.json')
+        .get(getViteUrl('/assets/data/html-files.json'))
         .then((res) => setHtmlFiles(res.data))
         .catch(() => setHtmlFiles([]));
     });
@@ -70,11 +69,7 @@ export default function Home() {
             <ul className="list-group list-group-flush">
               {htmlFiles.map((file) => (
                 <li className="list-group-item" key={file}>
-                  <a
-                    href={`/browser-automation/${file}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-decoration-none">
+                  <a href={getViteUrl(file)} target="_blank" rel="noopener noreferrer" className="text-decoration-none">
                     {file}
                   </a>
                 </li>
