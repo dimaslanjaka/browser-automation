@@ -41,7 +41,22 @@ const keyMap = {
 /**
  * Loads and processes CSV data from the data.csv file
  * Maps column headers using keyMap, parses dates, and saves encrypted JSON output
- * @returns {Promise<Array>} Promise that resolves to an array of processed CSV records
+ * @returns {Promise<Array<{
+ *   tanggal?: string,
+ *   nama?: string,
+ *   nik?: string,
+ *   pekerjaan?: string,
+ *   bb?: string,
+ *   tb?: string,
+ *   batuk?: string,
+ *   diabetes?: string,
+ *   tgl_lahir?: string,
+ *   alamat?: string,
+ *   jenis_kelamin?: string,
+ *   petugas?: string,
+ *   rowIndex: number,
+ *   originalTglLahir?: string
+ * }>>} Promise that resolves to an array of processed CSV records
  */
 export async function loadCsvData() {
   return new Promise((resolve, reject) => {
