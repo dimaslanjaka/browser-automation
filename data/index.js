@@ -1,10 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-import moment from 'moment';
-import { fileURLToPath, pathToFileURL } from 'url';
 import csvParser from 'csv-parser';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { encryptJson } from '../src/utils/json-crypto.js';
+import { parseDate } from '../src/utils/date.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +38,11 @@ const keyMap = {
   'PETUGAS ENTRY': 'petugas'
 };
 
+/**
+ * Loads and processes CSV data from the data.csv file
+ * Maps column headers using keyMap, parses dates, and saves encrypted JSON output
+ * @returns {Promise<Array>} Promise that resolves to an array of processed CSV records
+ */
 export async function loadCsvData() {
   return new Promise((resolve, reject) => {
     const mappedRecords = [];
@@ -56,12 +61,12 @@ export async function loadCsvData() {
       .on('end', () => {
         const dataKunto = mappedRecords.map((row) => {
           row.originalTglLahir = row.tgl_lahir;
-          row.tgl_lahir = moment(row.tgl_lahir, 'YYYY-MM-DD').format('DD/MM/YYYY');
+          row.tgl_lahir = parseDate(row.tgl_lahir);
           return row;
         });
 
         // Save as JSON (optional)
-        const outputDir = path.join(process.cwd(), 'public/assets/data');
+        const outputDir = path.join(__dirname, '../public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
         fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
 
