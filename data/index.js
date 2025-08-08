@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import moment from 'moment';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import csvParser from 'csv-parser';
 import dotenv from 'dotenv';
 import { encryptJson } from '../src/utils/json-crypto.js';
@@ -71,8 +71,12 @@ export async function loadCsvData() {
   });
 }
 
-// loadCsvData().then((data) => {
-//   console.log(`Loaded ${data.length} records from CSV.`);
-//   console.log(data.at(0)); // Output the first mapped record to verify mapping
-//   console.log(data.at(-1)); // Output the last mapped record to verify mapping
-// });
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // This module is being run directly
+  console.log('Loading CSV data...');
+  loadCsvData().then((data) => {
+    console.log(`Loaded ${data.length} records from CSV.`);
+    console.log(data.at(0)); // Output the first mapped record to verify mapping
+    console.log(data.at(-1)); // Output the last mapped record to verify mapping
+  });
+}
