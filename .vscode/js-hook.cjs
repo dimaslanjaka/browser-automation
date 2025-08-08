@@ -1,17 +1,12 @@
-import dotenv from 'dotenv';
-import path from 'node:path';
-import { fileURLToPath } from 'url';
-
-// Get the absolute path of the current script for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const dotenv = require('dotenv');
+const path = require('node:path');
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-// Set up common Node.js environment variables for ES modules
-globalThis.__filename = __filename;
-globalThis.__dirname = __dirname;
+// Set up common Node.js environment variables (already available in CommonJS)
+// globalThis.__filename = __filename;
+// globalThis.__dirname = __dirname;
 
 // Enhanced error handling
 process.on('unhandledRejection', (reason, promise) => {
@@ -24,7 +19,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-// Add timestamp to console logs
+// Add timestamp to console logs (commented out by default)
 // const originalLog = console.log;
 // const originalError = console.error;
 // const originalWarn = console.warn;
@@ -42,7 +37,7 @@ process.on('uncaughtException', (error) => {
 // };
 
 // Print startup info
-console.log('JavaScript hook loaded successfully');
+console.log('JavaScript hook (CommonJS) loaded successfully');
 console.log('Working directory:', process.cwd());
 console.log('Node.js version:', process.version);
 console.log('Environment:', process.env.NODE_ENV || 'development');

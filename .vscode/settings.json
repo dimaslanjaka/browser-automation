@@ -66,7 +66,7 @@
     "*.ps1": "powershell -ExecutionPolicy ByPass -File"
   },
   "code-runner.executorMap": {
-    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.js"
+    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs"
   },
   "code-runner.ignoreSelection": true,
   "code-runner.respectShebang": true,
