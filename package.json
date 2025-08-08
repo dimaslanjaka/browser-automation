@@ -7,7 +7,7 @@
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "init:docs": "node ./init-gh-pages.js",
     "postinstall": "npm run build:packages && npm run init:docs",
-    "test": "node --experimental-vm-modules -r ./.vscode/js-hook.js ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose",
+    "test": "node --experimental-vm-modules -r ./.vscode/js-hook.cjs ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose",
     "test:coverage": "npm run test -- --coverage",
     "serve-xlsx": "node xlsx-web-server.js | tee tmp/xlsx-server.log",
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
@@ -15,10 +15,10 @@
     "update:resolutions": "npx pkg-res-updater",
     "update:dependencies": "npx npm-check-updates -u",
     "download:google-sheet": "node download-google-sheet.js",
-    "vite:dev": "node -r ./.vscode/js-hook.js node_modules/vite/bin/vite.js --mode development",
-    "vite:build": "node -r ./.vscode/js-hook.js node_modules/vite/bin/vite.js build --mode production",
-    "vite:preview": "node -r ./.vscode/js-hook.js node_modules/vite/bin/vite.js preview",
-    "vite:deploy": "node -r ./.vscode/js-hook.js vite.deploy.js",
+    "vite:dev": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js --mode development",
+    "vite:build": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js build --mode production",
+    "vite:preview": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js preview",
+    "vite:deploy": "node -r ./.vscode/js-hook.cjs vite.deploy.js",
     "clean": "rimraf node_modules/.vite dist",
     "clean:full": "rimraf node_modules .vite dist && npm install"
   },
@@ -110,6 +110,7 @@
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "nodemon": "^3.1.10",
+    "npm-check-updates": "^18.0.2",
     "postcss": "^8.5.6",
     "postcss-nesting": "^13.0.2",
     "prettier": "^3.6.2",
@@ -128,9 +129,9 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/ffe6ff68615e28017db5d68543fb5fc91f23bc04/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/4f7a91de49cc841de80e6d24848d34772460b7e0/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/2aa0dbd203193045e3d6de9b2ea67004073ef4e9/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/88b4d2b061d124706ab7cc865f9d33b238ee60f8/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6"
   },
