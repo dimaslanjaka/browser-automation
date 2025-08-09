@@ -218,8 +218,8 @@ async function processData(page, data) {
     console.log(
       `isGenderEmpty: ${isGenderEmpty}, isKabupatenEmpty: ${isKabupatenEmpty}, isProvinsiEmpty: ${isProvinsiEmpty}, isKecamatanEmpty: ${isKecamatanEmpty}, isKelurahanEmpty: ${isKelurahanEmpty}`
     );
-    if (!isGenderEmpty || !isKabupatenEmpty || !isProvinsiEmpty || !isKecamatanEmpty || !isKelurahanEmpty) {
-      // If any field is not empty, set isManualInput to true
+    if (isGenderEmpty || isKabupatenEmpty || isProvinsiEmpty || isKecamatanEmpty || isKelurahanEmpty) {
+      // If any field is empty, set isManualInput to true
       isManualInput = true;
     }
   }
@@ -566,7 +566,7 @@ async function _test(page) {
   }
 }
 
-const main = async () => {
+const _main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
   const dataKunto = await loadCsvData();
@@ -599,4 +599,11 @@ const main = async () => {
   // await _test(page);
 };
 
-main();
+const _test2 = async () => {
+  const { page } = await getPuppeteer();
+  await skrinLogin(page);
+  const dataKunto = await loadCsvData();
+  processData(page, dataKunto[0]);
+};
+
+_main();
