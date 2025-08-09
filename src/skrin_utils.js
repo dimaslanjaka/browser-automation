@@ -236,11 +236,20 @@ export function getRandomInRange(min, max) {
 
 /**
  * Get height range based on age and gender for Indonesian population.
- * @param {number} age - The age of the person.
+ * @param {number|string} age - The age of the person.
  * @param {string} gender - The gender ('laki-laki' or 'perempuan').
  * @returns {number} A random height value.
  */
 export function getTinggiBadan(age, gender) {
+  if (typeof age === 'string') {
+    age = parseInt(age, 10);
+  }
+  if (gender.toUpperCase() === 'L') {
+    gender = 'laki-laki';
+  } else if (gender.toUpperCase() === 'P') {
+    gender = 'perempuan';
+  }
+
   const tinggiRange = {
     'laki-laki': {
       0: [45, 55],
