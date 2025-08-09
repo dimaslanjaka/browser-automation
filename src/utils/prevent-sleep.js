@@ -19,7 +19,7 @@
  */
 async function keepAwake(page) {
   let wakeLock = null;
-  let mouseInterval = null;
+  let usingMouseMovement = false;
   let visibilityHandler = null;
 
   // Try to use the Wake Lock API first (for browser environments)
@@ -46,16 +46,15 @@ async function keepAwake(page) {
   };
 
   // Fallback mouse movement for Puppeteer
-  const startMouseMovement = () => {
-    mouseInterval = setInterval(async () => {
-      try {
-        await page.mouse.move(1, 1);
-        await page.mouse.move(2, 2);
-        console.log('Sent keep-alive mouse move.');
-      } catch (err) {
-        console.error('Keep-awake mouse error:', err);
-      }
-    }, 30000); // every 30 seconds
+  const startMouseMovement = async () => {
+    try {
+      await page.mouse.move(1, 1);
+      await page.mouse.move(2, 2);
+      // console.log('Sent keep-alive mouse move.');
+      usingMouseMovement = true;
+    } catch (err) {
+      console.error('Keep-awake mouse error:', err);
+    }
   };
 
   // Handle visibility change to reacquire wake lock
@@ -70,7 +69,7 @@ async function keepAwake(page) {
 
   if (!wakeLockAcquired) {
     console.log('Using mouse movement fallback for keep-awake');
-    startMouseMovement();
+    await startMouseMovement();
   }
 
   // Set up visibility change listener for wake lock reacquisition
@@ -87,12 +86,13 @@ async function keepAwake(page) {
         await wakeLock.release();
         wakeLock = null;
       }
-
-      // Clear mouse movement interval
-      if (mouseInterval) {
-        clearInterval(mouseInterval);
-        mouseInterval = null;
+      if (usingMouseMovement) {
+        // If using mouse movement, we don't need to do anything special
+        usingMouseMovement = false;
       }
+
+      // Clear mouse movement interval (no longer needed since we don't use intervals)
+      // mouseInterval cleanup removed as we no longer use intervals
 
       // Remove visibility change listener
       if (visibilityHandler && typeof document !== 'undefined') {
@@ -104,12 +104,12 @@ async function keepAwake(page) {
     },
 
     get isActive() {
-      return wakeLock !== null || mouseInterval !== null;
+      return wakeLock !== null;
     },
 
     get method() {
       if (wakeLock) return 'wakeLock';
-      if (mouseInterval) return 'mouseMovement';
+      if (usingMouseMovement) return 'mouseMovement';
       return 'none';
     }
   };
