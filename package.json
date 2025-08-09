@@ -129,9 +129,9 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/7cd59ff4ce57e355a1d2b1f8bff827055c4f2d5e/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/2e0a11aae56d84ca7cece6056cf6ccc2f232c8f3/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/88b4d2b061d124706ab7cc865f9d33b238ee60f8/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/b3d1e17759aecc307c24562b02792a82cb14a6ba/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6"
   },
