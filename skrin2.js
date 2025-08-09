@@ -14,6 +14,7 @@ import {
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
+import { keepAwake } from './src/utils/prevent-sleep.js';
 import { ucwords } from './src/utils/string.js';
 import { fixData } from './src/xlsx-helper.js';
 
@@ -28,6 +29,10 @@ console.clear();
  * @returns {Promise<void>} Resolves when processing is complete.
  */
 async function processData(page, data) {
+  // Start keep-awake before long automation
+  const wakeController = await keepAwake(page);
+  console.log(`🔋 Keep-awake started using: ${wakeController.method}`);
+
   const fixedData = await fixData(data);
   const NIK = getNumbersOnly(fixedData.nik);
   const cachedData = getLogById(NIK);
@@ -515,6 +520,12 @@ async function processData(page, data) {
     });
   } else {
     logLine(`Data for NIK: ${NIK} submission failed. Please check the form for errors.`);
+  }
+
+  // Release the wake lock to allow the system to sleep again
+  if (wakeController) {
+    await wakeController.release();
+    console.log(`🔋 Keep-awake released for NIK: ${NIK}`);
   }
 }
 
