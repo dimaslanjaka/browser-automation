@@ -7,7 +7,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-export const dbPath = path.resolve('.cache/logs.db');
+const dbName = process.env.DATABASE_FILENAME + '.db';
+export const dbPath = path.resolve(`.cache/${dbName}`);
 const db = new Database(dbPath);
 
 // Create table if not exists
