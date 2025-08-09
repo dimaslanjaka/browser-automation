@@ -259,8 +259,40 @@ export async function typeAndTriggerIframe(page, iframeSelector, elementSelector
       const typePromises = Array.from(value).map((char, index) => typeChar(char, index));
 
       return Promise.all(typePromises).then(() => {
-        // After typing is complete, trigger change event
-        element.dispatchEvent(new iframe.contentWindow.Event('change', { bubbles: true }));
+        // More robust event triggering after typing is complete
+        const events = ['input', 'change', 'blur', 'keyup'];
+        events.forEach((eventType) => {
+          const event = new iframe.contentWindow.Event(eventType, {
+            bubbles: true,
+            cancelable: true
+          });
+          element.dispatchEvent(event);
+        });
+
+        // Also trigger jQuery events if jQuery is available in the iframe
+        if (typeof iframe.contentWindow.$ !== 'undefined' && iframe.contentWindow.$(element).length) {
+          iframe.contentWindow.$(element).trigger('change').trigger('blur');
+        }
+
+        // For datepicker or special inputs, also trigger specific events
+        if (
+          element.id.includes('tgl') ||
+          element.classList.contains('datepicker') ||
+          element.getAttribute('data-role') === 'datepicker'
+        ) {
+          const specificEvents = ['datechange', 'dp.change', 'changeDate'];
+          specificEvents.forEach((eventType) => {
+            try {
+              const event = new iframe.contentWindow.Event(eventType, {
+                bubbles: true,
+                cancelable: true
+              });
+              element.dispatchEvent(event);
+            } catch (_e) {
+              // Ignore if event type doesn't exist
+            }
+          });
+        }
 
         // Simulate tab key press by blurring the element
         element.blur();
@@ -519,4 +551,107 @@ export async function triggerInputChange(page, selector, options = {}) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }, selector);
+}
+
+/**
+ * Validates that a value was properly set in an iframe element and optionally retries with enhanced event triggering
+ * @param {Object} page - Puppeteer page object
+ * @param {string} iframeSelector - CSS selector for the iframe
+ * @param {string} elementSelector - CSS selector for the element within the iframe
+ * @param {string} expectedValue - Expected value that should be in the element
+ * @param {Object} options - Options for retry behavior
+ * @returns {Promise<boolean>} - True if validation passed, false otherwise
+ */
+export async function validateAndRetryIframeInput(page, iframeSelector, elementSelector, expectedValue, options = {}) {
+  const { maxRetries = 3, retryDelay = 1000 } = options;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // Check if the value was properly set
+    const currentValue = await page.evaluate(
+      ({ iframeSelector, elementSelector }) => {
+        const iframe = document.querySelector(iframeSelector);
+        if (!iframe || !iframe.contentDocument) {
+          return null;
+        }
+
+        const element = iframe.contentDocument.querySelector(elementSelector);
+        return element ? element.value : null;
+      },
+      { iframeSelector, elementSelector }
+    );
+
+    if (currentValue === expectedValue) {
+      return true;
+    }
+
+    if (attempt < maxRetries) {
+      console.log(
+        `Validation failed for ${elementSelector}, attempt ${attempt + 1}/${maxRetries + 1}. Expected: "${expectedValue}", Got: "${currentValue}". Retrying...`
+      );
+
+      // Enhanced retry with more aggressive event triggering
+      await page.evaluate(
+        ({ iframeSelector, elementSelector, expectedValue }) => {
+          const iframe = document.querySelector(iframeSelector);
+          if (!iframe || !iframe.contentDocument) {
+            return;
+          }
+
+          const element = iframe.contentDocument.querySelector(elementSelector);
+          if (!element) {
+            return;
+          }
+
+          // Force set the value
+          element.value = expectedValue;
+
+          // Trigger all possible events that might be needed
+          const allEvents = [
+            'input',
+            'change',
+            'blur',
+            'focus',
+            'keyup',
+            'keydown',
+            'keypress',
+            'paste',
+            'cut',
+            'beforeinput',
+            'afterinput'
+          ];
+
+          allEvents.forEach((eventType) => {
+            try {
+              const event = new iframe.contentWindow.Event(eventType, {
+                bubbles: true,
+                cancelable: true
+              });
+              element.dispatchEvent(event);
+            } catch (_e) {
+              // Ignore if event type doesn't exist
+            }
+          });
+
+          // Trigger jQuery events if available
+          if (typeof iframe.contentWindow.$ !== 'undefined' && iframe.contentWindow.$(element).length) {
+            iframe.contentWindow.$(element).trigger('change').trigger('blur').trigger('input');
+          }
+
+          // For Kendo UI components (common in enterprise apps)
+          if (typeof iframe.contentWindow.kendo !== 'undefined') {
+            const kendoWidget = iframe.contentWindow.kendo.widgetInstance(element);
+            if (kendoWidget && typeof kendoWidget.trigger === 'function') {
+              kendoWidget.trigger('change');
+            }
+          }
+        },
+        { iframeSelector, elementSelector, expectedValue }
+      );
+
+      await sleep(retryDelay);
+    }
+  }
+
+  console.warn(`Failed to validate input after ${maxRetries + 1} attempts for ${elementSelector}`);
+  return false;
 }

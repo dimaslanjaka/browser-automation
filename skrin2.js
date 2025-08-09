@@ -9,7 +9,8 @@ import {
   getPuppeteer,
   isElementVisible,
   isIframeElementVisible,
-  typeAndTriggerIframe
+  typeAndTriggerIframe,
+  validateAndRetryIframeInput
 } from './src/puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
@@ -105,14 +106,38 @@ async function processData(page, data) {
     await iframe.focus('#dt_tgl_skrining');
     await iframe.$eval('#dt_tgl_skrining', (e) => e.removeAttribute('readonly'));
     await typeAndTriggerIframe(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry);
-    // Explicitly trigger change event after typing
+
+    // More robust event triggering for datepicker
     await iframe.$eval('#dt_tgl_skrining', (el) => {
-      const event = new Event('change', { bubbles: true });
-      el.dispatchEvent(event);
+      // Trigger multiple events to ensure compatibility with different datepicker implementations
+      const events = ['input', 'change', 'blur', 'keyup', 'keydown'];
+      events.forEach((eventType) => {
+        const event = new Event(eventType, { bubbles: true, cancelable: true });
+        el.dispatchEvent(event);
+      });
+
+      // Also trigger jQuery events if jQuery is available
+      if (typeof window.$ !== 'undefined' && window.$(el).length) {
+        window.$(el).trigger('change').trigger('blur');
+      }
     });
+
+    await sleep(500); // Allow events to propagate
     await iframe.$eval('#dt_tgl_skrining', (e) => e.setAttribute('readonly', 'true'));
-    logLine(`Date ${tanggalEntry} applied to #dt_tgl_skrining`);
-    await sleep(1000); // Wait for the datepicker to process the input
+
+    // Validate that the date was properly set
+    const dateValidated = await validateAndRetryIframeInput(page, iframeSelector, '#dt_tgl_skrining', tanggalEntry, {
+      maxRetries: 2,
+      retryDelay: 1000
+    });
+
+    if (dateValidated) {
+      logLine(`Date ${tanggalEntry} successfully applied to #dt_tgl_skrining`);
+    } else {
+      logLine(`Warning: Date ${tanggalEntry} may not have been properly applied to #dt_tgl_skrining`);
+    }
+
+    await sleep(1500); // Extended wait for the datepicker to process the input
   }
 
   // Insert default skrining inputs
