@@ -11,6 +11,7 @@ import { geocodeWithNominatim } from './address/nominatim.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
 import { logLine } from './utils.js';
 import { getNumbersOnly } from './utils-browser.js';
+import { getBeratBadan, getTinggiBadan } from './skrin_utils.js';
 
 /**
  * Generates a hash for the given file
@@ -414,6 +415,14 @@ export async function fixData(data) {
   // Fix tinggi and berat badan
   let tinggi = initialData.TB || initialData.tb || null;
   let berat = initialData.bb || initialData.BB || null;
+
+  if (!tinggi) {
+    tinggi = getTinggiBadan(age, gender);
+  }
+  if (!berat) {
+    berat = getBeratBadan(age, gender);
+  }
+
   initialData.tb = tinggi; // Ensure both lowercase and uppercase keys are set
   initialData.TB = tinggi; // Ensure both lowercase and uppercase keys are set
   initialData.bb = berat; // Ensure both lowercase and uppercase keys are set
