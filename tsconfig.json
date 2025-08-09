@@ -14,14 +14,9 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": false,
-    "typeRoots": [
-      "./types",
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["./types", "./node_modules/@types"]
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*"],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
