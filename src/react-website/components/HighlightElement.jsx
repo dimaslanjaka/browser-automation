@@ -1,6 +1,6 @@
 import React from 'react';
 import { initHljs } from './highlight-helper.js';
-import { randomStr } from '../../utils-browser.cjs';
+import { randomStr } from '../../utils-browser.js';
 
 // css for browser
 // '//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/styles/default.min.css'

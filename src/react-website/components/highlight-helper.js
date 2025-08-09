@@ -1,6 +1,6 @@
 import hljs from 'highlight.js';
 import copyToClipboard from '../../utils/copyToClipboard';
-import { loadJS, randomStr } from '../../utils-browser.cjs';
+import { loadJS, randomStr } from '../../utils-browser.js';
 
 /**
  * Start highlighting for a given <pre> or <code> element.

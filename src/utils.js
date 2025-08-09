@@ -6,7 +6,7 @@ import nikParse from 'nik-parser-jurusid';
 import path from 'node:path';
 import readline from 'node:readline';
 import { readfile } from 'sbg-utility';
-export * from './utils-browser.cjs';
+export * from './utils-browser.js';
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });

@@ -3,7 +3,7 @@ import moment from 'moment';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { logInline, logLine } from './utils.js';
-import { getNumbersOnly } from './utils-browser.cjs';
+import { getNumbersOnly } from './utils-browser.js';
 import { fixData, getCacheKey, getCachedData, getDataRange, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);

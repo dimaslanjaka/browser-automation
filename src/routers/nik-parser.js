@@ -1,7 +1,7 @@
 import express from 'express';
 import nikParser from 'nik-parser-jurusid';
 import { loadCsvData } from '../../data/index.js';
-import { getNumbersOnly } from '../utils-browser.cjs';
+import { getNumbersOnly } from '../utils-browser.js';
 
 const router = express.Router();
 

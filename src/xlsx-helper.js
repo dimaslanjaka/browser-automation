@@ -10,7 +10,7 @@ import { getAge } from '../src/date.js';
 import { geocodeWithNominatim } from './address/nominatim.js';
 import { extractMonthName, getDatesWithoutSundays } from './date.js';
 import { logLine } from './utils.js';
-import { getNumbersOnly } from './utils-browser.cjs';
+import { getNumbersOnly } from './utils-browser.js';
 
 /**
  * Generates a hash for the given file
