@@ -41,25 +41,13 @@ const keyMap = {
 /**
  * Loads and processes CSV data from the data.csv file
  * Maps column headers using keyMap, parses dates, and saves encrypted JSON output
- * @returns {Promise<Array<{
- *   tanggal?: string,
- *   nama?: string,
- *   nik?: string,
- *   pekerjaan?: string,
- *   bb?: string,
- *   tb?: string,
- *   batuk?: string,
- *   diabetes?: string,
- *   tgl_lahir?: string,
- *   alamat?: string,
- *   jenis_kelamin?: string,
- *   petugas?: string,
- *   rowIndex: number,
- *   originalTglLahir?: string
- * }>>} Promise that resolves to an array of processed CSV records
+ * @returns {Promise<import('./types.js').DataArray>} Promise that resolves to an array of processed CSV records
  */
 export async function loadCsvData() {
-  return new Promise((resolve, reject) => {
+  /**
+   * @type {import('./types.js').DataArray}
+   */
+  const results = await new Promise((resolve, reject) => {
     const mappedRecords = [];
 
     fs.createReadStream(csvFilePath)
@@ -89,14 +77,16 @@ export async function loadCsvData() {
       })
       .on('error', reject);
   });
+  return results;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // This module is being run directly
-  console.log('Loading CSV data...');
-  loadCsvData().then((data) => {
+  (async () => {
+    console.log('Loading CSV data...');
+    const data = await loadCsvData();
     console.log(`Loaded ${data.length} records from CSV.`);
     console.log(data.at(0)); // Output the first mapped record to verify mapping
     console.log(data.at(-1)); // Output the last mapped record to verify mapping
-  });
+  })();
 }
