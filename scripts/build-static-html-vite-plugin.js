@@ -11,6 +11,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
+const filename = process.env.DATABASE_FILENAME;
 
 /**
  * Builds the static HTML log file from database logs and template.
@@ -38,7 +39,8 @@ export async function buildStaticHtml(options) {
   if (!secret) throw new Error('VITE_JSON_SECRET is not set in environment variables');
   fs.writeFileSync(outLogsPath, encryptJson(liveLogs, secret));
   console.log(`Logs JSON written to ${outLogsPath}`);
-  const outHtmlPath = path.resolve(process.cwd(), 'public/log-juli-2025.html');
+  const currentYear = new Date().getFullYear();
+  const outHtmlPath = path.resolve(process.cwd(), `public/log-${filename}-${currentYear}.html`);
   const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outHtmlPath)}`;
   // Count success and fail logs (case-insensitive)
   const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
