@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AdSense from './components/Adsense';
-import { decodeSafelinkQueryParameter } from './components/utils.cjs';
+import { decodeSafelinkQueryParameter } from './components/utils.js';
 
 const Outbound = () => {
   const [outboundUrl, setOutboundUrl] = useState(null);

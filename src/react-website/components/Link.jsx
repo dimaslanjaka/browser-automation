@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as OriginalLink } from 'react-router-dom';
-import { getSafelinkInstance, isValidHttpUrl } from './utils.cjs';
+import { getSafelinkInstance, isValidHttpUrl } from './utils.js';
 
 /**
  * React Safelink Converter
