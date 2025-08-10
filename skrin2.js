@@ -23,6 +23,9 @@ console.clear();
 // Start keep-awake before long automation
 const wakeController = await keepAwake();
 console.log(`🔋 Keep-awake started using: ${wakeController.method}`);
+process.on('exit', async () => {
+  wakeController.release();
+});
 
 /**
  * Processes a single data entry in the skrining workflow.
