@@ -74,7 +74,13 @@ export default defineConfig({
         '**/packages/**',
         '**/tmp/**',
         '**/transpile/**',
-        '**/docs/**'
+        '**/docs/**',
+        '**/.yarn/**',
+        '**/.cache/**',
+        '**/.vscode/**',
+        '**/.idea/**',
+        '**/.git/**',
+        '**/.github/**'
       ],
       usePolling: false
     }
