@@ -1,6 +1,6 @@
 import * as safelinkify from 'safelinkify/dist/safelink-browser-module';
 import { sleep } from '../../utils-browser.js';
-import { getCookie, setCookieMins } from './cookie.cjs';
+import { getCookie, setCookieMins } from './cookie.js';
 
 /**
  * Scrolls the window to the top of the page with a sequence of scrolls for smoother effect.
