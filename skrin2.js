@@ -435,10 +435,15 @@ async function processData(page, data) {
 
   await sleep(2000); // Wait for the form to stabilize
 
+  // Re-evaluate the form to ensure all fields are filled correctly
+  if (!(await isAllowedToSubmit())) {
+    await re_evaluate(page);
+  }
+
   while (!(await isAllowedToSubmit())) {
-    if (await isIframeElementVisible(page, iframeSelector, '#yesButton')) {
-      break; // If the Yes button is visible, we can proceed
-    }
+    // if (await isIframeElementVisible(page, iframeSelector, '#yesButton')) {
+    //   break; // If the Yes button is visible, we can proceed
+    // }
     logLine(`Submission not allowed for NIK: ${NIK}. Please check the form for errors.`);
     // Wait for user to fix data
     await waitEnter(`Please fix data for ${fixedData.NAMA} (${NIK}). Press Enter to continue...`);
@@ -524,6 +529,114 @@ async function processData(page, data) {
   } else {
     logLine(`Data for NIK: ${NIK} submission failed. Please check the form for errors.`);
   }
+}
+
+async function re_evaluate(page) {
+  const iframeSelector = '.k-window-content iframe.k-content-frame';
+  const iframeElement = await page.$(iframeSelector);
+  const iframe = await iframeElement.contentFrame();
+  const iframeType = async (selector, value) => {
+    // Check if element is visible and enabled
+    const isVisibleAndEnabled = await iframe
+      .$eval(selector, (el) => {
+        const style = window.getComputedStyle(el);
+        const notHidden =
+          style && style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+        const notDisabled = !el.disabled && !el.readOnly;
+        return notHidden && notDisabled;
+      })
+      .catch(() => false);
+    if (!isVisibleAndEnabled) {
+      logLine(`Element ${selector} is not visible or enabled, skipping typing.`);
+      return;
+    }
+    // Scroll to the element before typing
+    await iframe.$eval(selector, (el) => el.scrollIntoView({ behavior: 'auto', block: 'center' }));
+    // Click to focus the element
+    await iframe.click(selector).catch(() => {});
+    await iframe.focus(selector).catch(() => {});
+    // Try to clear the input using keyboard (Ctrl+A, Backspace)
+    try {
+      await iframe.click(selector, { clickCount: 3 });
+      await iframe.type(selector, String.fromCharCode(1), { delay: 10 }); // Ctrl+A
+      await iframe.keyboard.down('Control');
+      await iframe.keyboard.press('A');
+      await iframe.keyboard.up('Control');
+      await iframe.keyboard.press('Backspace');
+    } catch {
+      // fallback to JS clear
+      await page.evaluate(
+        (iframeSelector, selector) => {
+          const iframe = document.querySelector(iframeSelector);
+          const element = iframe.contentDocument.querySelector(selector);
+          if (element) {
+            element.value = '';
+            element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
+          }
+        },
+        iframeSelector,
+        selector
+      );
+    }
+    // Retry typing up to 3 times if value is not set
+    let lastError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await iframe.type(selector, value, { delay: 100 });
+        // Wait for value to be set
+        await iframe.waitForFunction(
+          (sel, val) => {
+            const el = document.querySelector(sel);
+            return el && el.value && el.value.trim() === val.trim();
+          },
+          {},
+          selector,
+          value
+        );
+        // Trigger input and change events
+        await iframe.$eval(selector, (el) => {
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await sleep(500);
+        return;
+      } catch (err) {
+        lastError = err;
+        logLine(`Typing attempt ${attempt + 1} failed for ${selector}: ${err}`);
+        await sleep(300);
+      }
+    }
+    logLine(`Failed to type value into ${selector} after 3 attempts. Last error: ${lastError}`);
+  };
+  const isInputEmpty = async (selector) => {
+    try {
+      const value = await iframe.$eval(selector, (el) => el.value);
+      return !value || value.trim() === '';
+    } catch (err) {
+      logLine(`Error checking input empty state for ${selector} with $eval: ${err}`);
+      // Fallback: try to get value using JS evaluate
+      try {
+        const value = await page.evaluate(
+          (iframeSelector, selector) => {
+            const iframe = document.querySelector(iframeSelector);
+            if (!iframe) return '';
+            const el = iframe.contentDocument.querySelector(selector);
+            return el ? el.value : '';
+          },
+          iframeSelector,
+          selector
+        );
+        return !value || value.trim() === '';
+      } catch (err2) {
+        logLine(`Fallback JS evaluate failed for ${selector}: ${err2}`);
+        return true; // Assume empty if error occurs
+      }
+    }
+  };
+  if (await isInputEmpty('#field_item_nama_peserta input[type="text"]'))
+    await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+  if (await isInputEmpty('input[name="tempat_skrining_id_input"]'))
+    await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
 }
 
 /**
