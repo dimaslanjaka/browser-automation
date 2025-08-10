@@ -1,18 +1,18 @@
 // https://codepen.io/dimaslanjaka/pen/LYegjaV
 // data timezone load https://momentjs.com/timezone/docs/#/data-loading/
 // list timezone https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-// require('moment')
-// require('moment/min/moment-with-locales');
-// require('moment-timezone/builds/moment-timezone-with-data.min');
-// const moment = require('moment-timezone');
+// import 'moment';
+// import 'moment/min/moment-with-locales';
+// import 'moment-timezone/builds/moment-timezone-with-data.min';
+// import moment from 'moment-timezone';
 
-export const moment = require('moment-timezone');
+import moment from 'moment-timezone';
 
 /**
  * start moment timezone script
  */
 export function momentTimezonePlayground() {
-  if (location.host.includes('cdpn')) console.clear();
+  if (typeof location !== 'undefined' && location.host.includes('cdpn')) console.clear();
 }
 
 /**
@@ -36,11 +36,16 @@ export function moment_format(dateInput, custom_pattern, custom_timezone) {
   let value = '';
   if (typeof custom_pattern === 'string' && custom_pattern.length > 0) {
     value = custom_pattern;
-  } else if (custom_pattern.value && custom_pattern.value.length > 0) {
+  } else if (custom_pattern && custom_pattern.value && custom_pattern.value.length > 0) {
     value = custom_pattern.value;
   }
-  const date_timezone = document.getElementById('date-timezone');
-  let timezone = date_timezone.value.trim();
+  let timezone = undefined;
+  if (typeof document !== 'undefined') {
+    const date_timezone = document.getElementById('date-timezone');
+    if (date_timezone && date_timezone.value) {
+      timezone = date_timezone.value.trim();
+    }
+  }
   if (typeof custom_timezone === 'string' && custom_timezone.length > 0) {
     timezone = custom_timezone;
   }
@@ -70,7 +75,7 @@ export function setDateLocalValue(element, date) {
 }
 
 export function isNumeric(str) {
-  return parseFloat(str) === parseFloat(str);
+  return !isNaN(str) && !isNaN(parseFloat(str));
 }
 
 /**
