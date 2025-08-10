@@ -20,6 +20,10 @@ import { fixData } from './src/xlsx-helper.js';
 
 console.clear();
 
+// Start keep-awake before long automation
+const wakeController = await keepAwake();
+console.log(`🔋 Keep-awake started using: ${wakeController.method}`);
+
 /**
  * Processes a single data entry in the skrining workflow.
  *
@@ -29,10 +33,6 @@ console.clear();
  * @returns {Promise<void>} Resolves when processing is complete.
  */
 async function processData(page, data) {
-  // Start keep-awake before long automation
-  const wakeController = await keepAwake(page);
-  console.log(`🔋 Keep-awake started using: ${wakeController.method}`);
-
   const fixedData = await fixData(data);
   const NIK = getNumbersOnly(fixedData.nik);
   const cachedData = getLogById(NIK);
@@ -520,12 +520,6 @@ async function processData(page, data) {
     });
   } else {
     logLine(`Data for NIK: ${NIK} submission failed. Please check the form for errors.`);
-  }
-
-  // Release the wake lock to allow the system to sleep again
-  if (wakeController) {
-    await wakeController.release();
-    console.log(`🔋 Keep-awake released for NIK: ${NIK}`);
   }
 }
 

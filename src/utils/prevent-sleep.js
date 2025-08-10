@@ -1,135 +1,125 @@
+import { spawn } from 'child_process';
+
 /**
- * Keeps a browser page awake using the Screen Wake Lock API when available,
- * with fallback to mouse movement for Puppeteer automation tasks.
- * This prevents the system from going to sleep or becoming idle during long-running automation tasks.
+ * Prevents system sleep using Windows-specific power configuration.
+ * This prevents the system from going to sleep during long-running automation tasks.
  *
- * @param {Object} page - The Puppeteer page object that provides mouse control
- * @param {Object} page.mouse - The mouse object with move method
- * @param {Function} page.mouse.move - Function to move mouse to specified coordinates
+ * @param {Object} [options] - Additional options for keep-awake behavior
+ * @param {boolean} [options.useSystemPrevent=true] - Use OS-specific prevention methods
  * @returns {Promise<Object>} Returns an object with release method to stop keeping awake
  *
  * @example
- * // Keep a Puppeteer page awake
- * const page = await browser.newPage();
- * const wakeController = await keepAwake(page);
- * // Later, release the wake lock
+ * // Keep system awake with Windows prevention
+ * const wakeController = await keepAwake();
+ * // Later, release and restore settings
  * await wakeController.release();
+ *
+ * @example
+ * // Keep awake with explicit options
+ * const wakeController = await keepAwake({ useSystemPrevent: true });
  *
  * @since 1.0.0
  */
-async function keepAwake(page) {
-  let wakeLock = null;
-  let usingMouseMovement = false;
-  let visibilityHandler = null;
+async function keepAwake(options = {}) {
+  let systemPreventActive = false;
 
-  // Try to use the Wake Lock API first (for browser environments)
-  const tryWakeLock = async () => {
+  // Default to using system prevent unless explicitly disabled
+  const shouldUseSystemPrevent = options.useSystemPrevent !== false;
+
+  // Windows-specific sleep prevention
+  const preventWindowsSleep = async () => {
+    if (!shouldUseSystemPrevent || process.platform !== 'win32') {
+      return false;
+    }
+
     try {
-      // Check if Wake Lock API is supported
-      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
-        wakeLock = await navigator.wakeLock.request('screen');
-        console.log('Screen Wake Lock acquired successfully');
-
-        // Listen for wake lock release
-        wakeLock.addEventListener('release', () => {
-          console.log('Screen Wake Lock has been released');
-          wakeLock = null;
+      // Set sleep timeout to 0 (never) for current session
+      const setNeverSleep = () =>
+        new Promise((resolve, reject) => {
+          const child = spawn('powercfg', ['-change', '-standby-timeout-ac', '0']);
+          child.on('close', (code) => {
+            if (code === 0) {
+              console.log('Windows sleep prevention activated for current session');
+              systemPreventActive = true;
+              resolve(true);
+            } else {
+              reject(new Error(`powercfg failed with code ${code}`));
+            }
+          });
         });
 
-        return true;
-      }
+      await setNeverSleep();
+      return true;
     } catch (err) {
-      console.warn('Wake Lock API failed:', err.message);
-      wakeLock = null;
+      console.warn('Windows sleep prevention failed:', err.message);
+      return false;
     }
-    return false;
   };
 
-  // Fallback mouse movement for Puppeteer
-  const startMouseMovement = async () => {
+  // Restore Windows power settings
+  const restoreWindowsPowerSettings = async () => {
+    if (!systemPreventActive || process.platform !== 'win32') {
+      return;
+    }
+
     try {
-      await page.mouse.move(1, 1);
-      await page.mouse.move(2, 2);
-      // console.log('Sent keep-alive mouse move.');
-      usingMouseMovement = true;
+      // Reset to system default (usually 30 minutes for AC power)
+      const restoreDefaults = () =>
+        new Promise((resolve) => {
+          const child = spawn('powercfg', ['-change', '-standby-timeout-ac', '30']);
+          child.on('close', () => {
+            console.log('Windows power settings restored');
+            systemPreventActive = false;
+            resolve();
+          });
+        });
+
+      await restoreDefaults();
     } catch (err) {
-      console.error('Keep-awake mouse error:', err);
+      console.warn('Failed to restore Windows power settings:', err.message);
     }
   };
 
-  // Handle visibility change to reacquire wake lock
-  const handleVisibilityChange = async () => {
-    if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !wakeLock) {
-      await tryWakeLock();
-    }
-  };
+  // Initialize Windows sleep prevention
+  const preventionActivated = await preventWindowsSleep();
 
-  // Initialize wake keeping
-  const wakeLockAcquired = await tryWakeLock();
-
-  if (!wakeLockAcquired) {
-    console.log('Using mouse movement fallback for keep-awake');
-    await startMouseMovement();
-  }
-
-  // Set up visibility change listener for wake lock reacquisition
-  if (typeof document !== 'undefined') {
-    visibilityHandler = handleVisibilityChange;
-    document.addEventListener('visibilitychange', visibilityHandler);
+  if (!preventionActivated) {
+    console.warn('Sleep prevention not activated - either not on Windows or useSystemPrevent is disabled');
   }
 
   // Return controller object
   return {
     async release() {
-      // Release wake lock
-      if (wakeLock) {
-        await wakeLock.release();
-        wakeLock = null;
-      }
-      if (usingMouseMovement) {
-        // If using mouse movement, we don't need to do anything special
-        usingMouseMovement = false;
-      }
-
-      // Clear mouse movement interval (no longer needed since we don't use intervals)
-      // mouseInterval cleanup removed as we no longer use intervals
-
-      // Remove visibility change listener
-      if (visibilityHandler && typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', visibilityHandler);
-        visibilityHandler = null;
-      }
-
+      // Restore Windows power settings if they were changed
+      await restoreWindowsPowerSettings();
       console.log('Keep-awake released');
     },
 
     get isActive() {
-      return wakeLock !== null;
+      return systemPreventActive;
     },
 
     get method() {
-      if (wakeLock) return 'wakeLock';
-      if (usingMouseMovement) return 'mouseMovement';
+      if (systemPreventActive) return 'windowsPowerCfg';
       return 'none';
     }
   };
 }
 
 /**
- * Checks if the Screen Wake Lock API is supported in the current environment.
- * @returns {boolean} True if Wake Lock API is supported, false otherwise
+ * Checks if Windows-specific sleep prevention is available.
+ * @returns {boolean} True if running on Windows with powercfg available, false otherwise
  *
  * @example
- * if (isWakeLockSupported()) {
- *   console.log('Wake Lock API is available');
- * } else {
- *   console.log('Wake Lock API not supported, will use fallback');
+ * if (isWindowsSleepPreventionSupported()) {
+ *   console.log('Windows sleep prevention is available');
  * }
  *
  * @since 1.0.0
  */
-function isWakeLockSupported() {
-  return typeof navigator !== 'undefined' && 'wakeLock' in navigator;
+
+function isWindowsSleepPreventionSupported() {
+  return process.platform === 'win32';
 }
 
-export { keepAwake, keepAwake as preventSleep, isWakeLockSupported };
+export { keepAwake, keepAwake as preventSleep, isWindowsSleepPreventionSupported };
