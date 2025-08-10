@@ -81,7 +81,7 @@
   "editor.formatOnPaste": false,
   "editor.formatOnSave": false,
   "eslint.useFlatConfig": true,
-  "files.autoSave": "onWindowChange",
+  "files.autoSave": "off",
   "files.exclude": {
     "**/.DS_Store": true,
     "**/.git": true,
@@ -191,5 +191,7 @@
   "typescript.tsserver.log": "verbose",
   "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
-  "typescript.tsserver.web.typeAcquisition.enabled": true
+  "typescript.tsserver.web.typeAcquisition.enabled": true,
+  "files.autoSaveDelay": 10000,
+  "files.autoSaveWhenNoErrors": true
 }
