@@ -1,1 +1,0 @@
-System.register(["./react-legacy-DWrEKM-J.js","./highlight-legacy-DV4tsojk.js"],function(e,t){"use strict";var r,g;return{setters:[e=>{r=e.g},e=>{g=e.r}],execute:function(){e("HighlightJS",r(g()))}}});
