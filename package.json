@@ -22,7 +22,8 @@
     "vite:preview": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js preview",
     "vite:deploy": "node -r ./.vscode/js-hook.cjs vite.deploy.js",
     "clean": "rimraf node_modules/.vite dist",
-    "clean:full": "rimraf node_modules .vite dist && npm install"
+    "clean:full": "rimraf node_modules .vite dist && npm install",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -112,8 +113,10 @@
     "eslint-plugin-react-hooks": "^5",
     "gh-pages": "^6",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "jest": "^30",
     "jest-environment-jsdom": "^30",
+    "lint-staged": "^16.1.5",
     "nodemon": "^3",
     "npm-check-updates": "^18",
     "postcss": "^8",
