@@ -1,0 +1,7 @@
+*.xlsx
+*.csv
+tmp/
+*.json
+*.log
+*.txt
+*.bak
