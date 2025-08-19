@@ -2,6 +2,8 @@ import { getPuppeteer } from '../puppeteer_utils.js';
 import 'dotenv/config.js';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
 import { sleep } from '../utils-browser.js';
+import path from 'upath';
+import fs from 'fs-extra';
 
 /**
  * Main entry point for the automation script.
@@ -130,6 +132,93 @@ async function processData(page, item) {
     throw new Error('Button "Daftar Baru" not found');
   }
 
+  // Easy input
+  await commonInput(page, item);
+
+  // Input datepicker
+  await vueDatePicker(page, item);
+
+  // Select gender (Jenis Kelamin)
+  await vueGenderSelect(page, item);
+
+  // Select pekerjaan (Pekerjaan)
+  await vuePekerjaanSelect(page, item);
+
+  // Select provinsi (Province)
+  await vueSelectAddress(page, item);
+}
+
+/**
+ * Select provinsi (Province) by interacting with the Vue-based dropdown/modal picker.
+ * Handles opening the "Alamat Domisili" dropdown, waits for the modal, and selects the province option by matching normalized text.
+ * Uses Puppeteer's real user click for robust interaction with custom UI components.
+ *
+ * @param {import('puppeteer').Page} page - Puppeteer page instance
+ * @param {object} item - Data item containing the 'provinsi' field (province name)
+ * @returns {Promise<void>} Resolves when the province is selected, or throws on error
+ */
+async function vueSelectAddress(page, item) {
+  // Find and click the "Alamat Domisili" dropdown to open the province selector
+  const clicked = await page.evaluate(() => {
+    // Find all divs with class "font-semibold"
+    const allDivs = Array.from(document.querySelectorAll('div.font-semibold'));
+    // Find the one whose text starts with "Alamat Domisili"
+    const labelDiv = allDivs.find((div) => div.textContent && div.textContent.trim().startsWith('Alamat Domisili'));
+    if (!labelDiv) return false;
+    // The dropdown trigger is the next sibling .relative.flex container
+    let container = labelDiv.parentElement;
+    // Find the .relative.flex container (dropdown root)
+    let dropdownContainer = null;
+    while (container && !dropdownContainer) {
+      dropdownContainer = Array.from(container.querySelectorAll('div.relative'))[0];
+      if (!dropdownContainer) container = container.parentElement;
+    }
+    // Fallback: try next sibling if not found
+    if (!dropdownContainer && labelDiv.nextElementSibling) {
+      dropdownContainer = labelDiv.nextElementSibling;
+    }
+    if (!dropdownContainer) return false;
+    // Click the div with class containing min-h-[2.9rem] inside the container
+    const trigger = Array.from(dropdownContainer.querySelectorAll('div')).find(
+      (div) => div.className && div.className.includes('min-h-[2.9rem]')
+    );
+    if (!trigger) return false;
+    trigger.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    trigger.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return true;
+  });
+  if (!clicked) throw new Error('Alamat Domisili dropdown not found or not clickable');
+
+  // Wait for the dropdown/modal to appear
+  await sleep(500);
+
+  const provinsi = item.provinsi.trim().toLowerCase();
+
+  // Click the province button inside the modal from the browser context
+  const buttonHandle = await page.evaluateHandle((provinsi) => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    return buttons.find((btn) => btn.textContent.trim().toLowerCase() === provinsi);
+  }, provinsi);
+  if (buttonHandle) {
+    const isVisible = await buttonHandle.evaluate((btn) => btn.offsetParent !== null);
+    if (isVisible) {
+      await buttonHandle.click();
+    }
+  }
+
+  // Click kabupaten/kota
+
+  // Optionally wait a bit for the modal to close
+  await sleep(200);
+}
+
+/**
+ * Fill common input fields in the registration form (NIK, Nama, Nomor Whatsapp).
+ * @param {import('puppeteer').Page} page - Puppeteer page instance
+ * @param {object} item - Data item containing input values
+ */
+async function commonInput(page, item) {
   // Input <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="16">
   await page.focus('input[id="nik"]');
   await page.type('input[id="nik"]', item.nik, { delay: 100 });
@@ -138,18 +227,9 @@ async function processData(page, item) {
   await page.focus('input[id="Nama Lengkap"]');
   await page.type('input[id="Nama Lengkap"]', item.nama, { delay: 100 });
 
-  // Input datepicker
-  await vueDatePicker(page, item);
-
-  // Select gender (Jenis Kelamin)
-  await vueGenderSelect(page, item);
-
   // Input phone number <input id="No Whatsapp" type="text" class="w-full form-input rounded-l-none" name="Nomor Whatsapp" placeholder="Masukkan nomor whatsapp" autocomplete="off" maxlength="300">
   await page.focus('input[name="Nomor Whatsapp"]');
   await page.type('input[name="Nomor Whatsapp"]', item.nomor_wa.replace(/^\+62/, ''), { delay: 100 });
-
-  // Select pekerjaan (Pekerjaan)
-  await vuePekerjaanSelect(page, item);
 }
 
 /**
@@ -509,6 +589,15 @@ async function _login(page) {
   } else {
     console.log('Login button is disabled. Please check if all fields are filled and captcha is handled.');
   }
+}
+
+async function _ss(page, filePath = 'tmp/screenshot.png') {
+  fs.ensureDirSync(path.dirname(filePath));
+  await page.screenshot({
+    path: filePath,
+    fullPage: true
+  });
+  console.log(`Screenshot saved as ${filePath}`);
 }
 
 main().catch(console.error);
