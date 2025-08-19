@@ -1,15 +1,16 @@
-import { getPuppeteer } from '../puppeteer_utils.js';
 import 'dotenv/config.js';
-import data from './sehatindonesiaku-data.json' with { type: 'json' };
-import { sleep } from '../utils-browser.js';
-import path from 'upath';
 import fs from 'fs-extra';
+import { Page } from 'puppeteer';
+import path from 'upath';
+import { getPuppeteer } from '../puppeteer_utils.js';
+import { sleep } from '../utils-browser.js';
+import { DataItem } from './sehatindonesiaku-data.js';
+import data from './sehatindonesiaku-data.json' with { type: 'json' };
 
 /**
  * Main entry point for the automation script.
  * Launches Puppeteer, navigates to the registration page, waits for DOM stability,
  * and processes the first data item.
- * @returns {Promise<void>}
  */
 async function main() {
   const { page, browser: _browser } = await getPuppeteer();
@@ -33,7 +34,7 @@ async function main() {
           if (Date.now() - lastChange > stableMs) {
             clearTimeout(timer);
             observer.disconnect();
-            resolve();
+            resolve(undefined);
           } else {
             setTimeout(check, 100);
           }
@@ -77,9 +78,8 @@ async function main() {
 
 /**
  * Process a single data item by interacting with the registration form.
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {object} item - Data item to process
- * @returns {Promise<void>}
+ * @param page Puppeteer page instance
+ * @param item Data item to process
  */
 async function processData(page, item) {
   // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
@@ -116,7 +116,7 @@ async function processData(page, item) {
               if (Date.now() - lastChange > stableMs) {
                 clearTimeout(timer);
                 observer.disconnect();
-                resolve();
+                resolve(undefined);
               } else {
                 setTimeout(check, 100);
               }
@@ -153,9 +153,8 @@ async function processData(page, item) {
  * Handles opening the "Alamat Domisili" dropdown, waits for the modal, and selects the province option by matching normalized text.
  * Uses Puppeteer's real user click for robust interaction with custom UI components.
  *
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {object} item - Data item containing the 'provinsi' field (province name)
- * @returns {Promise<void>} Resolves when the province is selected, or throws on error
+ * @param page Puppeteer page instance
+ * @param item Data item containing the 'provinsi' field (province name)
  */
 async function vueSelectAddress(page, item) {
   // Find and click the "Alamat Domisili" dropdown to open the province selector
@@ -180,8 +179,8 @@ async function vueSelectAddress(page, item) {
     if (!dropdownContainer) return false;
     // Click the div with class containing min-h-[2.9rem] inside the container
     const trigger = Array.from(dropdownContainer.querySelectorAll('div')).find(
-      (div) => div.className && div.className.includes('min-h-[2.9rem]')
-    );
+      (div) => (div as Element).className && (div as Element).className.includes('min-h-[2.9rem]')
+    ) as Element | null;
     if (!trigger) return false;
     trigger.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     trigger.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
@@ -215,8 +214,8 @@ async function vueSelectAddress(page, item) {
 
 /**
  * Fill common input fields in the registration form (NIK, Nama, Nomor Whatsapp).
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {object} item - Data item containing input values
+ * @param page Puppeteer page instance
+ * @param item Data item containing input values
  */
 async function commonInput(page, item) {
   // Input <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="16">
@@ -234,10 +233,10 @@ async function commonInput(page, item) {
 
 /**
  * Select pekerjaan (Pekerjaan) by clicking the SVG icon near the label and choosing the correct option.
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {object} item - Data item containing pekerjaan
+ * @param page Puppeteer page instance
+ * @param item Data item containing pekerjaan
  */
-async function vuePekerjaanSelect(page, item) {
+async function vuePekerjaanSelect(page: Page, item: DataItem) {
   // Map pekerjaan to a standardized value using regex patterns matching the button text
   const pekerjaanPatterns = [
     { re: /Belum\/?Tidak Bekerja/i, value: 'Belum/Tidak Bekerja' },
@@ -362,7 +361,12 @@ async function vuePekerjaanSelect(page, item) {
   }, pekerjaanValue);
 }
 
-async function vueGenderSelect(page, item) {
+/**
+ * Select gender (Jenis Kelamin) by clicking the SVG icon near the label and choosing the correct option.
+ * @param page Puppeteer page instance
+ * @param item Data item containing gender
+ */
+async function vueGenderSelect(page: Page, item: DataItem) {
   // Select gender (Jenis Kelamin) by clicking the SVG icon near the label (from Puppeteer context)
   const clickGenderDropdown = await page.evaluate(() => {
     // Find the label div
@@ -400,7 +404,7 @@ async function vueGenderSelect(page, item) {
           (d) => d.textContent && d.textContent.trim() === gender
         );
         if (match) {
-          opt.click();
+          (opt as HTMLElement).click();
           found = true;
           break;
         }
@@ -411,20 +415,14 @@ async function vueGenderSelect(page, item) {
   }, item.jenis_kelamin);
 }
 
-/**
- * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
- * Handles year, month, and day navigation robustly for DD/MM/YYYY format.
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {object} item - Data item containing tanggal_lahir in DD/MM/YYYY
- */
-async function vueDatePicker(page, item) {
+async function vueDatePicker(page: import('puppeteer').Page, item: DataItem): Promise<void> {
   /**
    * Select a date in the datepicker popup.
-   * @param {import('puppeteer').Page} page
-   * @param {string} selector - CSS selector for the datepicker container
-   * @param {string} tanggal - Date string in DD/MM/YYYY
+   * @param page Puppeteer page instance
+   * @param selector CSS selector for the datepicker container
+   * @param tanggal Date string in DD/MM/YYYY
    */
-  async function selectDate(page, selector, tanggal) {
+  async function selectDate(page: import('puppeteer').Page, selector: string, tanggal: string): Promise<void> {
     const [day, month, year] = tanggal.split('/');
     const bulan = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -434,9 +432,9 @@ async function vueDatePicker(page, item) {
 
     // --- YEAR ---
     // Try to find the year panel directly (newer mx-datepicker uses .mx-calendar-panel-year)
-    let yearPanelSelector = '.mx-calendar .mx-calendar-year-panel, .mx-calendar.mx-calendar-panel-year';
+    const yearPanelSelector = '.mx-calendar .mx-calendar-year-panel, .mx-calendar.mx-calendar-panel-year';
     // Try to find a year button to open the panel, but if already open, skip
-    let yearPanel = await page.$(yearPanelSelector);
+    const yearPanel = await page.$(yearPanelSelector);
     if (!yearPanel) {
       // Try multiple possible year buttons
       const yearBtnSel = [
@@ -454,19 +452,19 @@ async function vueDatePicker(page, item) {
     let foundYear = false;
     while (!foundYear) {
       // Try both old and new year panel structures
-      const years = await page.$$eval(
+      const years: string[] = await page.$$eval(
         '.mx-calendar-year-panel td, .mx-calendar.mx-calendar-panel-year .mx-table-year td',
-        (els) => els.map((el) => el.textContent.trim())
+        (els: Element[]) => els.map((el) => (el.textContent ?? '').trim())
       );
       if (years.includes(String(year))) {
-        await page.evaluate((year) => {
+        await page.evaluate((year: string) => {
           const yearCells = Array.from(
             document.querySelectorAll(
               '.mx-calendar-year-panel td, .mx-calendar.mx-calendar-panel-year .mx-table-year td'
             )
           );
-          const target = yearCells.find((td) => td.textContent.trim() === String(year));
-          if (target) target.click();
+          const target = yearCells.find((td) => (td.textContent ?? '').trim() === String(year));
+          if (target) (target as HTMLElement).click();
         }, year);
         foundYear = true;
       } else {
@@ -474,13 +472,13 @@ async function vueDatePicker(page, item) {
         const nums = years.map(Number).filter(Boolean);
         const min = Math.min(...nums);
         const max = Math.max(...nums);
-        if (year < min) {
+        if (Number(year) < min) {
           // Try both old and new prev buttons
           const prevBtn = await page.$(
             '.mx-calendar-year-panel .mx-btn-icon-double-left, .mx-calendar.mx-calendar-panel-year .mx-btn-icon-double-left'
           );
           if (prevBtn) await prevBtn.click();
-        } else if (year > max) {
+        } else if (Number(year) > max) {
           const nextBtn = await page.$(
             '.mx-calendar-year-panel .mx-btn-icon-double-right, .mx-calendar.mx-calendar-panel-year .mx-btn-icon-double-right'
           );
@@ -495,8 +493,8 @@ async function vueDatePicker(page, item) {
 
     // --- MONTH ---
     // Try to open month panel if not already in month selection mode
-    let monthPanelSelector = '.mx-calendar .mx-calendar-month-panel, .mx-calendar.mx-calendar-panel-month';
-    let monthPanel = await page.$(monthPanelSelector);
+    const monthPanelSelector = '.mx-calendar .mx-calendar-month-panel, .mx-calendar.mx-calendar-panel-month';
+    const monthPanel = await page.$(monthPanelSelector);
     if (!monthPanel) {
       // Try to find a month button to open the panel, but if already open, skip
       const monthBtnSel = [
@@ -511,15 +509,15 @@ async function vueDatePicker(page, item) {
     }
 
     // Now select the month
-    await page.evaluate((monthText) => {
+    await page.evaluate((monthText: string) => {
       // Try both old and new month panel structures
       const monthCells = Array.from(
         document.querySelectorAll(
           '.mx-calendar-month-panel td, .mx-calendar.mx-calendar-panel-month .mx-table-month td'
         )
       );
-      const target = monthCells.find((td) => td.textContent.trim().startsWith(monthText));
-      if (target) target.click();
+      const target = monthCells.find((td) => (td.textContent ?? '').trim().startsWith(monthText));
+      if (target) (target as HTMLElement).click();
     }, bulan[Number(month)]);
 
     // --- DAY ---
@@ -529,21 +527,21 @@ async function vueDatePicker(page, item) {
     const dd = String(day).padStart(2, '0');
     const targetDate = `${yyyy}-${mm}-${dd}`;
     await page.evaluate(
-      (targetDate, day) => {
+      (targetDate: string, day: string) => {
         // Find all day cells in the current month
         const dayCells = Array.from(document.querySelectorAll('.mx-table-date td.cell'));
         const targetCell = dayCells.find(
           (td) =>
             td.getAttribute('title') === targetDate &&
             td.querySelector('div') &&
-            td.querySelector('div').textContent.trim() === String(Number(day))
+            (td.querySelector('div')!.textContent ?? '').trim() === String(Number(day))
         );
         if (targetCell) {
-          targetCell.click();
+          (targetCell as HTMLElement).click();
         } else {
           // fallback: try to click the button inside the cell if present
           const btn = targetCell && targetCell.querySelector('button');
-          if (btn) btn.click();
+          if (btn) (btn as HTMLElement).click();
         }
       },
       targetDate,
@@ -559,8 +557,7 @@ async function vueDatePicker(page, item) {
 
 /**
  * Perform login on the sehatindonesiaku.kemkes.go.id site.
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @returns {Promise<void>}
+ * @param page Puppeteer page instance
  */
 async function _login(page) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });

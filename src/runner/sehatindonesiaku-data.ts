@@ -8,6 +8,23 @@ const __dirname = path.dirname(__filename);
 
 const xlsxFile = path.join(__dirname, 'FORM PTM BARU JULI 2025 BONJER.xlsx');
 
+/**
+ * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
+ * Handles year, month, and day navigation robustly for DD/MM/YYYY format.
+ * @param page Puppeteer page instance
+ * @param item Data item containing tanggal_lahir in DD/MM/YYYY
+ */
+export interface DataItem {
+  nik: string;
+  nama: string;
+  nomor_wa: string;
+  tanggal_lahir: string;
+  jenis_kelamin: string;
+  pekerjaan: string;
+  provinsi: string;
+  [key: string]: any;
+}
+
 export function parseXlsxFile(filePath = xlsxFile) {
   const workbook = xlsx.readFile(filePath);
   const sheetName = 'Format Full';
@@ -16,7 +33,7 @@ export function parseXlsxFile(filePath = xlsxFile) {
     throw new Error(`Sheet '${sheetName}' not found in file: ${filePath}`);
   }
   // Parse from row 7 (index 6), no header
-  const data = xlsx.utils.sheet_to_json(sheet, {
+  const data: any[] = xlsx.utils.sheet_to_json(sheet, {
     header: 1,
     defval: null,
     range: 6 // 0-based, so 6 = row 7 as first data row
@@ -40,7 +57,7 @@ export function parseXlsxFile(filePath = xlsxFile) {
         let tgl = row[index];
         if (nik && typeof nik === 'string' && nik.length >= 12) {
           let day = parseInt(nik.substring(6, 8), 10);
-          let month = parseInt(nik.substring(8, 10), 10);
+          const month = parseInt(nik.substring(8, 10), 10);
           let year = parseInt(nik.substring(10, 12), 10);
           if (day > 40) day -= 40;
           year += year <= 24 ? 2000 : 1900;
