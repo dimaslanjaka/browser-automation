@@ -6,6 +6,7 @@ import jsonc from 'jsonc-parser';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import babelParser from '@babel/eslint-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,14 +77,8 @@ export default [
         hexo: 'readonly' // Hexo static site generator object
       },
 
-      parser: tsParser, // Use TypeScript parser
       ecmaVersion: 2020, // Specify ECMAScript version 2020
-      sourceType: 'module', // Enable ES6 modules
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true // Enable JSX parsing
-        }
-      }
+      sourceType: 'module' // Enable ES6 modules
     },
 
     rules: {
@@ -137,6 +132,15 @@ export default [
   {
     // Specific rules for JavaScript and CommonJS files
     files: ['**/*.js', '**/*.cjs'],
+    languageOptions: {
+      parser: babelParser, // Use Babel parser for JavaScript files
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          plugins: ['@babel/plugin-syntax-import-assertions']
+        }
+      }
+    },
     rules: {
       '@typescript-eslint/no-var-requires': 'off', // Allow require() in CommonJS files
       '@typescript-eslint/no-require-imports': 'off' // Allow require imports
@@ -145,6 +149,13 @@ export default [
   // React/JSX specific overrides (non-intrusive, appended at the end)
   {
     files: ['**/*.jsx', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true // Enable JSX parsing
+        }
+      }
+    },
     rules: {
       'react/react-in-jsx-scope': 'off', // Not needed for React 17+
       'react/prop-types': 'off' // Disable prop-types if using TypeScript
@@ -152,6 +163,18 @@ export default [
     settings: {
       react: {
         version: 'detect'
+      }
+    }
+  },
+  // Typescript files overrides
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tsParser, // Use TypeScript parser
+      parserOptions: {
+        projectService: true, // Enable project service for TypeScript
+        tsconfigRootDir: __dirname, // Set root directory for tsconfig
+        warnOnUnsupportedTypeScriptVersion: false // Disable warnings for unsupported TS versions
       }
     }
   }
