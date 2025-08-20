@@ -5,7 +5,11 @@ import path from 'upath';
 import { getPuppeteer } from '../puppeteer_utils.js';
 import { sleep } from '../utils-browser.js';
 import { DataItem } from './sehatindonesiaku-data.js';
+import { fileURLToPath } from 'url';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Main entry point for the automation script.
@@ -21,7 +25,8 @@ async function main() {
     function waitForDomStable(timeout = 10000, stableMs = 800) {
       return new Promise((resolve, reject) => {
         let lastChange = Date.now();
-        let observer;
+        // eslint-disable-next-line prefer-const
+        let observer: MutationObserver;
         const timer = setTimeout(() => {
           if (observer) observer.disconnect();
           reject(new Error('DOM did not stabilize in time'));
@@ -81,7 +86,7 @@ async function main() {
  * @param page Puppeteer page instance
  * @param item Data item to process
  */
-async function processData(page, item) {
+async function processData(page: Page, item: DataItem) {
   // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
   const buttonHandle = await page.evaluateHandle(() => {
     const buttons = Array.from(document.querySelectorAll('button'));
@@ -103,7 +108,8 @@ async function processData(page, item) {
         function waitForDomStable(timeout = 10000, stableMs = 800) {
           return new Promise((resolve, reject) => {
             let lastChange = Date.now();
-            let observer;
+            // eslint-disable-next-line prefer-const
+            let observer: MutationObserver;
             const timer = setTimeout(() => {
               if (observer) observer.disconnect();
               reject(new Error('DOM did not stabilize in time'));
@@ -132,7 +138,7 @@ async function processData(page, item) {
     throw new Error('Button "Daftar Baru" not found');
   }
 
-  // Easy input
+  // Common input
   await commonInput(page, item);
 
   // Input datepicker
@@ -156,7 +162,7 @@ async function processData(page, item) {
  * @param page Puppeteer page instance
  * @param item Data item containing the 'provinsi' field (province name)
  */
-async function vueSelectAddress(page, item) {
+async function vueSelectAddress(page: Page, _item: DataItem) {
   // Find and click the "Alamat Domisili" dropdown to open the province selector
   const clicked = await page.evaluate(() => {
     // Find all divs with class "font-semibold"
@@ -189,27 +195,160 @@ async function vueSelectAddress(page, item) {
   });
   if (!clicked) throw new Error('Alamat Domisili dropdown not found or not clickable');
 
-  // Wait for the dropdown/modal to appear
+  // Wait for the modal to appear
   await sleep(500);
 
-  const provinsi = item.provinsi.trim().toLowerCase();
+  // Use fixed value for testing
+  const provinsi = 'DKI Jakarta';
+  const kabupaten = 'Kota Adm. Jakarta Barat';
+  const kecamatan = 'Kebon Jeruk';
+  const kelurahan = 'Kebon Jeruk';
 
-  // Click the province button inside the modal from the browser context
-  const buttonHandle = await page.evaluateHandle((provinsi) => {
-    const buttons = Array.from(document.querySelectorAll('button'));
-    return buttons.find((btn) => btn.textContent.trim().toLowerCase() === provinsi);
-  }, provinsi);
-  if (buttonHandle) {
-    const isVisible = await buttonHandle.evaluate((btn) => btn.offsetParent !== null);
-    if (isVisible) {
-      await buttonHandle.click();
+  // Type to search the province in the modal's input
+  await page.evaluate((provinsi) => {
+    const input = document.querySelector('input[placeholder="Cari Provinsi"]');
+    if (input) {
+      (input as HTMLInputElement).value = provinsi;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     }
+  }, provinsi);
+  await sleep(300);
+
+  // Click the province button only inside Daftar Provinsi section
+  const provinsiHandle = await page.evaluateHandle((provinsi) => {
+    // Find the section with text 'Daftar Provinsi'
+    const daftarProvinsiDiv = Array.from(document.querySelectorAll('div')).find(
+      (div) => div.textContent && div.textContent.includes('Daftar Provinsi')
+    );
+    if (!daftarProvinsiDiv) return null;
+    // Find the button inside this section whose text matches provinsi
+    const btns = daftarProvinsiDiv.parentElement?.querySelectorAll('button');
+    if (!btns) return null;
+    return (
+      Array.from(btns).find((b) => {
+        // The button text is inside a child div
+        const div = b.querySelector('div');
+        return div && div.textContent && div.textContent.trim().toLowerCase() === provinsi.toLowerCase();
+      }) || null
+    );
+  }, provinsi);
+  if (provinsiHandle) {
+    const isVisible = await provinsiHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
+    if (isVisible) {
+      await provinsiHandle.click();
+    }
+    await provinsiHandle.dispose();
   }
 
-  // Click kabupaten/kota
+  await sleep(1000); // Wait for the modal to close
 
-  // Optionally wait a bit for the modal to close
-  await sleep(200);
+  // Type to search the kabupaten in the modal's input (if available)
+  await page.evaluate((kabupaten) => {
+    const input = document.querySelector('input[placeholder="Cari Kabupaten/Kota"]');
+    if (input) {
+      (input as HTMLInputElement).value = kabupaten;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, kabupaten);
+
+  await sleep(300); // Wait for the modal to refresh after typing kabupaten
+
+  // Click kabupaten/kota (only inside Daftar Kabupaten/Kota section)
+  const kabupatenHandle = await page.evaluateHandle((kabupaten) => {
+    // Find the section with text 'Daftar Kabupaten/Kota'
+    const daftarKabupatenDiv = Array.from(document.querySelectorAll('div')).find(
+      (div) => div.textContent && div.textContent.includes('Daftar Kabupaten/Kota')
+    );
+    if (!daftarKabupatenDiv) return null;
+    // Find the button inside this section whose text matches kabupaten
+    const btns = daftarKabupatenDiv.parentElement?.querySelectorAll('button');
+    if (!btns) return null;
+    return (
+      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kabupaten.toLowerCase()) ||
+      null
+    );
+  }, kabupaten);
+  if (kabupatenHandle) {
+    const isVisible = await kabupatenHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
+    if (isVisible) {
+      await kabupatenHandle.click();
+    }
+    await kabupatenHandle.dispose();
+  }
+
+  await sleep(1000); // Wait for the modal to refresh after selecting kabupaten
+
+  // Type to search the kecamatan in the modal's input (if available)
+  await page.evaluate((kecamatan) => {
+    const input = document.querySelector('input[placeholder="Cari Kecamatan"]');
+    if (input) {
+      (input as HTMLInputElement).value = kecamatan;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, kecamatan);
+
+  await sleep(300); // Wait for the modal to refresh after typing kecamatan
+
+  // Click kecamatan (only inside Daftar Kecamatan section)
+  const kecamatanHandle = await page.evaluateHandle((kecamatan) => {
+    // Find the section with text 'Daftar Kecamatan'
+    const daftarKecamatanDiv = Array.from(document.querySelectorAll('div')).find(
+      (div) => div.textContent && div.textContent.includes('Daftar Kecamatan')
+    );
+    if (!daftarKecamatanDiv) return null;
+    // Find the button inside this section whose text matches kecamatan
+    const btns = daftarKecamatanDiv.parentElement?.querySelectorAll('button');
+    if (!btns) return null;
+    return (
+      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kecamatan.toLowerCase()) ||
+      null
+    );
+  }, kecamatan);
+  if (kecamatanHandle) {
+    const isVisible = await kecamatanHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
+    if (isVisible) {
+      await kecamatanHandle.click();
+    }
+    await kecamatanHandle.dispose();
+  }
+
+  await sleep(1000); // Wait for the modal to refresh after selecting kecamatan
+
+  // Type to search the kelurahan in the modal's input (if available)
+  await page.evaluate((kelurahan) => {
+    const input = document.querySelector('input[placeholder="Cari Kelurahan"]');
+    if (input) {
+      (input as HTMLInputElement).value = kelurahan;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, kelurahan);
+
+  await sleep(300); // Wait for the modal to refresh after typing kelurahan
+
+  // Click kelurahan (only inside Daftar Kelurahan section)
+  const kelurahanHandle = await page.evaluateHandle((kelurahan) => {
+    // Find the section with text 'Daftar Kelurahan'
+    const daftarKelurahanDiv = Array.from(document.querySelectorAll('div')).find(
+      (div) => div.textContent && div.textContent.includes('Daftar Kelurahan')
+    );
+    if (!daftarKelurahanDiv) return null;
+    // Find the button inside this section whose text matches kelurahan
+    const btns = daftarKelurahanDiv.parentElement?.querySelectorAll('button');
+    if (!btns) return null;
+    return (
+      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kelurahan.toLowerCase()) ||
+      null
+    );
+  }, kelurahan);
+  if (kelurahanHandle) {
+    const isVisible = await kelurahanHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
+    if (isVisible) {
+      await kelurahanHandle.click();
+    }
+    await kelurahanHandle.dispose();
+  }
+
+  await sleep(1000); // Wait for the modal to refresh after selecting kelurahan
 }
 
 /**
@@ -217,7 +356,7 @@ async function vueSelectAddress(page, item) {
  * @param page Puppeteer page instance
  * @param item Data item containing input values
  */
-async function commonInput(page, item) {
+async function commonInput(page: Page, item: DataItem) {
   // Input <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="16">
   await page.focus('input[id="nik"]');
   await page.type('input[id="nik"]', item.nik, { delay: 100 });
@@ -415,7 +554,7 @@ async function vueGenderSelect(page: Page, item: DataItem) {
   }, item.jenis_kelamin);
 }
 
-async function vueDatePicker(page: import('puppeteer').Page, item: DataItem): Promise<void> {
+async function vueDatePicker(page: Page, item: DataItem): Promise<void> {
   /**
    * Select a date in the datepicker popup.
    * @param page Puppeteer page instance
@@ -559,7 +698,7 @@ async function vueDatePicker(page: import('puppeteer').Page, item: DataItem): Pr
  * Perform login on the sehatindonesiaku.kemkes.go.id site.
  * @param page Puppeteer page instance
  */
-async function _login(page) {
+async function _login(page: Page) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });
   // Fill email (username)
   await page.type('input[name="Email"]', process.env.SIH_USERNAME);
@@ -597,4 +736,14 @@ async function _ss(page, filePath = 'tmp/screenshot.png') {
   console.log(`Screenshot saved as ${filePath}`);
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  if (err instanceof Error) {
+    console.error(err.stack || err.message);
+  } else {
+    try {
+      console.error('Non-Error thrown:', JSON.stringify(err, null, 2));
+    } catch (e) {
+      console.error('Non-Error thrown:', e);
+    }
+  }
+});

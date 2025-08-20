@@ -1,11 +1,10 @@
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const xlsxFile = path.join(__dirname, 'FORM PTM BARU JULI 2025 BONJER.xlsx');
 
 /**
@@ -22,10 +21,12 @@ export interface DataItem {
   jenis_kelamin: string;
   pekerjaan: string;
   provinsi: string;
+  /** Geocoding result */
+  // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
 }
 
-export function parseXlsxFile(filePath = xlsxFile) {
+export async function parseXlsxFile(filePath = xlsxFile) {
   const workbook = xlsx.readFile(filePath);
   const sheetName = 'Format Full';
   const sheet = workbook.Sheets[sheetName];
@@ -38,7 +39,8 @@ export function parseXlsxFile(filePath = xlsxFile) {
     defval: null,
     range: 6 // 0-based, so 6 = row 7 as first data row
   });
-  return data.map((row) => {
+  const result: Partial<DataItem>[] = [];
+  for (const row of data) {
     const obj = {
       tanggal_pemeriksaan: '21/08/2025'
     };
@@ -89,12 +91,22 @@ export function parseXlsxFile(filePath = xlsxFile) {
       }
       obj[`Column ${index + 1}`] = row[index]; // Use dynamic keys for each column
     }
-    return obj;
-  });
+    // FIXME: Search actual address
+    // try {
+    //   const address = (obj['alamat'] || '') + ' ' + (obj['provinsi'] || '');
+    //   obj['resolved_address'] = await resolveAddress(address);
+    // } catch {
+    //   //
+    // }
+    result.push(obj);
+  }
+  return result;
 }
 
-const result = parseXlsxFile();
-const outPath = path.join(__dirname, 'sehatindonesiaku-data.json');
-fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
-console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
+(async () => {
+  const result = await parseXlsxFile();
+  const outPath = path.join(__dirname, 'sehatindonesiaku-data.json');
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
+  console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
+})();
