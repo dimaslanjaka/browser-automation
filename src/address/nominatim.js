@@ -89,7 +89,7 @@ export async function geocodeWithNominatim(keyword, method = 'GET') {
 }
 
 // CLI test
-if (process.argv[1] === __filename) {
+if (process.argv[1].includes('nominatim')) {
   (async () => {
     const addresses = [
       { keyword: 'TEMBOK GEDE I/51-H SURABAYA', method: 'GET' },

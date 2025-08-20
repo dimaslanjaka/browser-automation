@@ -48,7 +48,7 @@ export async function geocodeWithGoogle(keyword, apiKey) {
   }
 }
 
-if (process.argv[1] === __filename) {
+if (process.argv[1].includes('address/google')) {
   (async () => {
     // Example usage for testing
     const keyword = '1600 Amphitheatre Parkway, Mountain View, CA';
