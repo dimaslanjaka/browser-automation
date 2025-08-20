@@ -1,12 +1,52 @@
 {
-  "autopep8.args": [
-    "--ignore",
-    "E401,E402,E211,E501"
-  ],
-  "code-runner.clearPreviousOutput": true,
-  "code-runner.executorMap": {
-    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs"
+  "[html]": {
+    "editor.suggest.insertMode": "replace",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll": "never"
+    }
   },
+  "[json]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll": "never"
+    }
+  },
+  "[jsonc]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll": "never"
+    }
+  },
+  "[njk]": {
+    "editor.suggest.insertMode": "replace",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll": "never"
+    }
+  },
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "[twig]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "autopep8.args": ["--ignore", "E401,E402,E211,E501"],
+  "code-runner.clearPreviousOutput": true,
   "code-runner.executorMapByGlob": {
     "electron-*.ts": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
     "*.py": "py2 -u",
@@ -22,6 +62,9 @@
     "*.cmd": "cmd /c",
     "*.ps1": "powershell -ExecutionPolicy ByPass -File"
   },
+  "code-runner.executorMap": {
+    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs"
+  },
   "code-runner.ignoreSelection": true,
   "code-runner.respectShebang": true,
   "code-runner.runInTerminal": true,
@@ -34,12 +77,8 @@
   },
   "editor.formatOnPaste": false,
   "editor.formatOnSave": false,
-  "eslint.debug": true,
-  "eslint.lintTask.enable": true,
   "eslint.useFlatConfig": true,
   "files.autoSave": "off",
-  "files.autoSaveDelay": 10000,
-  "files.autoSaveWhenNoErrors": true,
   "files.exclude": {
     "**/.DS_Store": true,
     "**/.git": true,
@@ -52,11 +91,11 @@
     "**/node_modules": true,
     "**/vendor": true,
     "backups": true,
-    "bas/": true,
-    "data/engine": true,
-    "data/fingerprints": true,
     "data/profiles": true,
-    "data/run": true
+    "data/run": true,
+    "data/fingerprints": true,
+    "data/engine": true,
+    "bas/": true
   },
   "files.readonlyInclude": {
     "**/*.sqlite*": true
@@ -67,15 +106,31 @@
     "**/.venv/**": true,
     "**/venv/**": true,
     "**/.yarn/**": true,
+    "**/profiles/**": true,
     "**/config/**": true,
     "**/databases/**": true,
     "**/node_modules/**": true,
-    "**/profiles/**": true,
     "src/database.sqlite*": true
   },
   "git.autoStash": true,
   "git.useCommitInputAsStashMessage": true,
-  "javascript.updateImportsOnFileMove.enabled": "always",
+  "intelephense.diagnostics.run": "onSave",
+  "intelephense.environment.documentRoot": "${workspaceFolder}",
+  "intelephense.environment.includePaths": ["${workspaceFolder}/src", "${workspaceFolder}/vendor"],
+  "intelephense.environment.phpVersion": "7.4.33",
+  "intelephense.files.exclude": [
+    "**/.git/**",
+    "**/.svn/**",
+    "**/.hg/**",
+    "**/CVS/**",
+    "**/.DS_Store/**",
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/.history/**"
+  ],
+  "intelephense.maxMemory": 1000,
+  "intelephense.references.exclude": [],
+  "intelephense.rename.exclude": [],
   "javascript.updateImportsOnPaste.enabled": true,
   "python.analysis.autoImportCompletions": true,
   "python.createEnvironment.contentButton": "show",
@@ -94,85 +149,37 @@
     "DEBUG_PKG": "1"
   },
   "terminal.integrated.profiles.windows": {
-    "Command Prompt": {
-      "args": [],
-      "icon": "terminal-cmd",
-      "path": [
-        "${env:windir}\\Sysnative\\cmd.exe",
-        "${env:windir}\\System32\\cmd.exe"
-      ]
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
     },
-    "Cygwin": {
-      "args": [
-        "--login",
-        "-i"
-      ],
-      "env": {
-        "CHERE_INVOKING": "1"
-      },
-      "path": "C:\\cygwin64\\bin\\bash.exe"
+    "Command Prompt": {
+      "path": ["${env:windir}\\Sysnative\\cmd.exe", "${env:windir}\\System32\\cmd.exe"],
+      "args": [],
+      "icon": "terminal-cmd"
     },
     "Git Bash": {
       "source": "Git Bash"
     },
-    "PowerShell": {
-      "icon": "terminal-powershell",
-      "source": "PowerShell"
+    "Cygwin": {
+      "path": "C:\\cygwin64\\bin\\bash.exe",
+      "args": ["--login", "-i"],
+      "env": {
+        "CHERE_INVOKING": "1"
+      }
     }
   },
-  "typescript.disableAutomaticTypeAcquisition": false,
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.updateImportsOnPaste.enabled": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.disableAutomaticTypeAcquisition": false,
   "typescript.tsserver.enableTracing": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "typescript.tsserver.log": "verbose",
   "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
   "typescript.tsserver.web.typeAcquisition.enabled": true,
-  "typescript.updateImportsOnPaste.enabled": false,
-  "[html]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "never",
-      "source.organizeImports": "never"
-    },
-    "editor.suggest.insertMode": "replace"
-  },
-  "[json]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "never",
-      "source.organizeImports": "never"
-    },
-    "editor.quickSuggestions": {
-      "strings": true
-    },
-    "editor.suggest.insertMode": "replace"
-  },
-  "[jsonc]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "never",
-      "source.organizeImports": "never"
-    },
-    "editor.quickSuggestions": {
-      "strings": true
-    },
-    "editor.suggest.insertMode": "replace"
-  },
-  "[njk]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "never",
-      "source.organizeImports": "never"
-    },
-    "editor.suggest.insertMode": "replace"
-  },
-  "[python]": {
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "never"
-    },
-    "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnSave": true,
-    "editor.insertSpaces": true,
-    "editor.tabSize": 4
-  },
-  "[twig]": {
-    "editor.defaultFormatter": "vscode.html-language-features"
-  }
+  "files.autoSaveDelay": 10000,
+  "files.autoSaveWhenNoErrors": true
 }
