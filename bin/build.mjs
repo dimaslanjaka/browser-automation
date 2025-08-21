@@ -5,7 +5,7 @@ import path from 'path';
 import { getChecksum } from 'sbg-utility';
 import color from 'ansi-colors';
 
-const checksumFile = path.join(process.cwd(), 'checksum.txt');
+const checksumFile = path.join(process.cwd(), 'tmp/checksum.txt');
 const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8').trim() : null;
 const files = glob.sync('**/*.{js,cjs,mjs,ts,tsx,jsx}', {
   cwd: path.join(process.cwd(), 'src')
