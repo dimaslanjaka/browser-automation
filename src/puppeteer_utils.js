@@ -4,6 +4,7 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
+import { chromium } from 'playwright-extra';
 
 /**
  * Get the absolute path of the current script.
@@ -12,9 +13,6 @@ import { sleep } from './utils-browser.js';
  */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Add stealth plugin and use defaults (all evasion techniques)
-puppeteer.use(StealthPlugin());
 
 /**
  * The absolute path for the user data directory.
@@ -25,7 +23,11 @@ const userDataDir = path.resolve(process.cwd(), '.cache/profile1');
 /**
  * @type {import('puppeteer').Browser | null}
  */
-let browser = null;
+let puppeteer_browser = null;
+/**
+ * @type {import('playwright').Browser | null}
+ */
+let playwright_browser = null;
 
 /**
  * Launches a new browser instance using `puppeteer-extra` or reuses an existing one.
@@ -43,12 +45,15 @@ let browser = null;
  * - `puppeteer`: The `puppeteer-extra` module reference.
  */
 export async function getPuppeteer() {
-  if (!browser || !browser.connected) {
+  // Add stealth plugin and use defaults (all evasion techniques)
+  puppeteer.use(StealthPlugin());
+
+  if (!puppeteer_browser || !puppeteer_browser.connected) {
     const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
     if (!fs.existsSync(chromePath)) {
       throw new Error(`Chrome executable not found at: ${chromePath}`);
     }
-    browser = await puppeteer.launch({
+    puppeteer_browser = await puppeteer.launch({
       headless: false,
       userDataDir,
       executablePath: chromePath,
@@ -65,8 +70,55 @@ export async function getPuppeteer() {
     });
   }
 
-  const page = await browser.newPage();
-  return { page, browser, puppeteer };
+  const page = await puppeteer_browser.newPage();
+  return { page, browser: puppeteer_browser, puppeteer };
+}
+
+/**
+ * Launches a new browser instance using Playwright or reuses an existing one.
+ *
+ * @async
+ * @function getPlaywright
+ * @returns {Promise<{
+ *   page: import('playwright').Page,
+ *   browser: import('playwright').Browser,
+ *   context: import('playwright').BrowserContext,
+ *   playwright: typeof import('playwright').chromium
+ * }>} Resolves with an object containing:
+ * - `page`: A new Playwright `Page` instance.
+ * - `browser`: The launched or reused Playwright `Browser` instance.
+ * - `context`: The Playwright `BrowserContext` instance.
+ * - `playwright`: The Playwright `chromium` module reference.
+ */
+export async function getPlaywright() {
+  // Add the plugin to playwright (any number of plugins can be added)
+  chromium.use(StealthPlugin());
+
+  if (!playwright_browser || !playwright_browser.isConnected()) {
+    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+    if (!fs.existsSync(chromePath)) {
+      throw new Error(`Chrome executable not found at: ${chromePath}`);
+    }
+    playwright_browser = await chromium.launch({
+      headless: false,
+      userDataDir,
+      executablePath: chromePath,
+      args: [
+        '--disable-features=HeavyAdIntervention',
+        '--disable-features=AdInterestGroupAPI',
+        '--disable-popup-blocking',
+        '--no-default-browser-check',
+        '--no-first-run',
+        '--ignore-certificate-errors',
+        '--hide-crash-restore-bubble',
+        '--autoplay-policy=no-user-gesture-required'
+      ]
+    });
+  }
+
+  const page = await playwright_browser.newPage();
+  const context = await page.context();
+  return { page, browser: playwright_browser, context, playwright: chromium };
 }
 
 /**
@@ -75,9 +127,9 @@ export async function getPuppeteer() {
  * @function closePuppeteer
  */
 export async function closePuppeteer() {
-  if (browser) {
-    await browser.close();
-    browser = null;
+  if (puppeteer_browser) {
+    await puppeteer_browser.close();
+    puppeteer_browser = null;
   }
 }
 
