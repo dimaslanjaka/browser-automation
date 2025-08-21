@@ -170,16 +170,21 @@ export async function parseXlsxFile(
     // }
     result.push(obj);
   }
-  // Remove undefined or null values
-  return result.map((item) => {
-    const cleanedItem: Partial<DataItem> = {};
-    for (const key in item) {
-      if (item[key] !== null && item[key] !== undefined) {
-        cleanedItem[key] = item[key];
-      }
-    }
-    return cleanedItem;
-  });
+  // Remove undefined or null or spesific patterns values
+  return (
+    result
+      .map((item) => {
+        const cleanedItem: Partial<DataItem> = {};
+        for (const key in item) {
+          if (item[key] !== null && item[key] !== undefined && item[key] !== '+62null') {
+            cleanedItem[key] = item[key];
+          }
+        }
+        return cleanedItem;
+      })
+      // Filter out empty objects
+      .filter((item) => Object.keys(item).length > 0)
+  );
 }
 
 const outPath = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku-data.json');
