@@ -1,8 +1,9 @@
 import 'dotenv/config.js';
+import moment from 'moment';
 import type { Page } from 'puppeteer';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { DataItem } from './sehatindonesiaku-data.js';
-import data from './sehatindonesiaku-data.json' with { type: 'json' };
+import { DataItem, downloadAndProcessXlsx, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
+import fs from 'fs-extra';
 import { clickKembali, selectCalendar } from './sehatindonesiaku-utils.js';
 
 const provinsi = 'DKI Jakarta';
@@ -15,7 +16,7 @@ const kelurahan = 'Kebon Jeruk';
  * Launches Puppeteer, navigates to the registration page, waits for DOM stability,
  * and processes the first data item.
  */
-async function main() {
+async function processItems(sehatindonesiakuData: DataItem[]) {
   const { page } = await getPuppeteer();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
 
@@ -52,14 +53,43 @@ async function main() {
 
   // Check if current url is not https://sehatindonesiaku.kemkes.go.id/auth/login
   const currentUrl = page.url();
-  if (currentUrl !== 'https://sehatindonesiaku.kemkes.go.id/auth/login') {
-    console.log('User is already logged in');
+  if (!currentUrl.includes('/login')) {
+    await clickDaftarBaru(page);
   } else {
     // User is not logged in, perform login
     await _login(page);
     return;
   }
 
+  for (const item of sehatindonesiakuData as DataItem[]) {
+    try {
+      console.log(`Processing item: ${item.nik} - ${item.nama} for tanggal_pemeriksaan: ${item.tanggal_pemeriksaan}`);
+      await processData(page, item);
+    } catch (error) {
+      console.error(`Error processing item:`, item['nik'], error);
+      break; // Stop processing on error
+    }
+
+    break; // For demonstration, process only the first item
+  }
+
+  // sehatindonesiakuData[0] = {
+  //   ...sehatindonesiakuData[0], // Spread existing data
+  //   tanggal_pemeriksaan: '21/08/2025',
+  //   nik: '3173050805091005',
+  //   nama: 'WAHYU FADILLAH',
+  //   tanggal_lahir: '5/8/2009',
+  //   jenis_kelamin: 'Laki-laki',
+  //   nomor_wa: '89672169077',
+  //   pekerjaan: 'LAINNYA',
+  //   provinsi: 'DKI JAKARTA',
+  //   alamat: 'JL.MUSYAWARAH 5/2'
+  // };
+
+  // processData(page, sehatindonesiakuData[0]); // Process the first item for demonstration
+}
+
+async function clickDaftarBaru(page: Page) {
   // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
   const buttonHandle = await page.evaluateHandle(() => {
     const buttons = Array.from(document.querySelectorAll('button'));
@@ -77,30 +107,7 @@ async function main() {
     if (!isVisible) {
       console.log('Button exists but is not visible');
     }
-  } else {
-    console.log('Button does not exist, login may be required');
-    await _login(page);
-    return;
   }
-
-  // for (const item of data) {
-  //   await processData(page, item);
-  // }
-
-  data[0] = {
-    ...data[0], // Spread existing data
-    tanggal_pemeriksaan: '21/08/2025',
-    nik: '3173050805091005',
-    nama: 'WAHYU FADILLAH',
-    tanggal_lahir: '5/8/2009',
-    jenis_kelamin: 'Laki-laki',
-    nomor_wa: '89672169077',
-    pekerjaan: 'LAINNYA',
-    provinsi: 'DKI JAKARTA',
-    alamat: 'JL.MUSYAWARAH 5/2'
-  };
-
-  processData(page, data[0]); // Process the first item for demonstration
 }
 
 /**
@@ -934,14 +941,38 @@ async function _login(page: Page) {
   }
 }
 
-main().catch((err) => {
-  if (err instanceof Error) {
-    console.error(err.stack || err.message);
-  } else {
-    try {
-      console.error('Non-Error thrown:', JSON.stringify(err, null, 2));
-    } catch (e) {
-      console.error('Non-Error thrown:', e);
-    }
+(async () => {
+  if (!fs.existsSync(sehatindonesiakuDataPath)) {
+    await downloadAndProcessXlsx();
   }
-});
+
+  console.log(`reading data from ${sehatindonesiakuDataPath}`);
+  const sehatindonesiakuData = (JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8')) as DataItem[])
+    .map((item) => {
+      // Fix tanggal_pemeriksaan empty to today
+      if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
+        item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+      }
+      return item;
+    })
+    .filter((item) => {
+      // Filter out empty item
+      const isEmptyItem = !item || Object.keys(item).length === 0;
+      // Filter out empty nik
+      const isNikEmpty = !item.nik || item.nik.trim() === '';
+      // Filter out items with past tanggal_pemeriksaan
+      const today = moment().startOf('day');
+      const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
+      const isPast = pemeriksaanDate.isBefore(today);
+
+      // Only include items that are NOT past, NOT empty NIK, NOT empty tanggal, and NOT empty item
+      return !isPast && !isNikEmpty && !isEmptyItem;
+    });
+  console.log(`Found ${sehatindonesiakuData.length} data items to process.`);
+
+  if (sehatindonesiakuData.length > 0) {
+    processItems(sehatindonesiakuData);
+  } else {
+    console.log('No data to process.');
+  }
+})();
