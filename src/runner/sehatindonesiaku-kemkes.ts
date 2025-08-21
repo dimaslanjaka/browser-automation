@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import moment from 'moment';
 import type { ElementHandle, Page } from 'puppeteer';
 import path from 'upath';
-import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem } from './sehatindonesiaku-data.js';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
 
@@ -88,6 +88,19 @@ async function main() {
   // for (const item of data) {
   //   await processData(page, item);
   // }
+
+  data[0] = {
+    ...data[0], // Spread existing data
+    tanggal_pemeriksaan: '21/08/2025',
+    nik: '3173050805091005',
+    nama: 'WAHYU FADILLAH',
+    tanggal_lahir: '5/8/2009',
+    jenis_kelamin: 'Laki-laki',
+    nomor_wa: '89672169077',
+    pekerjaan: 'LAINNYA',
+    provinsi: 'DKI JAKARTA',
+    alamat: 'JL.MUSYAWARAH 5/2'
+  };
 
   processData(page, data[0]); // Process the first item for demonstration
 }
@@ -193,7 +206,15 @@ async function clickKembali(page: Page) {
   const buttons = await page.$$('button');
 
   for (const btn of buttons) {
-    const text = await btn.evaluate((el) => el.textContent?.trim().toLowerCase());
+    const text = await btn.evaluate((el) => {
+      let t = el.innerText || '';
+      // Replace non-letter/number/space characters with empty string
+      t = t.replace(/[^\p{L}\p{N} ]/gu, '');
+      // Convert multiple spaces to single space
+      t = t.replace(/\s+/g, ' ').trim().toLowerCase();
+      return t;
+    });
+
     if (text === 'kembali') {
       await btn.click();
       return;
@@ -271,6 +292,13 @@ async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit') {
 
   // Wait for DOM to stabilize after clicking
   await waitForDomStable(page, 2000);
+
+  const isAgeLimitCheckDisplayed = await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan');
+  if (isAgeLimitCheckDisplayed) {
+    console.log('Age limit check is displayed, proceeding with the next steps.');
+    await clickKembali(page);
+    return;
+  }
 
   if (choice === 'lanjut') {
     await clickPilihButton(page);
