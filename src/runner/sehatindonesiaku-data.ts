@@ -22,6 +22,7 @@ export interface DataItem {
   pekerjaan: string;
   provinsi: string;
   alamat: string;
+  tanggal_pemeriksaan: string;
   /** Geocoding result */
   // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
