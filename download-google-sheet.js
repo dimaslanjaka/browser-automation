@@ -7,18 +7,13 @@ import { google } from 'googleapis';
 import path from 'path';
 import { URL, URLSearchParams } from 'url';
 import minimist from 'minimist';
+import xlsx from 'xlsx';
 
 // Load environment variables
 dotenv.config();
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-
-if (!SPREADSHEET_ID) {
-  throw new Error('Missing SPREADSHEET_ID in .env file');
-} else if (`${SPREADSHEET_ID}`.trim().length === 0) {
-  throw new Error('SPREADSHEET_ID is empty');
-}
 
 const CREDENTIALS_PATH = path.join(process.cwd(), '.cache', 'credentials.json');
 const TOKEN_PATH = path.join(process.cwd(), '.cache', 'token.json');
@@ -165,33 +160,126 @@ export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
   const drive = google.drive({ version: 'v3', auth });
 
   // Get sheet metadata
-  const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
-  const spreadsheetUrl = sheetMeta.data.spreadsheetUrl;
-  const sheetsList = sheetMeta.data.sheets;
+  let sheetMeta, spreadsheetUrl, sheetsList;
+  try {
+    sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
+    spreadsheetUrl = sheetMeta.data.spreadsheetUrl;
+    sheetsList = sheetMeta.data.sheets;
+  } catch (metaErr) {
+    // Always print error after result, not before
+    let errorMsg = 'Failed to fetch spreadsheet metadata: ' + (metaErr.message || metaErr);
+    // fallback: try public export for ANY spreadsheetId (like x.cjs)
+    const outDir = path.join(process.cwd(), '.cache', 'sheets');
+    fs.mkdirSync(outDir, { recursive: true });
+    try {
+      const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
+      console.log(`Attempting to download spreadsheet via public export URL (metadata fallback): ${publicUrl}`);
+      const response = await axios.get(publicUrl, { responseType: 'stream' });
+      const xlsxFilePathLocal = path.join(outDir, `spreadsheet-pub-${spreadsheetId}.xlsx`);
+      const xlsxWriter = fs.createWriteStream(xlsxFilePathLocal);
+      response.data.pipe(xlsxWriter);
+      await new Promise((resolve, reject) => {
+        xlsxWriter.on('finish', resolve);
+        xlsxWriter.on('error', reject);
+      });
+      console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePathLocal}`);
+
+      // Parse all sheets as CSV and save to files
+      const workbook = xlsx.readFile(xlsxFilePathLocal);
+      const csvFiles = [];
+      workbook.SheetNames.forEach((sheetName) => {
+        const csv = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+        const csvFilePath = path.join(outDir, `sheet-${sheetName.replace(/[^\w\d-]/g, '_')}.csv`);
+        fs.writeFileSync(csvFilePath, csv, 'utf-8');
+        csvFiles.push(csvFilePath);
+        console.log(`Parsed and saved sheet '${sheetName}' as CSV to ${csvFilePath}`);
+      });
+
+      // Print result first, then error if any
+      const result = { xlsxFilePath: xlsxFilePathLocal, csvFiles };
+      console.log('\n=== Result ===\n');
+      console.log(JSON.stringify(result, null, 2));
+      if (errorMsg) console.error(errorMsg);
+      return result;
+    } catch (pubErr) {
+      const result = { xlsxFilePath: null, csvFiles: [] };
+      console.log('\n=== Result ===\n');
+      console.log(JSON.stringify(result, null, 2));
+      console.error(
+        'Failed to download spreadsheet via public export URL (metadata fallback):',
+        pubErr.message || pubErr
+      );
+      if (errorMsg) console.error(errorMsg);
+      return result;
+    }
+  }
 
   // Ensure output folder exists
   const outDir = path.join(process.cwd(), '.cache', 'sheets');
   fs.mkdirSync(outDir, { recursive: true });
 
-  // Download XLSX (whole spreadsheet)
-  const xlsxFilePath = path.join(outDir, `spreadsheet-${SPREADSHEET_ID}.xlsx`);
-  const xlsxRes = await drive.files.export(
-    {
-      fileId: SPREADSHEET_ID,
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    },
-    { responseType: 'stream' }
-  );
+  // Always fetch and print file metadata first
+  let xlsxFilePath = null;
+  let fileMeta = null;
+  try {
+    fileMeta = await drive.files.get({ fileId: spreadsheetId, fields: '*' });
+    console.log('Drive file metadata:', JSON.stringify(fileMeta.data, null, 2));
+  } catch (metaErr) {
+    console.error('Failed to fetch Drive file metadata:', metaErr.message || metaErr);
+  }
 
-  const xlsxWriter = fs.createWriteStream(xlsxFilePath);
-  xlsxRes.data.pipe(xlsxWriter);
-
-  await new Promise((resolve, reject) => {
-    xlsxWriter.on('finish', resolve);
-    xlsxWriter.on('error', reject);
-  });
-
-  console.log(`Saved full spreadsheet as XLSX to ${xlsxFilePath}`);
+  if (fileMeta && fileMeta.data && fileMeta.data.mimeType === 'application/vnd.google-apps.spreadsheet') {
+    xlsxFilePath = path.join(outDir, `spreadsheet-${spreadsheetId}.xlsx`);
+    try {
+      // Try Drive export and fallback in a single try/catch
+      try {
+        const xlsxRes = await drive.files.export(
+          {
+            fileId: spreadsheetId,
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          },
+          { responseType: 'stream' }
+        );
+        const xlsxWriter = fs.createWriteStream(xlsxFilePath);
+        xlsxRes.data.pipe(xlsxWriter);
+        await new Promise((resolve, reject) => {
+          xlsxWriter.on('finish', resolve);
+          xlsxWriter.on('error', reject);
+        });
+        console.log(`Saved full spreadsheet as XLSX to ${xlsxFilePath}`);
+      } catch (exportErr) {
+        console.error('Failed to export spreadsheet as XLSX (Drive export error):', exportErr.message || exportErr);
+        xlsxFilePath = null;
+        // Try public export URL (for published sheets)
+        let exportId = spreadsheetId;
+        const publicUrl = `https://docs.google.com/spreadsheets/d/${exportId}/export?format=xlsx&id=${exportId}`;
+        console.log(`Attempting to download spreadsheet via public export URL: ${publicUrl}`);
+        try {
+          const response = await axios.get(publicUrl, { responseType: 'stream' });
+          const xlsxWriter2 = fs.createWriteStream(path.join(outDir, `spreadsheet-pub-${exportId}.xlsx`));
+          response.data.pipe(xlsxWriter2);
+          await new Promise((resolve, reject) => {
+            xlsxWriter2.on('finish', resolve);
+            xlsxWriter2.on('error', reject);
+          });
+          xlsxFilePath = path.join(outDir, `spreadsheet-pub-${exportId}.xlsx`);
+          console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
+        } catch (pubErr) {
+          console.error('Failed to download spreadsheet via public export URL:', pubErr.message || pubErr);
+          xlsxFilePath = null;
+        }
+      }
+    } catch (allErr) {
+      // Catch any unexpected error in the export logic
+      console.error('Unexpected error during XLSX export attempts:', allErr.message || allErr);
+      xlsxFilePath = null;
+    }
+  } else if (fileMeta && fileMeta.data) {
+    console.error(
+      `File with ID ${spreadsheetId} is not a Google Sheet (found mimeType: ${fileMeta.data.mimeType}). Cannot export as XLSX.`
+    );
+    xlsxFilePath = null;
+  }
 
   // Download each sheet as CSV
   const parsedUrl = new URL(spreadsheetUrl);
@@ -203,7 +291,7 @@ export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
     const sheetName = sheet.properties.title.replace(/[^\w\d-]/g, '_'); // sanitize
 
     const params = new URLSearchParams({
-      id: SPREADSHEET_ID,
+      id: spreadsheetId,
       format: 'csv',
       gid: sheetId
     });
@@ -242,6 +330,11 @@ export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
 if (process.argv.some((arg) => arg.includes('download-google-sheet.js'))) {
   const args = minimist(process.argv.slice(2));
   const spreadsheetId = args.id || SPREADSHEET_ID;
+  if (!spreadsheetId) {
+    throw new Error('SPREADSHEET_ID is missing. Please set it in your .env file or pass --id argument.');
+  } else if (`${spreadsheetId}`.trim().length === 0) {
+    throw new Error('SPREADSHEET_ID is provided but empty. Please provide a valid Google Spreadsheet ID.');
+  }
   downloadSheets(spreadsheetId)
     .then((result) => {
       console.log('\n=== Result ===\n');
