@@ -18,7 +18,8 @@ import {
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from '../skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, ucwords, waitEnter } from '../utils.js';
+import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
+import { ucwords } from '../utils/string.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });

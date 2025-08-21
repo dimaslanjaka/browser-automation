@@ -1,8 +1,9 @@
 import { deepmerge } from 'deepmerge-ts';
 import path from 'node:path';
 import { getPuppeteer } from '../puppeteer_utils.js';
-import { processData, skrinLogin } from './skrin.js';
+import { processData } from './skrin.js';
 import { appendLog, getLogData } from '../utils.js';
+import { skrinLogin } from '../skrin_puppeteer.js';
 
 // re-test .cache/lastData.log
 // current index range: 7488 - 8286
