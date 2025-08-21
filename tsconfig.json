@@ -1,4 +1,5 @@
 {
+  // VSCode JS/TS Server Config
   "compilerOptions": {
     "jsx": "react",
     "target": "ESNext",
@@ -6,7 +7,7 @@
     "moduleResolution": "Node",
     "outDir": "dist",
     "rootDir": "./",
-    "strict": false,
+    "strict": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "esModuleInterop": true,
@@ -17,7 +18,7 @@
     "typeRoots": ["./types", "./node_modules/@types"],
     "lib": ["ESNext", "ES2020", "DOM", "DOM.Iterable", "WebWorker", "WebWorker.Iterable"]
   },
-  // "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*", "**/*.ts", "**/*.js", "**/*.cjs", "**/*.mjs", "tsup.config.ts"],
+  "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*", "**/*.ts", "**/*.js", "**/*.cjs", "**/*.mjs", "tsup.config.ts"],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",

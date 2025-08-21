@@ -26,7 +26,8 @@
     "clean": "rimraf node_modules/.vite dist",
     "clean:full": "rimraf node_modules .vite dist && npm install",
     "prepare": "husky",
-    "build:tsup": "tsup"
+    "build:tsup": "tsup",
+    "build:tsc": "npx tsc -p tsconfig.build.json"
   },
   "keywords": [],
   "author": "",

@@ -1,8 +1,10 @@
 {
+  // TSConfig for build
   "extends": "./tsconfig.json",
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.cjs", "src/**/*.mjs"],
   "compilerOptions": {
     "outDir": "./tmp/dist",
-    "declaration": true
+    "declaration": true,
+    "strict": false
   }
 }
