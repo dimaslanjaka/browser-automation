@@ -54,6 +54,7 @@ Thumbs.db
 !vscode/settings.json
 !vscode/extensions.json
 .vscode/sftp*.json
+.vscode/*.rdp
 
 # Temporary files
 *.log
