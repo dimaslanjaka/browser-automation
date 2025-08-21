@@ -1,11 +1,11 @@
 import 'dotenv/config.js';
 import fs from 'fs-extra';
-import { Page } from 'puppeteer';
+import type { Page } from 'puppeteer';
 import path from 'upath';
+import { fileURLToPath } from 'url';
 import { getPuppeteer } from '../puppeteer_utils.js';
 import { sleep } from '../utils-browser.js';
 import { DataItem } from './sehatindonesiaku-data.js';
-import { fileURLToPath } from 'url';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
  * and processes the first data item.
  */
 async function main() {
-  const { page, browser: _browser } = await getPuppeteer();
+  const { page } = await getPuppeteer();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
 
   // Wait for DOM to stabilize (no mutations for 800ms)
@@ -160,19 +160,158 @@ async function processData(page: Page, item: DataItem) {
   // Select pekerjaan (Pekerjaan)
   await vuePekerjaanSelect(page, item);
 
-  // Select provinsi (Province)
-  await vueSelectAddress(page, item);
+  // Select address
+  const provinsi = 'DKI Jakarta';
+  const kabupaten = 'Kota Adm. Jakarta Barat';
+  const kecamatan = 'Kebon Jeruk';
+  const kelurahan = 'Kebon Jeruk';
+  await clickAddressModal(page);
+  await clickProvinsi(page, provinsi);
+  await clickKabupatenKota(page, kabupaten);
+  await clickKecamatan(page, kecamatan);
+  await clickKelurahan(page, kelurahan);
 }
 
-/**
- * Select provinsi (Province) by interacting with the Vue-based dropdown/modal picker.
- * Handles opening the "Alamat Domisili" dropdown, waits for the modal, and selects the province option by matching normalized text.
- * Uses Puppeteer's real user click for robust interaction with custom UI components.
- *
- * @param page Puppeteer page instance
- * @param item Data item containing the 'provinsi' field (province name)
- */
-async function vueSelectAddress(page: Page, _item: DataItem) {
+export async function clickKelurahan(page: Page, kelurahan: string) {
+  // Wait for the modal and the kelurahan section to appear
+  await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kelurahan")])', { visible: true });
+
+  // Find the div with text 'Daftar Kelurahan'
+  const kelSection = await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kelurahan")])');
+  if (!kelSection) {
+    throw new Error('Daftar Kelurahan section not found');
+  }
+
+  // Get the parent element (container of the buttons)
+  const parent = await kelSection.evaluateHandle((el) => el.parentElement);
+
+  // Find all button > div inside this parent
+  const divs = await parent.asElement().$$('button > div');
+  let found = false;
+  for (const div of divs) {
+    const text = await div.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === kelurahan.trim().toLowerCase()) {
+      const button = await div.evaluateHandle((el) => el.parentElement as HTMLElement);
+      await (button.asElement() as import('puppeteer').ElementHandle<Element>).click();
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    const allTexts = await Promise.all(divs.map((div) => div.evaluate((el) => el.textContent?.trim())));
+    console.error('Available Kelurahan options:', allTexts);
+    throw new Error(`Kelurahan '${kelurahan}' not found`);
+  }
+
+  await sleep(500); // Wait for any animations or transitions
+}
+
+export async function clickKecamatan(page: Page, kecamatan: string) {
+  // Wait for the modal and the kecamatan section to appear
+  await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kecamatan")])', { visible: true });
+
+  // Find the div with text 'Daftar Kecamatan'
+  const kecSection = await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kecamatan")])');
+  if (!kecSection) {
+    throw new Error('Daftar Kecamatan section not found');
+  }
+
+  // Get the parent element (container of the buttons)
+  const parent = await kecSection.evaluateHandle((el) => el.parentElement);
+
+  // Find all button > div inside this parent
+  const divs = await parent.asElement().$$('button > div');
+  let found = false;
+  for (const div of divs) {
+    const text = await div.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === kecamatan.trim().toLowerCase()) {
+      const button = await div.evaluateHandle((el) => el.parentElement as HTMLElement);
+      await (button.asElement() as import('puppeteer').ElementHandle<Element>).click();
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    const allTexts = await Promise.all(divs.map((div) => div.evaluate((el) => el.textContent?.trim())));
+    console.error('Available Kecamatan options:', allTexts);
+    throw new Error(`Kecamatan '${kecamatan}' not found`);
+  }
+
+  await sleep(500); // Wait for any animations or transitions
+}
+
+export async function clickKabupatenKota(page: Page, kota: string) {
+  // Wait for the modal and the kabupaten/kota section to appear
+  await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kabupaten/Kota")])', { visible: true });
+
+  // Find the div with text 'Daftar Kabupaten/Kota'
+  const kotaSection = await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kabupaten/Kota")])');
+  if (!kotaSection) {
+    throw new Error('Daftar Kabupaten/Kota section not found');
+  }
+
+  // Get the parent element (container of the buttons)
+  const parent = await kotaSection.evaluateHandle((el) => el.parentElement);
+
+  // Find all button > div inside this parent
+  const divs = await parent.asElement().$$('button > div');
+  let found = false;
+  for (const div of divs) {
+    const text = await div.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === kota.trim().toLowerCase()) {
+      const button = await div.evaluateHandle((el) => el.parentElement as HTMLElement);
+      await (button.asElement() as import('puppeteer').ElementHandle<Element>).click();
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    const allTexts = await Promise.all(divs.map((div) => div.evaluate((el) => el.textContent?.trim())));
+    console.error('Available Kabupaten/Kota options:', allTexts);
+    throw new Error(`Kota '${kota}' not found`);
+  }
+
+  await sleep(500); // Wait for any animations or transitions
+}
+
+async function clickProvinsi(page: Page, provinsi: string) {
+  // Wait for the modal and the provinsi section to appear
+  await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Provinsi")])', { visible: true });
+
+  // Find the div with text 'Daftar Provinsi' using Puppeteer's query handler
+  const provSection = await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Provinsi")])');
+  if (!provSection) {
+    throw new Error('Daftar Provinsi section not found');
+  }
+
+  // Get the parent element (container of the buttons)
+  const parent = await provSection.evaluateHandle((el) => el.parentElement);
+
+  // Find all button > div inside this parent
+  const divs = await parent.asElement().$$('button > div');
+  let found = false;
+  for (const div of divs) {
+    const text = await div.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === provinsi.trim().toLowerCase()) {
+      const button = await div.evaluateHandle((el) => el.parentElement as HTMLElement);
+      await (button.asElement() as import('puppeteer').ElementHandle<Element>).click();
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    const allTexts = await Promise.all(divs.map((div) => div.evaluate((el) => el.textContent?.trim())));
+    console.error('Available provinsi options:', allTexts);
+    throw new Error(`Provinsi '${provinsi}' not found`);
+  }
+
+  await sleep(500); // Wait for any animations or transitions
+}
+
+async function clickAddressModal(page: Page) {
   // Find and click the "Alamat Domisili" dropdown to open the province selector
   const clicked = await page.evaluate(() => {
     // Find all divs with class "font-semibold"
@@ -207,158 +346,6 @@ async function vueSelectAddress(page: Page, _item: DataItem) {
 
   // Wait for the modal to appear
   await sleep(500);
-
-  // Use fixed value for testing
-  const provinsi = 'DKI Jakarta';
-  const kabupaten = 'Kota Adm. Jakarta Barat';
-  const kecamatan = 'Kebon Jeruk';
-  const kelurahan = 'Kebon Jeruk';
-
-  // Type to search the province in the modal's input
-  await page.evaluate((provinsi) => {
-    const input = document.querySelector('input[placeholder="Cari Provinsi"]');
-    if (input) {
-      (input as HTMLInputElement).value = provinsi;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, provinsi);
-  await sleep(300);
-
-  // Click the province button only inside Daftar Provinsi section
-  const provinsiHandle = await page.evaluateHandle((provinsi) => {
-    // Find the section with text 'Daftar Provinsi'
-    const daftarProvinsiDiv = Array.from(document.querySelectorAll('div')).find(
-      (div) => div.textContent && div.textContent.includes('Daftar Provinsi')
-    );
-    if (!daftarProvinsiDiv) return null;
-    // Find the button inside this section whose text matches provinsi
-    const btns = daftarProvinsiDiv.parentElement?.querySelectorAll('button');
-    if (!btns) return null;
-    return (
-      Array.from(btns).find((b) => {
-        // The button text is inside a child div
-        const div = b.querySelector('div');
-        return div && div.textContent && div.textContent.trim().toLowerCase() === provinsi.toLowerCase();
-      }) || null
-    );
-  }, provinsi);
-  if (provinsiHandle) {
-    const isVisible = await provinsiHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
-    if (isVisible) {
-      await provinsiHandle.click();
-    }
-    await provinsiHandle.dispose();
-  }
-
-  await sleep(1000); // Wait for the modal to close
-
-  // Type to search the kabupaten in the modal's input (if available)
-  await page.evaluate((kabupaten) => {
-    const input = document.querySelector('input[placeholder="Cari Kabupaten/Kota"]');
-    if (input) {
-      (input as HTMLInputElement).value = kabupaten;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, kabupaten);
-
-  await sleep(300); // Wait for the modal to refresh after typing kabupaten
-
-  // Click kabupaten/kota (only inside Daftar Kabupaten/Kota section)
-  const kabupatenHandle = await page.evaluateHandle((kabupaten) => {
-    // Find the section with text 'Daftar Kabupaten/Kota'
-    const daftarKabupatenDiv = Array.from(document.querySelectorAll('div')).find(
-      (div) => div.textContent && div.textContent.includes('Daftar Kabupaten/Kota')
-    );
-    if (!daftarKabupatenDiv) return null;
-    // Find the button inside this section whose text matches kabupaten
-    const btns = daftarKabupatenDiv.parentElement?.querySelectorAll('button');
-    if (!btns) return null;
-    return (
-      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kabupaten.toLowerCase()) ||
-      null
-    );
-  }, kabupaten);
-  if (kabupatenHandle) {
-    const isVisible = await kabupatenHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
-    if (isVisible) {
-      await kabupatenHandle.click();
-    }
-    await kabupatenHandle.dispose();
-  }
-
-  await sleep(1000); // Wait for the modal to refresh after selecting kabupaten
-
-  // Type to search the kecamatan in the modal's input (if available)
-  await page.evaluate((kecamatan) => {
-    const input = document.querySelector('input[placeholder="Cari Kecamatan"]');
-    if (input) {
-      (input as HTMLInputElement).value = kecamatan;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, kecamatan);
-
-  await sleep(300); // Wait for the modal to refresh after typing kecamatan
-
-  // Click kecamatan (only inside Daftar Kecamatan section)
-  const kecamatanHandle = await page.evaluateHandle((kecamatan) => {
-    // Find the section with text 'Daftar Kecamatan'
-    const daftarKecamatanDiv = Array.from(document.querySelectorAll('div')).find(
-      (div) => div.textContent && div.textContent.includes('Daftar Kecamatan')
-    );
-    if (!daftarKecamatanDiv) return null;
-    // Find the button inside this section whose text matches kecamatan
-    const btns = daftarKecamatanDiv.parentElement?.querySelectorAll('button');
-    if (!btns) return null;
-    return (
-      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kecamatan.toLowerCase()) ||
-      null
-    );
-  }, kecamatan);
-  if (kecamatanHandle) {
-    const isVisible = await kecamatanHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
-    if (isVisible) {
-      await kecamatanHandle.click();
-    }
-    await kecamatanHandle.dispose();
-  }
-
-  await sleep(1000); // Wait for the modal to refresh after selecting kecamatan
-
-  // Type to search the kelurahan in the modal's input (if available)
-  await page.evaluate((kelurahan) => {
-    const input = document.querySelector('input[placeholder="Cari Kelurahan"]');
-    if (input) {
-      (input as HTMLInputElement).value = kelurahan;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, kelurahan);
-
-  await sleep(300); // Wait for the modal to refresh after typing kelurahan
-
-  // Click kelurahan (only inside Daftar Kelurahan section)
-  const kelurahanHandle = await page.evaluateHandle((kelurahan) => {
-    // Find the section with text 'Daftar Kelurahan'
-    const daftarKelurahanDiv = Array.from(document.querySelectorAll('div')).find(
-      (div) => div.textContent && div.textContent.includes('Daftar Kelurahan')
-    );
-    if (!daftarKelurahanDiv) return null;
-    // Find the button inside this section whose text matches kelurahan
-    const btns = daftarKelurahanDiv.parentElement?.querySelectorAll('button');
-    if (!btns) return null;
-    return (
-      Array.from(btns).find((b) => b.textContent && b.textContent.trim().toLowerCase() === kelurahan.toLowerCase()) ||
-      null
-    );
-  }, kelurahan);
-  if (kelurahanHandle) {
-    const isVisible = await kelurahanHandle.evaluate((btn) => !!btn && btn.offsetParent !== null);
-    if (isVisible) {
-      await kelurahanHandle.click();
-    }
-    await kelurahanHandle.dispose();
-  }
-
-  await sleep(1000); // Wait for the modal to refresh after selecting kelurahan
 }
 
 /**
@@ -378,6 +365,10 @@ async function commonInput(page: Page, item: DataItem) {
   // Input phone number <input id="No Whatsapp" type="text" class="w-full form-input rounded-l-none" name="Nomor Whatsapp" placeholder="Masukkan nomor whatsapp" autocomplete="off" maxlength="300">
   await page.focus('input[name="Nomor Whatsapp"]');
   await page.type('input[name="Nomor Whatsapp"]', item.nomor_wa.replace(/^\+62/, ''), { delay: 100 });
+
+  // input alamat <textarea id="detail-domisili" type="text" rows="3" class="h-auto p-4 form-input border-gray-3 focus-within:border-black" name="detail-domisili" placeholder="Cth: Jl. Kenanga 14 no 92" autocomplete="on" maxlength="60"></textarea>
+  await page.focus('textarea[id="detail-domisili"]');
+  await page.type('textarea[id="detail-domisili"]', item.alamat, { delay: 100 });
 }
 
 /**
