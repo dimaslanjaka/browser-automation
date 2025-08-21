@@ -172,7 +172,14 @@ async function processData(page: Page, item: DataItem) {
   await clickKelurahan(page, kelurahan);
 }
 
-export async function clickKelurahan(page: Page, kelurahan: string) {
+/**
+ * Clicks the kelurahan option in the address modal.
+ * Waits for the modal and the kelurahan section to appear, then selects the specified kelurahan.
+ * Throws an error if the kelurahan is not found.
+ * @param page Puppeteer page instance
+ * @param kelurahan Kelurahan name to select
+ */
+async function clickKelurahan(page: Page, kelurahan: string) {
   // Wait for the modal and the kelurahan section to appear
   await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kelurahan")])', { visible: true });
 
@@ -207,7 +214,14 @@ export async function clickKelurahan(page: Page, kelurahan: string) {
   await sleep(500); // Wait for any animations or transitions
 }
 
-export async function clickKecamatan(page: Page, kecamatan: string) {
+/**
+ * Clicks the kecamatan option in the address modal.
+ * Waits for the modal and the kecamatan section to appear, then selects the specified kecamatan.
+ * Throws an error if the kecamatan is not found.
+ * @param page Puppeteer page instance
+ * @param kecamatan Kecamatan name to select
+ */
+async function clickKecamatan(page: Page, kecamatan: string) {
   // Wait for the modal and the kecamatan section to appear
   await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kecamatan")])', { visible: true });
 
@@ -242,7 +256,14 @@ export async function clickKecamatan(page: Page, kecamatan: string) {
   await sleep(500); // Wait for any animations or transitions
 }
 
-export async function clickKabupatenKota(page: Page, kota: string) {
+/**
+ * Clicks the kabupaten/kota option in the address modal.
+ * Waits for the modal and the kabupaten/kota section to appear, then selects the specified kabupaten/kota.
+ * Throws an error if the kabupaten/kota is not found.
+ * @param page Puppeteer page instance
+ * @param kota Kabupaten/Kota name to select
+ */
+async function clickKabupatenKota(page: Page, kota: string) {
   // Wait for the modal and the kabupaten/kota section to appear
   await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Kabupaten/Kota")])', { visible: true });
 
@@ -277,6 +298,13 @@ export async function clickKabupatenKota(page: Page, kota: string) {
   await sleep(500); // Wait for any animations or transitions
 }
 
+/**
+ * Clicks the provinsi option in the address modal.
+ * Waits for the modal and the provinsi section to appear, then selects the specified provinsi.
+ * Throws an error if the provinsi is not found.
+ * @param page Puppeteer page instance
+ * @param provinsi Province name to select
+ */
 async function clickProvinsi(page: Page, provinsi: string) {
   // Wait for the modal and the provinsi section to appear
   await page.waitForSelector('::-p-xpath(//div[contains(text(), "Daftar Provinsi")])', { visible: true });
@@ -311,6 +339,12 @@ async function clickProvinsi(page: Page, provinsi: string) {
   await sleep(500); // Wait for any animations or transitions
 }
 
+/**
+ * Clicks the address modal dropdown to open the province selector.
+ * Finds and clicks the "Alamat Domisili" dropdown to open the province selector modal.
+ * Throws an error if the dropdown is not found or not clickable.
+ * @param page Puppeteer page instance
+ */
 async function clickAddressModal(page: Page) {
   // Find and click the "Alamat Domisili" dropdown to open the province selector
   const clicked = await page.evaluate(() => {
