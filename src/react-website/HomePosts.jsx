@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Card, Col, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function HomePosts() {
@@ -8,9 +8,7 @@ function HomePosts() {
   const [posts, setPosts] = React.useState([]);
 
   React.useEffect(() => {
-    import('./components/post-lists.json')
-      .then((module) => setPosts(module.default))
-      .catch(() => setPosts([]));
+    import('./components/post-lists.json').then((module) => setPosts(module.default)).catch(() => setPosts([]));
   }, []);
 
   const filteredPosts = posts.filter(
@@ -26,7 +24,7 @@ function HomePosts() {
           className="form-control"
           placeholder="Search posts..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       <Row xs={1} sm={2} md={3} lg={4} className="g-4">
@@ -37,8 +35,9 @@ function HomePosts() {
               tabIndex={0}
               style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer', width: '100%', height: '100%' }}
               onClick={() => navigate(post.href)}
-              onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') navigate(post.href); }}
-            >
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate(post.href);
+              }}>
               <Card className="h-100 shadow-sm d-flex flex-column" style={{ height: '100%' }}>
                 <Card.Img variant="top" src={post.image} alt={post.title} style={{ objectFit: 'cover', height: 180 }} />
                 <Card.Body className="d-flex flex-column flex-grow-1">
