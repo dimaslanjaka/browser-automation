@@ -3,6 +3,7 @@ import fs from 'fs';
 import * as glob from 'glob';
 import path from 'path';
 import { getChecksum } from 'sbg-utility';
+import color from 'ansi-colors';
 
 const checksumFile = path.join(process.cwd(), 'checksum.txt');
 const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8').trim() : null;
@@ -15,7 +16,13 @@ const checksum = getChecksum(
 );
 
 if (lastChecksum !== checksum) {
-  console.log('Checksum has changed, running build...');
+  console.log(
+    [
+      'Checksum changed, running build...',
+      `  Previous: ${color.yellow(lastChecksum)}`,
+      `  Current:  ${color.green(checksum)}`
+    ].join('\n')
+  );
   // Run the build command with shell:true to ensure all output is shown
   const result = spawnSync('npm', ['run', 'build'], { stdio: 'inherit', shell: true });
   console.log(`Build process exited with code: ${result.status}`);
@@ -27,4 +34,12 @@ if (lastChecksum !== checksum) {
   }
   // Update the checksum file
   fs.writeFileSync(checksumFile, checksum);
+} else {
+  console.log(
+    [
+      'No changes detected, skipping build.',
+      `  Previous: ${color.yellow(lastChecksum)}`,
+      `  Current:  ${color.green(checksum)}`
+    ].join('\n')
+  );
 }
