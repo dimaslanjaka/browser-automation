@@ -149,10 +149,10 @@
   "resolutions": {
     "binary-collections": "https://github.com/dimaslanjaka/bin/raw/2e0a11aae56d84ca7cece6056cf6ccc2f232c8f3/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/dd71be691552bd27b18f94d29682af1290560b62/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/a220b1bd10757c84b3a5aeef6fc0f3188b9a032e/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/73d76a8594d1d0e7f6e296dc756fa7fa94e5f546/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/d2c91acfd339cd3a6332516d83ecda727883b004/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
