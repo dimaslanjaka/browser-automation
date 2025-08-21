@@ -5,14 +5,10 @@ import fs from 'fs';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import path from 'path';
-import { fileURLToPath, URL, URLSearchParams } from 'url';
+import { URL, URLSearchParams } from 'url';
 
 // Load environment variables
 dotenv.config();
-
-// ESM-friendly __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
@@ -151,13 +147,24 @@ async function authorize() {
   return auth;
 }
 
-async function downloadSheets() {
+/**
+ * Downloads all sheets from a Google Spreadsheet as CSV files and the entire spreadsheet as XLSX.
+ *
+ * - Downloads the full spreadsheet as an XLSX file to `.cache/sheets/`.
+ * - Downloads each individual sheet as a CSV file to `.cache/sheets/`.
+ *
+ * @async
+ * @function downloadSheets
+ * @param {string} [spreadsheetId=SPREADSHEET_ID] - The ID of the Google Spreadsheet to download. Defaults to the value from the environment variable `SPREADSHEET_ID`.
+ * @returns {Promise<{xlsxFilePath: string, csvFiles: string[]}>} Resolves with the XLSX file path and an array of CSV file paths.
+ */
+export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
   const auth = await authorize();
   const sheets = google.sheets({ version: 'v4', auth });
   const drive = google.drive({ version: 'v3', auth });
 
   // Get sheet metadata
-  const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
   const spreadsheetUrl = sheetMeta.data.spreadsheetUrl;
   const sheetsList = sheetMeta.data.sheets;
 
@@ -188,6 +195,7 @@ async function downloadSheets() {
   // Download each sheet as CSV
   const parsedUrl = new URL(spreadsheetUrl);
   parsedUrl.pathname = parsedUrl.pathname.replace(/\/edit$/, '/export');
+  const csvFiles = [];
 
   for (const sheet of sheetsList) {
     const sheetId = sheet.properties.sheetId;
@@ -214,12 +222,27 @@ async function downloadSheets() {
     csvRes.data.pipe(csvWriter);
 
     await new Promise((resolve, reject) => {
-      csvWriter.on('finish', resolve);
+      csvWriter.on('finish', () => {
+        csvFiles.push(csvFilePath);
+        resolve(undefined);
+      });
       csvWriter.on('error', reject);
     });
 
     console.log(`Saved sheet "${sheetName}" as CSV to ${csvFilePath}`);
   }
+
+  return {
+    xlsxFilePath,
+    csvFiles
+  };
 }
 
-downloadSheets().catch(console.error);
+if (process.argv.some((arg) => arg.includes('download-google-sheet.js'))) {
+  downloadSheets()
+    .then((result) => {
+      console.log('\n=== Result ===\n');
+      console.log(JSON.stringify(result, null, 2));
+    })
+    .catch(console.error);
+}
