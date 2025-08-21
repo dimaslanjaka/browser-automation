@@ -31,7 +31,7 @@ function AdSense({ client, slot, style = { display: 'block' }, format = 'auto', 
       try {
         // @ts-ignore
         window.adsbygoogle.push({});
-      } catch (e) {
+      } catch {
         // AdSense script may not be loaded yet
       }
     }
