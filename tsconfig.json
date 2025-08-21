@@ -16,7 +16,7 @@
     "checkJs": false,
     "typeRoots": ["./types", "./node_modules/@types"]
   },
-  "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*"],
+  "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*", "**/*.ts", "**/*.js", "**/*.cjs", "**/*.mjs"],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
