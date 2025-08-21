@@ -181,5 +181,33 @@
   "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
   "typescript.tsserver.web.typeAcquisition.enabled": true,
   "files.autoSaveDelay": 10000,
-  "files.autoSaveWhenNoErrors": true
+  "files.autoSaveWhenNoErrors": true,
+  "eslint.probe": [
+    "astro",
+    "civet",
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "html",
+    "mdx",
+    "vue",
+    "markdown",
+    "json",
+    "jsonc"
+  ],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "astro",
+    "civet",
+    "html",
+    "mdx",
+    "markdown",
+    "json",
+    "jsonc"
+  ]
 }
