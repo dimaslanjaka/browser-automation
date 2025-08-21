@@ -51,6 +51,16 @@ async function main() {
 
   // Now safe to interact with the DOM
 
+  // Check if current url is not https://sehatindonesiaku.kemkes.go.id/auth/login
+  const currentUrl = page.url();
+  if (currentUrl !== 'https://sehatindonesiaku.kemkes.go.id/auth/login') {
+    console.log('User is already logged in');
+  } else {
+    // User is not logged in, perform login
+    await _login(page);
+    return;
+  }
+
   // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
   const buttonHandle = await page.evaluateHandle(() => {
     const buttons = Array.from(document.querySelectorAll('button'));
@@ -63,7 +73,7 @@ async function main() {
   });
   if (buttonHandle) {
     const isVisible = await buttonHandle.evaluate(
-      (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+      (el) => el !== null && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
     );
     if (!isVisible) {
       console.log('Button exists but is not visible');
@@ -99,7 +109,7 @@ async function processData(page: Page, item: DataItem) {
   });
   if (buttonHandle) {
     const isVisible = await buttonHandle.evaluate(
-      (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+      (el) => el !== null && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
     );
     if (isVisible) {
       await buttonHandle.click();
