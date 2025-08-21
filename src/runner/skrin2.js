@@ -14,18 +14,10 @@ import {
 } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
-import { keepAwake } from '../utils/prevent-sleep.js';
 import { ucwords } from '../utils/string.js';
 import { fixData } from '../xlsx-helper.js';
 
 console.clear();
-
-// Start keep-awake before long automation
-const wakeController = await keepAwake();
-console.log(`🔋 Keep-awake started using: ${wakeController.method}`);
-process.on('exit', async () => {
-  wakeController.release();
-});
 
 /**
  * Processes a single data entry in the skrining workflow.
