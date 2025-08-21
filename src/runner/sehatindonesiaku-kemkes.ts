@@ -7,6 +7,11 @@ import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem } from './sehatindonesiaku-data.js';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
 
+const provinsi = 'DKI Jakarta';
+const kabupaten = 'Kota Adm. Jakarta Barat';
+const kecamatan = 'Kebon Jeruk';
+const kelurahan = 'Kebon Jeruk';
+
 /**
  * Main entry point for the automation script.
  * Launches Puppeteer, navigates to the registration page, waits for DOM stability,
@@ -157,10 +162,6 @@ async function processData(page: Page, item: DataItem) {
   await vuePekerjaanSelect(page, item);
 
   // Select address
-  const provinsi = 'DKI Jakarta';
-  const kabupaten = 'Kota Adm. Jakarta Barat';
-  const kecamatan = 'Kebon Jeruk';
-  const kelurahan = 'Kebon Jeruk';
   await clickAddressModal(page);
   await clickProvinsi(page, provinsi);
   await clickKabupatenKota(page, kabupaten);
@@ -171,7 +172,139 @@ async function processData(page: Page, item: DataItem) {
   await selectCalendar(page, item.tanggal_pemeriksaan);
 
   // click submit button
-  await clickSubmit(page).catch(console.error);
+  await clickSubmit(page);
+
+  // Handle confirmation modal for quota full
+  await handleConfirmationModal(page, 'lanjut');
+  await clickKembali(page);
+}
+
+/**
+ * Clicks the "Kembali" button on the page.
+ *
+ * This function searches for all <button> elements and clicks the first one whose text content
+ * (case-insensitive) is exactly "kembali". Throws an error if no such button is found.
+ *
+ * @param page - Puppeteer page instance
+ * @throws If the "Kembali" button is not found
+ */
+async function clickKembali(page: Page) {
+  // Get all buttons on the page
+  const buttons = await page.$$('button');
+
+  for (const btn of buttons) {
+    const text = await btn.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === 'kembali') {
+      await btn.click();
+      return;
+    }
+  }
+
+  throw new Error("❌ 'Kembali' button not found");
+}
+
+/**
+ * Clicks the "Daftarkan dengan NIK" button on the page.
+ *
+ * This function searches for all <button> elements and clicks the first one whose text content
+ * (case-insensitive) is exactly "daftarkan dengan nik". Throws an error if no such button is found.
+ *
+ * @param page - Puppeteer page instance
+ * @throws If the "Daftarkan dengan NIK" button is not found
+ */
+async function clickDaftarkanDenganNIK(page: Page) {
+  // Get all buttons on the page
+  const buttons = await page.$$('button');
+
+  for (const btn of buttons) {
+    const text = await btn.evaluate((el) => el.textContent?.trim().toLowerCase());
+    if (text === 'daftarkan dengan nik') {
+      await btn.click();
+      return;
+    }
+  }
+
+  throw new Error("❌ 'Daftarkan dengan NIK' button not found");
+}
+
+/**
+ * Handles the confirmation modal for kuota habis (quota full) scenario.
+ * Clicks the appropriate button based on the user's choice: 'lanjut' (continue) or 'edit' (choose another date).
+ * @param page Puppeteer page instance
+ * @param choice 'lanjut' to continue, 'edit' to pick another date
+ */
+async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit') {
+  // Directly check if the modal wrapper exists
+  const modalHandle = await page.$('div.bg-white.shadow-gmail');
+  if (!modalHandle) {
+    throw new Error('Confirmation modal not found');
+  }
+
+  // Determine button text based on choice
+  const buttonText = choice === 'lanjut' ? 'Lanjut' : 'Pilih Tanggal Lain';
+
+  // Find all buttons inside the modal
+  const buttons = await modalHandle.$$('button');
+  let found = false;
+  for (const btn of buttons) {
+    const hasText = await btn.evaluate((el, wanted) => {
+      return Array.from(el.querySelectorAll('*')).some(
+        (node) => node.textContent && node.textContent.trim().includes(wanted)
+      );
+    }, buttonText);
+    if (hasText) {
+      await btn.click();
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    throw new Error(`Confirmation modal button '${buttonText}' not found`);
+  }
+
+  // Optionally, check if modal is gone (not required, but for stability)
+  for (let i = 0; i < 20; i++) {
+    const stillExists = await page.$('div.bg-white.shadow-gmail');
+    if (!stillExists) break;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  // Wait for DOM to stabilize after clicking
+  await waitForDomStable(page, 2000);
+
+  if (choice === 'lanjut') {
+    await clickPilihButton(page);
+    await clickDaftarkanDenganNIK(page);
+  }
+}
+
+/**
+ * Clicks the "Pilih" button in the table of registered individuals.
+ *
+ * This function searches for all buttons within the element with class
+ * ".table-individu-terdaftar" and clicks the first button whose inner text is exactly "Pilih".
+ * Throws an error if no such button is found, and lists the found button texts for debugging.
+ *
+ * @param page - Puppeteer page instance
+ * @throws If the "Pilih" button is not found
+ */
+export async function clickPilihButton(page: Page) {
+  const buttons = await page.$$('.table-individu-terdaftar button');
+
+  let clicked = false;
+  for (const btn of buttons) {
+    const text = await btn.evaluate((el) => el.innerText.trim());
+    if (text === 'Pilih') {
+      await btn.click();
+      clicked = true;
+      break;
+    }
+  }
+
+  if (!clicked) {
+    const foundTexts = await Promise.all(buttons.map((b) => b.evaluate((el) => el.innerText.trim())));
+    throw new Error(`❌ 'Pilih' button not found. Found: ${JSON.stringify(foundTexts)}`);
+  }
 }
 
 /**
