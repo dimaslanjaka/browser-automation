@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const xlsxFile = path.join(__dirname, 'FORM PTM BARU JULI 2025 BONJER.xlsx');
+const xlsxFile = path.join(__dirname, 'sehatindonesiaku.xlsx');
 
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
