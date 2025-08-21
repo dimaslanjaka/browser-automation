@@ -16,6 +16,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const CREDENTIALS_PATH = path.join(process.cwd(), '.cache', 'credentials.json');
 const TOKEN_PATH = path.join(process.cwd(), '.cache', 'token.json');
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');
 
 /**
  * Saves the OAuth2 credentials (access token, refresh token, etc.) to a local file.
@@ -138,8 +139,6 @@ async function authorize() {
 
   return auth;
 }
-
-const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');
 
 /**
  * Downloads a Google Spreadsheet as XLSX and CSV files using the Sheets and Drive APIs.
