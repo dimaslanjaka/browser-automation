@@ -58,16 +58,22 @@ export async function parseXlsxFile(
     throw new Error(`Sheet '${sheetName}' not found in file: ${filePath}`);
   }
   // Parse from row 7 (index 6) by default, no header
+  // Fix: Prevent infinite range if rangeEndIndex is too large
   let sheetToJsonRange: string | number = rangeIndex;
-  if (typeof rangeEndIndex === 'number') {
-    // xlsx.utils.sheet_to_json range as A7:Z100 (1-based)
-    // But we use 0-based index for start/end, so add 1
-    const ref = sheet['!ref'];
+  const ref = sheet['!ref'];
+  let maxRow = Number.MAX_SAFE_INTEGER;
+  if (ref) {
+    const [, endCell] = ref.split(':');
+    maxRow = xlsx.utils.decode_cell(endCell).r;
+  }
+  // Clamp rangeEndIndex to maxRow
+  const effectiveEndIndex = Math.min(rangeEndIndex, maxRow);
+  if (typeof rangeEndIndex === 'number' && effectiveEndIndex >= rangeIndex) {
     if (ref) {
       const [, endCell] = ref.split(':');
       const startCell = xlsx.utils.encode_cell({ c: 0, r: rangeIndex });
       const endCol = xlsx.utils.decode_cell(endCell).c;
-      const endCellStr = xlsx.utils.encode_cell({ c: endCol, r: rangeEndIndex });
+      const endCellStr = xlsx.utils.encode_cell({ c: endCol, r: effectiveEndIndex });
       sheetToJsonRange = `${startCell}:${endCellStr}`;
     }
   }
