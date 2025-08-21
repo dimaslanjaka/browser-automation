@@ -171,32 +171,50 @@ async function processData(page: Page, item: DataItem) {
   await selectCalendar(page, item.tanggal_pemeriksaan);
 
   // click submit button
-  await clickSubmit(page);
+  await clickSubmit(page).catch(console.error);
 }
 
 /**
  * Clicks the "Selanjutnya" (Next) button in the registration form.
- * Waits for the button or its disabled state to appear, throws if disabled, otherwise clicks the enabled button.
- * @param page Puppeteer page instance
- * @throws If the button is disabled or not found
+ *
+ * This function first checks if a disabled "Selanjutnya" button (as a div with specific classes) exists on the page.
+ * If found, it throws an error immediately. Otherwise, it searches for all enabled submit buttons and clicks the one
+ * whose descendants contain the text "Selanjutnya". Throws if no such button is found.
+ *
+ * @param page - Puppeteer page instance
+ * @throws If the "Selanjutnya" button is disabled or not found
  */
-export async function clickSubmit(page: Page) {
-  // Wait until either enabled button OR disabled div with "Selanjutnya" appears
-  await page.waitForSelector('div.tracking-wide', { visible: true });
-
-  // Check if disabled version exists
-  const disabled = await page.$('div.bg-disabled.cursor-not-allowed, div.cursor-not-allowed');
-  if (disabled) {
-    throw new Error("❌ 'Selanjutnya' button is disabled");
+async function clickSubmit(page: Page) {
+  // Immediately check if the disabled Selanjutnya div exists
+  const disabledSelanjutnya = await page.$(
+    'div.h-11.flex.items-center.justify-center.rounded-lg.bg-disabled.px-2.text-sm.text-gray-5.font-normal.cursor-not-allowed'
+  );
+  if (disabledSelanjutnya) {
+    const text = await disabledSelanjutnya.evaluate((el) => el.textContent?.trim());
+    if (text && text.includes('Selanjutnya')) {
+      throw new Error("❌ 'Selanjutnya' button is disabled");
+    }
   }
 
-  // Otherwise, click the enabled button
-  const button = await page.$('button:has-text("Selanjutnya")');
-  if (!button) {
+  // Find all submit buttons and check for the text 'Selanjutnya' in descendants
+  const buttons = await page.$$('button[type="submit"]');
+  let found = false;
+  for (const btn of buttons) {
+    const hasText = await btn.evaluate((el) => {
+      // Check all descendants for the text 'Selanjutnya'
+      return Array.from(el.querySelectorAll('*')).some(
+        (node) => node.textContent && node.textContent.trim().includes('Selanjutnya')
+      );
+    });
+    if (hasText) {
+      await btn.click();
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
     throw new Error("❌ 'Selanjutnya' button not found");
   }
-
-  await button.click();
 }
 
 // Supported Indonesian month labels seen in header
@@ -254,7 +272,7 @@ function monthIndexFromHeader(text: string): number {
  * @param dateStr Date string in DD/MM/YYYY format
  * @throws If the date is invalid, the calendar is not found, or the day is not available
  */
-export async function selectCalendar(page: Page, dateStr: string) {
+async function selectCalendar(page: Page, dateStr: string) {
   // Parse with moment, enforce strict DD/MM/YYYY
   const m = moment(dateStr, 'DD/MM/YYYY', true);
   if (!m.isValid()) {
