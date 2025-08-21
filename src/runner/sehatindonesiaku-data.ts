@@ -21,6 +21,7 @@ export interface DataItem {
   jenis_kelamin: string;
   pekerjaan: string;
   provinsi: string;
+  alamat: string;
   /** Geocoding result */
   // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
