@@ -1,19 +1,12 @@
+import color from 'ansi-colors';
 import { spawnSync } from 'child_process';
 import fs from 'fs';
-import * as glob from 'glob';
 import path from 'path';
 import { getChecksum } from 'sbg-utility';
-import color from 'ansi-colors';
 
 const checksumFile = path.join(process.cwd(), 'tmp/checksum.txt');
 const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8').trim() : null;
-const files = glob.sync('**/*.{js,cjs,mjs,ts,tsx,jsx}', {
-  cwd: path.join(process.cwd(), 'src')
-});
-const checksum = getChecksum(
-  path.join(process.cwd(), 'package.json'),
-  ...files.map((file) => path.join(process.cwd(), file))
-);
+const checksum = getChecksum(path.join(process.cwd(), 'package.json'), path.join(process.cwd(), 'src'));
 
 if (lastChecksum !== checksum) {
   console.log(
