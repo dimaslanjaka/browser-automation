@@ -3,12 +3,11 @@ import dotenv from 'dotenv';
 import moment from 'moment';
 import nikParse from 'nik-parser-jurusid';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { geocodeWithNominatim } from './src/address/nominatim.js';
-import { playMp3FromUrl } from './src/beep.js';
-import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
-import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from './src/puppeteer_utils.js';
-import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
+import { geocodeWithNominatim } from '../address/nominatim.js';
+import { playMp3FromUrl } from '../beep.js';
+import { fetchXlsxData3 } from '../fetchXlsxData3.js';
+import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '../puppeteer_utils.js';
+import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
   fixTbAndBb,
@@ -18,12 +17,8 @@ import {
   isNikErrorVisible,
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
-} from './src/skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, ucwords, waitEnter } from './src/utils.js';
-
-// Get the absolute path of the current script
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+} from '../skrin_utils.js';
+import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, ucwords, waitEnter } from '../utils.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
@@ -55,12 +50,12 @@ async function buildHtmlLog() {
  * @async
  * @function processData
  * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with web pages.
- * @param {import('./globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
+ * @param {import('../../globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
  * @returns {Promise<{
  *   status: 'success' | 'error',
  *   reason?: 'invalid_nik_length' | 'data_not_found' | string,
  *   description?: string,
- *   data?: import('./globals.js').ExcelRowData
+ *   data?: import('../../globals.js').ExcelRowData
  * }>} Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
@@ -497,7 +492,7 @@ export async function processData(browser, data) {
  * Logs into the web application, iterates through the data entries, and processes each one using `processData`.
  * Optionally allows transformation of each row of data through a callback before processing.
  *
- * @param {(data: import('./globals').ExcelRowData) => import('./globals').ExcelRowData | Promise<import('./globals').ExcelRowData>} [dataCallback]
+ * @param {(data: import('../../globals.js').ExcelRowData) => import('../../globals.js').ExcelRowData | Promise<import('../../globals.js').ExcelRowData>} [dataCallback]
  *   A callback to optionally transform each Excel data row before processing. Can be synchronous or asynchronous.
  *   Defaults to an identity function if not provided.
  * @returns {Promise<void>} A promise that resolves when all data entries are processed and the browser is closed.
@@ -513,7 +508,7 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
 
   while (datas.length > 0) {
     /**
-     * @type {import('./globals.js').ExcelRowData}
+     * @type {import('../../globals.js').ExcelRowData}
      */
     let data = await dataCallback(datas.shift()); // <-- modify the data via callback
     const result = await processData(browser, data);

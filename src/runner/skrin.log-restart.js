@@ -1,14 +1,11 @@
 import { deepmerge } from 'deepmerge-ts';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { getPuppeteer } from '../puppeteer_utils.js';
 import { processData, skrinLogin } from './skrin.js';
-import { getPuppeteer } from './src/puppeteer_utils.js';
-import { appendLog, getLogData } from './src/utils.js';
+import { appendLog, getLogData } from '../utils.js';
 
 // re-test .cache/lastData.log
 // current index range: 7488 - 8286
-
-const __filename = fileURLToPath(import.meta.url);
 
 async function createSession() {
   console.log('Creating new Puppeteer session...');
@@ -24,7 +21,7 @@ async function createSession() {
  *
  * @async
  * @function
- * @param {import('./globals.js').ExcelRowData} data - The data entry to be reprocessed.
+ * @param {import('../../globals.js').ExcelRowData} data - The data entry to be reprocessed.
  * @param {import('puppeteer').Browser} browser - An instance of the Puppeteer browser.
  * @returns {Promise<{status: 'success' | 'error', data?: any, error?: any, message?: string}>}
  * Resolves with the result of processing, or throws an error if an exception occurs.
@@ -54,7 +51,7 @@ const newNikSet = new Set(parsedNewLogs.map((item) => item.data && item.data.nik
 // Filter parsedLogs to exclude items already in parsedNewLogs by nik
 const filteredLogs = parsedLogs.filter((item) => item.data && !newNikSet.has(item.data.nik));
 
-if (process.argv[1] === __filename) {
+if (process.argv.some((arg) => arg.includes('log-restart'))) {
   (async function () {
     let { browser } = await createSession();
 

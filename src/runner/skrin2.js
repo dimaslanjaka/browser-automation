@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
-import { loadCsvData } from './data/index.js';
-import { addLog, getLogById } from './src/logHelper.js';
+import { loadCsvData } from '../../data/index.js';
+import { addLog, getLogById } from '../logHelper.js';
 import {
   clickIframeElement,
   getFormValuesFromFrame,
@@ -11,12 +11,12 @@ import {
   isIframeElementVisible,
   typeAndTriggerIframe,
   validateAndRetryIframeInput
-} from './src/puppeteer_utils.js';
-import { enterSkriningPage, skrinLogin } from './src/skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from './src/utils.js';
-import { keepAwake } from './src/utils/prevent-sleep.js';
-import { ucwords } from './src/utils/string.js';
-import { fixData } from './src/xlsx-helper.js';
+} from '../puppeteer_utils.js';
+import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
+import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
+import { keepAwake } from '../utils/prevent-sleep.js';
+import { ucwords } from '../utils/string.js';
+import { fixData } from '../xlsx-helper.js';
 
 console.clear();
 
@@ -32,7 +32,7 @@ process.on('exit', async () => {
  *
  * @async
  * @param {import('puppeteer').Page} page - Puppeteer page instance to operate on.
- * @param {import('./globals').ExcelRowData} data - A single data row from getDataRange (already fixed by fixData).
+ * @param {import('../../globals.js').ExcelRowData} data - A single data row from getDataRange (already fixed by fixData).
  * @returns {Promise<void>} Resolves when processing is complete.
  */
 async function processData(page, data) {

@@ -1,5 +1,5 @@
 import { runEntrySkrining } from './skrin.js';
-import { multiBeep } from './src/utils.js';
+import { multiBeep } from '../utils.js';
 
 // Override dates
 // runEntrySkrining(function (data) {
