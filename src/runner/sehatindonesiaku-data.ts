@@ -1,7 +1,9 @@
+import { spawnSync } from 'cross-spawn';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
+import 'dotenv/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +31,17 @@ export interface DataItem {
   [key: string]: any;
 }
 
+/**
+ * Parse the 'Format Full' sheet from an XLSX file and return an array of data objects.
+ *
+ * Each row is mapped to a partial DataItem, with columns mapped as follows:
+ * - NIK, Nama, Tanggal Lahir (parsed from NIK if possible), Jenis Kelamin, Nomor WhatsApp, Pekerjaan, Provinsi, Alamat.
+ * - Additional columns are included as dynamic keys (e.g., 'Column 9').
+ *
+ * @param filePath - Path to the XLSX file. Defaults to the local sehatindonesiaku.xlsx file.
+ * @returns Promise resolving to an array of partial DataItem objects.
+ * @throws If the 'Format Full' sheet is not found in the file.
+ */
 export async function parseXlsxFile(filePath = xlsxFile) {
   const workbook = xlsx.readFile(filePath);
   const sheetName = 'Format Full';
@@ -107,7 +120,33 @@ export async function parseXlsxFile(filePath = xlsxFile) {
 }
 
 (async () => {
-  const result = await parseXlsxFile();
+  const cmd = 'node';
+  const args = [path.join(process.cwd(), 'download-google-sheet.js'), '--id', process.env.KEMKES_SPREADSHEET_ID];
+  console.log('Running command:', cmd, args.join(' '));
+  const resultXlsx = spawnSync(cmd, args, {
+    cwd: process.cwd()
+  });
+  const stdout = resultXlsx.output
+    .map((nullableBuffer: Buffer | null) => {
+      if (nullableBuffer === null) return '';
+      return nullableBuffer.toString('utf-8');
+    })
+    .join('\n');
+  if (!stdout.includes('=== Result ===')) {
+    console.error('Error: Command output does not contain expected "=== Result ===" section.');
+    console.error('Output:', stdout);
+    process.exit(1);
+  }
+  let fileExportResult: { xlsxFilePath: string; csvFiles: string[] };
+  try {
+    fileExportResult = JSON.parse(stdout.split('=== Result ===')[1].trim());
+    console.log('Result:', fileExportResult);
+  } catch {
+    console.error('Error parsing JSON result from command output.');
+    console.error('Output:', stdout);
+    process.exit(1);
+  }
+  const result = await parseXlsxFile(fileExportResult.xlsxFilePath);
   const outPath = path.join(__dirname, 'sehatindonesiaku-data.json');
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
