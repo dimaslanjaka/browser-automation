@@ -11,7 +11,7 @@ import xlsx from 'xlsx';
  * - Converts each sheet in the XLSX to CSV and saves them in the cache directory.
  *
  * @param {string} spreadsheetId - The Google Spreadsheet ID to download.
- * @returns {Promise<{ xlsxFilePath: string | null, csvFiles: string[] }>} An object containing the XLSX file path and an array of CSV file paths.
+ * @returns {Promise<{ xlsxFilePath: string, csvFiles: string[], xlsxMetadataPath: string }>} An object containing the XLSX file path and an array of CSV file paths.
  */
 async function downloadSheets(spreadsheetId) {
   const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');
@@ -67,41 +67,42 @@ async function downloadSheets(spreadsheetId) {
     return { xlsxFilePath, csvFiles: metadata.csvFiles };
   }
 
-  try {
-    console.log(`Downloading via public export URL: ${publicUrl}`);
+  console.log(`Downloading via public export URL: ${publicUrl}`);
+  const response = await axios.get(publicUrl, { responseType: 'stream' });
+  const xlsxWriter = fs.createWriteStream(xlsxFilePath);
 
-    const response = await axios.get(publicUrl, { responseType: 'stream' });
-    const xlsxWriter = fs.createWriteStream(xlsxFilePath);
+  if (typeof response.data.pipe === 'function') {
     response.data.pipe(xlsxWriter);
-
     await new Promise((resolve, reject) => {
       xlsxWriter.on('finish', () => resolve());
       xlsxWriter.on('error', reject);
     });
-
-    console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
-
-    // Parse XLSX to CSV
-    const workbook = xlsx.readFile(xlsxFilePath);
-    const csvFiles = [];
-    workbook.SheetNames.forEach((sheetName) => {
-      const csv = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
-      const csvFilePath = path.join(CACHE_DIR, `sheet-${sheetName.replace(/[^\w\d-]/g, '_')}.csv`);
-      metadata.csvFiles.push(csvFilePath);
-      fs.writeFileSync(csvFilePath, csv, 'utf-8');
-      csvFiles.push(csvFilePath);
-      console.log(`Parsed and saved sheet '${sheetName}' as CSV to ${csvFilePath}`);
-    });
-
-    // Save updated metadata
-    fs.writeFileSync(xlsxMetadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
-    console.log(`New spreadsheet metadata saved to ${xlsxMetadataPath}`);
-
-    return { xlsxFilePath, csvFiles };
-  } catch (err) {
-    console.error('Failed public fallback download:', err.message || err);
-    return { xlsxFilePath: null, csvFiles: [] };
+  } else if (Buffer.isBuffer(response.data)) {
+    fs.writeFileSync(xlsxFilePath, response.data);
+  } else {
+    // Try to write as binary if not a stream or buffer
+    fs.writeFileSync(xlsxFilePath, response.data, 'binary');
   }
+
+  console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
+
+  // Parse XLSX to CSV
+  const workbook = xlsx.readFile(xlsxFilePath);
+  const csvFiles = [];
+  workbook.SheetNames.forEach((sheetName) => {
+    const csv = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+    const csvFilePath = path.join(CACHE_DIR, `sheet-${sheetName.replace(/[^\w\d-]/g, '_')}.csv`);
+    metadata.csvFiles.push(csvFilePath);
+    fs.writeFileSync(csvFilePath, csv, 'utf-8');
+    csvFiles.push(csvFilePath);
+    console.log(`Parsed and saved sheet '${sheetName}' as CSV to ${csvFilePath}`);
+  });
+
+  // Save updated metadata
+  fs.writeFileSync(xlsxMetadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+  console.log(`New spreadsheet metadata saved to ${xlsxMetadataPath}`);
+
+  return { xlsxFilePath, csvFiles, xlsxMetadataPath };
 }
 
 export { downloadSheets };
