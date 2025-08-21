@@ -149,7 +149,20 @@ export async function parseXlsxFile(filePath = xlsxFile) {
   return result;
 }
 
-(async () => {
+const outPath = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku-data.json');
+export { outPath as sehatindonesiakuDataPath };
+
+/**
+ * Download the Kemkes spreadsheet from Google Sheets, parse the 'Format Full' sheet,
+ * and write the processed data as JSON to the cache directory.
+ *
+ * - Requires the KEMKES_SPREADSHEET_ID environment variable to be set.
+ * - Downloads the spreadsheet, parses the XLSX, and saves the result as JSON.
+ * - Output path: .cache/sheets/sehatindonesiaku-data.json (relative to project root)
+ *
+ * @returns Resolves when the process is complete.
+ */
+export async function downloadAndProcessXlsx() {
   const spreadsheetId = process.env.KEMKES_SPREADSHEET_ID;
   if (!spreadsheetId) {
     console.error('KEMKES_SPREADSHEET_ID environment variable is not set.');
@@ -157,8 +170,13 @@ export async function parseXlsxFile(filePath = xlsxFile) {
   }
   const downloadResult = await downloadSheets(spreadsheetId);
   const result = await parseXlsxFile(downloadResult.xlsxFilePath);
-  const outPath = path.join(__dirname, 'sehatindonesiaku-data.json');
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.ensureDirSync(path.dirname(outPath));
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
-})();
+}
+
+if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
+  (async () => {
+    await downloadAndProcessXlsx();
+  })();
+}
