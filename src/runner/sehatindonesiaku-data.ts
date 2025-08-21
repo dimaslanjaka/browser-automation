@@ -17,15 +17,17 @@ const tanggal_pemeriksaan = '21/08/2025';
  * @param item Data item containing tanggal_lahir in DD/MM/YYYY
  */
 export interface DataItem {
-  nik: string;
-  nama: string;
-  nomor_wa: string;
-  tanggal_lahir: string;
-  jenis_kelamin: string;
-  pekerjaan: string;
-  provinsi: string;
-  alamat: string;
-  tanggal_pemeriksaan: string;
+  nik: string | null;
+  nama: string | null;
+  nomor_wa: string | null;
+  tanggal_lahir: string | null;
+  jenis_kelamin: string | null;
+  pekerjaan: string | null;
+  provinsi: string | null;
+  alamat: string | null;
+  tanggal_pemeriksaan: string | null;
+  tinggi_badan?: number | null;
+  berat_badan?: number | null;
   /** Geocoding result */
   // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
@@ -57,9 +59,20 @@ export async function parseXlsxFile(filePath = xlsxFile) {
   });
   const result: Partial<DataItem>[] = [];
   for (const row of data) {
-    const obj = {
-      tanggal_pemeriksaan
+    const obj: DataItem = {
+      tanggal_pemeriksaan,
+      nik: null,
+      nama: null,
+      nomor_wa: null,
+      tanggal_lahir: null,
+      jenis_kelamin: null,
+      pekerjaan: null,
+      provinsi: null,
+      alamat: null
     };
+    if (!row || row.length === 0) {
+      continue; // Skip empty rows
+    }
     for (let index = 0; index < row.length; index++) {
       if (index === 0) {
         // NIK
@@ -70,39 +83,55 @@ export async function parseXlsxFile(filePath = xlsxFile) {
         obj['nama'] = row[index];
         continue;
       } else if (index === 2) {
-        // Tanggal Lahir (parse from NIK)
-        const nik = row[0];
-        let tgl = row[index];
-        if (nik && typeof nik === 'string' && nik.length >= 12) {
-          let day = parseInt(nik.substring(6, 8), 10);
-          const month = parseInt(nik.substring(8, 10), 10);
-          let year = parseInt(nik.substring(10, 12), 10);
-          if (day > 40) day -= 40;
-          year += year <= 24 ? 2000 : 1900;
-          // Format as DD/MM/YYYY
-          tgl = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year.toString().padStart(4, '0')}`;
+        // Tanggal Lahir
+        let tgl_lahir = row[index];
+        // Convert Excel date number to DD/MM/YYYY if needed
+        if (typeof tgl_lahir === 'number') {
+          const jsDate = new Date(Math.round((tgl_lahir - 25569) * 86400 * 1000));
+          tgl_lahir = jsDate.toLocaleDateString('en-GB'); // DD/MM/YYYY
         }
-        obj['tanggal_lahir'] = tgl;
+        // console.log(`${obj['nama']} Tanggal Lahir: ${tgl_lahir}`);
+        obj['tanggal_lahir'] = tgl_lahir;
         continue;
       } else if (index === 3) {
         // Jenis Kelamin / Gender
         obj['jenis_kelamin'] = row[index];
         continue;
       } else if (index === 4) {
+        // Tanggal Pemeriksaan
+        let tglPemeriksaan = row[index];
+        // Convert Excel date number to DD/MM/YYYY if needed
+        if (typeof tglPemeriksaan === 'number') {
+          // Excel date number to JS date
+          const jsDate = new Date(Math.round((tglPemeriksaan - 25569) * 86400 * 1000));
+          tglPemeriksaan = jsDate.toLocaleDateString('en-GB'); // DD/MM/YYYY
+        }
+        obj['tanggal_pemeriksaan'] = tglPemeriksaan;
+        // if (tglPemeriksaan) console.log(`${obj['nama']} Tanggal Pemeriksaan: ${tglPemeriksaan}`);
+        continue;
+      } else if (index === 5) {
         // Nomor WhatsApp (WA)
         obj['nomor_wa'] = '+62' + row[index];
         continue;
-      } else if (index === 5) {
+      } else if (index === 6) {
         // Pekerjaan
         obj['pekerjaan'] = row[index];
         continue;
-      } else if (index === 6) {
+      } else if (index === 7) {
         // Provinsi
         obj['provinsi'] = row[index];
         continue;
-      } else if (index === 7) {
+      } else if (index === 8) {
         // Alamat
         obj['alamat'] = row[index];
+        continue;
+      } else if (index === 44) {
+        // Tinggi Badan
+        obj['tinggi_badan'] = row[index];
+        continue;
+      } else if (index === 45) {
+        // Berat Badan
+        obj['berat_badan'] = row[index];
         continue;
       }
       obj[`Column ${index + 1}`] = row[index]; // Use dynamic keys for each column
@@ -112,10 +141,11 @@ export async function parseXlsxFile(filePath = xlsxFile) {
     //   const address = (obj['alamat'] || '') + ' ' + (obj['provinsi'] || '');
     //   obj['resolved_address'] = await resolveAddress(address);
     // } catch {
-    //   //
+    //   // Handle address resolution error
     // }
     result.push(obj);
   }
+  console.log(result[0]);
   return result;
 }
 
