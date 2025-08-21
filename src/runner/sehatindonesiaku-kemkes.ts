@@ -1,16 +1,11 @@
 import 'dotenv/config.js';
 import fs from 'fs-extra';
+import moment from 'moment';
 import type { ElementHandle, Page } from 'puppeteer';
 import path from 'upath';
-import { fileURLToPath } from 'url';
-import { getPuppeteer } from '../puppeteer_utils.js';
-import { sleep } from '../utils-browser.js';
+import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem } from './sehatindonesiaku-data.js';
 import data from './sehatindonesiaku-data.json' with { type: 'json' };
-import moment from 'moment';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Main entry point for the automation script.
@@ -317,7 +312,7 @@ export async function selectCalendar(page: Page, dateStr: string) {
     } else {
       await nextBtn.click();
     }
-    await sleep(150);
+    await waitForDomStable(page, 150);
     if (safety === 599) throw new Error(`Failed to reach ${targetMonth + 1}/${targetYear}`);
   }
 
@@ -382,7 +377,7 @@ async function clickKelurahan(page: Page, kelurahan: string) {
     throw new Error(`Kelurahan '${kelurahan}' not found`);
   }
 
-  await sleep(500); // Wait for any animations or transitions
+  await waitForDomStable(page, 500); // Wait for any animations or transitions
 }
 
 /**
@@ -424,7 +419,7 @@ async function clickKecamatan(page: Page, kecamatan: string) {
     throw new Error(`Kecamatan '${kecamatan}' not found`);
   }
 
-  await sleep(500); // Wait for any animations or transitions
+  await waitForDomStable(page, 500); // Wait for any animations or transitions
 }
 
 /**
@@ -466,7 +461,7 @@ async function clickKabupatenKota(page: Page, kota: string) {
     throw new Error(`Kota '${kota}' not found`);
   }
 
-  await sleep(500); // Wait for any animations or transitions
+  await waitForDomStable(page, 500); // Wait for any animations or transitions
 }
 
 /**
@@ -507,7 +502,7 @@ async function clickProvinsi(page: Page, provinsi: string) {
     throw new Error(`Provinsi '${provinsi}' not found`);
   }
 
-  await sleep(500); // Wait for any animations or transitions
+  await waitForDomStable(page, 500); // Wait for any animations or transitions
 }
 
 /**
@@ -550,7 +545,7 @@ async function clickAddressModal(page: Page) {
   if (!clicked) throw new Error('Alamat Domisili dropdown not found or not clickable');
 
   // Wait for the modal to appear
-  await sleep(500);
+  await waitForDomStable(page, 500);
 }
 
 /**
@@ -676,7 +671,7 @@ async function vuePekerjaanSelect(page: Page, item: DataItem) {
   if (!clicked) throw new Error('Pekerjaan SVG icon not found or not clickable');
 
   // Wait for the dropdown to appear
-  await sleep(500);
+  await waitForDomStable(page, 500);
 
   // Select the pekerjaan option in the modal by matching normalized text (case/space-insensitive)
   await page.evaluate((pekerjaan) => {
@@ -734,7 +729,7 @@ async function vueGenderSelect(page: Page, item: DataItem) {
   });
   if (!clickGenderDropdown) throw new Error('Jenis Kelamin SVG icon not found or not clickable');
   // Simplified: select gender option from visible dropdown
-  await sleep(500); // Wait for dropdown to appear
+  await waitForDomStable(page, 500); // Wait for dropdown to appear
   await page.evaluate((gender) => {
     // Find all visible gender options in the dropdown
     const dropdowns = Array.from(

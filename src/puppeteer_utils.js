@@ -707,3 +707,55 @@ export async function validateAndRetryIframeInput(page, iframeSelector, elementS
   console.warn(`Failed to validate input after ${maxRetries + 1} attempts for ${elementSelector}`);
   return false;
 }
+
+/**
+ * Wait until DOM becomes stable (no changes for `quietTime` ms).
+ *
+ * @param {import('puppeteer').Page} page
+ * @param {number} quietTime - Time window where no mutations must occur (ms).
+ * @param {number} timeout - Maximum total wait time (ms).
+ */
+export async function waitForDomStable(page, quietTime = 500, timeout = 5000) {
+  if (quietTime > timeout) {
+    timeout = quietTime + 5000; // extend timeout
+  }
+
+  await page.evaluate(
+    ({ quietTime, timeout }) =>
+      new Promise((resolve, reject) => {
+        let timer = null;
+        let finished = false;
+
+        const observer = new MutationObserver(() => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(done, quietTime);
+        });
+
+        function done() {
+          if (finished) return;
+          finished = true;
+          observer.disconnect();
+          resolve();
+        }
+
+        observer.observe(document, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+
+        // Start initial quiet timer
+        timer = setTimeout(done, quietTime);
+
+        // Fail-safe timeout
+        setTimeout(() => {
+          if (finished) return;
+          finished = true;
+          observer.disconnect();
+          reject(new Error('DOM did not stabilize within timeout'));
+        }, timeout);
+      }),
+    { quietTime, timeout }
+  );
+}
