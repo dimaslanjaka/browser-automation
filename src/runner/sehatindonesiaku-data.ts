@@ -6,6 +6,7 @@ import xlsx from 'xlsx';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const xlsxFile = path.join(__dirname, 'sehatindonesiaku.xlsx');
+const tanggal_pemeriksaan = '21/08/2025';
 
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
@@ -44,7 +45,7 @@ export async function parseXlsxFile(filePath = xlsxFile) {
   const result: Partial<DataItem>[] = [];
   for (const row of data) {
     const obj = {
-      tanggal_pemeriksaan: '21/08/2025'
+      tanggal_pemeriksaan
     };
     for (let index = 0; index < row.length; index++) {
       if (index === 0) {
