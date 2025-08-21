@@ -16,8 +16,12 @@ const checksum = getChecksum(
 
 if (lastChecksum !== checksum) {
   console.log('Checksum has changed, running build...');
-  // Run the build command
-  const result = spawnSync('npm', ['run', 'build'], { stdio: 'inherit' });
+  // Run the build command with shell:true to ensure all output is shown
+  const result = spawnSync('npm', ['run', 'build'], { stdio: 'inherit', shell: true });
+  console.log(`Build process exited with code: ${result.status}`);
+  if (result.error) {
+    console.error('Error running build:', result.error);
+  }
   if (result.status !== 0) {
     process.exit(result.status);
   }
