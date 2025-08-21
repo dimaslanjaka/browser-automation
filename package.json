@@ -9,7 +9,7 @@
     "lint:fix": "npm run lint -- --fix",
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "init:docs": "node ./init-gh-pages.js",
-    "build": "npm run build:packages && npm run init:docs",
+    "build": "npm run build:packages && npm run build:tsup && npm run init:docs",
     "postinstall": "npm run init:docs",
     "test": "node --experimental-vm-modules -r ./.vscode/js-hook.cjs ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose",
     "test:coverage": "npm run test -- --coverage",
@@ -25,7 +25,8 @@
     "vite:deploy": "node -r ./.vscode/js-hook.cjs vite.deploy.js",
     "clean": "rimraf node_modules/.vite dist",
     "clean:full": "rimraf node_modules .vite dist && npm install",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:tsup": "tsup"
   },
   "keywords": [],
   "author": "",
@@ -133,6 +134,7 @@
     "sass": "^1",
     "terser": "^5",
     "ts-node": "^10",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.40.0",
     "vite": "^7",
