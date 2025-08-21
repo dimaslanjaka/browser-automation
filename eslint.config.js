@@ -107,7 +107,6 @@ export default defineConfig([
   // ---------------------------------------------------
   {
     files: ['**/*.{js,mjs,cjs,jsx}'],
-    ...js.configs.recommended, // Use ESLint recommended JS rules
     languageOptions: {
       parser: babelParser, // Use Babel parser for modern JS/JSX
       parserOptions: {
@@ -123,6 +122,7 @@ export default defineConfig([
       globals: { ...globals.browser, ...globals.node }
     },
     rules: {
+      ...js.configs.recommended.rules, // Use recommended JS rules
       'no-unused-vars': 'error' // Disallow unused variables
     }
   },
@@ -130,9 +130,9 @@ export default defineConfig([
   // ---------------------------------------------------
   // 🟦 TypeScript (TS, TSX, MTS, CTS)
   // ---------------------------------------------------
+  tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx,mts,cts}'],
-    ...tseslint.configs.recommended, // Use recommended TS rules
     languageOptions: {
       parser: tseslint.parser, // TypeScript-aware parser
       parserOptions: {
