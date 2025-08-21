@@ -1,10 +1,10 @@
 import { authenticate } from '@google-cloud/local-auth';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import fs from 'fs';
+import fs from 'fs-extra';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
-import path from 'path';
+import path from 'upath';
 import { URL, URLSearchParams } from 'url';
 import minimist from 'minimist';
 import xlsx from 'xlsx';
@@ -27,9 +27,7 @@ function saveToken(auth, customCredentials = null) {
   try {
     // Ensure the .cache directory exists
     const tokenDir = path.dirname(TOKEN_PATH);
-    if (!fs.existsSync(tokenDir)) {
-      fs.mkdirSync(tokenDir, { recursive: true });
-    }
+    fs.ensureDirSync(tokenDir);
 
     fs.writeFileSync(
       TOKEN_PATH,
@@ -45,7 +43,6 @@ function saveToken(auth, customCredentials = null) {
  * Loads an OAuth2Client using saved credentials and refresh tokens.
  *
  * @async
- * @function getClient
  * @returns {Promise<OAuth2Client|null>} An authenticated OAuth2Client instance with refreshed access token if needed, or null if no token exists.
  */
 async function getClient() {
@@ -142,373 +139,117 @@ async function authorize() {
   return auth;
 }
 
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');
+
 /**
- * Downloads all sheets from a Google Spreadsheet as CSV files and the entire spreadsheet as XLSX.
+ * Downloads a Google Spreadsheet as XLSX and CSV files using the Sheets and Drive APIs.
  *
- * - Downloads the full spreadsheet as an XLSX file to `.cache/sheets/`.
- * - Downloads each individual sheet as a CSV file to `.cache/sheets/`.
- *
- * @async
- * @function downloadSheets
- * @param {string} [spreadsheetId=SPREADSHEET_ID] - The ID of the Google Spreadsheet to download. Defaults to the value from the environment variable `SPREADSHEET_ID`.
- * @returns {Promise<{xlsxFilePath: string, csvFiles: string[]}>} Resolves with the XLSX file path and an array of CSV file paths.
+ * @param {string} spreadsheetId - The ID of the Google Spreadsheet.
+ * @param {import('google-auth-library').OAuth2Client} auth - The authenticated OAuth2 client.
+ * @returns {Promise<{ xlsxFilePath: string, csvFiles: string[] }>} Paths to the saved XLSX and CSV files.
  */
-export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
-  const auth = await authorize();
+async function downloadSheetsApi(spreadsheetId, auth) {
   const sheets = google.sheets({ version: 'v4', auth });
   const drive = google.drive({ version: 'v3', auth });
 
-  // Get sheet metadata
-  let sheetMeta, spreadsheetUrl, sheetsList;
+  // Ensure output folder exists
+  fs.ensureDirSync(CACHE_DIR);
+
+  // Fetch spreadsheet metadata
+  const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
+  const spreadsheetUrl = sheetMeta.data.spreadsheetUrl;
+  const sheetsList = sheetMeta.data.sheets;
+
+  const metaFilePath = path.join(CACHE_DIR, `spreadsheet-${spreadsheetId}.meta.json`);
+  let xlsxFilePath = path.join(CACHE_DIR, `spreadsheet-${spreadsheetId}.xlsx`);
+
+  // Try fetching Drive file metadata
+  let fileMeta = null;
   try {
-    sheetMeta = await sheets.spreadsheets.get({ spreadsheetId });
-    spreadsheetUrl = sheetMeta.data.spreadsheetUrl;
-    sheetsList = sheetMeta.data.sheets;
-  } catch (metaErr) {
-    // Always print error after result, not before
-    let errorMsg = 'Failed to fetch spreadsheet metadata: ' + (metaErr.message || metaErr);
-    // fallback: try public export for ANY spreadsheetId (like x.cjs)
-    const outDir = path.join(process.cwd(), '.cache', 'sheets');
-    fs.mkdirSync(outDir, { recursive: true });
+    fileMeta = await drive.files.get({ fileId: spreadsheetId, fields: '*' });
+  } catch (err) {
+    console.warn('Failed to fetch Drive metadata:', err.message || err);
+  }
+
+  // Check cache using md5Checksum or modifiedTime
+  let shouldDownload = true;
+  if (fileMeta && fs.existsSync(xlsxFilePath) && fs.existsSync(metaFilePath)) {
     try {
-      const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
-      console.log(`Attempting to download spreadsheet via public export URL (metadata fallback): ${publicUrl}`);
-      const response = await axios.get(publicUrl, { responseType: 'stream' });
-      const xlsxFilePathLocal = path.join(outDir, `spreadsheet-pub-${spreadsheetId}.xlsx`);
-      const xlsxWriter = fs.createWriteStream(xlsxFilePathLocal);
-      response.data.pipe(xlsxWriter);
+      const cachedMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
+      const remoteChecksum = fileMeta.data.md5Checksum || fileMeta.data.modifiedTime;
+      const cachedChecksum = cachedMeta.md5Checksum || cachedMeta.modifiedTime;
+      if (remoteChecksum && cachedChecksum && remoteChecksum === cachedChecksum) {
+        console.log('[api] XLSX file is up-to-date, skipping download.');
+        shouldDownload = false;
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+
+  if (shouldDownload) {
+    try {
+      const xlsxRes = await drive.files.export(
+        {
+          fileId: spreadsheetId,
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        },
+        { responseType: 'stream' }
+      );
+      const xlsxWriter = fs.createWriteStream(xlsxFilePath);
+      xlsxRes.data.pipe(xlsxWriter);
       await new Promise((resolve, reject) => {
         xlsxWriter.on('finish', resolve);
         xlsxWriter.on('error', reject);
       });
-      console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePathLocal}`);
+      console.log(`Saved full spreadsheet as XLSX to ${xlsxFilePath}`);
 
-      // Parse all sheets as CSV and save to files
-      const workbook = xlsx.readFile(xlsxFilePathLocal);
-      const csvFiles = [];
-      workbook.SheetNames.forEach((sheetName) => {
-        const csv = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
-        const csvFilePath = path.join(outDir, `sheet-${sheetName.replace(/[^\w\d-]/g, '_')}.csv`);
-        fs.writeFileSync(csvFilePath, csv, 'utf-8');
-        csvFiles.push(csvFilePath);
-        console.log(`Parsed and saved sheet '${sheetName}' as CSV to ${csvFilePath}`);
-      });
-
-      // Print result first, then error if any
-      const result = { xlsxFilePath: xlsxFilePathLocal, csvFiles };
-      console.log('\n=== Result ===\n');
-      console.log(JSON.stringify(result, null, 2));
-      if (errorMsg) console.error(errorMsg);
-      return result;
-    } catch (pubErr) {
-      const result = { xlsxFilePath: null, csvFiles: [] };
-      console.log('\n=== Result ===\n');
-      console.log(JSON.stringify(result, null, 2));
-      console.error(
-        'Failed to download spreadsheet via public export URL (metadata fallback):',
-        pubErr.message || pubErr
+      // Save metadata
+      fs.writeFileSync(
+        metaFilePath,
+        JSON.stringify(
+          {
+            md5Checksum: fileMeta?.data?.md5Checksum,
+            modifiedTime: fileMeta?.data?.modifiedTime
+          },
+          null,
+          2
+        ),
+        'utf-8'
       );
-      if (errorMsg) console.error(errorMsg);
-      return result;
-    }
-  }
-
-  // Ensure output folder exists
-  const outDir = path.join(process.cwd(), '.cache', 'sheets');
-  fs.mkdirSync(outDir, { recursive: true });
-
-  // Always fetch and print file metadata first
-  let xlsxFilePath = null;
-  let fileMeta = null;
-  const metaFilePath = path.join(outDir, `spreadsheet-${spreadsheetId}.meta.json`);
-  try {
-    fileMeta = await drive.files.get({ fileId: spreadsheetId, fields: '*' });
-    // console.log('Drive file metadata:', JSON.stringify(fileMeta.data, null, 2));
-  } catch (metaErr) {
-    console.error('Failed to fetch Drive file metadata:', metaErr.message || metaErr);
-  }
-
-  // If fileMeta is available and is a Google Sheet, use Drive API cache strategy
-  if (fileMeta && fileMeta.data && fileMeta.data.mimeType === 'application/vnd.google-apps.spreadsheet') {
-    xlsxFilePath = path.join(outDir, `spreadsheet-${spreadsheetId}.xlsx`);
-    let cachedMeta = null;
-    if (fs.existsSync(metaFilePath)) {
-      try {
-        cachedMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
-      } catch (_err) {
-        cachedMeta = null;
-      }
-    }
-    // Use md5Checksum if available, else modifiedTime
-    const remoteChecksum = fileMeta.data.md5Checksum || fileMeta.data.modifiedTime;
-    const cachedChecksum = cachedMeta && (cachedMeta.md5Checksum || cachedMeta.modifiedTime);
-    if (
-      fs.existsSync(xlsxFilePath) &&
-      cachedMeta &&
-      cachedChecksum &&
-      remoteChecksum &&
-      cachedChecksum === remoteChecksum
-    ) {
-      console.log('XLSX file is up-to-date, skipping download.');
-    } else {
-      try {
-        // Try Drive export and fallback in a single try/catch
-        try {
-          const xlsxRes = await drive.files.export(
-            {
-              fileId: spreadsheetId,
-              mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            },
-            { responseType: 'stream' }
-          );
-          const xlsxWriter = fs.createWriteStream(xlsxFilePath);
-          xlsxRes.data.pipe(xlsxWriter);
-          await new Promise((resolve, reject) => {
-            xlsxWriter.on('finish', resolve);
-            xlsxWriter.on('error', reject);
-          });
-          console.log(`Saved full spreadsheet as XLSX to ${xlsxFilePath}`);
-          // Save meta
-          fs.writeFileSync(
-            metaFilePath,
-            JSON.stringify(
-              {
-                md5Checksum: fileMeta.data.md5Checksum,
-                modifiedTime: fileMeta.data.modifiedTime
-              },
-              null,
-              2
-            ),
-            'utf-8'
-          );
-        } catch (exportErr) {
-          console.error('Failed to export spreadsheet as XLSX (Drive export error):', exportErr.message || exportErr);
-          xlsxFilePath = null;
-          // Try public export URL (for published sheets)
-          let exportId = spreadsheetId;
-          const publicUrl = `https://docs.google.com/spreadsheets/d/${exportId}/export?format=xlsx&id=${exportId}`;
-          console.log(`Attempting to download spreadsheet via public export URL: ${publicUrl}`);
-          // Fallback cache: check by file size and mtime
-          const pubXlsxFilePath = path.join(outDir, `spreadsheet-pub-${exportId}.xlsx`);
-          let pubCachedMeta = null;
-          if (fs.existsSync(pubXlsxFilePath) && fs.existsSync(metaFilePath)) {
-            try {
-              pubCachedMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
-            } catch (_err) {
-              pubCachedMeta = null;
-            }
-            if (
-              pubCachedMeta &&
-              pubCachedMeta.fallback &&
-              pubCachedMeta.fallback.size &&
-              pubCachedMeta.fallback.mtimeMs
-            ) {
-              const stat = fs.statSync(pubXlsxFilePath);
-              if (
-                stat.size === pubCachedMeta.fallback.size &&
-                Math.abs(stat.mtimeMs - pubCachedMeta.fallback.mtimeMs) < 2000 // allow 2s drift
-              ) {
-                xlsxFilePath = pubXlsxFilePath;
-                console.log('XLSX file (public export) is up-to-date, skipping download.');
-                return;
-              }
-            }
-          }
-          try {
-            const response = await axios.get(publicUrl, { responseType: 'stream' });
-            const xlsxWriter2 = fs.createWriteStream(pubXlsxFilePath);
-            response.data.pipe(xlsxWriter2);
-            await new Promise((resolve, reject) => {
-              xlsxWriter2.on('finish', resolve);
-              xlsxWriter2.on('error', reject);
-            });
-            xlsxFilePath = pubXlsxFilePath;
-            console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
-            // Save meta for public export (file size and mtime)
-            const stat = fs.statSync(pubXlsxFilePath);
-            fs.writeFileSync(
-              metaFilePath,
-              JSON.stringify(
-                {
-                  fallback: {
-                    size: stat.size,
-                    mtimeMs: stat.mtimeMs
-                  }
-                },
-                null,
-                2
-              ),
-              'utf-8'
-            );
-          } catch (pubErr) {
-            console.error('Failed to download spreadsheet via public export URL:', pubErr.message || pubErr);
-            xlsxFilePath = null;
-          }
-        }
-      } catch (allErr) {
-        // Catch any unexpected error in the export logic
-        console.error('Unexpected error during XLSX export attempts:', allErr.message || allErr);
-        xlsxFilePath = null;
-      }
-    }
-  } else {
-    // If fileMeta is not available, fallback to public export and cache by file size/mtime
-    const pubXlsxFilePath = path.join(outDir, `spreadsheet-pub-${spreadsheetId}.xlsx`);
-    let pubCachedMeta = null;
-    if (fs.existsSync(pubXlsxFilePath) && fs.existsSync(metaFilePath)) {
-      try {
-        pubCachedMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf-8'));
-      } catch (_err) {
-        pubCachedMeta = null;
-      }
-      if (pubCachedMeta && pubCachedMeta.fallback && pubCachedMeta.fallback.size && pubCachedMeta.fallback.mtimeMs) {
-        const stat = fs.statSync(pubXlsxFilePath);
-        if (
-          stat.size === pubCachedMeta.fallback.size &&
-          Math.abs(stat.mtimeMs - pubCachedMeta.fallback.mtimeMs) < 2000 // allow 2s drift
-        ) {
-          xlsxFilePath = pubXlsxFilePath;
-          console.log('XLSX file (public export, fallback) is up-to-date, skipping download.');
-        } else {
-          // Download again
-          try {
-            const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
-            const response = await axios.get(publicUrl, { responseType: 'stream' });
-            const xlsxWriter = fs.createWriteStream(pubXlsxFilePath);
-            response.data.pipe(xlsxWriter);
-            await new Promise((resolve, reject) => {
-              xlsxWriter.on('finish', resolve);
-              xlsxWriter.on('error', reject);
-            });
-            xlsxFilePath = pubXlsxFilePath;
-            console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
-            const stat2 = fs.statSync(pubXlsxFilePath);
-            fs.writeFileSync(
-              metaFilePath,
-              JSON.stringify(
-                {
-                  fallback: {
-                    size: stat2.size,
-                    mtimeMs: stat2.mtimeMs
-                  }
-                },
-                null,
-                2
-              ),
-              'utf-8'
-            );
-          } catch (pubErr) {
-            console.error('Failed to download spreadsheet via public export URL (fallback):', pubErr.message || pubErr);
-            xlsxFilePath = null;
-          }
-        }
-      } else {
-        // No cache, download
-        try {
-          const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
-          const response = await axios.get(publicUrl, { responseType: 'stream' });
-          const xlsxWriter = fs.createWriteStream(pubXlsxFilePath);
-          response.data.pipe(xlsxWriter);
-          await new Promise((resolve, reject) => {
-            xlsxWriter.on('finish', resolve);
-            xlsxWriter.on('error', reject);
-          });
-          xlsxFilePath = pubXlsxFilePath;
-          console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
-          const stat2 = fs.statSync(pubXlsxFilePath);
-          fs.writeFileSync(
-            metaFilePath,
-            JSON.stringify(
-              {
-                fallback: {
-                  size: stat2.size,
-                  mtimeMs: stat2.mtimeMs
-                }
-              },
-              null,
-              2
-            ),
-            'utf-8'
-          );
-        } catch (pubErr) {
-          console.error(
-            'Failed to download spreadsheet via public export URL (fallback, no cache):',
-            pubErr.message || pubErr
-          );
-          xlsxFilePath = null;
-        }
-      }
-    } else {
-      // No cache, download
-      try {
-        const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
-        const response = await axios.get(publicUrl, { responseType: 'stream' });
-        const xlsxWriter = fs.createWriteStream(pubXlsxFilePath);
-        response.data.pipe(xlsxWriter);
-        await new Promise((resolve, reject) => {
-          xlsxWriter.on('finish', resolve);
-          xlsxWriter.on('error', reject);
-        });
-        xlsxFilePath = pubXlsxFilePath;
-        console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
-        const stat2 = fs.statSync(pubXlsxFilePath);
-        fs.writeFileSync(
-          metaFilePath,
-          JSON.stringify(
-            {
-              fallback: {
-                size: stat2.size,
-                mtimeMs: stat2.mtimeMs
-              }
-            },
-            null,
-            2
-          ),
-          'utf-8'
-        );
-      } catch (pubErr) {
-        console.error(
-          'Failed to download spreadsheet via public export URL (fallback, no cache 2):',
-          pubErr.message || pubErr
-        );
-        xlsxFilePath = null;
-      }
+    } catch {
+      console.warn('Drive export failed, falling back to public export.');
+      return downloadSheetsFallback(spreadsheetId);
     }
   }
 
   // Download each sheet as CSV
-  const parsedUrl = new URL(spreadsheetUrl);
-  parsedUrl.pathname = parsedUrl.pathname.replace(/\/edit$/, '/export');
   const csvFiles = [];
-
   for (const sheet of sheetsList) {
     const sheetId = sheet.properties.sheetId;
-    const sheetName = sheet.properties.title.replace(/[^\w\d-]/g, '_'); // sanitize
-
+    const sheetName = sheet.properties.title.replace(/[^\w\d-]/g, '_');
     const params = new URLSearchParams({
       id: spreadsheetId,
       format: 'csv',
       gid: sheetId
     });
-
+    const parsedUrl = new URL(spreadsheetUrl);
+    parsedUrl.pathname = parsedUrl.pathname.replace(/\/edit$/, '/export');
     parsedUrl.search = params.toString();
 
     const csvRes = await axios.get(parsedUrl.toString(), {
-      headers: {
-        Authorization: `Bearer ${auth.credentials.access_token}`
-      },
+      headers: { Authorization: `Bearer ${auth.credentials.access_token}` },
       responseType: 'stream'
     });
 
-    const csvFilePath = path.join(outDir, `sheet-${sheetName}-${sheetId}.csv`);
+    const csvFilePath = path.join(CACHE_DIR, `sheet-${sheetName}-${sheetId}.csv`);
     const csvWriter = fs.createWriteStream(csvFilePath);
-
     csvRes.data.pipe(csvWriter);
 
     await new Promise((resolve, reject) => {
       csvWriter.on('finish', () => {
         csvFiles.push(csvFilePath);
-        resolve(undefined);
+        resolve();
       });
       csvWriter.on('error', reject);
     });
@@ -516,10 +257,66 @@ export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
     console.log(`Saved sheet "${sheetName}" as CSV to ${csvFilePath}`);
   }
 
-  return {
-    xlsxFilePath,
-    csvFiles
-  };
+  return { xlsxFilePath, csvFiles };
+}
+
+/**
+ * Fallback method to download a Google Spreadsheet as XLSX and convert to CSV using the public export URL.
+ *
+ * @param {string} spreadsheetId - The ID of the Google Spreadsheet.
+ * @returns {Promise<{ xlsxFilePath: string|null, csvFiles: string[] }>} Paths to the saved XLSX and CSV files, or null if failed.
+ */
+async function downloadSheetsFallback(spreadsheetId) {
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+  const xlsxFilePath = path.join(CACHE_DIR, `spreadsheet-pub-${spreadsheetId}.xlsx`);
+
+  try {
+    const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
+    console.log(`Downloading via public export URL: ${publicUrl}`);
+
+    const response = await axios.get(publicUrl, { responseType: 'stream' });
+    const xlsxWriter = fs.createWriteStream(xlsxFilePath);
+    response.data.pipe(xlsxWriter);
+
+    await new Promise((resolve, reject) => {
+      xlsxWriter.on('finish', resolve);
+      xlsxWriter.on('error', reject);
+    });
+
+    console.log(`Saved spreadsheet via public export as XLSX to ${xlsxFilePath}`);
+
+    // Parse XLSX to CSV
+    const workbook = xlsx.readFile(xlsxFilePath);
+    const csvFiles = [];
+    workbook.SheetNames.forEach((sheetName) => {
+      const csv = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+      const csvFilePath = path.join(CACHE_DIR, `sheet-${sheetName.replace(/[^\w\d-]/g, '_')}.csv`);
+      fs.writeFileSync(csvFilePath, csv, 'utf-8');
+      csvFiles.push(csvFilePath);
+      console.log(`Parsed and saved sheet '${sheetName}' as CSV to ${csvFilePath}`);
+    });
+
+    return { xlsxFilePath, csvFiles };
+  } catch (err) {
+    console.error('Failed public fallback download:', err.message || err);
+    return { xlsxFilePath: null, csvFiles: [] };
+  }
+}
+
+/**
+ * Main wrapper to download a Google Spreadsheet as XLSX and CSV, using API or fallback if needed.
+ *
+ * @param {string} [spreadsheetId=SPREADSHEET_ID] - The ID of the Google Spreadsheet.
+ * @returns {Promise<{ xlsxFilePath: string|null, csvFiles: string[] }>} Paths to the saved XLSX and CSV files, or null if failed.
+ */
+export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
+  try {
+    const auth = await authorize();
+    return await downloadSheetsApi(spreadsheetId, auth);
+  } catch {
+    console.warn('API download failed, using fallback.');
+    return await downloadSheetsFallback(spreadsheetId);
+  }
 }
 
 if (process.argv.some((arg) => arg.includes('download-google-sheet.js'))) {
