@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import path from 'path';
 import { URL, URLSearchParams } from 'url';
+import minimist from 'minimist';
 
 // Load environment variables
 dotenv.config();
@@ -239,7 +240,9 @@ export async function downloadSheets(spreadsheetId = SPREADSHEET_ID) {
 }
 
 if (process.argv.some((arg) => arg.includes('download-google-sheet.js'))) {
-  downloadSheets()
+  const args = minimist(process.argv.slice(2));
+  const spreadsheetId = args.id || SPREADSHEET_ID;
+  downloadSheets(spreadsheetId)
     .then((result) => {
       console.log('\n=== Result ===\n');
       console.log(JSON.stringify(result, null, 2));
