@@ -11,28 +11,30 @@ export default function Footer() {
   return (
     <footer
       className={
-        `p-3 mt-4 border-top bg-body-tertiary text-body` +
-        (theme === 'dark' ? ' border-dark' : ' border-light')
-      }
-    >
+        `p-3 mt-4 border-top bg-body-tertiary text-body` + (theme === 'dark' ? ' border-dark' : ' border-light')
+      }>
       <Container>
         <div className="d-flex justify-content-between align-items-center">
           <small>&copy; 2025 {siteInfo.title}</small>
           <div>
             {socialMedia.facebook && (
-              <a href={socialMedia.facebook} target="_blank" rel="noopener" aria-label="Facebook" className="mx-2">
-                <i
-                  className="fab fa-facebook fa-lg"
-                  style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }}
-                />
+              <a
+                href={socialMedia.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="mx-2">
+                <i className="fab fa-facebook fa-lg" style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }} />
               </a>
             )}
             {socialMedia.github && (
-              <a href={socialMedia.github} target="_blank" rel="noopener" aria-label="GitHub" className="mx-2">
-                <i
-                  className="fab fa-github fa-lg"
-                  style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F' }}
-                />
+              <a
+                href={socialMedia.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="mx-2">
+                <i className="fab fa-github fa-lg" style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F' }} />
               </a>
             )}
           </div>
