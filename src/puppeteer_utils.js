@@ -759,3 +759,73 @@ export async function waitForDomStable(page, quietTime = 500, timeout = 5000) {
     { quietTime, timeout }
   );
 }
+
+/**
+ * Check if any element matching the selector contains the given text and is visible
+ * @param {import('puppeteer').Page} page Puppeteer Page object
+ * @param {string} selector CSS selector to match elements
+ * @param {string} text Text content to match
+ * @returns {Promise<boolean>} true if at least one element matches
+ */
+export async function anyElementWithTextExists(page, selector, text) {
+  const elementHandles = await page.$$(selector); // get all matching elements
+
+  for (const el of elementHandles) {
+    const matchesText = await page.evaluate(
+      (element, expectedText) => {
+        const style = window.getComputedStyle(element);
+        const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+        return isVisible && element.textContent?.includes(expectedText);
+      },
+      el,
+      text
+    );
+
+    if (matchesText) return true; // found a match
+  }
+
+  return false; // no matches found
+}
+
+/**
+ * Checks if an element matching the selector exists and is visible on the page.
+ *
+ * @param {import('puppeteer').Page} page - Puppeteer Page instance
+ * @param {string} selector - CSS selector for the element to check
+ * @returns {Promise<boolean>} Resolves to true if the element exists and is visible, false otherwise
+ */
+export async function elementExists(page, selector) {
+  const elementHandle = await page.$(selector);
+  if (!elementHandle) return false;
+
+  const isVisible = await page.evaluate((el) => {
+    const style = window.getComputedStyle(el);
+    return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+  }, elementHandle);
+
+  return isVisible;
+}
+
+/**
+ * Check if an element exists with specific text content and is visible
+ * @param {import('puppeteer').Page} page Puppeteer Page object
+ * @param {string} selector CSS selector to match elements
+ * @param {string} text Text content to match
+ * @returns {Promise<boolean>} true if element exists and contains the text
+ */
+export async function elementWithTextExists(page, selector, text) {
+  const elementHandle = await page.$(selector);
+  if (!elementHandle) return false;
+
+  const matchesText = await page.evaluate(
+    (el, expectedText) => {
+      const style = window.getComputedStyle(el);
+      const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+      return isVisible && el.textContent?.includes(expectedText);
+    },
+    elementHandle,
+    text
+  );
+
+  return matchesText;
+}
