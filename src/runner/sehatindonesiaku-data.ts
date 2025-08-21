@@ -41,21 +41,40 @@ export interface DataItem {
  * - Additional columns are included as dynamic keys (e.g., 'Column 9').
  *
  * @param filePath - Path to the XLSX file. Defaults to the local sehatindonesiaku.xlsx file.
+ * @param rangeIndex - 0-based row index to start parsing (default: 6, i.e., row 7)
+ * @param rangeEndIndex - 0-based row index to end parsing (inclusive, optional)
  * @returns Promise resolving to an array of partial DataItem objects.
  * @throws If the 'Format Full' sheet is not found in the file.
  */
-export async function parseXlsxFile(filePath = xlsxFile) {
+export async function parseXlsxFile(
+  filePath = xlsxFile,
+  rangeIndex = 6,
+  rangeEndIndex: number = Number.MAX_SAFE_INTEGER
+) {
   const workbook = xlsx.readFile(filePath);
   const sheetName = 'Format Full';
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) {
     throw new Error(`Sheet '${sheetName}' not found in file: ${filePath}`);
   }
-  // Parse from row 7 (index 6), no header
+  // Parse from row 7 (index 6) by default, no header
+  let sheetToJsonRange: string | number = rangeIndex;
+  if (typeof rangeEndIndex === 'number') {
+    // xlsx.utils.sheet_to_json range as A7:Z100 (1-based)
+    // But we use 0-based index for start/end, so add 1
+    const ref = sheet['!ref'];
+    if (ref) {
+      const [, endCell] = ref.split(':');
+      const startCell = xlsx.utils.encode_cell({ c: 0, r: rangeIndex });
+      const endCol = xlsx.utils.decode_cell(endCell).c;
+      const endCellStr = xlsx.utils.encode_cell({ c: endCol, r: rangeEndIndex });
+      sheetToJsonRange = `${startCell}:${endCellStr}`;
+    }
+  }
   const data: any[] = xlsx.utils.sheet_to_json(sheet, {
     header: 1,
     defval: null,
-    range: 6 // 0-based, so 6 = row 7 as first data row
+    range: sheetToJsonRange
   });
   const result: Partial<DataItem>[] = [];
   for (const row of data) {
@@ -134,7 +153,7 @@ export async function parseXlsxFile(filePath = xlsxFile) {
         obj['berat_badan'] = row[index];
         continue;
       }
-      obj[`Column ${index + 1}`] = row[index]; // Use dynamic keys for each column
+      obj[`Column ${index + 1}`] = row[index];
     }
     // FIXME: Search actual address
     // try {
@@ -145,8 +164,16 @@ export async function parseXlsxFile(filePath = xlsxFile) {
     // }
     result.push(obj);
   }
-  console.log(result[0]);
-  return result;
+  // Remove undefined or null values
+  return result.map((item) => {
+    const cleanedItem: Partial<DataItem> = {};
+    for (const key in item) {
+      if (item[key] !== null && item[key] !== undefined) {
+        cleanedItem[key] = item[key];
+      }
+    }
+    return cleanedItem;
+  });
 }
 
 const outPath = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku-data.json');
@@ -160,16 +187,18 @@ export { outPath as sehatindonesiakuDataPath };
  * - Downloads the spreadsheet, parses the XLSX, and saves the result as JSON.
  * - Output path: .cache/sheets/sehatindonesiaku-data.json (relative to project root)
  *
+ * @param rangeIndex - 0-based row index to start parsing (default: 6, i.e., row 7)
+ * @param rangeEndIndex - 0-based row index to end parsing (inclusive, optional)
  * @returns Resolves when the process is complete.
  */
-export async function downloadAndProcessXlsx() {
+export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: number = Number.MAX_SAFE_INTEGER) {
   const spreadsheetId = process.env.KEMKES_SPREADSHEET_ID;
   if (!spreadsheetId) {
     console.error('KEMKES_SPREADSHEET_ID environment variable is not set.');
     process.exit(1);
   }
   const downloadResult = await downloadSheets(spreadsheetId);
-  const result = await parseXlsxFile(downloadResult.xlsxFilePath);
+  const result = await parseXlsxFile(downloadResult.xlsxFilePath, rangeIndex, rangeEndIndex);
   fs.ensureDirSync(path.dirname(outPath));
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
