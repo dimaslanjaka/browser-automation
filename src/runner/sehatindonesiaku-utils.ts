@@ -36,8 +36,8 @@ export async function clickKembali(page: Page) {
   }
 
   // Optional: log all button texts for debugging
-  const allTexts = await Promise.all(buttons.map((b) => b.evaluate((el) => el.innerText)));
-  console.log('All button texts:', allTexts);
+  // const allTexts = await Promise.all(buttons.map((b) => b.evaluate((el) => el.innerText)));
+  // console.log('All button texts:', allTexts);
 
   throw new Error("❌ 'Kembali' button not found");
 }
