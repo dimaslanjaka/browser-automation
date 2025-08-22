@@ -761,6 +761,44 @@ export async function waitForDomStable(page, quietTime = 500, timeout = 5000) {
 }
 
 /**
+ * Wait until DOM becomes stable indefinitely (no timeout, no quietTime).
+ * Resolves only when there are no more mutations for a full cycle.
+ *
+ * @param {import('puppeteer').Page} page
+ */
+export async function waitForDomStableIndefinite(page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        let pendingMutations = false;
+
+        const observer = new MutationObserver(() => {
+          pendingMutations = true;
+        });
+
+        observer.observe(document, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+
+        function checkStability() {
+          if (!pendingMutations) {
+            observer.disconnect();
+            resolve();
+          } else {
+            pendingMutations = false;
+            requestAnimationFrame(checkStability); // check again in next frame
+          }
+        }
+
+        requestAnimationFrame(checkStability);
+      })
+  );
+}
+
+/**
  * Check if any element matching the selector contains the given text and is visible
  * @param {import('puppeteer').Page} page Puppeteer Page object
  * @param {string} selector CSS selector to match elements
