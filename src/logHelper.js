@@ -9,17 +9,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const dbName = process.env.DATABASE_FILENAME + '.db';
 export const dbPath = path.resolve(`.cache/${dbName}`);
-const db = new Database(dbPath);
+let db = new Database(dbPath);
 
-// Create table if not exists
-db.prepare(
-  `CREATE TABLE IF NOT EXISTS logs (
+initializeDatabase();
+
+function initializeDatabase() {
+  db.pragma('journal_mode = WAL');
+  // Create table if not exists
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS logs (
     id TEXT PRIMARY KEY,
     data TEXT,
     message TEXT,
     timestamp TEXT
   )`
-).run();
+  ).run();
+}
 
 /**
  * Add a log entry to the database.
@@ -84,6 +89,18 @@ export function getLogs(filterFn = () => true) {
   return logsArr.filter(filterFn);
 }
 
-if (process.argv[1] === __filename) {
+/**
+ * Create a new log database instance at the specified path.
+ *
+ * @param {string} dbPath - The file path for the SQLite database.
+ * @returns {{ getLogById: function, getLogs: function, addLog: function, removeLog: function }} An object containing log database methods.
+ */
+export function createLogDatabase(dbPath) {
+  db = new Database(dbPath);
+  initializeDatabase();
+  return { getLogById, getLogs, addLog, removeLog };
+}
+
+if (process.argv.some((arg) => arg.includes('logHelper.js'))) {
   // removeLog('3578109092021005');
 }
