@@ -122,6 +122,39 @@ export async function clickDaftarkanDenganNIK(page: Page) {
   throw new Error("❌ 'Daftarkan dengan NIK' button not found");
 }
 
+export async function handleKuotaHabisModal(page: Page) {
+  // Grab all modal containers
+  const modals = await page.$$('div.shadow-gmail');
+
+  for (const modal of modals) {
+    const text = await page.evaluate((el) => el.innerText, modal);
+
+    if (text.includes('Kuota Pemeriksaan Habis')) {
+      // Check visibility
+      const visible = await page.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+      }, modal);
+
+      if (!visible) return false;
+
+      // Find all buttons inside this modal
+      const buttons = await modal.$$('button');
+
+      for (const btn of buttons) {
+        const btnText = await page.evaluate((el) => el.innerText.trim(), btn);
+
+        if (btnText.startsWith('Lanjut')) {
+          await btn.click();
+          return true;
+        }
+      }
+    }
+  }
+
+  return false; // modal not found, not visible, or button not matched
+}
+
 /**
  * Handles the confirmation modal for kuota habis (quota full) scenario.
  * Clicks the appropriate button based on the user's choice: 'lanjut' (continue) or 'edit' (choose another date).
@@ -129,42 +162,6 @@ export async function clickDaftarkanDenganNIK(page: Page) {
  * @param choice 'lanjut' to continue, 'edit' to pick another date
  */
 export async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit', item: DataItem) {
-  // Directly check if the modal wrapper exists
-  const modalHandle = await page.$('div.bg-white.shadow-gmail');
-  if (!modalHandle) {
-    throw new Error('Confirmation modal not found');
-  }
-
-  // Determine button text based on choice
-  const buttonText = choice === 'lanjut' ? 'Lanjut' : 'Pilih Tanggal Lain';
-
-  // Find all buttons inside the modal
-  const buttons = await modalHandle.$$('button');
-  let found = false;
-  for (const btn of buttons) {
-    const hasText = await btn.evaluate((el, wanted) => {
-      return Array.from(el.querySelectorAll('*')).some(
-        (node) => node.textContent && node.textContent.trim().includes(wanted)
-      );
-    }, buttonText);
-    if (hasText) {
-      await btn.click();
-      found = true;
-      break;
-    }
-  }
-  if (found) {
-    // Optionally, check if modal is gone (not required, but for stability)
-    for (let i = 0; i < 20; i++) {
-      const stillExists = await page.$('div.bg-white.shadow-gmail');
-      if (!stillExists) break;
-      await new Promise((r) => setTimeout(r, 100));
-    }
-
-    // Wait for DOM to stabilize after clicking
-    await waitForDomStable(page, 2000, 6000);
-  }
-
   const isAgeLimitCheckDisplayed =
     (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
     (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));

@@ -16,3 +16,9 @@ export class UnauthorizedError extends Error {
     this.name = 'UnauthorizedError';
   }
 }
+export class KuotaHabisError extends Error {
+  constructor(nik: string) {
+    super(`❌ Kuota pemeriksaan habis for NIK: ${nik}`);
+    this.name = 'KuotaHabisError';
+  }
+}

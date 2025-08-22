@@ -1,10 +1,16 @@
 import 'dotenv/config.js';
 import fs from 'fs-extra';
 import moment from 'moment';
+import { Browser, Page } from 'puppeteer';
 import { LogDatabase } from '../logHelper.js';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
-import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
+import {
+  DataTidakSesuaiKTPError,
+  KuotaHabisError,
+  PembatasanUmurError,
+  UnauthorizedError
+} from './sehatindonesiaku-errors.js';
 import {
   clickAddressModal,
   clickDaftarkanDenganNIK,
@@ -15,13 +21,13 @@ import {
   clickProvinsi,
   clickSubmit,
   commonInput,
+  handleKuotaHabisModal,
   isSpecificModalVisible,
   selectGender,
   selectPekerjaan,
   selectTanggalLahir
 } from './sehatindonesiaku-staging.js';
-import { Browser, Page } from 'puppeteer';
-import { DataTidakSesuaiKTPError, PembatasanUmurError, UnauthorizedError } from './sehatindonesiaku-errors.js';
+import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
@@ -45,7 +51,7 @@ async function main() {
       typeof cachedData.data === 'object' &&
       Object.keys(cachedData.data).length > 0
     ) {
-      console.log(`Data for NIK: ${item.nik} already processed. Skipping...`);
+      console.log(`${item.nik} - already processed. Skipping...`);
       continue; // Skip this item if already processed
     }
 
@@ -136,6 +142,17 @@ async function processData(browser: Browser, item: DataItem) {
   console.log(`Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
   if (isAgeLimitCheckDisplayed) {
     throw new PembatasanUmurError(item.nik);
+  }
+
+  // Handle modal "Kuota pemeriksaan habis"
+  const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
+  console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
+  if (isKuotaHabisVisible) {
+    const isClicked = await handleKuotaHabisModal(page);
+    if (!isClicked) {
+      throw new KuotaHabisError(item.nik);
+    }
+    await waitForDomStable(page, 2000, 6000);
   }
 
   // Handle modal formulir pendaftaran
