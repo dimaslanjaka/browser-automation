@@ -69,7 +69,7 @@ async function main() {
       break;
     }
 
-    // break; // Remove this break to process all data items
+    break; // Remove this break to process all data items
   }
 }
 

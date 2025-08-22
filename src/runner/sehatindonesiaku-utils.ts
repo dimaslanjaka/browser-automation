@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import moment from 'moment';
 import type { ElementHandle, Page } from 'puppeteer';
 import path from 'upath';
-import { waitForDomStable } from '../puppeteer_utils.js';
+import { clearCurrentPageCookies, waitForDomStable } from '../puppeteer_utils.js';
 
 /**
  * Clicks the "Kembali" button on the page.
@@ -246,13 +246,30 @@ export async function clickDaftarBaru(page: Page) {
 /**
  * Perform login on the sehatindonesiaku.kemkes.go.id site.
  * @param page Puppeteer page instance
+ * @param options Optional login options: username, password, clearCookies
  */
 export async function _login(
   page: Page,
-  username: string = process.env.SIH_USERNAME || '',
-  password: string = process.env.SIH_PASSWORD || ''
+  options: {
+    username?: string;
+    password?: string;
+    clearCookies?: boolean;
+  } = {}
 ) {
+  const {
+    username = process.env.SIH_USERNAME || '',
+    password = process.env.SIH_PASSWORD || '',
+    clearCookies = false
+  } = options;
+
   await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });
+
+  // Clear cookies if specified
+  if (clearCookies) {
+    await clearCurrentPageCookies(page);
+    await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });
+  }
+
   // Check if already logged in
   if (!page.url().includes('/auth/login')) {
     console.log('Already logged in, skipping login step');

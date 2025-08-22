@@ -867,3 +867,40 @@ export async function elementWithTextExists(page, selector, text) {
 
   return matchesText;
 }
+
+/**
+ * Clears all cookies for the current page's domain using CDP.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ */
+export async function clearCurrentPageCookies(page) {
+  const client = await page.createCDPSession();
+  const url = new URL(page.url());
+
+  // Get cookies for current domain
+  const { cookies } = await client.send('Network.getCookies', {
+    urls: [url.origin]
+  });
+
+  for (const cookie of cookies) {
+    await client.send('Network.deleteCookies', {
+      name: cookie.name,
+      domain: cookie.domain,
+      path: cookie.path // important, otherwise deletion may fail
+    });
+  }
+
+  // Verify
+  const { cookies: remaining } = await client.send('Network.getCookies', {
+    urls: [url.origin]
+  });
+
+  if (remaining.length > 0) {
+    console.warn(`⚠️ Some cookies not cleared for ${url.hostname}:`, remaining);
+  } else {
+    console.log(`✅ All cookies cleared for ${url.hostname}`);
+  }
+
+  const xclient = await page.target().createCDPSession();
+  await xclient.send('Network.clearBrowserCookies');
+}
