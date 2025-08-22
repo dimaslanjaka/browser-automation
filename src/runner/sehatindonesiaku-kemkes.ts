@@ -21,7 +21,7 @@ import {
   selectTanggalLahir
 } from './sehatindonesiaku-staging.js';
 import { Browser, Page } from 'puppeteer';
-import { DataTidakSesuaiKTPError, PembatasanUmurError } from './sehatindonesiaku-errors.js';
+import { DataTidakSesuaiKTPError, PembatasanUmurError, UnauthorizedError } from './sehatindonesiaku-errors.js';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
@@ -60,6 +60,9 @@ async function main() {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         db.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
         continue; // Skip this item and continue with the next
+      } else if (e instanceof UnauthorizedError) {
+        console.warn(`Login required, please login manually from opened browser. (close browser manual)`);
+        break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
       // Break the loop on unexpected errors
@@ -80,8 +83,8 @@ async function processData(browser: Browser, item: DataItem) {
   // Create a new page for each data item
   console.log(`Processing data for NIK ${item.nik}`);
   const page = await browser.newPage();
-
-  await enterSubmission(page);
+  const isLoggedIn = await enterSubmission(page);
+  if (!isLoggedIn) throw new UnauthorizedError();
   await waitForDomStable(page, 2000, 6000);
 
   await clickDaftarBaru(page);

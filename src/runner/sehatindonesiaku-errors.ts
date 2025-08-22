@@ -10,3 +10,9 @@ export class PembatasanUmurError extends Error {
     this.name = 'PembatasanUmurError';
   }
 }
+export class UnauthorizedError extends Error {
+  constructor() {
+    super(`❌ Login required`);
+    this.name = 'UnauthorizedError';
+  }
+}

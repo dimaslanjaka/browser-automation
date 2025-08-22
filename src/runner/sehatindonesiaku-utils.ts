@@ -314,9 +314,10 @@ export async function enterSubmission(page: Page) {
   const currentUrl = page.url();
   if (!currentUrl.includes('/login')) {
     await clickDaftarBaru(page);
+    return true;
   } else {
     // User is not logged in, perform login
     await _login(page);
-    return;
+    return false;
   }
 }
