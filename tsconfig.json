@@ -13,12 +13,23 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "removeComments": false,
     "allowJs": true,
     "checkJs": false,
     "typeRoots": ["./types", "./node_modules/@types"],
     "lib": ["ESNext", "ES2020", "DOM", "DOM.Iterable", "WebWorker", "WebWorker.Iterable"]
   },
-  "include": ["src/**/*", "test/**/*", "data/**/*", "scripts/**/*", "**/*.ts", "**/*.js", "**/*.cjs", "**/*.mjs", "tsup.config.ts"],
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "data/**/*",
+    "scripts/**/*",
+    "**/*.ts",
+    "**/*.js",
+    "**/*.cjs",
+    "**/*.mjs",
+    "tsup.config.ts"
+  ],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
