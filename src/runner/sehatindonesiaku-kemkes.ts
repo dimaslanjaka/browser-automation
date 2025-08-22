@@ -3,12 +3,7 @@ import fs from 'fs-extra';
 import moment from 'moment';
 import type { Browser, Page } from 'puppeteer';
 import { LogDatabase } from '../logHelper.js';
-import {
-  anyElementWithTextExists,
-  getPuppeteer,
-  waitForDomStable,
-  waitForDomStableIndefinite
-} from '../puppeteer_utils.js';
+import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import {
   DataItem,
   downloadAndProcessXlsx,
@@ -234,7 +229,7 @@ async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit', it
     }
 
     // Wait for DOM to stabilize after clicking
-    await waitForDomStableIndefinite(page);
+    await waitForDomStable(page, 2000, 6000);
 
     const isAgeLimitCheckDisplayed =
       (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
@@ -1020,6 +1015,9 @@ async function _standardMethod(page: Page, browser: Browser) {
         const newPage = await browser.newPage();
         await enterSubmission(newPage);
         await processData(newPage, data);
+        // Log success
+        db.addLog({ id: data.nik, message: 'Data processed successfully', data });
+        console.log(`Data for NIK ${data.nik} processed successfully.`);
       } catch (e) {
         if (e instanceof DataTidakSesuaiKTPError) {
           console.warn(`Data tidak sesuai KTP untuk NIK ${data.nik}:`);
@@ -1031,7 +1029,8 @@ async function _standardMethod(page: Page, browser: Browser) {
           continue; // Skip this item and continue with the next
         }
         console.error(`Error processing data for NIK ${data.nik}:`, e);
-        break; // Break the loop on unexpected errors
+        // Break the loop on unexpected errors
+        break;
       }
     }
   } else {
