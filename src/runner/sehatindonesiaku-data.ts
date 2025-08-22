@@ -269,6 +269,7 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
-    await downloadAndProcessXlsx();
+    // download excel and parse with range 320-500
+    await downloadAndProcessXlsx(320, 500);
   })();
 }

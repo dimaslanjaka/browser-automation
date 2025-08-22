@@ -189,3 +189,134 @@ export async function screenshot(page: Page, filePath: string = 'tmp/screenshot.
   });
   console.log(`Screenshot saved as ${filePath}`);
 }
+
+export async function clickDaftarBaru(page: Page) {
+  // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
+  const buttonHandle = await page.evaluateHandle(() => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    return (
+      buttons.find((btn) => {
+        const div = btn.querySelector('div.text-white');
+        return div && div.textContent && div.textContent.trim() === 'Daftar Baru';
+      }) || null
+    );
+  });
+  if (buttonHandle) {
+    const isVisible = await buttonHandle.evaluate(
+      (el) => el !== null && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+    );
+    if (isVisible) {
+      await buttonHandle.click();
+      // Wait for dom to stabilize after clicking
+      await page.evaluate(async () => {
+        function waitForDomStable(timeout = 10000, stableMs = 800) {
+          return new Promise((resolve, reject) => {
+            let lastChange = Date.now();
+            // eslint-disable-next-line prefer-const
+            let observer: MutationObserver;
+            const timer = setTimeout(() => {
+              if (observer) observer.disconnect();
+              reject(new Error('DOM did not stabilize in time'));
+            }, timeout);
+            observer = new MutationObserver(() => {
+              lastChange = Date.now();
+            });
+            observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+            (function check() {
+              if (Date.now() - lastChange > stableMs) {
+                clearTimeout(timer);
+                observer.disconnect();
+                resolve(undefined);
+              } else {
+                setTimeout(check, 100);
+              }
+            })();
+          });
+        }
+        await waitForDomStable();
+      });
+    } else {
+      console.log('Button exists but is not visible');
+    }
+  } else {
+    throw new Error('Button "Daftar Baru" not found');
+  }
+}
+
+/**
+ * Perform login on the sehatindonesiaku.kemkes.go.id site.
+ * @param page Puppeteer page instance
+ */
+export async function _login(page: Page) {
+  await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });
+  // Fill email (username)
+  await page.type('input[name="Email"]', process.env.SIH_USERNAME);
+  // Fill password
+  await page.type('input[name="Kata sandi"]', process.env.SIH_PASSWORD);
+  // Wait for captcha input to be visible
+  await page.waitForSelector('input[name="Captcha"]', { visible: true });
+  // Optionally, you can add code to handle captcha here (manual or automated)
+  // Uncomment below to prompt for captcha input from user
+  // const captcha = await promptUserForCaptcha();
+  // await page.type('input[name="Captcha"]', captcha);
+  // Wait for the login button to be enabled and click it
+  const loginButtonSelector = 'div.text-center .bg-disabled, div.text-center button[type="submit"]';
+  // Try to find enabled button, fallback to disabled for waiting
+  await page.waitForSelector(loginButtonSelector, { visible: true });
+  // If the button is not disabled, click it
+  const isDisabled = await page.$eval(loginButtonSelector, (el) => el.classList.contains('bg-disabled'));
+  if (!isDisabled) {
+    await Promise.all([
+      page.click('div.text-center button[type="submit"]'),
+      page.waitForNavigation({ waitUntil: 'networkidle2' })
+    ]);
+    console.log('Login successful');
+  } else {
+    console.log('Login button is disabled. Please check if all fields are filled and captcha is handled.');
+  }
+}
+
+export async function enterSubmission(page: Page) {
+  await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
+
+  // Wait for DOM to stabilize (no mutations for 800ms)
+  await page.evaluate(async () => {
+    function waitForDomStable(timeout = 10000, stableMs = 800) {
+      return new Promise((resolve, reject) => {
+        let lastChange = Date.now();
+        // eslint-disable-next-line prefer-const
+        let observer: MutationObserver;
+        const timer = setTimeout(() => {
+          if (observer) observer.disconnect();
+          reject(new Error('DOM did not stabilize in time'));
+        }, timeout);
+        observer = new MutationObserver(() => {
+          lastChange = Date.now();
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+        (function check() {
+          if (Date.now() - lastChange > stableMs) {
+            clearTimeout(timer);
+            observer.disconnect();
+            resolve(undefined);
+          } else {
+            setTimeout(check, 100);
+          }
+        })();
+      });
+    }
+    await waitForDomStable();
+  });
+
+  // Now safe to interact with the DOM
+
+  // Check if current url is not https://sehatindonesiaku.kemkes.go.id/auth/login
+  const currentUrl = page.url();
+  if (!currentUrl.includes('/login')) {
+    await clickDaftarBaru(page);
+  } else {
+    // User is not logged in, perform login
+    await _login(page);
+    return;
+  }
+}
