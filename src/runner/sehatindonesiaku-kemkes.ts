@@ -1,7 +1,12 @@
 import 'dotenv/config.js';
 import moment from 'moment';
-import type { Page } from 'puppeteer';
-import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import type { Browser, Page } from 'puppeteer';
+import {
+  anyElementWithTextExists,
+  getPuppeteer,
+  waitForDomStable,
+  waitForDomStableIndefinite
+} from '../puppeteer_utils.js';
 import {
   DataItem,
   downloadAndProcessXlsx,
@@ -10,6 +15,8 @@ import {
 } from './sehatindonesiaku-data.js';
 import fs from 'fs-extra';
 import { clickKembali, selectCalendar } from './sehatindonesiaku-utils.js';
+import { sleep } from '../utils-browser.js';
+import { DataTidakSesuaiKTPError, PembatasanUmurError } from './sehatindonesiaku-errors.js';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
@@ -95,18 +102,23 @@ async function processData(page: Page, item: DataItem) {
   }
 
   // Common input
+  console.log(`${item.nik} - Filling common input fields...`);
   await commonInput(page, item);
 
   // Input datepicker
-  await vueDatePicker(page, item);
+  console.log(`${item.nik} - Selecting date of birth...`);
+  await selectTanggalLahir(page, item);
 
   // Select gender (Jenis Kelamin)
-  await vueGenderSelect(page, item);
+  console.log(`${item.nik} - Selecting gender...`);
+  await selectGender(page, item);
 
   // Select pekerjaan (Pekerjaan)
-  await vuePekerjaanSelect(page, item);
+  console.log(`${item.nik} - Selecting pekerjaan...`);
+  await selectPekerjaan(page, item);
 
   // Select address
+  console.log(`${item.nik} - Selecting address...`);
   await clickAddressModal(page);
   await clickProvinsi(page, provinsi);
   await clickKabupatenKota(page, kabupaten);
@@ -114,14 +126,47 @@ async function processData(page: Page, item: DataItem) {
   await clickKelurahan(page, kelurahan);
 
   // Select calendar date pemeriksaan
+  console.log(`${item.nik} - Selecting tanggal pemeriksaan...`);
   await selectCalendar(page, item.tanggal_pemeriksaan);
 
   // click submit button
+  console.log(`${item.nik} - Submitting form...`);
   await clickSubmit(page);
 
   // Handle confirmation modal for quota full
-  await handleConfirmationModal(page, 'lanjut');
+  console.log(`${item.nik} - Handling confirmation modal...`);
+  await handleConfirmationModal(page, 'lanjut', item);
+
+  // Check modal "Data belum sesuai KTP"
+  if (isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
+    console.log(`${item.nik} - Data belum sesuai KTP modal is visible.`);
+    throw new DataTidakSesuaiKTPError(item.nik);
+  }
+
+  console.log(`${item.nik} - Registration completed successfully!`);
   await clickKembali(page);
+}
+
+async function isSpecificModalVisible(page: Page, textToMatch: string = 'Data belum sesuai KTP') {
+  // Select all divs with the custom shadow class (or another stable class)
+  const modals = await page.$$('div.shadow-gmail');
+
+  for (const modal of modals) {
+    const text = await page.evaluate((el) => el.innerText, modal);
+
+    // Check if it contains the specific text
+    if (text.trim().toLowerCase().includes(textToMatch.toLowerCase())) {
+      // Check if it is visible
+      const visible = await page.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+      }, modal);
+
+      if (visible) return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -154,7 +199,7 @@ async function clickDaftarkanDenganNIK(page: Page) {
  * @param page Puppeteer page instance
  * @param choice 'lanjut' to continue, 'edit' to pick another date
  */
-async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit') {
+async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit', item: DataItem) {
   // Directly check if the modal wrapper exists
   const modalHandle = await page.$('div.bg-white.shadow-gmail');
   if (!modalHandle) {
@@ -179,29 +224,27 @@ async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit') {
       break;
     }
   }
-  if (!found) {
-    throw new Error(`Confirmation modal button '${buttonText}' not found`);
-  }
+  if (found) {
+    // Optionally, check if modal is gone (not required, but for stability)
+    for (let i = 0; i < 20; i++) {
+      const stillExists = await page.$('div.bg-white.shadow-gmail');
+      if (!stillExists) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
 
-  // Optionally, check if modal is gone (not required, but for stability)
-  for (let i = 0; i < 20; i++) {
-    const stillExists = await page.$('div.bg-white.shadow-gmail');
-    if (!stillExists) break;
-    await new Promise((r) => setTimeout(r, 100));
-  }
+    // Wait for DOM to stabilize after clicking
+    await waitForDomStableIndefinite(page);
 
-  // Wait for DOM to stabilize after clicking
-  await waitForDomStable(page, 2000);
-
-  const isAgeLimitCheckDisplayed = await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan');
-  if (isAgeLimitCheckDisplayed) {
-    console.log('Age limit check is displayed, proceeding with the next steps.');
-    // await clickKembali(page);
-    return;
+    const isAgeLimitCheckDisplayed = await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan');
+    if (isAgeLimitCheckDisplayed) {
+      throw new PembatasanUmurError(item.nik);
+    }
   }
 
   if (choice === 'lanjut') {
+    console.log(`Clicking "Pilih" button inside individu terdaftar table...`);
     await clickPilihButton(page);
+    console.log(`Clicking "Daftarkan dengan NIK" button...`);
     await clickDaftarkanDenganNIK(page);
   }
 }
@@ -217,12 +260,14 @@ async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit') {
  * @throws If the "Pilih" button is not found
  */
 export async function clickPilihButton(page: Page) {
-  const buttons = await page.$$('.table-individu-terdaftar button');
+  const buttons = await page.$$('.table-individu-terdaftar table button');
 
   let clicked = false;
   for (const btn of buttons) {
     const text = await btn.evaluate((el) => el.innerText.trim());
-    if (text === 'Pilih') {
+    const isPilih = text.trim().toLowerCase() === 'pilih';
+    // console.log(`Found button with text: "${text}" (isPilih: ${isPilih})`);
+    if (isPilih) {
       await btn.click();
       clicked = true;
       break;
@@ -233,6 +278,8 @@ export async function clickPilihButton(page: Page) {
     const foundTexts = await Promise.all(buttons.map((b) => b.evaluate((el) => el.innerText.trim())));
     throw new Error(`❌ 'Pilih' button not found. Found: ${JSON.stringify(foundTexts)}`);
   }
+
+  await waitForDomStable(page, 2000);
 }
 
 /**
@@ -276,6 +323,8 @@ async function clickSubmit(page: Page) {
   if (!found) {
     throw new Error("❌ 'Selanjutnya' button not found");
   }
+
+  await waitForDomStable(page, 2000);
 }
 
 /**
@@ -516,7 +565,7 @@ async function commonInput(page: Page, item: DataItem) {
  * @param page Puppeteer page instance
  * @param item Data item containing pekerjaan
  */
-async function vuePekerjaanSelect(page: Page, item: DataItem) {
+async function selectPekerjaan(page: Page, item: DataItem) {
   // Map pekerjaan to a standardized value using regex patterns matching the button text
   const pekerjaanPatterns = [
     { re: /Belum\/?Tidak Bekerja/i, value: 'Belum/Tidak Bekerja' },
@@ -646,7 +695,7 @@ async function vuePekerjaanSelect(page: Page, item: DataItem) {
  * @param page Puppeteer page instance
  * @param item Data item containing gender
  */
-async function vueGenderSelect(page: Page, item: DataItem) {
+async function selectGender(page: Page, item: DataItem) {
   // Select gender (Jenis Kelamin) by clicking the SVG icon near the label (from Puppeteer context)
   const clickGenderDropdown = await page.evaluate(() => {
     // Find the label div
@@ -695,7 +744,7 @@ async function vueGenderSelect(page: Page, item: DataItem) {
   }, item.jenis_kelamin);
 }
 
-async function vueDatePicker(page: Page, item: DataItem): Promise<void> {
+async function selectTanggalLahir(page: Page, item: DataItem): Promise<void> {
   /**
    * Select a date in the datepicker popup.
    * @param page Puppeteer page instance
@@ -873,7 +922,7 @@ async function _login(page: Page) {
     await downloadAndProcessXlsx();
   }
 
-  const { page } = await getPuppeteer();
+  const { page, browser } = await getPuppeteer();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
 
   // Wait for DOM to stabilize (no mutations for 800ms)
@@ -917,6 +966,52 @@ async function _login(page: Page) {
     return;
   }
 
+  await _standardMethod(page, browser);
+})();
+
+async function _standardMethod(page: Page, browser: Browser) {
+  console.log(`reading data from ${sehatindonesiakuDataPath}`);
+  const sehatindonesiakuData = (JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8')) as DataItem[])
+    .map((item) => {
+      // Fix tanggal_pemeriksaan empty to today
+      if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
+        item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+      }
+      return item;
+    })
+    .filter((item) => {
+      // Filter out empty item
+      const isEmptyItem = !item || Object.keys(item).length === 0;
+      // Filter out empty nik
+      const isNikEmpty = !item.nik || item.nik.trim() === '';
+      // Filter out items with past tanggal_pemeriksaan
+      const today = moment().startOf('day');
+      const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
+      const isPast = pemeriksaanDate.isBefore(today);
+
+      // Only include items that are NOT past, NOT empty NIK, NOT empty tanggal, and NOT empty item
+      return !isPast && !isNikEmpty && !isEmptyItem;
+    });
+  console.log(`Found ${sehatindonesiakuData.length} data items to process.`);
+
+  if (sehatindonesiakuData.length > 0) {
+    for (const data of sehatindonesiakuData) {
+      try {
+        await processData(page, data);
+      } catch (e) {
+        console.error(`Error processing data for NIK ${data.nik}:`, e);
+        while (browser.connected) {
+          // wait until the browser is disconnected
+          await sleep(1000);
+        }
+      }
+    }
+  } else {
+    console.log('No data to process.');
+  }
+}
+
+async function _streamMethod(page: Page, sehatindonesiakuDataPath: string, browser: Browser) {
   console.log('Stream data from', sehatindonesiakuDataPath);
   readSehatIndonesiakuDataAsync(sehatindonesiakuDataPath, async (data) => {
     if (!data.tanggal_pemeriksaan) {
@@ -935,36 +1030,14 @@ async function _login(page: Page) {
     }
 
     console.log(`Received valid data:`, data);
-    await processData(page, data);
+    try {
+      await processData(page, data);
+    } catch (e) {
+      console.error(`Error processing data for NIK ${data.nik}:`, e);
+      while (browser.connected) {
+        // wait until the browser is disconnected
+        await sleep(1000);
+      }
+    }
   });
-
-  // console.log(`reading data from ${sehatindonesiakuDataPath}`);
-  // const sehatindonesiakuData = (JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8')) as DataItem[])
-  //   .map((item) => {
-  //     // Fix tanggal_pemeriksaan empty to today
-  //     if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
-  //       item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-  //     }
-  //     return item;
-  //   })
-  //   .filter((item) => {
-  //     // Filter out empty item
-  //     const isEmptyItem = !item || Object.keys(item).length === 0;
-  //     // Filter out empty nik
-  //     const isNikEmpty = !item.nik || item.nik.trim() === '';
-  //     // Filter out items with past tanggal_pemeriksaan
-  //     const today = moment().startOf('day');
-  //     const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
-  //     const isPast = pemeriksaanDate.isBefore(today);
-
-  //     // Only include items that are NOT past, NOT empty NIK, NOT empty tanggal, and NOT empty item
-  //     return !isPast && !isNikEmpty && !isEmptyItem;
-  //   });
-  // console.log(`Found ${sehatindonesiakuData.length} data items to process.`);
-
-  // if (sehatindonesiakuData.length > 0) {
-  //   processItems(sehatindonesiakuData);
-  // } else {
-  //   console.log('No data to process.');
-  // }
-})();
+}
