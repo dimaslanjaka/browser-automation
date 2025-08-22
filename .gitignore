@@ -63,6 +63,7 @@ Thumbs.db
 .cache/
 
 # Public files
+public/**/*
 public/assets/data/**/*.json
 public/*log*.html
 !public/index.html
