@@ -1,6 +1,8 @@
 import 'dotenv/config.js';
+import fs from 'fs-extra';
 import moment from 'moment';
 import type { Browser, Page } from 'puppeteer';
+import { LogDatabase } from '../logHelper.js';
 import {
   anyElementWithTextExists,
   getPuppeteer,
@@ -10,18 +12,17 @@ import {
 import {
   DataItem,
   downloadAndProcessXlsx,
-  sehatindonesiakuDataPath,
-  readSehatIndonesiakuDataAsync
+  readSehatIndonesiakuDataAsync,
+  sehatindonesiakuDataPath
 } from './sehatindonesiaku-data.js';
-import fs from 'fs-extra';
-import { clickKembali, selectCalendar } from './sehatindonesiaku-utils.js';
-import { sleep } from '../utils-browser.js';
 import { DataTidakSesuaiKTPError, PembatasanUmurError } from './sehatindonesiaku-errors.js';
+import { clickKembali, selectCalendar } from './sehatindonesiaku-utils.js';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
 const kecamatan = 'Kebon Jeruk';
 const kelurahan = 'Kebon Jeruk';
+const db = new LogDatabase('sehatindonesiaku-kemkes');
 
 async function clickDaftarBaru(page: Page) {
   // Use a compatible selector and textContent check since :has and :contains are not supported in querySelector
@@ -235,7 +236,9 @@ async function handleConfirmationModal(page: Page, choice: 'lanjut' | 'edit', it
     // Wait for DOM to stabilize after clicking
     await waitForDomStableIndefinite(page);
 
-    const isAgeLimitCheckDisplayed = await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan');
+    const isAgeLimitCheckDisplayed =
+      (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
+      (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
     if (isAgeLimitCheckDisplayed) {
       throw new PembatasanUmurError(item.nik);
     }
@@ -917,12 +920,7 @@ async function _login(page: Page) {
   }
 }
 
-(async () => {
-  if (!fs.existsSync(sehatindonesiakuDataPath)) {
-    await downloadAndProcessXlsx();
-  }
-
-  const { page, browser } = await getPuppeteer();
+async function enterSubmission(page: Page) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
 
   // Wait for DOM to stabilize (no mutations for 800ms)
@@ -965,6 +963,14 @@ async function _login(page: Page) {
     await _login(page);
     return;
   }
+}
+
+(async () => {
+  if (!fs.existsSync(sehatindonesiakuDataPath)) {
+    await downloadAndProcessXlsx();
+  }
+
+  const { page, browser } = await getPuppeteer();
 
   await _standardMethod(page, browser);
 })();
@@ -996,14 +1002,36 @@ async function _standardMethod(page: Page, browser: Browser) {
 
   if (sehatindonesiakuData.length > 0) {
     for (const data of sehatindonesiakuData) {
+      // Check if data for this NIK is already processed
+      const cachedData = db.getLogById(data.nik);
+      if (cachedData && cachedData.data && cachedData.data.status === 'success') {
+        console.log(`Data for NIK: ${data.nik} already processed. Skipping...`);
+        return;
+      }
       try {
-        await processData(page, data);
-      } catch (e) {
-        console.error(`Error processing data for NIK ${data.nik}:`, e);
-        while (browser.connected) {
-          // wait until the browser is disconnected
-          await sleep(1000);
+        // Close tab when more than 5 tabs open
+        const pages = await browser.pages();
+        if (pages.length > 5) {
+          console.log(`Closing excess tab, current open tabs: ${pages.length}`);
+          await pages[0].close(); // Close the first tab
         }
+        // Create a new page for each data item
+        console.log(`Processing data for NIK ${data.nik}`);
+        const newPage = await browser.newPage();
+        await enterSubmission(newPage);
+        await processData(newPage, data);
+      } catch (e) {
+        if (e instanceof DataTidakSesuaiKTPError) {
+          console.warn(`Data tidak sesuai KTP untuk NIK ${data.nik}:`);
+          db.addLog({ id: data.nik, message: 'Data tidak sesuai KTP', data });
+          continue; // Skip this item and continue with the next
+        } else if (e instanceof PembatasanUmurError) {
+          console.warn(`Pembatasan umur untuk NIK ${data.nik}:`);
+          db.addLog({ id: data.nik, message: 'Pembatasan umur', data });
+          continue; // Skip this item and continue with the next
+        }
+        console.error(`Error processing data for NIK ${data.nik}:`, e);
+        break; // Break the loop on unexpected errors
       }
     }
   } else {
@@ -1011,7 +1039,7 @@ async function _standardMethod(page: Page, browser: Browser) {
   }
 }
 
-async function _streamMethod(page: Page, sehatindonesiakuDataPath: string, browser: Browser) {
+async function _streamMethod(page: Page, sehatindonesiakuDataPath: string, _browser: Browser) {
   console.log('Stream data from', sehatindonesiakuDataPath);
   readSehatIndonesiakuDataAsync(sehatindonesiakuDataPath, async (data) => {
     if (!data.tanggal_pemeriksaan) {
@@ -1034,10 +1062,6 @@ async function _streamMethod(page: Page, sehatindonesiakuDataPath: string, brows
       await processData(page, data);
     } catch (e) {
       console.error(`Error processing data for NIK ${data.nik}:`, e);
-      while (browser.connected) {
-        // wait until the browser is disconnected
-        await sleep(1000);
-      }
     }
   });
 }
