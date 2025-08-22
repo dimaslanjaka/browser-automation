@@ -247,12 +247,21 @@ export async function clickDaftarBaru(page: Page) {
  * Perform login on the sehatindonesiaku.kemkes.go.id site.
  * @param page Puppeteer page instance
  */
-export async function _login(page: Page) {
+export async function _login(
+  page: Page,
+  username: string = process.env.SIH_USERNAME || '',
+  password: string = process.env.SIH_PASSWORD || ''
+) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/auth/login', { waitUntil: 'networkidle2' });
+  // Check if already logged in
+  if (!page.url().includes('/auth/login')) {
+    console.log('Already logged in, skipping login step');
+    return;
+  }
   // Fill email (username)
-  await page.type('input[name="Email"]', process.env.SIH_USERNAME);
+  await page.type('input[name="Email"]', username);
   // Fill password
-  await page.type('input[name="Kata sandi"]', process.env.SIH_PASSWORD);
+  await page.type('input[name="Kata sandi"]', password);
   // Wait for captcha input to be visible
   await page.waitForSelector('input[name="Captcha"]', { visible: true });
   // Optionally, you can add code to handle captcha here (manual or automated)
