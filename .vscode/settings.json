@@ -209,5 +209,6 @@
     "markdown",
     "json",
     "jsonc"
-  ]
+  ],
+  "prettier.endOfLine": "lf"
 }
