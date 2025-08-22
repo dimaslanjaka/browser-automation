@@ -4,6 +4,7 @@ import path from 'upath';
 import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
 import { downloadSheets } from '../utils/googleSheet.js';
+import oboe from 'oboe';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,57 @@ export interface DataItem {
   /** Geocoding result */
   // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
+}
+
+/**
+ * Stream a JSON array file and process each item as it comes.
+ * @param filePath Path to the JSON file (array of objects)
+ * @param onItem Callback called for each DataItem
+ * @returns Promise that resolves when streaming is done
+ */
+export function readSehatIndonesiakuData(filePath: string, onItem: (item: DataItem) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const readStream = fs.createReadStream(filePath, { encoding: 'utf8' });
+
+    oboe(readStream)
+      .node('![*]', (item: DataItem) => {
+        onItem(item);
+        return oboe.drop; // prevent storing in memory
+      })
+      .done(() => resolve())
+      .fail((err) => reject(err));
+  });
+}
+
+/**
+ * Stream a JSON array file and process each item sequentially using async callback.
+ * @param filePath Path to the JSON file
+ * @param onItem Async callback called for each DataItem
+ */
+export async function readSehatIndonesiakuDataAsync(
+  filePath: string,
+  onItem: (item: DataItem) => Promise<void>
+): Promise<void> {
+  const readStream = fs.createReadStream(filePath, { encoding: 'utf8' });
+
+  const queue: Promise<void>[] = [];
+
+  return new Promise((resolve, reject) => {
+    oboe(readStream)
+      .node('![*]', (item: DataItem) => {
+        // Push a promise to the queue
+        const p = (queue.length ? queue[queue.length - 1] : Promise.resolve()).then(() => onItem(item));
+        queue.push(p);
+        return oboe.drop;
+      })
+      .done(() => {
+        // Wait until all queued promises are finished
+        Promise.all(queue)
+          .then(() => resolve())
+          .catch((err) => reject(err));
+      })
+      .fail((err) => reject(err));
+  });
 }
 
 /**
