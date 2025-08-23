@@ -28,7 +28,7 @@ export async function installDependencies() {
 }
 
 export async function installIfNeeded() {
-  const checksum = getChecksum(path.join(process.cwd(), 'src'), path.join(process.cwd(), 'package.json'));
+  const checksum = getChecksum(path.join(process.cwd(), '.yarnrc.yml'), path.join(process.cwd(), 'package.json'));
   const checksumFile = path.join(process.cwd(), 'tmp/.last_install_checksum');
   const lastChecsum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
   if (checksum !== lastChecsum) {
