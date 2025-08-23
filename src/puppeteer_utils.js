@@ -923,12 +923,13 @@ export async function clearCurrentPageCookies(page) {
  * zero-width and special characters (keeping only letters, numbers, and spaces), collapses multiple spaces, trims,
  * and converts to lowercase. It then compares the normalized text to the provided `text` (also lowercased).
  *
- * If a match is found, the element is clicked and the function returns. If no match is found, nothing happens.
+ * If a match is found, the element is clicked and the function returns true. If no match is found, returns false.
+ * Throws if no elements are found for the selector.
  *
  * @param {import('puppeteer').Page} page - Puppeteer Page instance
  * @param {string} selector - CSS selector to match elements
  * @param {string} text - Text to match (case-insensitive, normalized)
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} true if an element was clicked, false otherwise
  * @throws {Error} If no elements are found for the given selector
  */
 export async function clickElementByText(page, selector, text) {
@@ -953,7 +954,8 @@ export async function clickElementByText(page, selector, text) {
 
     if (elementText === text.toLowerCase()) {
       await el.click();
-      return;
+      return true;
     }
   }
+  return false;
 }
