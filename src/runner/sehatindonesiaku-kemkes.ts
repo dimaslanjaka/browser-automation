@@ -76,7 +76,7 @@ async function main() {
       break;
     }
 
-    // break; // Remove this break to process all data items
+    if (isSingleData) break; // Process only one item if --single or -s flag is passed
   }
 }
 
