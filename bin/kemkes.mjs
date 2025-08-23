@@ -121,7 +121,8 @@ async function main() {
       }
       running = true;
       try {
-        await runCommand(cmd, dev, forwarded);
+        const argsWithoutWatch = forwarded.filter((a) => !watchFlags.includes(a));
+        await runCommand(cmd, dev, argsWithoutWatch);
       } catch (err) {
         console.error(err);
       } finally {
@@ -134,6 +135,7 @@ async function main() {
     };
     chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
       console.log(`[watch] ${event}: ${path}`);
+
       if (!dev) {
         buildIfNeeded().then(run);
       } else {
