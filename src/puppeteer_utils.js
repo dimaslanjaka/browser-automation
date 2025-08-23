@@ -904,3 +904,35 @@ export async function clearCurrentPageCookies(page) {
   const xclient = await page.target().createCDPSession();
   await xclient.send('Network.clearBrowserCookies');
 }
+
+/**
+ * Click the first element that matches the selector and has the given text.
+ *
+ * @param {import('puppeteer').Page} page - Puppeteer Page instance
+ * @param {string} selector - CSS selector to find elements
+ * @param {string} text - Text to match (case-insensitive, normalized)
+ * @returns {Promise<void>}
+ */
+export async function clickElementByText(page, selector, text) {
+  const elements = await page.$$(selector);
+
+  for (const el of elements) {
+    const elementText = await el.evaluate((el) => {
+      let t = el.innerText || '';
+
+      // Remove zero-width characters
+      t = t.replace(/[\u200B-\u200D\uFEFF]/g, '');
+      // Remove special characters but keep letters, numbers, spaces
+      t = t.replace(/[^\p{L}\p{N} ]/gu, '');
+      // Collapse multiple spaces and trim
+      t = t.replace(/\s+/g, ' ').trim().toLowerCase();
+
+      return t;
+    });
+
+    if (elementText === text.toLowerCase()) {
+      await el.click();
+      return;
+    }
+  }
+}
