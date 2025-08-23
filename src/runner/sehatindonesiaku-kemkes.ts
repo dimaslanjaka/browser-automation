@@ -33,8 +33,8 @@ const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
 const kecamatan = 'Kebon Jeruk';
 const kelurahan = 'Kebon Jeruk';
-const args = minimist(process.argv.slice(2));
-const isSingleData = args.single || args.s || false;
+const cliArgs = minimist(process.argv.slice(2));
+const isSingleData = cliArgs.single || cliArgs.s || false;
 
 async function main() {
   const { browser } = await getPuppeteer();
@@ -234,4 +234,23 @@ async function getData() {
   return sehatindonesiakuData;
 }
 
-main();
+if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
+  (async () => {
+    // Show help if -h or --help is passed
+    if (cliArgs.h || cliArgs.help) {
+      // Print help, each line as a separate console.log (no spawn)
+      console.log('Usage: sehatindonesiaku-kemkes [options]');
+      console.log('');
+      console.log('Options:');
+      console.log('  -h, --help     Show help');
+      console.log('  -s, --single   Process only one data item');
+      return;
+    }
+    try {
+      await main();
+    } catch (err) {
+      console.error('Fatal error in main():', err);
+      process.exit(1);
+    }
+  })();
+}
