@@ -169,13 +169,31 @@ export async function typeAndTrigger(page, selector, value) {
 }
 
 /**
- * Check if the element exists
+ * Check if the element exists and optionally if it is visible
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
  * @param {string} selector
- * @returns {Promise<boolean>} - Returns true if the element exists, otherwise false.
+ * @param {Object} [options] - Options object
+ * @param {boolean} [options.visible=true] - Whether to check if the element is visible
+ * @returns {Promise<boolean>} - Returns true if the element exists (and is visible if visible=true), otherwise false.
  */
-export async function isElementExist(page, selector) {
-  return (await page.$(selector)) !== null;
+export async function isElementExist(page, selector, options = {}) {
+  const { visible = true } = options;
+  const element = await page.$(selector);
+  if (!element) return false;
+  if (!visible) return true;
+  // Check visibility using the same logic as isElementVisible
+  return await page.evaluate((sel) => {
+    const elem = document.querySelector(sel);
+    if (!elem) return false;
+    const style = window.getComputedStyle(elem);
+    return (
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      elem.offsetWidth > 0 &&
+      elem.offsetHeight > 0 &&
+      style.opacity !== '0'
+    );
+  }, selector);
 }
 
 /**
