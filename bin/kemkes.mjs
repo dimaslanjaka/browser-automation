@@ -37,7 +37,7 @@ async function installDependencies() {
 }
 
 async function installIfNeeded() {
-  const checksum = getChecksum(path.join(CWD, 'src'), path.join(CWD, 'package.json'), __filename);
+  const checksum = getChecksum(path.join(CWD, 'src'), path.join(CWD, 'package.json'));
   const checksumFile = path.join(CWD, 'tmp/.last_install_checksum');
   const lastChecsum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
   if (checksum !== lastChecsum) {
@@ -50,20 +50,7 @@ async function installIfNeeded() {
 }
 
 async function buildIfNeeded() {
-  const srcDir = path.join(CWD, 'src');
-  const packageJson = path.join(CWD, 'package.json');
-
-  const checksum = getChecksum(srcDir, packageJson, __filename);
-  const checksumFile = path.join(process.cwd(), 'tmp/.last_build_checksum');
-  const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
-
-  if (checksum !== lastChecksum) {
-    await runAsync('yarn', ['build']);
-    fs.ensureDirSync(path.dirname(checksumFile));
-    fs.writeFileSync(checksumFile, checksum, 'utf-8');
-    return true;
-  }
-  return false;
+  await runAsync('node', [BUILD_SCRIPT]);
 }
 
 async function main() {
@@ -76,7 +63,6 @@ async function main() {
   const args = argv._;
   const dev = argv.dev || argv.development;
   const devFlags = ['-d', '--dev', '--development'];
-  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a));
 
   if (!dev) {
     const needInstall = await installIfNeeded();
@@ -138,9 +124,28 @@ async function main() {
     console.log(`Running ${dev ? 'development' : 'production'} data...`);
     await runAsync('node', script);
     return;
+  } else if (args[0] === 'run') {
+    // Run main script with all args after 'run'
+    const runArgIndex = rawArgs.findIndex((a) => a === 'run');
+    const forwarded = rawArgs.slice(runArgIndex + 1).filter((a) => !devFlags.includes(a));
+    console.log('Running kemkes (main) script with forwarded args...');
+    await runAsync(
+      'node',
+      dev
+        ? [
+            '--no-warnings',
+            '--loader',
+            'ts-node/esm',
+            path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
+            ...forwarded
+          ]
+        : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...forwarded]
+    );
+    return;
   }
 
-  const devArgs = filterDevFlags(args);
+  // Default to running kemkes (main) script
+  const devArgs = rawArgs.filter((a) => !devFlags.includes(a));
   if (dev) {
     console.log('Running development build (TypeScript source)...');
     await runAsync('node', [
@@ -154,7 +159,6 @@ async function main() {
   }
 
   console.log('Running production build...');
-  await runAsync('node', [BUILD_SCRIPT]);
   await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...devArgs]);
 }
 
