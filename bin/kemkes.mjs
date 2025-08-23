@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 // kemkes.mjs - Node.js script to replace kemkes.cmd
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import path from 'upath';
 import minimist from 'minimist';
-import { getChecksum } from 'sbg-utility';
-import fs from 'fs-extra';
+import path from 'upath';
+import { fileURLToPath } from 'url';
+import { installIfNeeded } from './build.mjs';
 
 // Polyfill for __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -25,28 +24,6 @@ function runAsync(command, args, options = {}) {
     });
     proc.on('error', reject);
   });
-}
-
-async function installDependencies() {
-  const yarn = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
-  const yarnLockPath = path.join(CWD, 'yarn.lock');
-  if (!fs.existsSync(yarnLockPath)) {
-    fs.writeFileSync(yarnLockPath, '', 'utf-8'); // Ensure yarn.lock exists only if not present
-  }
-  await runAsync(yarn, ['install']);
-}
-
-async function installIfNeeded() {
-  const checksum = getChecksum(path.join(CWD, 'src'), path.join(CWD, 'package.json'));
-  const checksumFile = path.join(CWD, 'tmp/.last_install_checksum');
-  const lastChecsum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
-  if (checksum !== lastChecsum) {
-    await installDependencies();
-    fs.ensureDirSync(path.dirname(checksumFile));
-    fs.writeFileSync(checksumFile, checksum, 'utf-8');
-    return true;
-  }
-  return false;
 }
 
 async function buildIfNeeded() {
