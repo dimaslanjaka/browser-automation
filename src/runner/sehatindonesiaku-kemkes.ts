@@ -78,6 +78,10 @@ async function main() {
 
     if (isSingleData) break; // Process only one item if --single or -s flag is passed
   }
+
+  console.log('All data processed. Closing browser...');
+  await browser.close();
+  process.exit(0);
 }
 
 async function processData(browser: Browser, item: DataItem) {
