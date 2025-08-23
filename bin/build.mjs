@@ -1,7 +1,7 @@
 import color from 'ansi-colors';
 import { spawn, spawnSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import fs from 'fs-extra';
+import path from 'upath';
 import { getChecksum } from 'sbg-utility';
 
 function runAsync(command, args, options = {}) {
