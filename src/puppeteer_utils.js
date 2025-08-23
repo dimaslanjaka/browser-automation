@@ -906,15 +906,25 @@ export async function clearCurrentPageCookies(page) {
 }
 
 /**
- * Click the first element that matches the selector and has the given text.
+ * Clicks the first element matching the selector whose text content matches the given text (case-insensitive).
+ *
+ * This function searches for all elements matching the provided selector, normalizes their text content by removing
+ * zero-width and special characters (keeping only letters, numbers, and spaces), collapses multiple spaces, trims,
+ * and converts to lowercase. It then compares the normalized text to the provided `text` (also lowercased).
+ *
+ * If a match is found, the element is clicked and the function returns. If no match is found, nothing happens.
  *
  * @param {import('puppeteer').Page} page - Puppeteer Page instance
- * @param {string} selector - CSS selector to find elements
+ * @param {string} selector - CSS selector to match elements
  * @param {string} text - Text to match (case-insensitive, normalized)
  * @returns {Promise<void>}
+ * @throws {Error} If no elements are found for the given selector
  */
 export async function clickElementByText(page, selector, text) {
   const elements = await page.$$(selector);
+  if (elements.length === 0) {
+    throw new Error(`No elements found for selector: ${selector}`);
+  }
 
   for (const el of elements) {
     const elementText = await el.evaluate((el) => {
