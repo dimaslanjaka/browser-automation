@@ -6,7 +6,6 @@ import path from 'upath';
 import { fileURLToPath } from 'url';
 import { installIfNeeded } from './build.mjs';
 
-// Polyfill for __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CWD = process.cwd();
@@ -15,13 +14,7 @@ const BUILD_SCRIPT = path.resolve(__dirname, 'build.mjs');
 function runAsync(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { stdio: 'inherit', shell: true, ...options });
-    proc.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`${command} exited with code ${code}`));
-      }
-    });
+    proc.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`${command} exited with code ${code}`))));
     proc.on('error', reject);
   });
 }
@@ -30,113 +23,89 @@ async function buildIfNeeded() {
   await runAsync('node', [BUILD_SCRIPT]);
 }
 
+function showHelp() {
+  console.log(`
+Usage: kemkes <command> [options]
+
+Commands:
+  hadir         Run kehadiran (attendance) automation
+  data          Run data automation
+  run           Run main kemkes script
+  help          Show this help message
+
+Options:
+  -d, --dev         Run in development mode (TypeScript source)
+  --development     Same as --dev
+Sub-options:
+  -h, --help        Show help (e.g., kemkes data --help)
+
+Examples:
+  kemkes hadir --dev
+  kemkes data
+`);
+}
+
+function getForwardedArgs(cmd, rawArgs, devFlags) {
+  const idx = rawArgs.indexOf(cmd);
+  return idx === -1
+    ? rawArgs.filter((a) => !devFlags.includes(a))
+    : rawArgs.slice(idx + 1).filter((a) => !devFlags.includes(a));
+}
+
+async function runCommand(cmd, dev, forwarded) {
+  const COMMANDS = {
+    hadir: {
+      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
+      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js')
+    },
+    data: {
+      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
+      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js')
+    },
+    run: {
+      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
+      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+    },
+    default: {
+      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
+      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+    }
+  };
+
+  if (cmd === 'help') {
+    showHelp();
+    return;
+  }
+
+  const target = COMMANDS[cmd] || COMMANDS.default;
+  const script = dev
+    ? ['--no-warnings', '--loader', 'ts-node/esm', target.dev, ...forwarded]
+    : [target.prod, ...forwarded];
+
+  console.log(`Running ${dev ? 'development' : 'production'} ${cmd}...`);
+  await runAsync('node', script);
+}
+
 async function main() {
   const argv = minimist(process.argv.slice(2), {
     boolean: ['dev', 'development', 'd'],
     alias: { d: 'dev' }
   });
-  // Use process.argv.slice(2) directly for forwarding, so all flags are preserved
+
   const rawArgs = process.argv.slice(2);
   const args = argv._;
   const dev = argv.dev || argv.development;
   const devFlags = ['-d', '--dev', '--development'];
 
   if (!dev) {
-    const needInstall = await installIfNeeded();
-    if (needInstall) {
-      console.log('Dependencies installed/updated.');
-    }
+    if (await installIfNeeded()) console.log('Dependencies installed/updated.');
     await buildIfNeeded();
   }
 
-  // Handle subcommands
-  if (args[0] === 'help') {
-    console.log();
-    console.log('Usage: kemkes <command> [options]');
-    console.log();
-    console.log('Commands:');
-    console.log('  hadir         Run kehadiran (attendance) automation');
-    console.log('  data          Run data automation');
-    console.log('  help          Show this help message');
-    console.log();
-    console.log('Options:');
-    console.log('  -d, --dev     Run in development mode (TypeScript source)');
-    console.log('  --development Same as --dev');
-    console.log('  -h, --help    Show help');
-    console.log();
-    console.log('Examples:');
-    console.log('  kemkes hadir --dev');
-    console.log('  kemkes data');
-    console.log();
-    return;
-  } else if (args[0] === 'hadir') {
-    // Forward all non-dev flags as-is from the original argv
-    const hadirArgIndex = rawArgs.findIndex((a) => a === 'hadir');
-    const forwarded = rawArgs.slice(hadirArgIndex + 1).filter((a) => !devFlags.includes(a));
-    const script = dev
-      ? [
-          '--no-warnings',
-          '--loader',
-          'ts-node/esm',
-          path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
-          ...forwarded
-        ]
-      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...forwarded];
-    console.log(`Running ${dev ? 'development' : 'production'} hadir...`);
-    await runAsync('node', script);
-    return;
-  } else if (args[0] === 'data') {
-    // Forward all non-dev flags as-is from the original argv
-    const dataArgIndex = rawArgs.findIndex((a) => a === 'data');
-    const forwarded = rawArgs.slice(dataArgIndex + 1).filter((a) => !devFlags.includes(a));
-    const script = dev
-      ? [
-          '--no-warnings',
-          '--loader',
-          'ts-node/esm',
-          path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
-          ...forwarded
-        ]
-      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js'), ...forwarded];
-    console.log(`Running ${dev ? 'development' : 'production'} data...`);
-    await runAsync('node', script);
-    return;
-  } else if (args[0] === 'run') {
-    // Run main script with all args after 'run'
-    const runArgIndex = rawArgs.findIndex((a) => a === 'run');
-    const forwarded = rawArgs.slice(runArgIndex + 1).filter((a) => !devFlags.includes(a));
-    console.log('Running kemkes (main) script with forwarded args...');
-    await runAsync(
-      'node',
-      dev
-        ? [
-            '--no-warnings',
-            '--loader',
-            'ts-node/esm',
-            path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-            ...forwarded
-          ]
-        : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...forwarded]
-    );
-    return;
-  }
+  const cmd = args[0] || 'default';
+  const forwarded = getForwardedArgs(cmd, rawArgs, devFlags);
 
-  // Default to running kemkes (main) script
-  const devArgs = rawArgs.filter((a) => !devFlags.includes(a));
-  if (dev) {
-    console.log('Running development build (TypeScript source)...');
-    await runAsync('node', [
-      '--no-warnings',
-      '--loader',
-      'ts-node/esm',
-      path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-      ...devArgs
-    ]);
-    return;
-  }
-
-  console.log('Running production build...');
-  await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...devArgs]);
+  await runCommand(cmd, dev, forwarded);
 }
 
 main().catch(console.error);
