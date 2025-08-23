@@ -32,27 +32,31 @@ function initGitRepository() {
     // Set remote origin
     console.log('Setting remote origin...');
     try {
-      execSync('git remote add origin https://github.com/dimaslanjaka/browser-automation.git', { stdio: 'inherit' });
+      execSync('git remote add origin https://github.com/dimaslanjaka/browser-automation.git', {
+        stdio: 'inherit',
+        cwd: publicDir
+      });
     } catch {
       // If remote already exists, update it
       console.log('Remote origin already exists, updating...');
       execSync('git remote set-url origin https://github.com/dimaslanjaka/browser-automation.git', {
-        stdio: 'inherit'
+        stdio: 'inherit',
+        cwd: publicDir
       });
     }
 
     // Set branch to gh-pages
     console.log('Setting branch to gh-pages...');
-    execSync('git checkout -B gh-pages', { stdio: 'inherit' });
+    execSync('git checkout -B gh-pages', { stdio: 'inherit', cwd: publicDir });
 
     // Fetch all branches
     console.log('Fetching all branches...');
-    execSync('git fetch --all', { stdio: 'inherit' });
+    execSync('git fetch --all', { stdio: 'inherit', cwd: publicDir });
 
     // Stash any local changes before reset
     console.log('Stashing local changes...');
     try {
-      execSync('git stash', { stdio: 'inherit' });
+      execSync('git stash', { stdio: 'inherit', cwd: publicDir });
     } catch {
       console.log('No local changes to stash or stash failed, continuing...');
     }
@@ -60,7 +64,7 @@ function initGitRepository() {
     // Reset to origin/gh-pages
     console.log('Resetting to origin/gh-pages...');
     try {
-      execSync('git reset --hard origin/gh-pages', { stdio: 'inherit' });
+      execSync('git reset --hard origin/gh-pages', { stdio: 'inherit', cwd: publicDir });
     } catch {
       console.warn('Warning: Could not reset to origin/gh-pages. Branch might not exist on remote yet.');
       console.warn('This is normal for a new gh-pages branch.');
@@ -69,7 +73,7 @@ function initGitRepository() {
     // Restore stashed changes and enforce them
     console.log('Restoring stashed changes...');
     try {
-      execSync('git stash pop', { stdio: 'inherit' });
+      execSync('git stash pop', { stdio: 'inherit', cwd: publicDir });
       console.log('Local changes restored and enforced over remote changes.');
     } catch {
       console.log('No stashed changes to restore or stash pop failed, continuing...');
@@ -80,7 +84,7 @@ function initGitRepository() {
 
     // Show git status
     console.log('\nGit status:');
-    execSync('git status', { stdio: 'inherit' });
+    execSync('git status', { stdio: 'inherit', cwd: publicDir });
   } catch (error) {
     console.error('❌ Error during git setup:', error.message);
     process.exit(1);
