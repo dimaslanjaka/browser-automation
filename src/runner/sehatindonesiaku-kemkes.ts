@@ -27,11 +27,14 @@ import {
   selectTanggalLahir
 } from './sehatindonesiaku-staging.js';
 import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
+import minimist from 'minimist';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
 const kecamatan = 'Kebon Jeruk';
 const kelurahan = 'Kebon Jeruk';
+const args = minimist(process.argv.slice(2));
+const isSingleData = args.single || args.s || false;
 
 async function main() {
   const { browser } = await getPuppeteer();
@@ -73,7 +76,7 @@ async function main() {
       break;
     }
 
-    break; // Remove this break to process all data items
+    // break; // Remove this break to process all data items
   }
 }
 
