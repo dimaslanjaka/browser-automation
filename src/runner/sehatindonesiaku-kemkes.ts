@@ -2,9 +2,8 @@ import 'dotenv/config.js';
 import fs from 'fs-extra';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
-import { LogDatabase } from '../logHelper.js';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { DataItem, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
+import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
@@ -33,7 +32,6 @@ const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
 const kecamatan = 'Kebon Jeruk';
 const kelurahan = 'Kebon Jeruk';
-const db = new LogDatabase('sehatindonesiaku-kemkes');
 
 async function main() {
   const { browser } = await getPuppeteer();
@@ -44,7 +42,7 @@ async function main() {
 
   for (const item of allData) {
     // Check if data for this NIK is already processed
-    const cachedData = db.getLogById(item.nik);
+    const cachedData = sehatindonesiakuDb.getLogById(item.nik);
     if (
       cachedData &&
       cachedData.data &&
@@ -60,11 +58,11 @@ async function main() {
     } catch (e) {
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`Data tidak sesuai KTP untuk NIK ${item.nik}:`);
-        db.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
+        sehatindonesiakuDb.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
-        db.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
+        sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         console.warn(`Login required, please login manually from opened browser. (close browser manual)`);
@@ -171,7 +169,7 @@ async function processData(browser: Browser, item: DataItem) {
   if (await isSuccessModalVisible(page)) {
     console.log(`${item.nik} - Data processed successfully!`);
     // Save the data to database
-    db.addLog({
+    sehatindonesiakuDb.addLog({
       id: item.nik,
       data: { ...item, status: 'success' },
       message: 'Data processed successfully'

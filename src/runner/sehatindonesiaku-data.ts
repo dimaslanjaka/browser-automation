@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
 import { downloadSheets } from '../utils/googleSheet.js';
 import oboe from 'oboe';
+import { LogDatabase } from '../logHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -266,6 +267,8 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
 }
+
+export const sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes');
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
