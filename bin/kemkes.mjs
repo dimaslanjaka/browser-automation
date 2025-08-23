@@ -4,8 +4,10 @@ import { spawn } from 'child_process';
 import minimist from 'minimist';
 import path from 'upath';
 import { fileURLToPath } from 'url';
+
 import { installIfNeeded } from './build.mjs';
 import chokidar from 'chokidar';
+import treeKill from 'tree-kill';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,7 +57,22 @@ function getForwardedArgs(cmd, rawArgs, devFlags) {
     : rawArgs.slice(idx + 1).filter((a) => !devFlags.includes(a));
 }
 
-async function runCommand(cmd, dev, forwarded) {
+// Cancellable runCommand implementation
+let currentProcess = null;
+function cancelCurrentRun() {
+  if (currentProcess && currentProcess.pid && !currentProcess.killed) {
+    const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
+    console.log(`[watch] Killing process ${currentProcess.pid} with ${signal}`);
+    treeKill(currentProcess.pid, signal, (err) => {
+      if (err) {
+        console.error(`[watch] Failed to kill process ${currentProcess.pid}:`, err);
+      }
+    });
+    currentProcess = null;
+  }
+}
+
+async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) {
   const COMMANDS = {
     hadir: {
       dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
@@ -80,13 +97,31 @@ async function runCommand(cmd, dev, forwarded) {
     return;
   }
 
+  if (cancelPrevious) {
+    cancelCurrentRun();
+  }
+
   const target = COMMANDS[cmd] || COMMANDS.default;
   const script = dev
     ? ['--no-warnings', '--loader', 'ts-node/esm', target.dev, ...forwarded]
     : [target.prod, ...forwarded];
 
   console.log(`Running ${dev ? 'development' : 'production'} ${cmd}...`);
-  await runAsync('node', script);
+  await new Promise((resolve, reject) => {
+    currentProcess = spawn('node', script, { stdio: 'inherit', shell: true });
+    currentProcess.on('exit', (code) => {
+      currentProcess = null;
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`node exited with code ${code}`));
+      }
+    });
+    currentProcess.on('error', (err) => {
+      currentProcess = null;
+      reject(err);
+    });
+  });
 }
 
 async function main() {
@@ -112,41 +147,29 @@ async function main() {
 
   if (watch) {
     console.log('Watch mode enabled. Watching src/ for changes...');
-    let running = false;
-    let rerun = false;
-    const run = async () => {
-      if (running) {
-        rerun = true;
-        return;
+    const argsWithoutWatch = process.argv.slice(2).filter((a) => a !== '-w' && a !== '--watch');
+    let child = null;
+    function startChild() {
+      if (child && !child.killed) {
+        const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
+        console.log(`[watch] Killing previous process ${child.pid} with ${signal}`);
+        treeKill(child.pid, signal, (err) => {
+          if (err) {
+            console.error(`[watch] Failed to kill process ${child.pid}:`, err);
+          }
+        });
       }
-      running = true;
-      try {
-        const argsWithoutWatch = forwarded.filter((a) => !watchFlags.includes(a));
-        await runCommand(cmd, dev, argsWithoutWatch);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        running = false;
-        if (rerun) {
-          rerun = false;
-          run();
-        }
-      }
-    };
+      child = spawn(process.execPath, [__filename, ...argsWithoutWatch], {
+        stdio: 'inherit',
+        shell: false
+      });
+    }
     chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
       console.log(`[watch] ${event}: ${path}`);
-
-      if (!dev) {
-        buildIfNeeded().then(run);
-      } else {
-        run();
-      }
+      startChild();
     });
     // Initial run
-    if (!dev) {
-      await buildIfNeeded();
-    }
-    await run();
+    startChild();
     return;
   }
 
