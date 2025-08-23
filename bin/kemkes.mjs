@@ -68,13 +68,35 @@ async function buildIfNeeded() {
 
 async function main() {
   const argv = minimist(process.argv.slice(2), {
-    boolean: ['dev', 'development', 'd'],
-    alias: { d: 'dev' }
+    boolean: ['dev', 'development', 'd', 'help', 'h'],
+    alias: { d: 'dev', h: 'help' }
   });
   const args = argv._;
   const dev = argv.dev || argv.development;
+  const help = argv.help;
   const devFlags = ['-d', '--dev', '--development'];
-  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a));
+  const helpFlags = ['-h', '--help'];
+  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a) && !helpFlags.includes(a));
+
+  if (help || args[0] === 'help' || args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: kemkes [options] <command> [args...]
+
+Options:
+  -d, --dev           Run in development mode (TypeScript source)
+  -h, --help          Show this help message
+
+Commands:
+  hadir [args...]     Run the 'hadir' subcommand
+  data [args...]      Run the 'data' subcommand
+  (no command)        Run the main kemkes runner
+
+Examples:
+  kemkes hadir --dev
+  kemkes data -d
+  kemkes --help
+`);
+    return;
+  }
 
   if (!dev) {
     const needInstall = await installIfNeeded();
