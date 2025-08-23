@@ -22,3 +22,9 @@ export class KuotaHabisError extends Error {
     this.name = 'KuotaHabisError';
   }
 }
+export class ErrorDataKehadiranNotFound extends Error {
+  constructor(nik: string) {
+    super(`❌ Data Kehadiran not found for NIK: ${nik}`);
+    this.name = 'ErrorDataKehadiranNotFound';
+  }
+}
