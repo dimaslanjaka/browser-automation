@@ -149,20 +149,31 @@ async function main() {
     console.log('Watch mode enabled. Watching src/ for changes...');
     const argsWithoutWatch = process.argv.slice(2).filter((a) => a !== '-w' && a !== '--watch');
     let child = null;
+
+    let restartTimeout = null;
+    let lastRestart = 0;
     function startChild() {
-      if (child && !child.killed) {
-        const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
-        console.log(`[watch] Killing previous process ${child.pid} with ${signal}`);
-        treeKill(child.pid, signal, (err) => {
-          if (err) {
-            console.error(`[watch] Failed to kill process ${child.pid}:`, err);
-          }
-        });
+      const now = Date.now();
+      const delay = Math.max(0, 5000 - (now - lastRestart));
+      if (restartTimeout) {
+        clearTimeout(restartTimeout);
       }
-      child = spawn(process.execPath, [__filename, ...argsWithoutWatch], {
-        stdio: 'inherit',
-        shell: false
-      });
+      restartTimeout = setTimeout(() => {
+        if (child && !child.killed) {
+          const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
+          console.log(`[watch] Killing previous process ${child.pid} with ${signal}`);
+          treeKill(child.pid, signal, (err) => {
+            if (err) {
+              console.error(`[watch] Failed to kill process ${child.pid}:`, err);
+            }
+          });
+        }
+        child = spawn(process.execPath, [__filename, ...argsWithoutWatch], {
+          stdio: 'inherit',
+          shell: false
+        });
+        lastRestart = Date.now();
+      }, delay);
     }
     chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
       console.log(`[watch] ${event}: ${path}`);
