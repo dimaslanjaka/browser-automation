@@ -811,9 +811,20 @@ export async function anyElementWithTextExists(page, selector, text) {
   for (const el of elementHandles) {
     const matchesText = await page.evaluate(
       (element, expectedText) => {
+        // Normalize: lowercase, trim, remove special chars, collapse spaces
+        const normalize = (str) => {
+          if (!str) return '';
+          return str
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N} ]+/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        };
         const style = window.getComputedStyle(element);
         const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-        return isVisible && element.textContent?.includes(expectedText);
+        const elementText = normalize(element.textContent);
+        const normalizedExpected = normalize(expectedText);
+        return isVisible && elementText.includes(normalizedExpected);
       },
       el,
       text
