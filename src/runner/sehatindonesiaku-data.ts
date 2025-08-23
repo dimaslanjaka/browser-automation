@@ -6,6 +6,7 @@ import xlsx from 'xlsx';
 import { downloadSheets } from '../utils/googleSheet.js';
 import oboe from 'oboe';
 import { LogDatabase } from '../logHelper.js';
+import minimist from 'minimist';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -272,7 +273,12 @@ export const sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes');
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
+    const args = minimist(process.argv.slice(2));
+    const start = parseInt(args.start) || 320;
+    const end = parseInt(args.end) || 500;
+
+    console.log(`Downloading and processing XLSX with range ${start}-${end}...`);
     // download excel and parse with range 320-500
-    await downloadAndProcessXlsx(320, 500);
+    await downloadAndProcessXlsx(start, end);
   })();
 }
