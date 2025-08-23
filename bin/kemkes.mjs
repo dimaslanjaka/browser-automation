@@ -5,6 +5,7 @@ import minimist from 'minimist';
 import path from 'upath';
 import { fileURLToPath } from 'url';
 import { installIfNeeded } from './build.mjs';
+import chokidar from 'chokidar';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,11 +37,13 @@ Commands:
 Options:
   -d, --dev         Run in development mode (TypeScript source)
   --development     Same as --dev
+  -w, --watch       Watch src/ for changes and rerun command automatically
+  --watch           Same as -w
 Sub-options:
   -h, --help        Show help (e.g., kemkes data --help)
 
 Examples:
-  kemkes hadir --dev
+  kemkes --dev --watch hadir
   kemkes data
 `);
 }
@@ -88,14 +91,16 @@ async function runCommand(cmd, dev, forwarded) {
 
 async function main() {
   const argv = minimist(process.argv.slice(2), {
-    boolean: ['dev', 'development', 'd'],
-    alias: { d: 'dev' }
+    boolean: ['dev', 'development', 'd', 'watch', 'w'],
+    alias: { d: 'dev', w: 'watch' }
   });
 
   const rawArgs = process.argv.slice(2);
   const args = argv._;
   const dev = argv.dev || argv.development;
+  const watch = argv.watch;
   const devFlags = ['-d', '--dev', '--development'];
+  const watchFlags = ['-w', '--watch'];
 
   if (!dev) {
     if (await installIfNeeded()) console.log('Dependencies installed/updated.');
@@ -103,7 +108,45 @@ async function main() {
   }
 
   const cmd = args[0] || 'default';
-  const forwarded = getForwardedArgs(cmd, rawArgs, devFlags);
+  const forwarded = getForwardedArgs(cmd, rawArgs, devFlags.concat(watchFlags));
+
+  if (watch) {
+    console.log('Watch mode enabled. Watching src/ for changes...');
+    let running = false;
+    let rerun = false;
+    const run = async () => {
+      if (running) {
+        rerun = true;
+        return;
+      }
+      running = true;
+      try {
+        await runCommand(cmd, dev, forwarded);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        running = false;
+        if (rerun) {
+          rerun = false;
+          run();
+        }
+      }
+    };
+    chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
+      console.log(`[watch] ${event}: ${path}`);
+      if (!dev) {
+        buildIfNeeded().then(run);
+      } else {
+        run();
+      }
+    });
+    // Initial run
+    if (!dev) {
+      await buildIfNeeded();
+    }
+    await run();
+    return;
+  }
 
   await runCommand(cmd, dev, forwarded);
 }
