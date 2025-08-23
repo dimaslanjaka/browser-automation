@@ -284,7 +284,12 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
       process.exit(0);
     }
     const start = parseInt(args.start) || 320;
-    const end = parseInt(args.end) || 500;
+    let end: number;
+    if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
+      end = Number.MAX_SAFE_INTEGER;
+    } else {
+      end = parseInt(args.end) || 500;
+    }
 
     console.log(`Downloading and processing XLSX with range ${start}-${end}...`);
     // download excel and parse with range 320-500
