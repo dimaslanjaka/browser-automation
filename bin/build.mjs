@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { getChecksum } from 'sbg-utility';
 
-const checksumFile = path.join(process.cwd(), 'tmp/checksum.txt');
+const checksumFile = path.join(process.cwd(), 'tmp/.last_bin_build_checksum');
 const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8').trim() : null;
 const checksum = getChecksum(path.join(process.cwd(), 'package.json'), path.join(process.cwd(), 'src'));
 
