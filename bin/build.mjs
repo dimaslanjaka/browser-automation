@@ -1,8 +1,16 @@
 import color from 'ansi-colors';
 import { spawn, spawnSync } from 'child_process';
 import fs from 'fs-extra';
-import path from 'upath';
 import { getChecksum } from 'sbg-utility';
+import path from 'upath';
+
+/**
+ * Run a command asynchronously using child_process.spawn.
+ * @param {string} command - The command to run.
+ * @param {string[]} args - The command arguments.
+ * @param {object} [options] - Additional spawn options.
+ * @returns {Promise<void>} Resolves when the command exits with code 0, rejects otherwise.
+ */
 
 function runAsync(command, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -17,6 +25,11 @@ function runAsync(command, args, options = {}) {
     proc.on('error', reject);
   });
 }
+/**
+ * Install dependencies using yarn if needed.
+ * Ensures yarn.lock exists and runs yarn install.
+ * @returns {Promise<void>}
+ */
 
 export async function installDependencies() {
   const yarn = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
@@ -26,6 +39,10 @@ export async function installDependencies() {
   }
   await runAsync(yarn, ['install']);
 }
+/**
+ * Installs dependencies if the checksum of .yarnrc.yml or package.json has changed.
+ * @returns {Promise<boolean>} True if install was needed and performed, false otherwise.
+ */
 
 export async function installIfNeeded() {
   const checksum = getChecksum(path.join(process.cwd(), '.yarnrc.yml'), path.join(process.cwd(), 'package.json'));
@@ -39,6 +56,11 @@ export async function installIfNeeded() {
   }
   return false;
 }
+/**
+ * Runs the build process if the checksum of package.json or src/ has changed.
+ * Updates the checksum file after a successful build.
+ * @returns {Promise<void>}
+ */
 
 export async function build() {
   const checksumFile = path.join(process.cwd(), 'tmp/.last_bin_build_checksum');
