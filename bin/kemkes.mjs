@@ -71,42 +71,39 @@ async function main() {
     boolean: ['dev', 'development', 'd'],
     alias: { d: 'dev' }
   });
-  const args = process.argv.slice(2);
+  const args = argv._;
   const dev = argv.dev || argv.development;
-
-  const needInstall = await installIfNeeded();
-  if (needInstall) {
-    console.log('Dependencies installed/updated.');
-  }
+  const devFlags = ['-d', '--dev', '--development'];
+  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a));
 
   if (!dev) {
+    const needInstall = await installIfNeeded();
+    if (needInstall) {
+      console.log('Dependencies installed/updated.');
+    }
     await buildIfNeeded();
   }
 
-  // Check for 'hadir' as the first argument
+  // Handle subcommands
   if (args[0] === 'hadir') {
-    // Remove all dev flags from hadirArgs for the script
-    const hadirArgs = args.slice(1).filter((a) => a !== '-d' && a !== '--dev' && a !== '--development');
-    if (dev) {
-      console.log('Running development hadir (TypeScript source)...');
-      await runAsync('node', [
-        '--no-warnings',
-        '--loader',
-        'ts-node/esm',
-        path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
-        ...hadirArgs
-      ]);
-    } else {
-      console.log('Running production hadir...');
-      await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...hadirArgs]);
-    }
+    const hadirArgs = filterDevFlags(args.slice(1));
+    const script = dev
+      ? [
+          '--no-warnings',
+          '--loader',
+          'ts-node/esm',
+          path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
+          ...hadirArgs
+        ]
+      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...hadirArgs];
+    console.log(`Running ${dev ? 'development' : 'production'} hadir...`);
+    await runAsync('node', script);
     return;
   }
 
+  const devArgs = filterDevFlags(args);
   if (dev) {
     console.log('Running development build (TypeScript source)...');
-    // Remove all dev flags from args for the script
-    const devArgs = args.filter((a) => a !== '-d' && a !== '--dev' && a !== '--development');
     await runAsync('node', [
       '--no-warnings',
       '--loader',
@@ -119,7 +116,7 @@ async function main() {
 
   console.log('Running production build...');
   await runAsync('node', [BUILD_SCRIPT]);
-  await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...args]);
+  await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...devArgs]);
 }
 
 main().catch(console.error);
