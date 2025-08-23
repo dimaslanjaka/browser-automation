@@ -13,11 +13,6 @@ const __dirname = path.dirname(__filename);
 const CWD = process.cwd();
 const BUILD_SCRIPT = path.resolve(__dirname, 'build.mjs');
 
-function run(command, args, options = {}) {
-  const proc = spawn(command, args, { stdio: 'inherit', shell: true, ...options });
-  proc.on('exit', (code) => process.exit(code));
-}
-
 function runAsync(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { stdio: 'inherit', shell: true, ...options });
@@ -54,7 +49,7 @@ async function installIfNeeded() {
   return false;
 }
 
-function buildIfNeeded() {
+async function buildIfNeeded() {
   const srcDir = path.join(CWD, 'src');
   const packageJson = path.join(CWD, 'package.json');
 
@@ -63,7 +58,7 @@ function buildIfNeeded() {
   const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
 
   if (checksum !== lastChecksum) {
-    run('yarn', ['build']);
+    await runAsync('yarn', ['build']);
     fs.ensureDirSync(path.dirname(checksumFile));
     fs.writeFileSync(checksumFile, checksum, 'utf-8');
     return true;
@@ -79,12 +74,13 @@ async function main() {
   const args = process.argv.slice(2);
   const dev = argv.dev || argv.development;
 
+  const needInstall = await installIfNeeded();
+  if (needInstall) {
+    console.log('Dependencies installed/updated.');
+  }
+
   if (!dev) {
-    const needInstall = await installIfNeeded();
-    if (needInstall) {
-      console.log('Dependencies installed/updated.');
-    }
-    buildIfNeeded();
+    await buildIfNeeded();
   }
 
   // Check for 'hadir' as the first argument
@@ -93,7 +89,7 @@ async function main() {
     const hadirArgs = args.slice(1).filter((a) => a !== '-d' && a !== '--dev' && a !== '--development');
     if (dev) {
       console.log('Running development hadir (TypeScript source)...');
-      run('node', [
+      await runAsync('node', [
         '--no-warnings',
         '--loader',
         'ts-node/esm',
@@ -102,7 +98,7 @@ async function main() {
       ]);
     } else {
       console.log('Running production hadir...');
-      run('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...hadirArgs]);
+      await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...hadirArgs]);
     }
     return;
   }
@@ -111,7 +107,7 @@ async function main() {
     console.log('Running development build (TypeScript source)...');
     // Remove all dev flags from args for the script
     const devArgs = args.filter((a) => a !== '-d' && a !== '--dev' && a !== '--development');
-    run('node', [
+    await runAsync('node', [
       '--no-warnings',
       '--loader',
       'ts-node/esm',
@@ -122,8 +118,8 @@ async function main() {
   }
 
   console.log('Running production build...');
-  run('node', [BUILD_SCRIPT]);
-  run('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...args]);
+  await runAsync('node', [BUILD_SCRIPT]);
+  await runAsync('node', [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js'), ...args]);
 }
 
 main().catch(console.error);
