@@ -339,7 +339,6 @@ export async function enterSubmission(page: Page) {
   // Check if current url is not https://sehatindonesiaku.kemkes.go.id/auth/login
   const currentUrl = page.url();
   if (!currentUrl.includes('/login')) {
-    await clickDaftarBaru(page);
     return true;
   } else {
     // User is not logged in, perform login
