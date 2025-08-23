@@ -99,6 +99,20 @@ async function main() {
     console.log(`Running ${dev ? 'development' : 'production'} hadir...`);
     await runAsync('node', script);
     return;
+  } else if (args[0] === 'data') {
+    const dataArgs = filterDevFlags(args.slice(1));
+    const script = dev
+      ? [
+          '--no-warnings',
+          '--loader',
+          'ts-node/esm',
+          path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
+          ...dataArgs
+        ]
+      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js'), ...dataArgs];
+    console.log(`Running ${dev ? 'development' : 'production'} data...`);
+    await runAsync('node', script);
+    return;
   }
 
   const devArgs = filterDevFlags(args);
