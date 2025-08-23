@@ -68,35 +68,15 @@ async function buildIfNeeded() {
 
 async function main() {
   const argv = minimist(process.argv.slice(2), {
-    boolean: ['dev', 'development', 'd', 'help', 'h'],
-    alias: { d: 'dev', h: 'help' }
+    boolean: ['dev', 'development', 'd'],
+    alias: { d: 'dev' }
   });
+  // Use process.argv.slice(2) directly for forwarding, so all flags are preserved
+  const rawArgs = process.argv.slice(2);
   const args = argv._;
   const dev = argv.dev || argv.development;
-  const help = argv.help;
   const devFlags = ['-d', '--dev', '--development'];
-  const helpFlags = ['-h', '--help'];
-  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a) && !helpFlags.includes(a));
-
-  if (help || args[0] === 'help' || args.includes('--help') || args.includes('-h')) {
-    console.log(`Usage: kemkes [options] <command> [args...]
-
-Options:
-  -d, --dev           Run in development mode (TypeScript source)
-  -h, --help          Show this help message
-
-Commands:
-  hadir [args...]     Run the 'hadir' subcommand
-  data [args...]      Run the 'data' subcommand
-  (no command)        Run the main kemkes runner
-
-Examples:
-  kemkes hadir --dev
-  kemkes data -d
-  kemkes --help
-`);
-    return;
-  }
+  const filterDevFlags = (arr) => arr.filter((a) => !devFlags.includes(a));
 
   if (!dev) {
     const needInstall = await installIfNeeded();
@@ -107,31 +87,54 @@ Examples:
   }
 
   // Handle subcommands
-  if (args[0] === 'hadir') {
-    const hadirArgs = filterDevFlags(args.slice(1));
+  if (args[0] === 'help') {
+    console.log();
+    console.log('Usage: kemkes <command> [options]');
+    console.log();
+    console.log('Commands:');
+    console.log('  hadir         Run kehadiran (attendance) automation');
+    console.log('  data          Run data automation');
+    console.log('  help          Show this help message');
+    console.log();
+    console.log('Options:');
+    console.log('  -d, --dev     Run in development mode (TypeScript source)');
+    console.log('  --development Same as --dev');
+    console.log('  -h, --help    Show help');
+    console.log();
+    console.log('Examples:');
+    console.log('  kemkes hadir --dev');
+    console.log('  kemkes data');
+    console.log();
+    return;
+  } else if (args[0] === 'hadir') {
+    // Forward all non-dev flags as-is from the original argv
+    const hadirArgIndex = rawArgs.findIndex((a) => a === 'hadir');
+    const forwarded = rawArgs.slice(hadirArgIndex + 1).filter((a) => !devFlags.includes(a));
     const script = dev
       ? [
           '--no-warnings',
           '--loader',
           'ts-node/esm',
           path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
-          ...hadirArgs
+          ...forwarded
         ]
-      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...hadirArgs];
+      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js'), ...forwarded];
     console.log(`Running ${dev ? 'development' : 'production'} hadir...`);
     await runAsync('node', script);
     return;
   } else if (args[0] === 'data') {
-    const dataArgs = filterDevFlags(args.slice(1));
+    // Forward all non-dev flags as-is from the original argv
+    const dataArgIndex = rawArgs.findIndex((a) => a === 'data');
+    const forwarded = rawArgs.slice(dataArgIndex + 1).filter((a) => !devFlags.includes(a));
     const script = dev
       ? [
           '--no-warnings',
           '--loader',
           'ts-node/esm',
           path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
-          ...dataArgs
+          ...forwarded
         ]
-      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js'), ...dataArgs];
+      : [path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js'), ...forwarded];
     console.log(`Running ${dev ? 'development' : 'production'} data...`);
     await runAsync('node', script);
     return;
