@@ -1,12 +1,18 @@
-export class ElementNotFoundError extends Error {
-  constructor(message: string) {
+class ElementNotFoundError extends Error {
+  constructor(message) {
     super(message);
     this.name = 'ElementNotFoundError';
   }
 }
-export class UnauthorizedError extends Error {
+
+class UnauthorizedError extends Error {
   constructor(message = 'Unauthorized access - login required') {
     super(message);
     this.name = 'UnauthorizedError';
   }
 }
+
+module.exports = {
+  ElementNotFoundError,
+  UnauthorizedError
+};
