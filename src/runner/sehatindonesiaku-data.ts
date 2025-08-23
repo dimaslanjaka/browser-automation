@@ -273,7 +273,16 @@ export const sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes');
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
-    const args = minimist(process.argv.slice(2));
+    const args = minimist(process.argv.slice(2), {
+      alias: { h: 'help' }
+    });
+    if (args.help) {
+      console.log(`\nUsage: node sehatindonesiaku-data [--start <row>] [--end <row>] [--help|-h]\n`);
+      console.log('  --start <row>   Start row index (default: 320)');
+      console.log('  --end <row>     End row index (default: 500)');
+      console.log('  --help, -h      Show this help message');
+      process.exit(0);
+    }
     const start = parseInt(args.start) || 320;
     const end = parseInt(args.end) || 500;
 
