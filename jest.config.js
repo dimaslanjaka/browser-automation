@@ -9,8 +9,10 @@ export default {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transform: {
-    // Use babel-jest for .js/.jsx/.ts/.tsx
-    '^.+\\.[jt]sx?$': 'babel-jest'
+    // Use ts-jest for .ts files only
+    '^.+\\.ts$': 'ts-jest',
+    // Use babel-jest for .tsx, .jsx, .js, .mjs, .cjs files
+    '^.+\\.(tsx|jsx|js|mjs|cjs)$': 'babel-jest'
   },
   transformIgnorePatterns: ['/node_modules/(?!(@react|react|react-dom|react-router-dom)/)'],
   modulePathIgnorePatterns: ['<rootDir>/packages']
