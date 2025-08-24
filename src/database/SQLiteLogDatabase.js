@@ -1,14 +1,15 @@
 import Database from 'better-sqlite3';
-import moment from 'moment-timezone';
-import path from 'upath';
-import fs from 'fs-extra';
-import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import cp from 'cross-spawn';
+import fs from 'fs-extra';
+import moment from 'moment-timezone';
+import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
+import * as path from 'upath';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
+const cacheDirectoryPath = path.join(process.cwd(), '.cache');
+const backupDirectoryPath = path.join(cacheDirectoryPath, 'database/backup');
 
 /**
  * Class representing a log database using SQLite.
@@ -20,13 +21,23 @@ export class SQLiteLogDatabase {
    */
   constructor(dbFileName) {
     const name = dbFileName || process.env.DATABASE_FILENAME || 'default';
-    const dirPath = path.resolve('.cache');
-    if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+    if (!fs.existsSync(cacheDirectoryPath)) fs.mkdirSync(cacheDirectoryPath, { recursive: true });
 
-    const dbPath = path.resolve(dirPath, `${name}.db`);
+    const dbPath = path.resolve(cacheDirectoryPath, `${name}.db`);
     this.dbPath = dbPath;
     this.db = new Database(dbPath);
     this._initializeDatabase();
+
+    // Auto run backup on process exit
+    process.on('exit', () => {
+      const backupPath = path.join(
+        backupDirectoryPath,
+        `${name}-backup-${moment().tz('Asia/Jakarta').format('YYYYMMDD-HHmmss')}.sql`
+      );
+      this.backup(backupPath).catch((err) => {
+        console.error('Failed to backup database on exit:', err);
+      });
+    });
   }
 
   /**
@@ -43,6 +54,7 @@ export class SQLiteLogDatabase {
    * @returns {Promise<import('better-sqlite3').BackupMetadata>} Resolves when backup is complete.
    */
   async backup(destPath) {
+    fs.ensureDirSync(path.dirname(destPath));
     // Use cross-spawn to run sqlite3 and dump the database
     const dumpArgs = [this.dbPath, '.dump'];
     const outStream = fs.createWriteStream(destPath);
