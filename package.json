@@ -66,6 +66,7 @@
     "minimist": "^1",
     "moment": "^2",
     "moment-timezone": "^0",
+    "mysql2": "^3.14.3",
     "nik-parser-jurusid": "^3",
     "node-7z": "^3",
     "node-fetch": "^3",
