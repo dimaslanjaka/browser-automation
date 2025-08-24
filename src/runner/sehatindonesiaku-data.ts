@@ -1,16 +1,13 @@
 import 'dotenv/config.js';
 import fs from 'fs-extra';
-import path from 'upath';
-import { fileURLToPath } from 'url';
-import xlsx from 'xlsx';
-import { downloadSheets } from '../utils/googleSheet.js';
-import oboe from 'oboe';
-import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
 import minimist from 'minimist';
+import oboe from 'oboe';
+import path from 'upath';
+import xlsx from 'xlsx';
+import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
+import { downloadSheets } from '../utils/googleSheet.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const xlsxFile = path.join(__dirname, 'sehatindonesiaku.xlsx');
+const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
 const tanggal_pemeriksaan = '21/08/2025';
 
 /**
