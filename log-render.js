@@ -8,7 +8,7 @@ import nunjucks from 'nunjucks';
 import path from 'path';
 import { Server as SocketIOServer } from 'socket.io';
 import { buildStaticHtml } from './scripts/build-static-html-vite-plugin.js';
-import { dbPath, getLogs } from './src/logHelper.js';
+import { dbPath, getLogs } from './src/database/SQLiteLogDatabase.js';
 import { ucwords } from './src/utils/string.js';
 
 let __filename = new URL(import.meta.url).pathname;

@@ -2,7 +2,7 @@ import 'dotenv/config.js';
 import fs from 'fs-extra';
 import moment from 'moment';
 import type { Browser, Page } from 'puppeteer';
-import { LogDatabase } from '../logHelper.js';
+import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import {
   DataItem,
@@ -20,7 +20,7 @@ const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
 const kecamatan = 'Kebon Jeruk';
 const kelurahan = 'Kebon Jeruk';
-const db = new LogDatabase('sehatindonesiaku-kemkes');
+const db = new SQLiteLogDatabase('sehatindonesiaku-kemkes');
 
 /**
  * Process a single data item by interacting with the registration form.

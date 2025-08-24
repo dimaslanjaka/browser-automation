@@ -2,7 +2,7 @@ import 'dotenv/config';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import { loadCsvData } from '../../data/index.js';
-import { addLog, getLogById } from '../logHelper.js';
+import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import {
   clickIframeElement,
   getFormValuesFromFrame,

@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 /**
  * Class representing a log database using SQLite.
  */
-export class LogDatabase {
+export class SQLiteLogDatabase {
   /**
    * Create a new LogDatabase instance.
    * @param {string} [dbFileName] - Optional database filename without extension. Defaults to environment variable DATABASE_FILENAME or 'default'.
@@ -165,15 +165,15 @@ export class LogDatabase {
 // Backward compatibility
 
 // Default singleton instance (similar to old behavior)
-const db = new LogDatabase(process.env.DATABASE_FILENAME || 'default');
+const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
 
 /**
  * Create a new LogDatabase instance at a custom path.
  * @param {string} dbPath - Custom database filename without extension.
- * @returns {LogDatabase} LogDatabase instance.
+ * @returns {SQLiteLogDatabase} LogDatabase instance.
  */
 export function createLogDatabase(dbPath) {
-  return new LogDatabase(dbPath);
+  return new SQLiteLogDatabase(dbPath);
 }
 
 /**

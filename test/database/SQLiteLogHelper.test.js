@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from '@jest/globals';
 import path from 'upath';
 import fs from 'fs-extra';
-import { LogDatabase } from '../src/logHelper.js';
+import { SQLiteLogDatabase } from '../../src/database/SQLiteLogDatabase.js';
 
 const TEST_DB_NAME = 'test-log-db';
 const BACKUP_DIR = path.join(process.cwd(), 'databases');
@@ -28,11 +28,11 @@ function cleanupFile(filePath) {
 
 // --- Tests ---
 describe('LogDatabase', () => {
-  /** @type {LogDatabase} */
+  /** @type {SQLiteLogDatabase} */
   let logDb;
 
   beforeEach(() => {
-    logDb = new LogDatabase(TEST_DB_NAME);
+    logDb = new SQLiteLogDatabase(TEST_DB_NAME);
     clearLogs(logDb);
   });
 

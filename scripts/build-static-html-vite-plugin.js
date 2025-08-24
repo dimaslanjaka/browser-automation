@@ -2,7 +2,7 @@ import fs from 'fs';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
-import { dbPath, getLogs } from '../src/logHelper.js';
+import { dbPath, getLogs } from '../src/database/SQLiteLogDatabase.js';
 import dotenv from 'dotenv';
 import { encryptJson } from '../src/utils/json-crypto.js';
 
