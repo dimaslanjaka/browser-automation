@@ -2,6 +2,7 @@
  * Auto-download and extract the latest SQLite precompiled binary
  * for the current OS/arch.
  */
+
 import https from 'https';
 import os from 'os';
 import path from 'upath';
@@ -69,6 +70,23 @@ async function downloadFile(url, dest) {
   });
 }
 
+// === Check if download is needed ===
+async function shouldDownload(url, local) {
+  if (!fs.existsSync(local)) return true;
+  const localSize = fs.statSync(local).size;
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, { method: 'HEAD' }, (res) => {
+        const remoteSize = parseInt(res.headers['content-length'], 10);
+        if (!remoteSize || isNaN(remoteSize)) {
+          return resolve(true);
+        }
+        resolve(localSize !== remoteSize);
+      })
+      .on('error', reject);
+  });
+}
+
 // === Main ===
 (async () => {
   try {
@@ -94,9 +112,13 @@ async function downloadFile(url, dest) {
       fs.mkdirSync(binDir, { recursive: true });
     }
 
-    console.log('Downloading:', filename);
-    await downloadFile(url, local);
-    console.log('Download complete:', local);
+    if (await shouldDownload(url, local)) {
+      console.log('Downloading:', filename);
+      await downloadFile(url, local);
+      console.log('Download complete:', local);
+    } else {
+      console.log('Local file is up to date, skipping download.');
+    }
 
     console.log('Extracting...');
     if (ext === '.zip') {
