@@ -99,6 +99,7 @@ export async function build() {
 
 if (process.argv.some((arg) => arg.includes('build.mjs'))) {
   (async () => {
+    await installIfNeeded();
     await build();
   })();
 }
