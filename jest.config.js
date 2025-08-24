@@ -8,9 +8,28 @@ export default {
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
   transform: {
     // Use ts-jest for .ts files only
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        babelConfig: {
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                targets: { node: 'current' }
+              }
+            ],
+            '@babel/preset-typescript'
+          ]
+        },
+        useESM: true
+      }
+    ],
     // Use babel-jest for .tsx, .jsx, .js, .mjs, .cjs files
     '^.+\\.(tsx|jsx|js|mjs|cjs)$': 'babel-jest'
   },
