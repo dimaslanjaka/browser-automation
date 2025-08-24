@@ -1,5 +1,7 @@
-# Node.js dependencies
+# Dependencies
 node_modules/
+bin/sqlite3*
+bin/sqldiff*
 
 # Yarn files
 yarn.lock

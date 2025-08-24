@@ -17,7 +17,7 @@
     "init:docs": "node ./init-gh-pages.js",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
-    "postinstall": "npm run init:docs",
+    "postinstall": "npm run init:docs && node scripts/sqlite-installer.js",
     "prepare": "husky",
     "serve-xlsx": "node xlsx-web-server.js | tee tmp/xlsx-server.log",
     "serve-xlsx-bg": "node xlsx-web-server.js > tmp/xlsx-server.log 2>&1 &",
