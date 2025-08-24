@@ -3,11 +3,8 @@ import cp from 'cross-spawn';
 import fs from 'fs-extra';
 import moment from 'moment-timezone';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
-import * as path from 'upath';
-import { fileURLToPath } from 'url';
+import path from 'upath';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const cacheDirectoryPath = path.join(process.cwd(), '.cache');
 const backupDirectoryPath = path.join(cacheDirectoryPath, 'database/backup');
 
