@@ -1,10 +1,11 @@
 import Database from 'better-sqlite3';
 import moment from 'moment-timezone';
-import path from 'path';
-import fs from 'fs';
+import path from 'upath';
+import fs from 'fs-extra';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import cp from 'cross-spawn';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,8 +24,63 @@ export class LogDatabase {
     if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 
     const dbPath = path.resolve(dirPath, `${name}.db`);
+    this.dbPath = dbPath;
     this.db = new Database(dbPath);
     this._initializeDatabase();
+  }
+
+  /**
+   * Close the database connection.
+   */
+  close() {
+    this.db.close();
+  }
+
+  /**
+   * Backup the SQLite database file to a specified destination (raw SQLite file, not SQL dump).
+   * Uses better-sqlite3's native backup method for reliability and performance.
+   * @param {string} destPath - The destination file path for the backup (will be a binary SQLite file).
+   * @returns {Promise<import('better-sqlite3').BackupMetadata>} Resolves when backup is complete.
+   */
+  async backup(destPath) {
+    // Use cross-spawn to run sqlite3 and dump the database
+    const dumpArgs = [this.dbPath, '.dump'];
+    const outStream = fs.createWriteStream(destPath);
+    // Add process.cwd() + '/bin' to PATH for sqlite3 lookup
+    const env = { ...process.env };
+    const binPath = path.join(process.cwd(), 'bin');
+    env.PATH = `${binPath};${env.PATH}`;
+    const child = cp('sqlite3', dumpArgs, { stdio: ['ignore', 'pipe', 'inherit'], env });
+    child.stdout.pipe(outStream);
+    await new Promise((resolve, reject) => {
+      child.on('error', (err) => {
+        console.error('Backup failed:', err);
+        reject(err);
+      });
+      child.on('close', (code) => {
+        if (code === 0) {
+          console.log('Backup completed:', destPath);
+          resolve();
+        } else {
+          const err = new Error(`Backup failed with exit code ${code}`);
+          console.error(err);
+          reject(err);
+        }
+      });
+    });
+    // Wait for file to be accessible
+    while (
+      await fs
+        .access(destPath)
+        .then(() => false)
+        .catch(() => true)
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    // Replace CREATE TABLE statements to ensure compatibility
+    let content = await fs.readFile(destPath, 'utf-8');
+    content = content.replace('CREATE TABLE logs', 'CREATE TABLE IF NOT EXISTS logs');
+    await fs.writeFile(destPath, content, 'utf-8');
   }
 
   /**
@@ -118,6 +174,15 @@ const db = new LogDatabase(process.env.DATABASE_FILENAME || 'default');
  */
 export function createLogDatabase(dbPath) {
   return new LogDatabase(dbPath);
+}
+
+/**
+ * Backup the singleton log database to a specified destination.
+ * @param {string} destPath - The destination file path for the backup.
+ * @returns {Promise<void>} Resolves when backup is complete.
+ */
+export function backupLogDatabase(destPath) {
+  return db.backup(destPath);
 }
 
 /* === Re-export old functions for backward compatibility === */
