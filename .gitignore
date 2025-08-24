@@ -76,3 +76,4 @@ public/*log*.html
 *.*private*.*
 deobfuscate/
 **/tmp/**
+/database*
