@@ -68,8 +68,6 @@ Thumbs.db
 public/**/*
 public/assets/data/**/*.json
 public/*log*.html
-!public/index.html
-!public/404.html
 
 # TypeScript
 *.tsbuildinfo
