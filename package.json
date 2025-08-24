@@ -161,7 +161,7 @@
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/f58af787eab404891d8394fe0570ce603e0d7308/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/679cb9edd0ed306ecabf6698925c451c64d94604/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/9956f751696b7435b92eddfca32469a127e608f4/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
