@@ -3,7 +3,14 @@ import 'dotenv/config';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DBNAME, MYSQL_PORT } = process.env;
 
-async function createDatabasePool() {
+/**
+ * Create a MySQL connection pool, ensuring the database exists.
+ *
+ * @param config Optional additional pool configuration.
+ * @returns A promise that resolves to a MySQL connection pool.
+ * @throws If required environment variables are missing.
+ */
+async function createDatabasePool(config: mysql.PoolOptions = {}) {
   if (!MYSQL_HOST || !MYSQL_USER || !MYSQL_PASS || !MYSQL_DBNAME) {
     throw new Error(
       'Missing one of the required environment variables: MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DBNAME'
@@ -14,7 +21,8 @@ async function createDatabasePool() {
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASS,
-    port: parseInt(MYSQL_PORT ?? '3306', 10)
+    port: parseInt(MYSQL_PORT ?? '3306', 10),
+    ...(config || {})
   });
 
   // Create database if it doesn't exist
