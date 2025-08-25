@@ -46,18 +46,6 @@ async function main() {
   // await processData(browser, sampleData);
 
   for (const item of allData) {
-    // Check if data for this NIK is already processed
-    const cachedData = await sehatindonesiakuDb.getLogById(item.nik);
-    if (
-      cachedData &&
-      cachedData.data &&
-      typeof cachedData.data === 'object' &&
-      Object.keys(cachedData.data).length > 0
-    ) {
-      console.log(`${item.nik} - already processed. Skipping...`);
-      continue; // Skip this item if already processed
-    }
-
     try {
       await processData(browser, item);
     } catch (e) {
@@ -70,7 +58,9 @@ async function main() {
         await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
-        console.warn(`Login required, please login manually from opened browser. (close browser manual)`);
+        console.warn(
+          `${ansiColors.redBright('Login required')}, please ${ansiColors.bold('login manually')} from opened browser. (close browser manual)`
+        );
         break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
@@ -233,6 +223,10 @@ async function getData() {
       const today = moment().startOf('day');
       const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
       const isPast = pemeriksaanDate.isBefore(today);
+      // Filter not have property status
+      if ('status' in item && item.status === 'success') return false;
+      // Filter not have property hadir
+      if ('hadir' in item && item.hadir === true) return false;
 
       // Only include items that are NOT past, NOT empty NIK, NOT empty tanggal, and NOT empty item
       return !isPast && !isNikEmpty && !isEmptyItem;
