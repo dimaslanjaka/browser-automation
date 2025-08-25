@@ -8,7 +8,7 @@ import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
-const tanggal_pemeriksaan = '21/08/2025';
+const tanggal_pemeriksaan = '24/08/2025';
 
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
@@ -280,16 +280,17 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
       console.log('  --help, -h      Show this help message');
       process.exit(0);
     }
-    const start = parseInt(args.start) || 320;
+    const start = parseInt(args.start) || 315;
     let end: number;
     if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
       end = Number.MAX_SAFE_INTEGER;
     } else {
-      end = parseInt(args.end) || 500;
+      end = parseInt(args.end) || 1000;
     }
 
     console.log(`Downloading and processing XLSX with range ${start}-${end}...`);
     // download excel and parse with range 320-500
     await downloadAndProcessXlsx(start, end);
+    // await downloadAndProcessXlsx(315, 615);
   })();
 }
