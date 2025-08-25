@@ -280,7 +280,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
       console.log('  --help, -h      Show this help message');
       process.exit(0);
     }
-    const start = parseInt(args.start) || 315;
+    const start = args.start !== undefined && !isNaN(parseInt(args.start)) ? parseInt(args.start) : 315;
     let end: number;
     if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
       end = Number.MAX_SAFE_INTEGER;
