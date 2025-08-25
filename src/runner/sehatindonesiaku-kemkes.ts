@@ -255,6 +255,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
     try {
       await migrateIfNeeded('sehatindonesiaku-kemkes');
       await main();
+      await sehatindonesiakuDb.close();
     } catch (err) {
       console.error('Fatal error in main():', err);
       process.exit(1);

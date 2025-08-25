@@ -298,5 +298,6 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
     // download excel and parse with range 320-500
     await downloadAndProcessXlsx(start, end);
     // await downloadAndProcessXlsx(315, 615);
+    await sehatindonesiakuDb.close();
   })();
 }
