@@ -77,3 +77,4 @@ public/*log*.html
 deobfuscate/
 **/tmp/**
 /database*
+/phpmyadmin
