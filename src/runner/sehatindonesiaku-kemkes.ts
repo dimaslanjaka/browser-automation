@@ -63,11 +63,11 @@ async function main() {
     } catch (e) {
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
-        sehatindonesiakuDb.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
+        await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
-        sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
+        await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         console.warn(`Login required, please login manually from opened browser. (close browser manual)`);
@@ -178,7 +178,7 @@ async function processData(browser: Browser, item: DataItem) {
   if (await isSuccessModalVisible(page)) {
     console.log(`${item.nik} - ${ansiColors.green('Data processed successfully!')}`);
     // Save the data to database
-    sehatindonesiakuDb.addLog({
+    await sehatindonesiakuDb.addLog({
       id: item.nik,
       data: { ...item, status: 'success' },
       message: 'Data processed successfully'
