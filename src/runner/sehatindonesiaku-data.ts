@@ -270,34 +270,36 @@ export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes'
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
-    const args = minimist(process.argv.slice(2), {
-      alias: { h: 'help' }
-    });
-    if (args.help) {
-      console.log(`\nUsage: node sehatindonesiaku-data [--start <row>] [--end <row>] [--help|-h]\n`);
-      console.log('  --start <row>   Start row index (default: 320)');
-      console.log('  --end <row>     End row index (default: 500)');
-      console.log('  --help, -h      Show this help message');
-      process.exit(0);
-    }
-    // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
-    const start = args.start !== undefined && !isNaN(parseInt(args.start)) ? parseInt(args.start) - 1 : 315;
-    let end: number;
-    if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
-      end = Number.MAX_SAFE_INTEGER;
-    } else if (args.end !== undefined && !isNaN(parseInt(args.end))) {
-      end = parseInt(args.end) - 1;
-    } else {
-      end = 1000;
-    }
-    if (end < start) {
-      throw new Error(`Invalid range: end (${end + 1}) cannot be less than start (${start + 1})`);
-    }
+    try {
+      const args = minimist(process.argv.slice(2), {
+        alias: { h: 'help' }
+      });
+      if (args.help) {
+        console.log(`\nUsage: node sehatindonesiaku-data [--start <row>] [--end <row>] [--help|-h]\n`);
+        console.log('  --start <row>   Start row index (default: 320)');
+        console.log('  --end <row>     End row index (default: 500)');
+        console.log('  --help, -h      Show this help message');
+        process.exit(0);
+      }
+      // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
+      const start = args.start !== undefined && !isNaN(parseInt(args.start)) ? parseInt(args.start) - 1 : 315;
+      let end: number;
+      if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
+        end = Number.MAX_SAFE_INTEGER;
+      } else if (args.end !== undefined && !isNaN(parseInt(args.end))) {
+        end = parseInt(args.end) - 1;
+      } else {
+        end = 1000;
+      }
+      if (end < start) {
+        throw new Error(`Invalid range: end (${end + 1}) cannot be less than start (${start + 1})`);
+      }
 
-    console.log(`Downloading and processing XLSX with range ${start + 1}-${end + 1}...`);
-    // download excel and parse with range 320-500
-    await downloadAndProcessXlsx(start, end);
-    // await downloadAndProcessXlsx(315, 615);
-    await sehatindonesiakuDb.close();
+      console.log(`Downloading and processing XLSX with range ${start + 1}-${end + 1}...`);
+      // download excel and parse with range 320-500
+      await downloadAndProcessXlsx(start, end);
+    } finally {
+      await sehatindonesiakuDb.close();
+    }
   })();
 }
