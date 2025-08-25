@@ -4,7 +4,7 @@ import minimist from 'minimist';
 import oboe from 'oboe';
 import path from 'upath';
 import xlsx from 'xlsx';
-import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
+import { MysqlLogDatabase } from '../database/MysqlLogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
@@ -266,7 +266,7 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
 }
 
-export const sehatindonesiakuDb = new SQLiteLogDatabase('sehatindonesiaku-kemkes');
+export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes');
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {

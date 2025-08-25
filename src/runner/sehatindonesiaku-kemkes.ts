@@ -29,6 +29,7 @@ import {
 import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
 import minimist from 'minimist';
 import ansiColors from 'ansi-colors';
+import migrateIfNeeded from './sehatindonesiaku-migration.js';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
@@ -46,7 +47,7 @@ async function main() {
 
   for (const item of allData) {
     // Check if data for this NIK is already processed
-    const cachedData = sehatindonesiakuDb.getLogById(item.nik);
+    const cachedData = await sehatindonesiakuDb.getLogById(item.nik);
     if (
       cachedData &&
       cachedData.data &&
@@ -252,6 +253,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
       return;
     }
     try {
+      await migrateIfNeeded('sehatindonesiaku-kemkes');
       await main();
     } catch (err) {
       console.error('Fatal error in main():', err);
