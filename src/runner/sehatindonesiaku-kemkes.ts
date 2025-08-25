@@ -75,7 +75,7 @@ async function main() {
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
       // Break the loop on unexpected errors
-      break;
+      // break;
     }
 
     if (isSingleData) break; // Process only one item if --single or -s flag is passed
