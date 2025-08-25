@@ -287,6 +287,9 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
     } else {
       end = parseInt(args.end) || 1000;
     }
+    if (end < start) {
+      throw new Error(`Invalid range: end (${end}) cannot be less than start (${start})`);
+    }
 
     console.log(`Downloading and processing XLSX with range ${start}-${end}...`);
     // download excel and parse with range 320-500
