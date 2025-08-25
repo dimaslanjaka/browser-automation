@@ -28,6 +28,7 @@ import {
 } from './sehatindonesiaku-staging.js';
 import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
 import minimist from 'minimist';
+import ansiColors from 'ansi-colors';
 
 const provinsi = 'DKI Jakarta';
 const kabupaten = 'Kota Adm. Jakarta Barat';
@@ -60,7 +61,7 @@ async function main() {
       await processData(browser, item);
     } catch (e) {
       if (e instanceof DataTidakSesuaiKTPError) {
-        console.warn(`Data tidak sesuai KTP untuk NIK ${item.nik}:`);
+        console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         sehatindonesiakuDb.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
@@ -174,7 +175,7 @@ async function processData(browser: Browser, item: DataItem) {
   }
 
   if (await isSuccessModalVisible(page)) {
-    console.log(`${item.nik} - Data processed successfully!`);
+    console.log(`${item.nik} - ${ansiColors.green('Data processed successfully!')}`);
     // Save the data to database
     sehatindonesiakuDb.addLog({
       id: item.nik,
