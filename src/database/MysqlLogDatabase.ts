@@ -11,6 +11,13 @@ function getJakartaTimestamp() {
   return jakarta.toISOString().replace('Z', '+07:00');
 }
 
+export interface LogEntry<T> {
+  id: string | number;
+  data: T;
+  message: string;
+  timestamp?: string;
+}
+
 /**
  * Class representing a log database using MySQL.
  */
@@ -46,10 +53,10 @@ export class MysqlLogDatabase {
    * Add or update a log entry in the database.
    * @param log Log entry object.
    */
-  async addLog({ id, data, message }: { id: string; data: any; message: string }) {
+  async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>) {
     await this.readyPromise;
     const pool = await this.poolPromise;
-    const timestamp = getJakartaTimestamp();
+    if (!timestamp) timestamp = getJakartaTimestamp();
     await pool.query(`REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`, [
       id,
       JSON.stringify(data),
@@ -63,7 +70,7 @@ export class MysqlLogDatabase {
    * @param id Unique log identifier.
    * @returns True if a log was removed, false otherwise.
    */
-  async removeLog(id: string): Promise<boolean> {
+  async removeLog(id: LogEntry<any>['id']): Promise<boolean> {
     await this.readyPromise;
     const pool = await this.poolPromise;
     const [result]: any = await pool.query('DELETE FROM logs WHERE id = ?', [id]);
@@ -75,14 +82,14 @@ export class MysqlLogDatabase {
    * @param id Unique log identifier.
    * @returns Log object or undefined if not found.
    */
-  async getLogById(id: string) {
+  async getLogById<T = any>(id: LogEntry<any>['id']): Promise<LogEntry<T> | undefined> {
     await this.readyPromise;
     const pool = await this.poolPromise;
     const [rows]: any = await pool.query('SELECT * FROM logs WHERE id = ?', [id]);
     if (!rows[0]) return undefined;
     return {
       id: rows[0].id,
-      data: JSON.parse(rows[0].data),
+      data: JSON.parse(rows[0].data) as T,
       message: rows[0].message,
       timestamp: rows[0].timestamp
     };
@@ -93,9 +100,9 @@ export class MysqlLogDatabase {
    * @param filterFn Optional filter function.
    * @returns Array of log objects.
    */
-  async getLogs(
+  async getLogs<T = any>(
     filterFn?: (log: { id: string; data: any; message: string; timestamp: string }) => boolean | Promise<boolean>
-  ) {
+  ): Promise<T[]> {
     await this.readyPromise;
     const pool = await this.poolPromise;
     const [rows]: any = await pool.query('SELECT * FROM logs');
@@ -116,6 +123,7 @@ export class MysqlLogDatabase {
   }
 
   async close() {
+    await this.readyPromise;
     const pool = await this.poolPromise;
     await pool.end();
   }
