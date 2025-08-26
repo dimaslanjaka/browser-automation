@@ -1,6 +1,6 @@
 import minimist from 'minimist';
 import { Page } from 'puppeteer';
-import { normalizePathUnix } from 'sbg-utility';
+import { array_shuffle, normalizePathUnix } from 'sbg-utility';
 import { ElementNotFoundError } from '../puppeteer-errors.cjs';
 import {
   anyElementWithTextExists,
@@ -44,14 +44,13 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
 
 async function main() {
   const puppeteer = await getPuppeteer();
-  const allData = await getData();
+  let allData: DataItem[] = [];
   // Shuffle data if --shuffle is passed
   if (args.shuffle) {
     // Shuffle allData array
-    for (let i = allData.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allData[i], allData[j]] = [allData[j], allData[i]];
-    }
+    allData = array_shuffle(await getData());
+  } else {
+    allData = await getData();
   }
   // If --single or -s is passed, keep only the first item
   if (args.single || args.s) {
