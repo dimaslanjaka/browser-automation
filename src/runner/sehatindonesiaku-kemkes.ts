@@ -46,6 +46,7 @@ const isSingleData = cliArgs.single || cliArgs.s || false;
 async function main() {
   const { browser } = await getPuppeteer();
   const allData = await getData();
+  let needLogin = false;
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
   // await processData(browser, sampleData);
@@ -63,6 +64,7 @@ async function main() {
         await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
+        needLogin = true;
         console.warn(
           `${ansiColors.redBright('Login required')}, please ${ansiColors.bold('login manually')} from opened browser. (close browser manual)`
         );
@@ -74,6 +76,15 @@ async function main() {
     }
 
     if (isSingleData) break; // Process only one item if --single or -s flag is passed
+  }
+
+  if (needLogin) {
+    // Keep the browser open for manual login
+    console.log('Browser will remain open for manual login. Press Ctrl+C to exit when done.');
+
+    while (true) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
   }
 
   console.log('All data processed. Closing browser...');
