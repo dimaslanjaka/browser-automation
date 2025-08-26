@@ -79,8 +79,12 @@ for (const [key, validate] of Object.entries(validators)) {
   }
 }
 
-if (noMatch) {
-  console.log('No valid options provided.');
-  showHelp();
+if (process.argv.some((arg) => arg.includes('sehatindonesiaku-config'))) {
+  // If no recognized options were provided, show help
+  if (noMatch) {
+    showHelp();
+  } else {
+    console.log('Configuration updated successfully.');
+  }
   process.exit(0);
 }
