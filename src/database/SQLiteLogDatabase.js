@@ -121,16 +121,13 @@ export class SQLiteLogDatabase {
 
   /**
    * Add or update a log entry in the database.
-   * @param {{ id: string, data: any, message: string }} log - Log entry object.
-   * @param {string} log.id - Unique log identifier.
-   * @param {any} log.data - Log data (can be any type, supports circular references).
-   * @param {string} log.message - Log message.
+   * @param {import('./BaseLogDatabase').LogEntry} log - Log entry object.
    */
-  addLog({ id, data, message }) {
-    const timestamp = moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ssZ');
+  addLog(log) {
+    const timestamp = log.timestamp || moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ssZ');
     this.db
       .prepare(`INSERT OR REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`)
-      .run(id, jsonStringifyWithCircularRefs(data), message, timestamp);
+      .run(log.id, jsonStringifyWithCircularRefs(log.data), log.message, timestamp);
   }
 
   /**
