@@ -86,6 +86,10 @@ async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) 
       dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
       prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
     },
+    config: {
+      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
+      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-config.js')
+    },
     default: {
       dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
       prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
