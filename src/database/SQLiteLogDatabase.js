@@ -132,7 +132,7 @@ export class SQLiteLogDatabase {
 
   /**
    * Remove a log entry by its id.
-   * @param {string} id - Unique log identifier.
+   * @param {import('./BaseLogDatabase').LogEntry['id']} id - Unique log identifier.
    * @returns {boolean} True if a log was removed, false otherwise.
    */
   removeLog(id) {
@@ -142,7 +142,7 @@ export class SQLiteLogDatabase {
 
   /**
    * Get a log entry by its id.
-   * @param {string} id - Unique log identifier.
+   * @param {import('./BaseLogDatabase').LogEntry['id']} id - Unique log identifier.
    * @returns {import('./BaseLogDatabase').LogEntry | undefined} Log object or undefined if not found.
    */
   getLogById(id) {
