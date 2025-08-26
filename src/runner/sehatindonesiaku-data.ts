@@ -13,6 +13,19 @@ export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatind
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
 const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan', '24/08/2025');
 
+process.on('SIGINT', async () => {
+  await sehatindonesiakuDb.close();
+  process.exit(0);
+});
+process.on('SIGTERM', async () => {
+  await sehatindonesiakuDb.close();
+  process.exit(0);
+});
+process.on('exit', () => {
+  // Not async, but best effort
+  sehatindonesiakuDb.close();
+});
+
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
  * Handles year, month, and day navigation robustly for DD/MM/YYYY format.
