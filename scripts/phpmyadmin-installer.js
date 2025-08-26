@@ -1,10 +1,12 @@
 /**
  * Auto download and extract phpMyAdmin with Node.js
  */
+
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import { execSync } from 'child_process';
+import crypto from 'crypto';
 
 const CWD = process.cwd();
 const TMP_DIR = path.join(CWD, 'tmp', 'download');
@@ -71,6 +73,48 @@ async function extractZip(zipFile, targetDir) {
   console.log('Extraction complete.');
 }
 
+function createConfigFile() {
+  // Generate a 32-byte random string for blowfish_secret (base64, 43 chars, no padding)
+  const blowfishSecret = crypto.randomBytes(32).toString('base64').replace(/=+$/, '');
+  const configContent = `
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This is needed for cookie based authentication to encrypt the cookie.
+ * Needs to be a 32-bytes long string of random bytes. See FAQ 2.10.
+ */
+$cfg['blowfish_secret'] = '${blowfishSecret}'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
+
+/**
+ * First server
+ */
+$i++;
+/* Authentication type */
+$cfg['Servers'][$i]['auth_type'] = 'cookie';
+/* Server parameters */
+$cfg['Servers'][$i]['host'] = 'localhost';
+$cfg['Servers'][$i]['compress'] = false;
+$cfg['Servers'][$i]['AllowNoPassword'] = false;
+
+/*
+ * Laragon: set phpmyadmin to not timeout so quickly
+ */
+$cfg['LoginCookieValidity'] = 36000;
+
+/**
+ * Directories for saving/loading files from server
+ */
+$cfg['UploadDir'] = __DIR__ . '/tmp/upload';
+$cfg['SaveDir'] = __DIR__ . '/tmp/save';
+
+`.trim();
+  const configPath = path.join(EXTRACT_DIR, `phpMyAdmin-${PHPMYADMIN_VERSION}-all-languages`, 'config.inc.php');
+  fs.writeFileSync(configPath, configContent);
+  console.log(`Created config.inc.php at ${configPath} with upload and save directories set.`);
+}
+
 /**
  * Main
  */
@@ -98,11 +142,11 @@ async function main() {
     if (remoteSize !== localSize) {
       console.log('File size differs. Downloading phpMyAdmin...');
       await downloadFile(PHPMYADMIN_URL, DOWNLOAD_FILE);
+      await extractZip(DOWNLOAD_FILE, EXTRACT_DIR);
+      createConfigFile();
     } else {
       console.log('Local file is up to date. Skipping download.');
     }
-
-    await extractZip(DOWNLOAD_FILE, EXTRACT_DIR);
 
     console.log('Done ✅ (zip kept in tmp/download)');
   } catch (err) {
