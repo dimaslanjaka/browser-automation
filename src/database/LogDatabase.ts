@@ -46,6 +46,7 @@ export class LogDatabase implements BaseLogDatabase {
   }
 
   async close() {
+    if (!this.store) return;
     if (this.store instanceof SQLiteLogDatabase) {
       await this.migrate().catch((e) => console.error('Migration error:', e));
     }
