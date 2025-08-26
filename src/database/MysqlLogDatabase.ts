@@ -150,14 +150,18 @@ export class MysqlLogDatabase {
     return await this.readyPromise;
   }
 
+  private closed = false;
+
   /**
    * Close the database connection pool.
    *
    * @returns Promise that resolves when the pool is closed.
    */
   async close() {
+    if (this.closed) return;
     await this.readyPromise;
     const pool = await this.poolPromise;
     await pool.end();
+    this.closed = true;
   }
 }
