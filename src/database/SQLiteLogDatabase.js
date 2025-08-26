@@ -9,6 +9,15 @@ const cacheDirectoryPath = path.join(process.cwd(), '.cache');
 const backupDirectoryPath = path.join(cacheDirectoryPath, 'database/backup');
 
 /**
+ * Get the absolute file path for a SQLite database file by name.
+ * @param {string} name - Database filename without extension.
+ * @returns {string} Absolute path to the database file.
+ */
+export function getDatabaseFilePath(name) {
+  return path.resolve(cacheDirectoryPath, `${name}.db`);
+}
+
+/**
  * Class representing a log database using SQLite.
  */
 export class SQLiteLogDatabase {
@@ -20,7 +29,7 @@ export class SQLiteLogDatabase {
     const name = dbFileName || process.env.DATABASE_FILENAME || 'default';
     if (!fs.existsSync(cacheDirectoryPath)) fs.mkdirSync(cacheDirectoryPath, { recursive: true });
 
-    const dbPath = path.resolve(cacheDirectoryPath, `${name}.db`);
+    const dbPath = getDatabaseFilePath(name);
     this.dbPath = dbPath;
     this.db = new Database(dbPath);
     this._initializeDatabase();
