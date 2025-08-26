@@ -143,7 +143,7 @@ export class SQLiteLogDatabase {
   /**
    * Get a log entry by its id.
    * @param {string} id - Unique log identifier.
-   * @returns {{ id: string, data: any, message: string, timestamp: string } | undefined} Log object or undefined if not found.
+   * @returns {import('./BaseLogDatabase').LogEntry | undefined} Log object or undefined if not found.
    */
   getLogById(id) {
     const row = this.db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
@@ -159,11 +159,11 @@ export class SQLiteLogDatabase {
   /**
    * Get all logs or filtered logs from the database.
    *
-   * @param {function(Object): boolean} [filterFn] Optional filter function for each log object.
-   * @param {Object} [options] Pagination options.
+   * @param {(log: import('./BaseLogDatabase').LogEntry) => boolean} [filterFn] Optional filter function to apply to each log entry after fetching from the database.
+   * @param {Object} [options] Optional pagination options.
    * @param {number} [options.limit] Maximum number of logs to return.
    * @param {number} [options.offset] Number of logs to skip before starting to collect the result set.
-   * @returns {Array<Object>} Array of log objects with shape: { id, data, message, timestamp }.
+   * @returns {Array<import('./BaseLogDatabase').LogEntry>} Array of log objects with shape: { id, data, message, timestamp }.
    */
   getLogs(filterFn = () => true, options = {}) {
     let query = 'SELECT * FROM logs';
