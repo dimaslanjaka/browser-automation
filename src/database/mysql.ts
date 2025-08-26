@@ -24,7 +24,8 @@ async function createDatabasePool(config: mysql.PoolOptions = {}) {
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASS,
-    port: parseInt(MYSQL_PORT ?? '3306', 10)
+    port: parseInt(MYSQL_PORT ?? '3306', 10),
+    connectTimeout: config.connectTimeout || 60000 // default 60s if not provided
   });
 
   // Create database if it doesn't exist
@@ -41,6 +42,7 @@ async function createDatabasePool(config: mysql.PoolOptions = {}) {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    connectTimeout: config.connectTimeout || 60000, // default 60s if not provided
     ...config
   });
 }

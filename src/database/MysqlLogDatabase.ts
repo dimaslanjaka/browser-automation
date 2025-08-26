@@ -26,18 +26,22 @@ export class MysqlLogDatabase {
   private readyPromise: Promise<void>;
 
   /**
-   * Create a new LogDatabase instance.
+   * Create a new MysqlLogDatabase instance.
+   *
    * @param dbName Optional database name (not used, for compatibility)
+   * @param options Optional pool options (e.g., connectTimeout)
    */
-  constructor(dbName?: string) {
-    const options = dbName ? { database: dbName } : {};
-    this.poolPromise = createDatabasePool(options);
+  constructor(dbName?: string, options: Partial<Parameters<typeof createDatabasePool>[0]> = {}) {
+    const poolOptions = dbName ? { database: dbName, ...options } : { ...options };
+    this.poolPromise = createDatabasePool(poolOptions);
     this.readyPromise = this._initializeDatabase();
   }
 
   /**
    * Initialize the database: create logs table if not exists.
+   *
    * @private
+   * @returns Promise that resolves when initialization is complete.
    */
   private async _initializeDatabase() {
     const pool = await this.poolPromise;
@@ -51,24 +55,29 @@ export class MysqlLogDatabase {
 
   /**
    * Add or update a log entry in the database.
+   *
    * @param log Log entry object.
+   * @param options Optional query options (e.g., timeout in ms)
+   * @returns Promise that resolves when the log is added or updated.
    */
-  async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>) {
+  async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: any = {}) {
     await this.readyPromise;
     const pool = await this.poolPromise;
     if (!timestamp) timestamp = getJakartaTimestamp();
-    await pool.query(`REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`, [
-      id,
-      JSON.stringify(data),
-      message,
-      timestamp
-    ]);
+    await pool.query(
+      {
+        sql: `REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`,
+        timeout: options.timeout || 60000 // default 60s if not provided
+      },
+      [id, JSON.stringify(data), message, timestamp]
+    );
   }
 
   /**
    * Remove a log entry by its id.
+   *
    * @param id Unique log identifier.
-   * @returns True if a log was removed, false otherwise.
+   * @returns Promise that resolves to true if a log was removed, false otherwise.
    */
   async removeLog(id: LogEntry<any>['id']): Promise<boolean> {
     await this.readyPromise;
@@ -79,8 +88,9 @@ export class MysqlLogDatabase {
 
   /**
    * Get a log entry by its id.
+   *
    * @param id Unique log identifier.
-   * @returns Log object or undefined if not found.
+   * @returns Promise that resolves to the log object or undefined if not found.
    */
   async getLogById<T = any>(id: LogEntry<any>['id']): Promise<LogEntry<T> | undefined> {
     await this.readyPromise;
@@ -100,7 +110,7 @@ export class MysqlLogDatabase {
    *
    * @param filterFn Optional filter function to apply to each log entry after fetching from the database. Can be async.
    * @param options Optional object with limit and offset for pagination.
-   * @returns Array of log objects.
+   * @returns Promise that resolves to an array of log objects.
    */
   async getLogs<T = any>(
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
@@ -131,10 +141,20 @@ export class MysqlLogDatabase {
     return results.filter(Boolean);
   }
 
+  /**
+   * Wait until the database is ready for operations.
+   *
+   * @returns Promise that resolves when the database is ready.
+   */
   public async waitReady() {
     return await this.readyPromise;
   }
 
+  /**
+   * Close the database connection pool.
+   *
+   * @returns Promise that resolves when the pool is closed.
+   */
   async close() {
     await this.readyPromise;
     const pool = await this.poolPromise;
