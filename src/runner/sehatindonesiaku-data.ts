@@ -2,6 +2,7 @@ import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
 import oboe from 'oboe';
+import { normalizePathUnix } from 'sbg-utility';
 import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
 import path from 'upath';
 import xlsx from 'xlsx';
@@ -289,7 +290,8 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
         alias: { h: 'help' }
       });
       if (args.help) {
-        console.log(`\nUsage: node sehatindonesiaku-data [--start <row>] [--end <row>] [--help|-h]\n`);
+        const [node, script] = process.argv;
+        console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
         console.log('  --start <row>   Start row index (default: 320)');
         console.log('  --end <row>     End row index (default: 500)');
         console.log('  --help, -h      Show this help message');
