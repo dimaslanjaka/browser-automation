@@ -8,11 +8,35 @@ import { fileURLToPath } from 'url';
 import { installIfNeeded } from './build.mjs';
 import chokidar from 'chokidar';
 import treeKill from 'tree-kill';
+import { spawnAsync } from 'cross-spawn';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CWD = process.cwd();
 const BUILD_SCRIPT = path.resolve(__dirname, 'build.mjs');
+
+const COMMANDS = {
+  hadir: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js')
+  },
+  data: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js')
+  },
+  run: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+  },
+  config: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-config.js')
+  },
+  default: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+  }
+};
 
 function runAsync(command, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -26,7 +50,23 @@ async function buildIfNeeded() {
   await runAsync('node', [BUILD_SCRIPT]);
 }
 
-function showHelp() {
+async function showHelp() {
+  const dataHelp = async () => {
+    const result = await spawnAsync('node', [COMMANDS.data.prod, '--help'], { stdio: 'pipe', shell: true });
+    console.log(result.output.toString().trim());
+  };
+  const hadirHelp = async () => {
+    const result = await spawnAsync('node', [COMMANDS.hadir.prod, '--help'], { stdio: 'pipe', shell: true });
+    console.log(result.output.toString().trim());
+  };
+  const runHelp = async () => {
+    const result = await spawnAsync('node', [COMMANDS.run.prod, '--help'], { stdio: 'pipe', shell: true });
+    console.log(result.output.toString().trim());
+  };
+  const configHelp = async () => {
+    const result = await spawnAsync('node', [COMMANDS.config.prod, '--help'], { stdio: 'pipe', shell: true });
+    console.log(result.output.toString().trim());
+  };
   console.log(`
 Usage: kemkes <command> [options]
 
@@ -47,7 +87,24 @@ Sub-options:
 Examples:
   kemkes --dev --watch hadir
   kemkes data
+  kemkes run --help
+  kemkes hadir --single
 `);
+
+  centerLog('==== Config Command Help ====');
+  await configHelp();
+  centerLog('==== Data Command Help ====');
+  await dataHelp();
+  centerLog('==== Kehadiran Command Help ====');
+  await hadirHelp();
+  centerLog('==== Kemkes Command Help ====');
+  await runHelp();
+}
+
+function centerLog(msg) {
+  const width = process.stdout.columns || 80;
+  const pad = Math.max(0, Math.floor((width - msg.length) / 2));
+  console.log('\n' + ' '.repeat(pad) + msg + '\n');
 }
 
 function getForwardedArgs(cmd, rawArgs, devFlags) {
@@ -73,30 +130,8 @@ function cancelCurrentRun() {
 }
 
 async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) {
-  const COMMANDS = {
-    hadir: {
-      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kehadiran.ts'),
-      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kehadiran.js')
-    },
-    data: {
-      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
-      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js')
-    },
-    run: {
-      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
-    },
-    config: {
-      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
-      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-config.js')
-    },
-    default: {
-      dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-      prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
-    }
-  };
-
   if (cmd === 'help') {
+    if (await installIfNeeded()) console.log('Dependencies installed/updated.');
     showHelp();
     return;
   }
