@@ -283,6 +283,15 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
 }
 
+export function showHelp() {
+  const [node, script] = process.argv;
+  console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]\n`);
+  console.log('Options:');
+  console.log('  --start <row>    Start row index (default: 320)');
+  console.log('  --end <row>      End row index (default: 500)');
+  console.log('  --help, -h       Show this help message');
+}
+
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
     try {
@@ -290,12 +299,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
         alias: { h: 'help' }
       });
       if (args.help) {
-        const [node, script] = process.argv;
-        console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]\n`);
-        console.log('Options:');
-        console.log('  --start <row>    Start row index (default: 320)');
-        console.log('  --end <row>      End row index (default: 500)');
-        console.log('  --help, -h       Show this help message');
+        showHelp();
         process.exit(0);
       }
       // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing

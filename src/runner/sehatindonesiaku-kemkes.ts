@@ -247,16 +247,20 @@ async function getData() {
   return sehatindonesiakuData;
 }
 
+export function showHelp() {
+  const [node, script] = process.argv;
+  console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
+  console.log('');
+  console.log('Options:');
+  console.log('  -h, --help     Show help');
+  console.log('  -s, --single   Process only one data item');
+}
+
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
   (async () => {
     // Show help if -h or --help is passed
     if (cliArgs.h || cliArgs.help) {
-      const [node, script] = process.argv;
-      console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
-      console.log('');
-      console.log('Options:');
-      console.log('  -h, --help     Show help');
-      console.log('  -s, --single   Process only one data item');
+      showHelp();
       return;
     }
     try {

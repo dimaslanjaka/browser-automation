@@ -16,7 +16,7 @@ import { enterSubmission } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2));
 
-function showHelp() {
+export function showHelp() {
   const [node, script] = process.argv;
   console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
   console.log('');

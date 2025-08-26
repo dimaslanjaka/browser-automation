@@ -10,7 +10,7 @@ const args = minimist(process.argv.slice(2), {
 /**
  * Print usage and options help to the console.
  */
-function showHelp() {
+export function showHelp() {
   // Print the command and file from process.argv
   const [node, script] = process.argv;
   console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
