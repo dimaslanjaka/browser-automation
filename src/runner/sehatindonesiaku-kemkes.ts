@@ -259,7 +259,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
       return;
     }
     try {
-      await migrateIfNeeded('sehatindonesiaku-kemkes');
+      await migrateIfNeeded();
       await main();
     } finally {
       await sehatindonesiakuDb.close();

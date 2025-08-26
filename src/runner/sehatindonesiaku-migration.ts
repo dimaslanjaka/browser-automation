@@ -3,14 +3,15 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { MysqlLogDatabase } from '../database/MysqlLogDatabase.js';
-import { SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
+import { getDatabaseFilePath, SQLiteLogDatabase } from '../database/SQLiteLogDatabase.js';
+import { getChecksum } from 'sbg-utility';
 
 /**
  * Migrates logs from the SQLite database to the MySQL database for 'sehatindonesiaku-kemkes'.
  * Skips logs that already exist in the MySQL database.
  * Closes both database connections after migration.
  */
-export async function migrate(): Promise<void> {
+export async function migrate() {
   const sqlite = new SQLiteLogDatabase('sehatindonesiaku-kemkes');
   const mysql = new MysqlLogDatabase('sehatindonesiaku-kemkes');
 
@@ -29,12 +30,17 @@ export async function migrate(): Promise<void> {
 }
 
 /**
- * Runs the migration only if it hasn't already been completed for the given id.
- * Uses a lock file in `.cache/migrations/` to prevent duplicate migrations.
- * @param id - Unique identifier for the migration lock file.
+ * Runs the migration only if it hasn't already been completed for the current SQLite database file.
+ *
+ * Uses a lock file in `.cache/migrations/` (named by the checksum of the SQLite file) to prevent duplicate migrations.
+ * If the lock file exists, migration is skipped.
+ *
+ * @returns Promise that resolves when migration is complete or skipped.
  */
-export default async function migrateIfNeeded(id: string): Promise<void> {
-  const filePath = path.join(process.cwd(), `.cache/migrations/${id}.lock`);
+export default async function migrateIfNeeded() {
+  const sqliteFile = getDatabaseFilePath('sehatindonesiaku-kemkes');
+  const sqliteChecksum = getChecksum(sqliteFile);
+  const filePath = path.join(process.cwd(), `.cache/migrations/${sqliteChecksum}.lock`);
   if (fs.existsSync(filePath)) {
     // console.log(`Migration already completed for id=${id}`);
     return;
