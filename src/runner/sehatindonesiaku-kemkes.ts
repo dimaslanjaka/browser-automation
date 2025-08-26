@@ -1,7 +1,10 @@
+import ansiColors from 'ansi-colors';
 import 'dotenv/config.js';
 import fs from 'fs-extra';
+import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
+import { normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import {
   DataItem,
@@ -15,6 +18,7 @@ import {
   PembatasanUmurError,
   UnauthorizedError
 } from './sehatindonesiaku-errors.js';
+import migrateIfNeeded from './sehatindonesiaku-migration.js';
 import {
   clickAddressModal,
   clickDaftarkanDenganNIK,
@@ -32,9 +36,6 @@ import {
   selectTanggalLahir
 } from './sehatindonesiaku-staging.js';
 import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
-import minimist from 'minimist';
-import ansiColors from 'ansi-colors';
-import migrateIfNeeded from './sehatindonesiaku-migration.js';
 
 const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
 const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
@@ -250,8 +251,8 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
   (async () => {
     // Show help if -h or --help is passed
     if (cliArgs.h || cliArgs.help) {
-      // Print help, each line as a separate console.log (no spawn)
-      console.log('Usage: sehatindonesiaku-kemkes [options]');
+      const [node, script] = process.argv;
+      console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
       console.log('');
       console.log('Options:');
       console.log('  -h, --help     Show help');
