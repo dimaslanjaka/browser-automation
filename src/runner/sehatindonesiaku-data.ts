@@ -291,10 +291,11 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
       });
       if (args.help) {
         const [node, script] = process.argv;
-        console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
-        console.log('  --start <row>   Start row index (default: 320)');
-        console.log('  --end <row>     End row index (default: 500)');
-        console.log('  --help, -h      Show this help message');
+        console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]\n`);
+        console.log('Options:');
+        console.log('  --start <row>    Start row index (default: 320)');
+        console.log('  --end <row>      End row index (default: 500)');
+        console.log('  --help, -h       Show this help message');
         process.exit(0);
       }
       // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
