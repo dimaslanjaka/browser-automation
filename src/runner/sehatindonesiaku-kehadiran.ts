@@ -1,5 +1,6 @@
 import minimist from 'minimist';
 import { Page } from 'puppeteer';
+import { normalizePathUnix } from 'sbg-utility';
 import { ElementNotFoundError } from '../puppeteer-errors.cjs';
 import {
   anyElementWithTextExists,
@@ -13,16 +14,23 @@ import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
 import { enterSubmission } from './sehatindonesiaku-utils.js';
 
+const args = minimist(process.argv.slice(2));
+
+function showHelp() {
+  const [node, script] = process.argv;
+  console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
+  console.log('');
+  console.log('Options:');
+  console.log('  -h, --help     Show help');
+  console.log('  -s, --single   Process a single item');
+  console.log('  --shuffle      Shuffle the order of data items before processing');
+}
+
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
   (async () => {
-    const args = minimist(process.argv.slice(2));
     // Show help if -h or --help is passed
     if (args.h || args.help) {
-      // Print help, each line as a separate console.log (no spawn)
-      console.log('Usage: sehatindonesiaku-kehadiran [options]');
-      console.log('');
-      console.log('Options:');
-      console.log('  -h, --help     Show help');
+      showHelp();
       return;
     }
     try {
@@ -37,6 +45,20 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
 async function main() {
   const puppeteer = await getPuppeteer();
   const allData = await getData();
+  // Shuffle data if --shuffle is passed
+  if (args.shuffle) {
+    // Shuffle allData array
+    for (let i = allData.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allData[i], allData[j]] = [allData[j], allData[i]];
+    }
+  }
+  // If --single or -s is passed, keep only the first item
+  if (args.single || args.s) {
+    if (allData.length > 1) {
+      allData.splice(1); // Keep only the first item
+    }
+  }
   for (const item of allData) {
     if (!item.nik) {
       console.error(`Skipping item with missing NIK: ${JSON.stringify(item)}`);
