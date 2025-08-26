@@ -80,11 +80,7 @@ async function main() {
 
   if (needLogin) {
     // Keep the browser open for manual login
-    console.log('Browser will remain open for manual login. Press Ctrl+C to exit when done.');
-
-    while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    return;
   }
 
   console.log('All data processed. Closing browser...');
