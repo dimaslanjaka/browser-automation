@@ -159,7 +159,7 @@ export class SQLiteLogDatabase {
   /**
    * Get all logs or filtered logs from the database.
    *
-   * @param {(log: import('./BaseLogDatabase').LogEntry) => boolean} [filterFn] Optional filter function to apply to each log entry after fetching from the database.
+   * @param {(log: import('./BaseLogDatabase').LogEntry) => boolean | Promise<boolean>} [filterFn] Optional filter function to apply to each log entry after fetching from the database.
    * @param {Object} [options] Optional pagination options.
    * @param {number} [options.limit] Maximum number of logs to return.
    * @param {number} [options.offset] Number of logs to skip before starting to collect the result set.

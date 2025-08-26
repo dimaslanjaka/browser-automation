@@ -1,3 +1,4 @@
+import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 import createDatabasePool from './mysql.js';
 
 /**
@@ -11,17 +12,14 @@ function getJakartaTimestamp() {
   return jakarta.toISOString().replace('Z', '+07:00');
 }
 
-export interface LogEntry<T> {
-  id: string | number;
-  data: T;
-  message: string;
-  timestamp?: string;
-}
+export const defaultOptions: Partial<Parameters<typeof createDatabasePool>[0]> = {
+  connectTimeout: 60000 // default 60s
+};
 
 /**
  * Class representing a log database using MySQL.
  */
-export class MysqlLogDatabase {
+export class MysqlLogDatabase implements BaseLogDatabase {
   private poolPromise: Promise<import('mysql2/promise').Pool>;
   private readyPromise: Promise<void>;
 
@@ -33,7 +31,7 @@ export class MysqlLogDatabase {
    */
   constructor(dbName?: string, options: Partial<Parameters<typeof createDatabasePool>[0]> = {}) {
     const poolOptions = dbName ? { database: dbName, ...options } : { ...options };
-    this.poolPromise = createDatabasePool(poolOptions);
+    this.poolPromise = createDatabasePool(Object.assign({}, defaultOptions, poolOptions));
     this.readyPromise = this._initializeDatabase();
   }
 
@@ -115,7 +113,7 @@ export class MysqlLogDatabase {
   async getLogs<T = any>(
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
-  ): Promise<T[]> {
+  ) {
     await this.readyPromise;
     const pool = await this.poolPromise;
     let query = 'SELECT * FROM logs';
@@ -129,7 +127,7 @@ export class MysqlLogDatabase {
       }
     }
     const [rows]: any = await pool.query(query, params);
-    const logsArr = rows.map((row: any) => ({
+    const logsArr: LogEntry<T>[] = rows.map((row: any) => ({
       id: row.id,
       data: JSON.parse(row.data),
       message: row.message,

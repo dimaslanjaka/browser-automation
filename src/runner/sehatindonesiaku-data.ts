@@ -2,13 +2,13 @@ import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
 import oboe from 'oboe';
+import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
 import path from 'upath';
 import xlsx from 'xlsx';
-import { MysqlLogDatabase } from '../database/MysqlLogDatabase.js';
-import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
+import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 
-export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes');
+export const sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes');
 export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
 const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan', '24/08/2025');
