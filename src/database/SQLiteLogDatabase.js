@@ -152,11 +152,25 @@ export class SQLiteLogDatabase {
 
   /**
    * Get all logs or filtered logs from the database.
-   * @param {function({ id: string, data: any, message: string, timestamp: string }): boolean} [filterFn] - Optional filter function.
-   * @returns {Array<{ id: string, data: any, message: string, timestamp: string }>} Array of log objects.
+   *
+   * @param {function(Object): boolean} [filterFn] Optional filter function for each log object.
+   * @param {Object} [options] Pagination options.
+   * @param {number} [options.limit] Maximum number of logs to return.
+   * @param {number} [options.offset] Number of logs to skip before starting to collect the result set.
+   * @returns {Array<Object>} Array of log objects with shape: { id, data, message, timestamp }.
    */
-  getLogs(filterFn = () => true) {
-    const rows = this.db.prepare('SELECT * FROM logs').all();
+  getLogs(filterFn = () => true, options = {}) {
+    let query = 'SELECT * FROM logs';
+    const params = [];
+    if (options?.limit) {
+      query += ' LIMIT ?';
+      params.push(options.limit);
+      if (options.offset) {
+        query += ' OFFSET ?';
+        params.push(options.offset);
+      }
+    }
+    const rows = this.db.prepare(query).all(...params);
     const logsArr = rows.map((row) => ({
       id: row.id,
       data: jsonParseWithCircularRefs(row.data),

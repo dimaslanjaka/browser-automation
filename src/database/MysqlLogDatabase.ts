@@ -97,15 +97,28 @@ export class MysqlLogDatabase {
 
   /**
    * Get all logs or filtered logs from the database.
-   * @param filterFn Optional filter function.
+   *
+   * @param filterFn Optional filter function to apply to each log entry after fetching from the database. Can be async.
+   * @param options Optional object with limit and offset for pagination.
    * @returns Array of log objects.
    */
   async getLogs<T = any>(
-    filterFn?: (log: { id: string; data: any; message: string; timestamp: string }) => boolean | Promise<boolean>
+    filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
+    options?: { limit?: number; offset?: number }
   ): Promise<T[]> {
     await this.readyPromise;
     const pool = await this.poolPromise;
-    const [rows]: any = await pool.query('SELECT * FROM logs');
+    let query = 'SELECT * FROM logs';
+    const params: any[] = [];
+    if (options?.limit) {
+      query += ' LIMIT ?';
+      params.push(options.limit);
+      if (options.offset) {
+        query += ' OFFSET ?';
+        params.push(options.offset);
+      }
+    }
+    const [rows]: any = await pool.query(query, params);
     const logsArr = rows.map((row: any) => ({
       id: row.id,
       data: JSON.parse(row.data),
@@ -114,7 +127,7 @@ export class MysqlLogDatabase {
     }));
     if (!filterFn) return logsArr;
     // Support async filterFn
-    const results = await Promise.all(logsArr.map(async (log: any) => ((await filterFn(log)) ? log : undefined)));
+    const results = await Promise.all(logsArr.map(async (log) => ((await filterFn(log)) ? log : undefined)));
     return results.filter(Boolean);
   }
 
