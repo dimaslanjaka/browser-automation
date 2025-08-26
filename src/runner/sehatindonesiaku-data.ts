@@ -8,8 +8,10 @@ import { MysqlLogDatabase } from '../database/MysqlLogDatabase.js';
 import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
 import { downloadSheets } from '../utils/googleSheet.js';
 
+export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes');
+export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
-const tanggal_pemeriksaan = '24/08/2025';
+const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan', '24/08/2025');
 
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
@@ -266,9 +268,6 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
 }
-
-export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes');
-export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
