@@ -4,7 +4,6 @@ import { spawn } from 'child_process';
 import minimist from 'minimist';
 import path from 'upath';
 import { fileURLToPath } from 'url';
-
 import { installIfNeeded } from './build.mjs';
 import chokidar from 'chokidar';
 import treeKill from 'tree-kill';
@@ -38,6 +37,8 @@ const COMMANDS = {
   }
 };
 
+const SIGNAL = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
+
 function runAsync(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { stdio: 'inherit', shell: true, ...options });
@@ -50,23 +51,14 @@ async function buildIfNeeded() {
   await runAsync('node', [BUILD_SCRIPT]);
 }
 
+async function showCommandHelp(name) {
+  const script = COMMANDS[name]?.prod;
+  if (!script) return;
+  const result = await spawnAsync('node', [script, '--help'], { stdio: 'pipe', shell: true });
+  console.log(result.output.toString().trim());
+}
+
 async function showHelp() {
-  const dataHelp = async () => {
-    const result = await spawnAsync('node', [COMMANDS.data.prod, '--help'], { stdio: 'pipe', shell: true });
-    console.log(result.output.toString().trim());
-  };
-  const hadirHelp = async () => {
-    const result = await spawnAsync('node', [COMMANDS.hadir.prod, '--help'], { stdio: 'pipe', shell: true });
-    console.log(result.output.toString().trim());
-  };
-  const runHelp = async () => {
-    const result = await spawnAsync('node', [COMMANDS.run.prod, '--help'], { stdio: 'pipe', shell: true });
-    console.log(result.output.toString().trim());
-  };
-  const configHelp = async () => {
-    const result = await spawnAsync('node', [COMMANDS.config.prod, '--help'], { stdio: 'pipe', shell: true });
-    console.log(result.output.toString().trim());
-  };
   console.log(`
 Usage: kemkes <command> [options]
 
@@ -91,14 +83,10 @@ Examples:
   kemkes hadir --single
 `);
 
-  centerLog('==== Config Command Help ====');
-  await configHelp();
-  centerLog('==== Data Command Help ====');
-  await dataHelp();
-  centerLog('==== Kehadiran Command Help ====');
-  await hadirHelp();
-  centerLog('==== Kemkes Command Help ====');
-  await runHelp();
+  for (const name of ['config', 'data', 'hadir', 'run']) {
+    centerLog(`==== ${name.toUpperCase()} Command Help ====`);
+    await showCommandHelp(name);
+  }
 }
 
 function centerLog(msg) {
@@ -107,38 +95,30 @@ function centerLog(msg) {
   console.log('\n' + ' '.repeat(pad) + msg + '\n');
 }
 
-function getForwardedArgs(cmd, rawArgs, devFlags) {
+function getForwardedArgs(cmd, rawArgs, excludeFlags) {
   const idx = rawArgs.indexOf(cmd);
-  return idx === -1
-    ? rawArgs.filter((a) => !devFlags.includes(a))
-    : rawArgs.slice(idx + 1).filter((a) => !devFlags.includes(a));
+  const args = idx === -1 ? rawArgs : rawArgs.slice(idx + 1);
+  return args.filter((a) => !excludeFlags.includes(a));
 }
 
-// Cancellable runCommand implementation
+// --- Process management ---
 let currentProcess = null;
-function cancelCurrentRun() {
-  if (currentProcess && currentProcess.pid && !currentProcess.killed) {
-    const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
-    console.log(`[watch] Killing process ${currentProcess.pid} with ${signal}`);
-    treeKill(currentProcess.pid, signal, (err) => {
-      if (err) {
-        console.error(`[watch] Failed to kill process ${currentProcess.pid}:`, err);
-      }
+function killProcess(proc, label = 'process') {
+  if (proc?.pid && !proc.killed) {
+    console.log(`[watch] Killing ${label} ${proc.pid} with ${SIGNAL}`);
+    treeKill(proc.pid, SIGNAL, (err) => {
+      if (err) console.error(`[watch] Failed to kill ${label} ${proc.pid}:`, err);
     });
-    currentProcess = null;
   }
 }
 
 async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) {
   if (cmd === 'help') {
     if (await installIfNeeded()) console.log('Dependencies installed/updated.');
-    showHelp();
-    return;
+    return showHelp();
   }
 
-  if (cancelPrevious) {
-    cancelCurrentRun();
-  }
+  if (cancelPrevious) killProcess(currentProcess);
 
   const target = COMMANDS[cmd] || COMMANDS.default;
   const script = dev
@@ -146,12 +126,13 @@ async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) 
     : [target.prod, ...forwarded];
 
   console.log(`Running ${dev ? 'development' : 'production'} ${cmd}...`);
+
   await new Promise((resolve, reject) => {
     currentProcess = spawn('node', script, { stdio: 'inherit', shell: true });
     currentProcess.on('exit', (code) => {
       currentProcess = null;
       if (code === 0) {
-        resolve();
+        resolve(undefined);
       } else {
         reject(new Error(`node exited with code ${code}`));
       }
@@ -163,6 +144,7 @@ async function runCommand(cmd, dev, forwarded, { cancelPrevious = false } = {}) 
   });
 }
 
+// --- Main CLI ---
 async function main() {
   const argv = minimist(process.argv.slice(2), {
     boolean: ['dev', 'development', 'd', 'watch', 'w'],
@@ -173,8 +155,7 @@ async function main() {
   const args = argv._;
   const dev = argv.dev || argv.development;
   const watch = argv.watch;
-  const devFlags = ['-d', '--dev', '--development'];
-  const watchFlags = ['-w', '--watch'];
+  const flags = ['-d', '--dev', '--development', '-w', '--watch'];
 
   if (!dev) {
     if (await installIfNeeded()) console.log('Dependencies installed/updated.');
@@ -182,44 +163,32 @@ async function main() {
   }
 
   const cmd = args[0] || 'default';
-  const forwarded = getForwardedArgs(cmd, rawArgs, devFlags.concat(watchFlags));
+  const forwarded = getForwardedArgs(cmd, rawArgs, flags);
 
   if (watch) {
     console.log('Watch mode enabled. Watching src/ for changes...');
-    const argsWithoutWatch = process.argv.slice(2).filter((a) => a !== '-w' && a !== '--watch');
-    let child = null;
+    const argsWithoutWatch = rawArgs.filter((a) => !['-w', '--watch'].includes(a));
+    let child = null,
+      restartTimeout = null,
+      lastRestart = 0;
 
-    let restartTimeout = null;
-    let lastRestart = 0;
-    function startChild() {
+    function restartChild() {
       const now = Date.now();
       const delay = Math.max(0, 5000 - (now - lastRestart));
-      if (restartTimeout) {
-        clearTimeout(restartTimeout);
-      }
+      clearTimeout(restartTimeout);
       restartTimeout = setTimeout(() => {
-        if (child && !child.killed) {
-          const signal = process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM';
-          console.log(`[watch] Killing previous process ${child.pid} with ${signal}`);
-          treeKill(child.pid, signal, (err) => {
-            if (err) {
-              console.error(`[watch] Failed to kill process ${child.pid}:`, err);
-            }
-          });
-        }
-        child = spawn(process.execPath, [__filename, ...argsWithoutWatch], {
-          stdio: 'inherit',
-          shell: false
-        });
+        killProcess(child, 'child');
+        child = spawn(process.execPath, [__filename, ...argsWithoutWatch], { stdio: 'inherit' });
         lastRestart = Date.now();
       }, delay);
     }
-    chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
-      console.log(`[watch] ${event}: ${path}`);
-      startChild();
+
+    chokidar.watch('src', { ignoreInitial: true }).on('all', (event, file) => {
+      console.log(`[watch] ${event}: ${file}`);
+      restartChild();
     });
-    // Initial run
-    startChild();
+
+    restartChild(); // Initial run
     return;
   }
 
