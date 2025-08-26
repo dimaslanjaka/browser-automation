@@ -83,7 +83,7 @@
     "react-bootstrap": "^2",
     "react-router-dom": "^7",
     "safelinkify": "^1",
-    "sbg-utility": "^2",
+    "sbg-utility": "^2.0.10",
     "socket.io": "^4",
     "socks-proxy-agent": "^8",
     "tree-kill": "^1.2.2",
@@ -161,12 +161,12 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/2e0a11aae56d84ca7cece6056cf6ccc2f232c8f3/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/0bde69c6f08999b29879ed85957230fe20f90917/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/f58af787eab404891d8394fe0570ce603e0d7308/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/5a1ea4a2647f2a9dc1281defea47a25d28cdf244/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/72288c8e2ff423989c308a2dc5e91cd6de08ed51/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/e0e6596038ced068fd68355f42630c8296ede94e/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }

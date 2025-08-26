@@ -3,7 +3,12 @@ import fs from 'fs-extra';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import {
+  DataItem,
+  sehatindonesiakuDataPath,
+  sehatindonesiakuDb,
+  sehatindonesiakuPref
+} from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
@@ -31,10 +36,10 @@ import minimist from 'minimist';
 import ansiColors from 'ansi-colors';
 import migrateIfNeeded from './sehatindonesiaku-migration.js';
 
-const provinsi = 'DKI Jakarta';
-const kabupaten = 'Kota Adm. Jakarta Barat';
-const kecamatan = 'Kebon Jeruk';
-const kelurahan = 'Kebon Jeruk';
+const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
+const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
+const kecamatan = sehatindonesiakuPref.getString('kecamatan', 'Kebon Jeruk');
+const kelurahan = sehatindonesiakuPref.getString('kelurahan', 'Kebon Jeruk');
 const cliArgs = minimist(process.argv.slice(2));
 const isSingleData = cliArgs.single || cliArgs.s || false;
 

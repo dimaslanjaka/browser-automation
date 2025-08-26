@@ -5,6 +5,7 @@ import oboe from 'oboe';
 import path from 'upath';
 import xlsx from 'xlsx';
 import { MysqlLogDatabase } from '../database/MysqlLogDatabase.js';
+import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
 import { downloadSheets } from '../utils/googleSheet.js';
 
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
@@ -267,6 +268,7 @@ export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: numb
 }
 
 export const sehatindonesiakuDb = new MysqlLogDatabase('sehatindonesiaku-kemkes');
+export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
   (async () => {
