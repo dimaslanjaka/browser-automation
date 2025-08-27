@@ -31,6 +31,10 @@ const COMMANDS = {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-config.js')
   },
+  pelayanan: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-pelayanan.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-pelayanan.js')
+  },
   default: {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
@@ -83,7 +87,7 @@ Examples:
   kemkes hadir --single
 `);
 
-  for (const name of ['config', 'data', 'hadir', 'run']) {
+  for (const name of ['config', 'data', 'hadir', 'run', 'pelayanan']) {
     centerLog(`==== ${name.toUpperCase()} Command Help ====`);
     await showCommandHelp(name);
   }
