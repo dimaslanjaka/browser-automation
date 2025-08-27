@@ -64,20 +64,42 @@ export class LogDatabase implements BaseLogDatabase {
   }
 
   /**
-   * Migrates logs from the SQLite database to the MySQL database for the current dbName.
+   * Check if the checksum of the SQLite database file has changed since the last recorded value.
+   *
+   * Compares the current checksum of the SQLite database file with the last stored checksum
+   * in the `.cache/migrations/` directory. If `save` is true and the checksum has changed,
+   * updates the stored checksum file.
+   *
+   * @param save Whether to update the stored checksum file if the checksum has changed.
+   * @returns True if the checksum has changed, false otherwise.
+   */
+  private isChecksumChanged(save = false) {
+    const sqliteFile = getDatabaseFilePath(this.dbName || 'logs.db');
+    const sqliteChecksum = getChecksum(sqliteFile);
+    const checksumFile = path.join(process.cwd(), `.cache/migrations/${this.dbName || 'logs'}.checksum`);
+    const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
+    if (save && lastChecksum !== sqliteChecksum) {
+      fs.ensureDirSync(path.dirname(checksumFile));
+      fs.writeFileSync(checksumFile, sqliteChecksum);
+    }
+    return lastChecksum !== sqliteChecksum;
+  }
+
+  /**
+   * Migrates logs from the SQLite database to the MySQL database for the current database name.
    *
    * Skips logs that already exist in the MySQL database.
-   * Uses a lock file in `.cache/migrations/` (named by the checksum of the SQLite file) to prevent duplicate migrations.
-   * If the lock file exists, migration is skipped.
+   * Uses a lock file in the `.cache/migrations/` directory, named by the checksum of the SQLite file,
+   * to prevent duplicate migrations. If the lock file exists, migration is skipped.
+   *
+   * Only performs migration if the checksum of the SQLite database file has changed since the last migration.
+   * After a successful migration, updates the stored checksum file.
    *
    * @returns Promise that resolves when migration is complete or skipped.
    */
   async migrate() {
-    // get checksum of the SQLite database file
-    const sqliteFile = getDatabaseFilePath(this.dbName || 'logs.db');
-    const sqliteChecksum = getChecksum(sqliteFile);
-    const lockPath = path.join(process.cwd(), `.cache/migrations/${sqliteChecksum}.lock`);
-    if (fs.existsSync(lockPath)) {
+    // Only migrate if checksum has changed
+    if (!this.isChecksumChanged()) {
       // Skipping migration as it has already been completed
       return;
     }
@@ -97,8 +119,7 @@ export class LogDatabase implements BaseLogDatabase {
 
     sqlite.close();
     await mysql.close();
-    // Save lock file
-    fs.ensureDirSync(path.dirname(lockPath));
-    fs.writeFileSync(lockPath, 'lock');
+    // Save new checksum after migration
+    this.isChecksumChanged(true);
   }
 }
