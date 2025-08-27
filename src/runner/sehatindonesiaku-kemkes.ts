@@ -272,3 +272,6 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
     }
   })();
 }
+
+export { processData as processKemkesData };
+export { main as mainKemkes };

@@ -216,3 +216,6 @@ async function processData(page: Page, item: DataItem) {
     message: 'Data processed successfully and Hadir confirmed'
   });
 }
+
+export { processData as processKehadiranData };
+export { main as mainKehadiran };
