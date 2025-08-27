@@ -24,14 +24,17 @@ export class LogDatabase implements BaseLogDatabase {
   }
 
   async addLog<T = any>(log: LogEntry<T>, options?: { timeout?: number }) {
+    if (!this.store) await this.initialize();
     return await this.store.addLog(log, options);
   }
 
   async removeLog(id: LogEntry<any>['id']) {
+    if (!this.store) await this.initialize();
     return await this.store.removeLog(id);
   }
 
   async getLogById<T = any>(id: LogEntry<any>['id']): Promise<LogEntry<T> | undefined> {
+    if (!this.store) await this.initialize();
     return await this.store.getLogById(id);
   }
 
@@ -39,12 +42,14 @@ export class LogDatabase implements BaseLogDatabase {
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
   ) {
+    if (!this.store) await this.initialize();
     return await this.store.getLogs(filterFn, options);
   }
 
-  waitReady() {
+  async waitReady() {
+    if (!this.store) await this.initialize();
     if (this.store instanceof MysqlLogDatabase) {
-      return this.store.waitReady();
+      return await this.store.waitReady();
     }
   }
 

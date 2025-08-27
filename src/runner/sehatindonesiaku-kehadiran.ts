@@ -37,7 +37,6 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
       return;
     }
     try {
-      await sehatindonesiakuDb.initialize();
       await main();
     } finally {
       await sehatindonesiakuDb.close();
