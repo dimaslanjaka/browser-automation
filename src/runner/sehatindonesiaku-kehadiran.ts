@@ -14,7 +14,10 @@ import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
 import { enterSubmission } from './sehatindonesiaku-utils.js';
 
-const args = minimist(process.argv.slice(2));
+const args = minimist(process.argv.slice(2), {
+  boolean: ['help', 'single', 'shuffle'],
+  alias: { h: 'help', s: 'single', sh: 'shuffle' }
+});
 
 export function showHelp() {
   const [node, script] = process.argv;
@@ -23,7 +26,7 @@ export function showHelp() {
   console.log('Options:');
   console.log('  -h, --help     Show help');
   console.log('  -s, --single   Process a single item');
-  console.log('  --shuffle      Shuffle the order of data items before processing');
+  console.log('  -sh, --shuffle      Shuffle the order of data items before processing');
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
@@ -46,7 +49,7 @@ async function main() {
   const puppeteer = await getPuppeteer();
   let allData: DataItem[] = [];
   // Shuffle data if --shuffle is passed
-  if (args.shuffle) {
+  if (args.shuffle || args.sh) {
     // Shuffle allData array
     allData = array_shuffle(await getData());
   } else {
@@ -88,13 +91,13 @@ async function main() {
       console.error(`${item.nik} - Error processing data: ${(e as Error).message}`);
       console.error((e as Error).stack);
     }
-    break; // Process only one item for now
+    if (args.single || args.s) break; // Process only one item
   }
 
   console.log('All data processed. Closing browser...');
-  // await sleep(2000);
-  // await puppeteer.browser.close();
-  // process.exit(0);
+  await sleep(2000);
+  await puppeteer.browser.close();
+  process.exit(0);
 }
 
 /**
@@ -163,34 +166,43 @@ async function processData(page: Page, item: DataItem) {
   await sleep(1000);
   // Check checkbox <div><input id="verify" name="verify" type="checkbox" class="" value="false"><div id="verify" class="check"></div></div>
   console.log(`${item.nik} - checking hadir checkbox`);
-  const verifyCheckboxSelector = 'input#verify';
-  if (await isElementExist(page, verifyCheckboxSelector, { visible: true })) {
-    const el = await page.evaluateHandle((selector) => {
-      const checkbox = document.querySelector(selector) as HTMLInputElement;
-      if (checkbox) {
-        checkbox.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-      }
-      return checkbox;
-    }, verifyCheckboxSelector);
-    await el.click();
-    // await page.evaluate(() => {
-    //   const checkbox = document.querySelector('input#verify') as HTMLInputElement;
-    //   // Scroll to checkbox
-    //   if (checkbox) {
-    //     checkbox.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-    //   }
-    //   // Click checkbox if not already checked
-    //   if (checkbox && !checkbox.checked) {
-    //     checkbox.click();
-    //     // Trigger change event
-    //     const event = new Event('change', { bubbles: true });
-    //     checkbox.dispatchEvent(event);
-    //   }
-    // });
-    await waitForDomStable(page, 2000, 10000);
-  } else {
+  let checkboxFound = false;
+  for (const verifyCheckboxSelector of ['div#verify', '[name="verify"]']) {
+    if (await isElementExist(page, verifyCheckboxSelector, { visible: true })) {
+      const el = await page.evaluateHandle((selector) => {
+        const checkbox = document.querySelector(selector) as HTMLInputElement;
+        if (checkbox) {
+          checkbox.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+        return checkbox;
+      }, verifyCheckboxSelector);
+      await el.click();
+      // await page.evaluate(() => {
+      //   const checkbox = document.querySelector('input#verify') as HTMLInputElement;
+      //   // Scroll to checkbox
+      //   if (checkbox) {
+      //     checkbox.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      //   }
+      //   // Click checkbox if not already checked
+      //   if (checkbox && !checkbox.checked) {
+      //     checkbox.click();
+      //     // Trigger change event
+      //     const event = new Event('change', { bubbles: true });
+      //     checkbox.dispatchEvent(event);
+      //   }
+      // });
+      await waitForDomStable(page, 2000, 10000);
+      checkboxFound = true;
+      break;
+    } else {
+      console.log(`${item.nik} - ${verifyCheckboxSelector} checkbox not found`);
+    }
+  }
+
+  if (!checkboxFound) {
     throw new ElementNotFoundError('Checkbox verify not found');
   }
+
   // Click hadir button <button type="button" class="w-fill btn-fill-primary h-11"><div class="flex flex-row justify-center gap-2"><!----><div class="tracking-wide">Hadir <!----></div></div></button>
   await clickElementByText(page, 'button.w-fill', 'Hadir');
   await waitForDomStable(page, 2000, 10000);
