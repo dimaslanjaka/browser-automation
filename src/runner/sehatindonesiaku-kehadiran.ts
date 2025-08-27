@@ -122,7 +122,7 @@ async function getData(): Promise<DataItem[]> {
 async function processData(page: Page, item: DataItem) {
   const isLoggedIn = await enterSubmission(page);
   if (!isLoggedIn) throw new UnauthorizedError();
-  await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu');
+  await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 2000, 5000);
   console.log(`${item.nik} - change search type to NIK`);
   // Select search dropdown <div data-v-c491f920="" class="h-[2.9rem] w-full flex cursor-pointer items-center justify-start overflow-hidden border-none bg-transparent pl-4 text-sm focus:outline-none text-black">Nomor Tiket</div>

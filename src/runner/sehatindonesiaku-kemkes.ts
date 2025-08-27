@@ -101,6 +101,7 @@ async function processData(browser: Browser, item: DataItem) {
   const page = await browser.newPage();
   const isLoggedIn = await enterSubmission(page);
   if (!isLoggedIn) throw new UnauthorizedError();
+  await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 2000, 6000);
 
   await clickDaftarBaru(page);
