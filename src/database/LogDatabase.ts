@@ -1,4 +1,4 @@
-import { getChecksum } from 'sbg-utility';
+import { getChecksum, SharedPreferences } from 'sbg-utility';
 import fs from 'fs-extra';
 import path from 'upath';
 import createDatabasePool from './mysql.js';
@@ -15,9 +15,12 @@ export class LogDatabase implements BaseLogDatabase {
   options: LogDatabaseOptions;
   dbName: string;
   store: MysqlLogDatabase | SQLiteLogDatabase;
+  pref: SharedPreferences;
+
   constructor(dbName?: string, options?: LogDatabaseOptions) {
     this.options = options;
     this.dbName = dbName;
+    this.pref = new SharedPreferences({ namespace: this.constructor.name });
   }
 
   async addLog<T = any>(log: LogEntry<T>, options?: { timeout?: number }) {
@@ -47,8 +50,14 @@ export class LogDatabase implements BaseLogDatabase {
 
   async close() {
     if (!this.store) return;
-    if (this.store instanceof SQLiteLogDatabase) {
-      await this.migrate().catch((e) => console.error('Migration error:', e));
+    // Run migration when closing SQLite database
+    if (this.store instanceof SQLiteLogDatabase || this.pref.getBoolean('needsMigration', false)) {
+      try {
+        await this.migrate();
+      } catch (e) {
+        console.error('Migration error:', e);
+        this.pref.putBoolean('needsMigration', true);
+      }
     }
     await this.store.close();
   }
