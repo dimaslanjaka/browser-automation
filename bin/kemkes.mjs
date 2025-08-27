@@ -187,7 +187,7 @@ async function main() {
       }, delay);
     }
 
-    chokidar.watch('src', { ignoreInitial: true }).on('all', (event, file) => {
+    chokidar.watch('src/**/*.{js,ts,cjs,mjs}', { ignoreInitial: true, ignored: [/tmp/i] }).on('all', (event, file) => {
       console.log(`[watch] ${event}: ${file}`);
       restartChild();
     });
