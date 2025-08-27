@@ -259,24 +259,43 @@ const outPath = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku-data.js
 export { outPath as sehatindonesiakuDataPath };
 
 /**
- * Download the Kemkes spreadsheet from Google Sheets, parse the 'Format Full' sheet,
- * and write the processed data as JSON to the cache directory.
+ * Downloads the Kemkes spreadsheet from Google Sheets, parses the "Format Full" sheet,
+ * and writes the processed data as JSON to the cache directory.
  *
- * - Requires the KEMKES_SPREADSHEET_ID environment variable to be set.
- * - Downloads the spreadsheet, parses the XLSX, and saves the result as JSON.
- * - Output path: .cache/sheets/sehatindonesiaku-data.json (relative to project root)
+ * Behavior:
+ * - If a `spreadsheetId` is passed, it will be used.
+ * - Otherwise, falls back to the `KEMKES_SPREADSHEET_ID` environment variable.
+ * - If neither is provided, the function throws an error.
  *
- * @param rangeIndex - 0-based row index to start parsing (default: 6, i.e., row 7)
- * @param rangeEndIndex - 0-based row index to end parsing (inclusive, optional)
- * @returns Resolves when the process is complete.
+ * Processing:
+ * - Downloads the spreadsheet as XLSX.
+ * - Parses rows from the given range (`rangeIndex` to `rangeEndIndex`).
+ * - Saves the parsed data as JSON.
+ *
+ * Output:
+ * - File is written to: `.cache/sheets/sehatindonesiaku-data.json` (relative to project root).
+ *
+ * @param rangeIndex - 0-based row index to start parsing (default: 6 → row 7).
+ * @param rangeEndIndex - 0-based row index to end parsing (inclusive, default: Number.MAX_SAFE_INTEGER).
+ * @param spreadsheetId - Optional Google Sheets spreadsheet ID. If not provided, falls back to `process.env.KEMKES_SPREADSHEET_ID`.
+ * @returns Promise<void> - Resolves when the process is complete.
+ * @throws {Error} If neither a `spreadsheetId` argument nor the `KEMKES_SPREADSHEET_ID` environment variable is provided.
  */
-export async function downloadAndProcessXlsx(rangeIndex = 6, rangeEndIndex: number = Number.MAX_SAFE_INTEGER) {
-  const spreadsheetId = process.env.KEMKES_SPREADSHEET_ID;
-  if (!spreadsheetId) {
-    console.error('KEMKES_SPREADSHEET_ID environment variable is not set.');
-    process.exit(1);
+export async function downloadAndProcessXlsx(
+  rangeIndex = 6,
+  rangeEndIndex: number = Number.MAX_SAFE_INTEGER,
+  spreadsheetId?: string
+) {
+  const resolvedSpreadsheetId = spreadsheetId || process.env.KEMKES_SPREADSHEET_ID;
+
+  if (!resolvedSpreadsheetId) {
+    throw new Error(
+      'Spreadsheet ID is required but not provided. ' +
+        'Pass it explicitly as an argument, or set the KEMKES_SPREADSHEET_ID environment variable.'
+    );
   }
-  const downloadResult = await downloadSheets(spreadsheetId);
+
+  const downloadResult = await downloadSheets(resolvedSpreadsheetId);
   const result = await parseXlsxFile(downloadResult.xlsxFilePath, rangeIndex, rangeEndIndex);
   fs.ensureDirSync(path.dirname(outPath));
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
