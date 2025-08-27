@@ -44,7 +44,6 @@
     "better-sqlite3": "^12.2.0",
     "bootstrap": "^5",
     "cheerio": "^1",
-    "chokidar": "^4.0.3",
     "cross-spawn": "^7",
     "crypto-js": "^4",
     "csv-parser": "^3",
@@ -119,6 +118,7 @@
     "@types/oboe": "^2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/watchpack": "^2",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "@vitejs/plugin-legacy": "^7",
@@ -155,6 +155,7 @@
     "typescript-eslint": "^8",
     "vite": "^7",
     "vite-plugin-mkcert": "^1",
+    "watchpack": "^2.4.4",
     "why-is-node-running": "^3"
   },
   "workspaces": [

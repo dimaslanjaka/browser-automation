@@ -5,9 +5,11 @@ import minimist from 'minimist';
 import path from 'upath';
 import { fileURLToPath } from 'url';
 import { installIfNeeded } from './build.mjs';
-import chokidar from 'chokidar';
+import Watchpack from 'watchpack';
 import treeKill from 'tree-kill';
 import { spawnAsync } from 'cross-spawn';
+import ansiColors from 'ansi-colors';
+import micromatch from 'micromatch'; // for glob filtering
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -170,7 +172,8 @@ async function main() {
   const forwarded = getForwardedArgs(cmd, rawArgs, flags);
 
   if (watch) {
-    console.log('Watch mode enabled. Watching src/ for changes...');
+    const patterns = ['src/**/*.js', 'src/**/*.ts', 'src/**/*.cjs', 'src/**/*.mjs'];
+    console.log(`Watch mode enabled. Watching ${patterns.map((s) => ansiColors.yellow(s)).join(',')} for changes...`);
     const argsWithoutWatch = rawArgs.filter((a) => !['-w', '--watch'].includes(a));
     let child = null,
       restartTimeout = null,
@@ -187,9 +190,26 @@ async function main() {
       }, delay);
     }
 
-    chokidar.watch('src/**/*.{js,ts,cjs,mjs}', { ignoreInitial: true, ignored: [/tmp/i] }).on('all', (event, file) => {
-      console.log(`[watch] ${event}: ${file}`);
-      restartChild();
+    // --- Refactored watcher: Watchpack instead of chokidar ---
+    const wp = new Watchpack({
+      aggregateTimeout: 200,
+      followSymlinks: true
+    });
+
+    wp.watch([], ['src']); // watch the "src" folder recursively
+
+    wp.on('change', (filePath, _mtime, _explanation) => {
+      if (micromatch.isMatch(filePath, patterns)) {
+        console.log(`[watch] changed: ${filePath}`);
+        restartChild();
+      }
+    });
+
+    wp.on('remove', (filePath, _explanation) => {
+      if (micromatch.isMatch(filePath, patterns)) {
+        console.log(`[watch] removed: ${filePath}`);
+        restartChild();
+      }
     });
 
     restartChild(); // Initial run
