@@ -1,6 +1,6 @@
 import minimist from 'minimist';
 import { Page } from 'puppeteer';
-import { array_shuffle, normalizePathUnix } from 'sbg-utility';
+import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { ElementNotFoundError } from '../puppeteer-errors.cjs';
 import {
   anyElementWithTextExists,
@@ -80,10 +80,12 @@ async function main() {
         break; // Stop processing further if unauthorized
       } else if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
+        const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+        message.push('Data Kehadiran not found');
         await sehatindonesiakuDb.addLog({
           id: item.nik,
           data: { ...item, hadir: false },
-          message: 'Data Kehadiran not found'
+          message: array_unique(message).join(',')
         });
         continue; // Continue to next item
       }
@@ -150,10 +152,12 @@ async function processData(page: Page, item: DataItem) {
   // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
   if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
     console.log(`${item.nik} - already marked as hadir`);
+    const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+    message.push('Data sudah hadir');
     await sehatindonesiakuDb.addLog({
       id: item.nik,
       data: { ...item, hadir: true },
-      message: 'Data processed successfully and already marked as Hadir'
+      message: array_unique(message).join(',')
     });
     return;
   }
@@ -209,12 +213,13 @@ async function processData(page: Page, item: DataItem) {
   await clickElementByText(page, 'div.flex.flex-row.justify-center.gap-2', 'Tutup');
   await waitForDomStable(page, 2000, 10000);
   console.log(`${item.nik} - hadir confirmed`);
+  const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+  message.push('Data hadir confirmed');
   await sehatindonesiakuDb.addLog({
     id: item.nik,
     data: { ...item, hadir: true },
-    message: 'Data processed successfully and Hadir confirmed'
+    message: array_unique(message).join(',')
   });
 }
 
-export { processData as processKehadiranData };
-export { main as mainKehadiran };
+export { main as mainKehadiran, processData as processKehadiranData };
