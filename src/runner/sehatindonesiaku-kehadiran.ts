@@ -80,7 +80,7 @@ async function main() {
         break; // Stop processing further if unauthorized
       } else if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
-        const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+        const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
         message.push('Data Kehadiran not found');
         await sehatindonesiakuDb.addLog({
           id: item.nik,
@@ -152,7 +152,7 @@ async function processData(page: Page, item: DataItem) {
   // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
   if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
     console.log(`${item.nik} - already marked as hadir`);
-    const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data sudah hadir');
     await sehatindonesiakuDb.addLog({
       id: item.nik,
@@ -213,7 +213,7 @@ async function processData(page: Page, item: DataItem) {
   await clickElementByText(page, 'div.flex.flex-row.justify-center.gap-2', 'Tutup');
   await waitForDomStable(page, 2000, 10000);
   console.log(`${item.nik} - hadir confirmed`);
-  const message = ((await sehatindonesiakuDb.getLogById(item.nik)).message ?? '').split(',');
+  const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
   message.push('Data hadir confirmed');
   await sehatindonesiakuDb.addLog({
     id: item.nik,
