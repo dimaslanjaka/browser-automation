@@ -302,7 +302,7 @@ export async function _login(
   }
 }
 
-export async function enterSubmission(page: Page) {
+export async function enterSehatIndonesiaKu(page: Page) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
 
   // Wait for DOM to stabilize (no mutations for 800ms)

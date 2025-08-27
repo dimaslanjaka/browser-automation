@@ -12,7 +12,7 @@ import {
 import { sleep } from '../utils-browser.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
-import { enterSubmission } from './sehatindonesiaku-utils.js';
+import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle'],
@@ -120,7 +120,7 @@ async function getData(): Promise<DataItem[]> {
 }
 
 async function processData(page: Page, item: DataItem) {
-  const isLoggedIn = await enterSubmission(page);
+  const isLoggedIn = await enterSehatIndonesiaKu(page);
   if (!isLoggedIn) throw new UnauthorizedError();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 2000, 5000);

@@ -11,7 +11,7 @@ import {
   sehatindonesiakuDataPath
 } from './sehatindonesiaku-data.js';
 import { DataTidakSesuaiKTPError, PembatasanUmurError } from './sehatindonesiaku-errors.js';
-import { clickKembali, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
+import { clickKembali, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 // Usage:
 // node --no-warnings=ExperimentalWarning --loader ts-node/esm "d:\Repositories\browser-automation\src\runner\sehatindonesiaku-kemkes.ts" > output.txt 2>&1
@@ -28,7 +28,7 @@ const db = new SQLiteLogDatabase('sehatindonesiaku-kemkes');
  * @param item Data item to process
  */
 async function processData(page: Page, item: DataItem) {
-  await enterSubmission(page);
+  await enterSehatIndonesiaKu(page);
 
   // Common input
   console.log(`${item.nik} - Filling common input fields...`);
@@ -867,7 +867,7 @@ async function _standardMethod(browser: Browser) {
         // Create a new page for each data item
         console.log(`Processing data for NIK ${data.nik}`);
         const newPage = await browser.newPage();
-        await enterSubmission(newPage);
+        await enterSehatIndonesiaKu(newPage);
         await processData(newPage, data);
         try {
           // Log success

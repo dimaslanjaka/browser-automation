@@ -46,7 +46,7 @@ describe('MysqlLogDatabase', () => {
     await db.addLog({ id: 'log2', data: { a: 1 }, message: 'A' });
     await db.addLog({ id: 'log3', data: { b: 2 }, message: 'B' });
     const logs = await db.getLogs();
-    const ids = logs.map((l: { id: string }) => l.id);
+    const ids = logs.map((l) => l.id.toString());
     expect(ids).toEqual(expect.arrayContaining(['log2', 'log3']));
     logs.forEach((log) => {
       expect(typeof log.timestamp).toBe('string');

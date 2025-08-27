@@ -35,7 +35,7 @@ import {
   selectPekerjaan,
   selectTanggalLahir
 } from './sehatindonesiaku-staging.js';
-import { clickDaftarBaru, enterSubmission, selectCalendar } from './sehatindonesiaku-utils.js';
+import { clickDaftarBaru, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
 const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
@@ -99,7 +99,7 @@ async function processData(browser: Browser, item: DataItem) {
   // Create a new page for each data item
   console.log(`Processing data for NIK ${item.nik}`);
   const page = await browser.newPage();
-  const isLoggedIn = await enterSubmission(page);
+  const isLoggedIn = await enterSehatIndonesiaKu(page);
   if (!isLoggedIn) throw new UnauthorizedError();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 2000, 6000);
