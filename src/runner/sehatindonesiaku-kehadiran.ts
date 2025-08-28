@@ -12,6 +12,7 @@ import {
 import { sleep } from '../utils-browser.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
+import { getKemkesData } from './sehatindonesiaku-kemkes.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2), {
@@ -27,6 +28,7 @@ export function showHelp() {
   console.log('  -h, --help     Show help');
   console.log('  -s, --single   Process a single item');
   console.log('  -sh, --shuffle      Shuffle the order of data items before processing');
+  console.log('  --dbtype      Type of database to use (db or excel). Default: excel');
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
@@ -46,13 +48,12 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
 
 async function main() {
   const puppeteer = await getPuppeteer();
-  let allData: DataItem[] = [];
+  // Prepare data to process
+  const dataType = args.dbtype || 'excel';
+  let allData = await getData({ type: dataType });
   // Shuffle data if --shuffle is passed
   if (args.shuffle || args.sh) {
-    // Shuffle allData array
-    allData = array_shuffle(await getData());
-  } else {
-    allData = await getData();
+    allData = array_shuffle(allData);
   }
   // If --single or -s is passed, keep only the first item
   if (args.single || args.s) {
@@ -60,6 +61,7 @@ async function main() {
       allData.splice(1); // Keep only the first item
     }
   }
+  console.log(`Processing ${allData.length} items...`);
   for (const item of allData) {
     if (!item.nik) {
       console.error(`Skipping item with missing NIK: ${JSON.stringify(item)}`);
@@ -101,23 +103,47 @@ async function main() {
   process.exit(0);
 }
 
+export interface DataOptions {
+  shuffle?: boolean;
+  single?: boolean;
+  type?: 'db' | 'excel';
+}
+
 /**
- * Get filtered data items from sehatindonesiakuDb logs.
+ * Retrieves a filtered list of data items to process for kehadiran (attendance).
  *
- * Returns only items where:
- * - The object does NOT have the property `hadir` (i.e., 'hadir' is not found in item.data)
- * - The `nik` property is not empty (i.e., item.data.nik is truthy)
+ * The function sources data either from the database logs or from Kemkes data,
+ * depending on the `type` option provided. It then filters the data to include only items:
+ * - Whose `data` property exists and contains a non-empty `nik` value.
+ * - That do not already have the `hadir` property in their `data` (i.e., not yet marked as hadir).
  *
- * @returns Array of DataItem objects to process
+ * The returned list can be shuffled or limited to a single item based on the options.
+ *
+ * @param options Optional configuration for data retrieval:
+ *   - shuffle: If true, randomizes the order of the returned items.
+ *   - single: If true, returns only the first item after filtering (useful for single processing).
+ *   - type: Source of data, either 'db' (database logs) or 'excel' (Kemkes data). Defaults to 'excel'.
+ * @returns Promise resolving to an array of DataItem objects to process.
  */
-async function getData(): Promise<DataItem[]> {
-  const data = await sehatindonesiakuDb.getLogs();
+async function getData(options?: DataOptions): Promise<DataItem[]> {
+  const defaultOptions: DataOptions = { shuffle: false, single: false, type: 'excel' };
+  options = { ...defaultOptions, ...options };
+  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getKemkesData();
+  console.log(`Total data items retrieved from ${options.type}: ${data.length}`);
   const filtered = data.filter((item) => {
     return item.data && item.data.nik && !('hadir' in item.data);
   });
-  return filtered.map((item) => {
-    return item.data as DataItem;
+  console.log(`Total filtered data items: ${filtered.length}`);
+  let map = filtered.map((item) => {
+    return item.data;
   });
+  if (options.shuffle) {
+    map = array_shuffle(map);
+  }
+  if (options.single) {
+    return map.slice(0, 1);
+  }
+  return map;
 }
 
 async function processData(page: Page, item: DataItem) {
