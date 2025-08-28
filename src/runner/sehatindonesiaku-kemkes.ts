@@ -13,7 +13,6 @@ import {
   PembatasanUmurError,
   UnauthorizedError
 } from './sehatindonesiaku-errors.js';
-import migrateIfNeeded from './sehatindonesiaku-migration.js';
 import {
   clickAddressModal,
   clickDaftarkanDenganNIK,
@@ -290,7 +289,6 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
       return;
     }
     try {
-      await migrateIfNeeded();
       await main();
     } finally {
       await sehatindonesiakuDb.close();
@@ -298,4 +296,4 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
   })();
 }
 
-export { main as mainKemkes, processData as processKemkesData, getData as getKemkesData };
+export { getData as getKemkesData, main as mainKemkes, processData as processKemkesData };
