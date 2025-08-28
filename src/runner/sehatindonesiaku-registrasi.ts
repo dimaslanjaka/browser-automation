@@ -1,12 +1,11 @@
 import ansiColors from 'ansi-colors';
 import 'dotenv/config.js';
-import fs from 'fs-extra';
 import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem, getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
@@ -291,7 +290,7 @@ export interface getDataOptions {
 }
 
 async function getData(options: getDataOptions = {}) {
-  let rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
+  let rawData: DataItem[] = await getExcelData();
 
   // Filter by NIK if provided
   if (options.nik && options.nik.length > 0) {
@@ -301,60 +300,51 @@ async function getData(options: getDataOptions = {}) {
     }
   }
 
-  // Prepare result array
-  const result: DataItem[] = [];
-  for (const excelData of rawData) {
+  for (let i = rawData.length - 1; i >= 0; i--) {
+    let item = rawData[i];
     // Skip empty or invalid NIK
-    if (!excelData.nik || typeof excelData.nik !== 'string' || excelData.nik.trim().length === 0) {
+    if (!item.nik || String(item.nik).trim().length === 0) {
       if (options.debug) {
-        console.log(`Skipping row for empty/invalid NIK:`, excelData);
+        console.log(`Skipping row for empty/invalid NIK:`, item);
       }
+      rawData.splice(i, 1);
       continue;
     }
 
-    // Merge DB data if exists
-    const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(excelData.nik);
-    let merged = { ...excelData };
-    if (dbItem && dbItem.data) {
-      merged = { ...merged, ...dbItem.data };
-      if (options.debug) {
-        console.log(`Merging data from DB for NIK: ${excelData.nik}`);
-      }
-    }
+    // Merge data with database
+    const dbItem = (await sehatindonesiakuDb.getLogById<DataItem>(item.nik)) ?? ({} as Partial<DataItem>);
+    item = Object.assign(item, dbItem.data ?? {});
 
     // Fix tanggal_pemeriksaan if empty
-    if (!merged.tanggal_pemeriksaan || merged.tanggal_pemeriksaan.trim() === '') {
-      merged.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+    if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
+      item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
       if (options.debug) {
-        console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${merged.nik}`);
+        console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${item.nik}`);
       }
     }
 
     // Skip if tanggal_pemeriksaan is in the past
     const today = moment().startOf('day');
-    const pemeriksaanDate = moment(merged.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
+    const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
     if (pemeriksaanDate.isBefore(today)) {
       if (options.debug) {
-        console.log(`Skipping row for past tanggal_pemeriksaan: ${merged.nik} - ${merged.tanggal_pemeriksaan}`);
+        console.log(`Skipping row for past tanggal_pemeriksaan: ${item.nik} - ${item.tanggal_pemeriksaan}`);
       }
+      rawData.splice(i, 1);
       continue;
     }
 
     // Skip if object has 'registered' property
-    if (Object.prototype.hasOwnProperty.call(merged, 'registered')) {
+    if (Object.prototype.hasOwnProperty.call(item, 'registered')) {
       if (options.debug) {
-        console.log(`Skipping row for registered property: ${merged.nik}`);
+        console.log(`Skipping row for registered property: ${item.nik}`);
       }
+      rawData.splice(i, 1);
       continue;
     }
-
-    result.push(merged);
   }
 
-  if (options.debug) {
-    console.log('Returning filtered data count:', result.length);
-  }
-  return result;
+  return rawData;
 }
 
 export function showHelp() {

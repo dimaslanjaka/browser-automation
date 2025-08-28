@@ -258,18 +258,19 @@ export async function downloadAndProcessXlsx(
  * @param merge Whether to merge each item with the latest database data (default: true)
  * @returns Array of DataItem objects, possibly merged with database data
  */
-export async function getExcelData(merge = true) {
+export async function getExcelData() {
   const rawData: DataItem[] = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
-  for (let i = rawData.length - 1; i >= 0; i--) {
-    const item = rawData[i];
-    if (merge) {
-      const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
-      let merged = { ...item };
-      if (dbItem && dbItem.data) {
-        merged = { ...merged, ...dbItem.data };
-      }
-    }
-  }
+  // for (let i = rawData.length - 1; i >= 0; i--) {
+  //   const item = rawData[i];
+  //   if (merge) {
+  //     const dbItem = (await sehatindonesiakuDb.getLogById<DataItem>(item.nik)) ?? ({} as Partial<DataItem>);
+  //     let merged = { ...item };
+  //     if (dbItem && dbItem.data) {
+  //       console.log(`Merging data for NIK: ${item.nik}`);
+  //       merged = { ...merged, ...dbItem.data };
+  //     }
+  //   }
+  // }
   return rawData;
 }
 

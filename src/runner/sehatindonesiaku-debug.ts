@@ -13,15 +13,12 @@ async function _main(callback: (...args: any[]) => any | Promise<any>) {
 
 async function _debugRegistrasiData() {
   const allData = await getRegistrasiData({ debug: true });
-  console.log(`Total records from Kemkes: ${allData.length}`);
+  console.log(`Total records from Registrasi: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
-    const get = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
-    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik} - Existing: ${get ? 'Yes' : 'No'}`);
-    if (get) {
-      console.log(`${get.data.nik} - ${get.data.nama}`);
-      console.log(`\t-> registered: ${get.data.registered}`);
-      console.log(`\t-> hadir: ${get.data.hadir}`);
-    }
+    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik}`);
+    console.log(`${item.nik} - ${item.nama}`);
+    console.log(`\t-> registered: ${item.registered}`);
+    console.log(`\t-> hadir: ${item.hadir}`);
   }
 }
 
@@ -29,13 +26,10 @@ async function _debugHadirData() {
   const allData = await getKehadiranData();
   console.log(`Total records from Kehadiran: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
-    const get = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
-    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik} - Existing: ${get ? 'Yes' : 'No'}`);
-    if (get) {
-      console.log(`${get.data.nik} - ${get.data.nama}`);
-      console.log(`\t-> registered: ${get.data.registered}`);
-      console.log(`\t-> hadir: ${get.data.hadir}`);
-    }
+    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik}`);
+    console.log(`${item.nik} - ${item.nama}`);
+    console.log(`\t-> registered: ${item.registered}`);
+    console.log(`\t-> hadir: ${item.hadir}`);
   }
 }
 
@@ -45,11 +39,11 @@ async function _debugData() {
   console.log(`Total records from Excel: ${allExcelData.length}`);
   console.log(`Total records from Database: ${allData.length}`);
 
-  for (const [index, item] of allData.entries()) {
+  for (let index = 0; index < allData.length; index++) {
+    const item = allData[index];
     const found = allExcelData.find((d) => d.nik === item.data.nik);
-    process.stdout.write(`\r[${index + 1}/${allData.length}] ${item.id} found: ${found ? 'Yes' : 'No'}`);
     if (found) {
-      console.log(`[${index + 1}/${allData.length}] NIK: ${item.data.nik}`);
+      console.log(`[${index + 1}/${allData.length}] NIK: ${item.data.nik} - ${item.data.nama}`);
       console.log(`\t-> registered: ${item.data.registered}`);
       console.log(`\t-> hadir: ${item.data.hadir}`);
       console.log('');
@@ -90,4 +84,9 @@ async function _testRegistrasiFilter() {
   console.log(`Filtered results for NIK ${nik}:`, filteredData);
 }
 
-_main(_debugData).catch(console.error);
+_main(async function () {
+  console.log('all data');
+  await _debugData();
+  console.log('all registrasi data');
+  await _debugRegistrasiData();
+}).catch(console.error);
