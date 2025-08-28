@@ -24,6 +24,12 @@ export class LogDatabase implements BaseLogDatabase {
     this.pref = new SharedPreferences({ namespace: this.constructor.name });
   }
 
+  async getType() {
+    if (!this.store) await this.initialize();
+    const optionsType = this.options.type || 'sqlite';
+    return { optionsType, classType: this.store instanceof MysqlLogDatabase ? 'mysql' : 'sqlite' };
+  }
+
   async addLog<T = any>(log: LogEntry<T>, options?: { timeout?: number }) {
     if (!this.store) await this.initialize();
     return await this.store.addLog(log, options);
