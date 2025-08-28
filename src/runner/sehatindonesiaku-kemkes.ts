@@ -198,7 +198,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     message.push('Data processed successfully');
     await sehatindonesiakuDb.addLog({
       id: item.nik,
-      data: { ...item, status: 'success' },
+      data: { ...item, registered: true },
       message: array_unique(message).join(',')
     });
     return; // Exit after successful processing
@@ -263,8 +263,8 @@ async function getData() {
       const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
       const isPast = pemeriksaanDate.isBefore(today);
       if (isPast) return false;
-      // Filter not have property status
-      if ('status' in item && item.status === 'success') return false;
+      // Filter not have property registered
+      if ('registered' in item) return false;
 
       return true;
     });
