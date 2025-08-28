@@ -53,12 +53,20 @@ async function main() {
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
-        await sehatindonesiakuDb.addLog({ id: item.nik, message: array_unique(message).join(','), data: item });
+        await sehatindonesiakuDb.addLog({
+          id: item.nik,
+          message: array_unique(message).join(','),
+          data: { registered: false, ...item }
+        });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
-        await sehatindonesiakuDb.addLog({ id: item.nik, message: array_unique(message).join(','), data: item });
+        await sehatindonesiakuDb.addLog({
+          id: item.nik,
+          message: array_unique(message).join(','),
+          data: { registered: false, ...item }
+        });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         needLogin = true;
