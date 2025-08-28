@@ -25,7 +25,7 @@ const COMMANDS = {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-data.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js')
   },
-  run: {
+  registrasi: {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-registrasi.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-registrasi.js')
   },
@@ -70,34 +70,41 @@ async function showCommandHelp(name) {
 
 async function showHelp() {
   console.log(`\n${'='.repeat(60)}\n`);
-  console.log('Usage: kemkes <command> [options]\n');
+  console.log('Kemkes CLI - SehatIndonesiaku Automation');
+  console.log('=========================================');
+  console.log('\nUsage: kemkes <command> [options]\n');
   console.log('Commands:');
-  console.log('  hadir        Run kehadiran (attendance) automation');
-  console.log('  data         Run data automation');
-  console.log('  run          Run main kemkes script');
-  console.log('  config       Run kemkes config script');
-  console.log('  pelayanan    Run pelayanan automation');
-  console.log('  cleandb      Clean kemkes database');
+  console.log('  hadir        Run attendance automation (kehadiran)');
+  console.log('  data         Run data extraction/processing');
+  console.log('  registrasi   Run registration automation (main)');
+  console.log('  config       Run configuration utility');
+  console.log('  pelayanan    Run service automation (pelayanan)');
+  console.log('  cleandb      Clean Kemkes database');
   console.log('  help         Show this help message');
-  console.log('\nOptions:');
+  console.log('\nGlobal Options:');
   console.log('  -d, --dev         Run in development mode (TypeScript source)');
-  console.log('  --development     Same as --dev');
+  console.log('  --development     Alias for --dev');
   console.log('  -w, --watch       Watch src/ for changes and rerun command automatically');
-  console.log('  --watch           Same as -w');
-  console.log('\nSub-options:');
+  console.log('  --watch           Alias for -w');
+  console.log('\nCommand Options:');
   console.log('  -h, --help        Show help for a command (e.g., kemkes data --help)');
+  console.log('  --single          Process only one data item (where supported)');
+  console.log('  --nik <NIK>       Filter by NIK (where supported)');
+  console.log('  --shuffle         Shuffle data before processing (where supported)');
   console.log('\nExamples:');
-  console.log('  kemkes hadir --dev --watch');
-  console.log('  kemkes data');
-  console.log('  kemkes run --help');
-  console.log('  kemkes config');
-  console.log('  kemkes pelayanan --dev');
-  console.log('  kemkes cleandb');
-  console.log('  kemkes hadir --single');
+  console.log('  kemkes hadir --dev --watch         # Run kehadiran in dev mode with watch');
+  console.log('  kemkes data                       # Run data automation');
+  console.log('  kemkes registrasi --help          # Show help for registration');
+  console.log('  kemkes config                     # Run config utility');
+  console.log('  kemkes pelayanan --dev            # Run pelayanan in dev mode');
+  console.log('  kemkes cleandb                    # Clean Kemkes database');
+  console.log('  kemkes hadir --single             # Process only one data item');
+  console.log('  kemkes registrasi --nik 1234      # Filter registration by NIK');
+  console.log('  kemkes registrasi --shuffle       # Shuffle data before registration');
   console.log('\nFor detailed help on a command, use: kemkes <command> --help');
   console.log(`\n${'='.repeat(60)}\n`);
 
-  for (const name of ['config', 'data', 'hadir', 'run', 'pelayanan', 'cleandb']) {
+  for (const name of ['config', 'data', 'hadir', 'registrasi', 'pelayanan', 'cleandb']) {
     centerLog(`==== ${name.toUpperCase()} Command Help ====`);
     await showCommandHelp(name);
   }
