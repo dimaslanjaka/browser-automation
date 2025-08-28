@@ -31,7 +31,12 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    */
   constructor(dbName?: string, options: Partial<Parameters<typeof createDatabasePool>[0]> = {}) {
     const poolOptions = dbName ? { database: dbName, ...options } : { ...options };
-    this.poolPromise = createDatabasePool(Object.assign({}, defaultOptions, poolOptions));
+    // filter out 'type' property if present
+    if ('type' in poolOptions) {
+      delete (poolOptions as any).type;
+    }
+    const mergedOptions = Object.assign({}, defaultOptions, poolOptions);
+    this.poolPromise = createDatabasePool(mergedOptions);
     this.readyPromise = this._initializeDatabase();
   }
 
