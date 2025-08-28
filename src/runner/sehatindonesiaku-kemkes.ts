@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
-import { array_shuffle, normalizePathUnix } from 'sbg-utility';
+import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
@@ -50,13 +50,16 @@ async function main() {
     try {
       await processData(browser, item);
     } catch (e) {
+      const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
-        await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Data tidak sesuai KTP', data: item });
+        message.push('Data tidak sesuai KTP');
+        await sehatindonesiakuDb.addLog({ id: item.nik, message: array_unique(message).join(','), data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
-        await sehatindonesiakuDb.addLog({ id: item.nik, message: 'Pembatasan umur', data: item });
+        message.push('Pembatasan umur');
+        await sehatindonesiakuDb.addLog({ id: item.nik, message: array_unique(message).join(','), data: item });
         continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         needLogin = true;
@@ -192,10 +195,12 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   if (await isSuccessModalVisible(page)) {
     console.log(`${item.nik} - ${ansiColors.green('Data processed successfully!')}`);
     // Save the data to database
+    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    message.push('Data processed successfully');
     await sehatindonesiakuDb.addLog({
       id: item.nik,
       data: { ...item, status: 'success' },
-      message: 'Data processed successfully'
+      message: array_unique(message).join(',')
     });
     return; // Exit after successful processing
   }
@@ -253,17 +258,16 @@ async function getData() {
       const isEmptyItem = !item || Object.keys(item).length === 0;
       // Filter out empty nik
       const isNikEmpty = !item.nik || item.nik.trim() === '';
+      if (isEmptyItem || isNikEmpty) return false;
       // Filter out items with past tanggal_pemeriksaan
       const today = moment().startOf('day');
       const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
       const isPast = pemeriksaanDate.isBefore(today);
+      if (isPast) return false;
       // Filter not have property status
       if ('status' in item && item.status === 'success') return false;
-      // Filter not have property hadir
-      if ('hadir' in item && item.hadir === true) return false;
 
-      // Only include items that are NOT past, NOT empty NIK, NOT empty tanggal, and NOT empty item
-      return !isPast && !isNikEmpty && !isEmptyItem;
+      return true;
     });
   return sehatindonesiakuData;
 }
