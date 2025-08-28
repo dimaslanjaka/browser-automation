@@ -1,4 +1,5 @@
 import { MysqlLogDatabase } from '../../src/database/MysqlLogDatabase.js';
+import 'dotenv/config.js';
 
 describe('MysqlLogDatabase', () => {
   let db: MysqlLogDatabase;
