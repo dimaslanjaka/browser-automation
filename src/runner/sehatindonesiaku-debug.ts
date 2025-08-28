@@ -27,10 +27,13 @@ async function _migrate() {
   const allData = await sehatindonesiakuDb.getLogs<DataItem>();
   for (const item of allData as LogEntry<DataItem>[]) {
     if ('status' in item.data) {
-      if (item.data.status === 'success') {
-        item.data.registered = true;
-      } else {
-        item.data.registered = false;
+      if (!('registered' in item.data)) {
+        // Set default value for registered
+        if (item.data.status === 'success') {
+          item.data.registered = true;
+        } else {
+          item.data.registered = false;
+        }
       }
       delete item.data.status;
       await sehatindonesiakuDb.addLog(item);
@@ -39,4 +42,4 @@ async function _migrate() {
   }
 }
 
-// _main(_migrate).catch(console.error);
+_main(_migrate).catch(console.error);
