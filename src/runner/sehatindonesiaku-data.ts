@@ -250,6 +250,29 @@ export async function downloadAndProcessXlsx(
   console.log(`Parsed XLSX data (Format Full) written to: ${outPath}`);
 }
 
+/**
+ * Loads data from the Excel JSON file and optionally merges it with the latest data from the database.
+ * If merge is true, for each item, attempts to update its fields with the corresponding database entry.
+ * Returns the resulting array of DataItem objects.
+ *
+ * @param merge Whether to merge each item with the latest database data (default: true)
+ * @returns Array of DataItem objects, possibly merged with database data
+ */
+export async function getExcelData(merge = true) {
+  const rawData: DataItem[] = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
+  for (let i = rawData.length - 1; i >= 0; i--) {
+    const item = rawData[i];
+    if (merge) {
+      const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+      let merged = { ...item };
+      if (dbItem && dbItem.data) {
+        merged = { ...merged, ...dbItem.data };
+      }
+    }
+  }
+  return rawData;
+}
+
 export function showHelp() {
   const [node, script] = process.argv;
   console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]\n`);
