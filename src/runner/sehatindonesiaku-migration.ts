@@ -17,7 +17,8 @@ export async function migrate() {
 
   const logs = sqlite.getLogs();
   for await (const log of logs) {
-    if (await mysql.getLogById(log.id)) {
+    const get = await mysql.getLogById(log.id);
+    if (typeof get === 'object' && Object.keys(get).length > 0) {
       console.log(`Skipping existing log id=${log.id}`);
       continue;
     }
