@@ -109,7 +109,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     await pages[0].close(); // Close the first tab
   }
   // Create a new page for each data item
-  console.log(`Processing data for NIK ${item.nik}`);
+  console.log(`Processing data for NIK ${item.nik} - ${item.nama}`);
   const page =
     typeof (browserOrPage as any).browser === 'function'
       ? await (browserOrPage as Page).browser().newPage()
