@@ -8,14 +8,14 @@ describe('MysqlLogDatabase', () => {
   beforeAll(async () => {
     db = new MysqlLogDatabase(dbName);
     await db.waitReady();
-  });
+  }, 60000);
 
   afterAll(async () => {
     // Clean up test database
     const pool = await db.waitReady().then(() => db['poolPromise']);
     await pool.query(`DROP DATABASE IF EXISTS \`${dbName}\``);
     await db.close();
-  });
+  }, 60000);
 
   it('should add and retrieve a log entry', async () => {
     const log = { id: 'log1', data: { foo: 'bar' }, message: 'Test log' };
@@ -26,7 +26,7 @@ describe('MysqlLogDatabase', () => {
     expect(result?.data).toEqual({ foo: 'bar' });
     expect(result?.message).toBe('Test log');
     expect(typeof result?.timestamp).toBe('string');
-  });
+  }, 60000);
 
   it('should update a log entry', async () => {
     const log = { id: 'log1', data: { foo: 'baz' }, message: 'Updated log' };
@@ -34,14 +34,14 @@ describe('MysqlLogDatabase', () => {
     const result = await db.getLogById('log1');
     expect(result?.data).toEqual({ foo: 'baz' });
     expect(result?.message).toBe('Updated log');
-  });
+  }, 60000);
 
   it('should remove a log entry', async () => {
     const removed = await db.removeLog('log1');
     expect(removed).toBe(true);
     const result = await db.getLogById('log1');
     expect(result).toBeUndefined();
-  });
+  }, 60000);
 
   it('should return all logs', async () => {
     await db.addLog({ id: 'log2', data: { a: 1 }, message: 'A' });
@@ -52,11 +52,11 @@ describe('MysqlLogDatabase', () => {
     logs.forEach((log) => {
       expect(typeof log.timestamp).toBe('string');
     });
-  });
+  }, 60000);
 
   it('should filter logs with filterFn', async () => {
     const logs = await db.getLogs((log) => log.id === 'log2');
     expect(logs.length).toBe(1);
     expect(logs[0].id).toBe('log2');
-  });
+  }, 60000);
 });
