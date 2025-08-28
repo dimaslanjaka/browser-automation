@@ -12,7 +12,7 @@ import {
 import { sleep } from '../utils-browser.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
-import { getKemkesData } from './sehatindonesiaku-kemkes.js';
+import { getRegistrasiData } from './sehatindonesiaku-kemkes.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2), {
@@ -128,7 +128,7 @@ export interface DataOptions {
 async function getData(options?: DataOptions): Promise<DataItem[]> {
   const defaultOptions: DataOptions = { shuffle: false, single: false, type: 'excel' };
   options = { ...defaultOptions, ...options };
-  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getKemkesData();
+  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getRegistrasiData();
   console.log(`Total data items retrieved from ${options.type}: ${data.length}`);
   const filtered = data.filter((item) => {
     // Support both flat and wrapped data

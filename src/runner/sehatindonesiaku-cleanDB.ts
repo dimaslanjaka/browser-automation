@@ -1,13 +1,13 @@
 import minimist from 'minimist';
 import { sleep } from '../utils-browser.js';
 import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
-import { getKemkesData } from './sehatindonesiaku-kemkes.js';
+import { getRegistrasiData } from './sehatindonesiaku-kemkes.js';
 import { normalizePathUnix } from 'sbg-utility';
 
 const args = minimist(process.argv.slice(2), { alias: { h: 'help' } });
 
 async function main() {
-  let allData = await getKemkesData();
+  let allData = await getRegistrasiData();
   if (args.nik) {
     allData = allData.filter((item) => item.nik === args.nik);
   }

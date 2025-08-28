@@ -393,4 +393,4 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
   })();
 }
 
-export { getData as getKemkesData, main as mainKemkes, processData as processKemkesData };
+export { getData as getRegistrasiData, main as mainRegistrasi, processData as processRegistrasiData };
