@@ -14,11 +14,11 @@ async function _debugSingle() {
   const allData = await getKemkesData();
   console.log(`Total records from Kemkes: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
-    const get = await sehatindonesiakuDb.getLogById(item.nik);
+    const get = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
     console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik} - Existing: ${get ? 'Yes' : 'No'}`);
     if (get) {
-      console.log(get);
-      break;
+      console.log(`${get.data.nik} - ${get.data.nama}`);
+      console.log(`\t-> registered: ${get.data.registered}`);
     }
   }
 }
@@ -42,4 +42,16 @@ async function _migrate() {
   }
 }
 
-_main(_migrate).catch(console.error);
+async function _testFilter() {
+  // test register 3173050212880001
+  // kemkes --nik=3173050212880001
+  // Test filtering by NIK
+  const nik = '3173050212880001';
+  process.argv.push(`--nik=${nik}`);
+  const { getKemkesData } = await import('./sehatindonesiaku-kemkes.js');
+  const allData = await getKemkesData();
+  const filteredData = allData.filter((item) => item.nik === nik);
+  console.log(`Filtered results for NIK ${nik}:`, filteredData);
+}
+
+_main(_testFilter).catch(console.error);

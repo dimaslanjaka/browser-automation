@@ -95,7 +95,7 @@ async function main() {
   process.exit(0);
 }
 
-// Helper for async CLI prompt
+/** Helper for async CLI prompt */
 function askQuestion(query: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
