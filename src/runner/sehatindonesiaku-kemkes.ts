@@ -59,7 +59,7 @@ async function main() {
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
         });
-        // continue; // Skip this item and continue with the next
+        continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
@@ -68,7 +68,7 @@ async function main() {
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
         });
-        // continue; // Skip this item and continue with the next
+        continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         needLogin = true;
         console.warn(
@@ -78,7 +78,7 @@ async function main() {
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
       // Break the loop on unexpected errors (uncomment below for development)
-      break;
+      // break;
     }
 
     if (isSingleData) break; // Process only one item if --single or -s flag is passed
@@ -90,9 +90,9 @@ async function main() {
   }
 
   // comment below codes for development
-  // console.log('All data processed. Closing browser...');
-  // await browser.close();
-  // process.exit(0);
+  console.log('All data processed. Closing browser...');
+  await browser.close();
+  process.exit(0);
 }
 
 /** Helper for async CLI prompt */
