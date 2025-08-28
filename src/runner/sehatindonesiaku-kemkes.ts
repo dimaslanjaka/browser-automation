@@ -41,9 +41,6 @@ async function main() {
   const { browser } = await getPuppeteer();
   let allData = await getData();
   if (isShuffle) allData = array_shuffle(allData);
-  if (cliArgs.nik) {
-    allData = allData.filter((item) => item.nik.trim() === cliArgs.nik.trim());
-  }
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
   // await processData(browser, sampleData);
@@ -258,12 +255,25 @@ async function getData() {
   const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
 
   // Fix tanggal_pemeriksaan empty to today
-  const mappedData = rawData.map((item) => {
+  let mappedData = rawData.map((item) => {
     if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
       item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
     }
     return item;
   });
+
+  // Filter by NIK if provided via CLI
+  if (cliArgs.nik) {
+    // Support multiple NIKs separated by comma, trim whitespace, filter out empty
+    let nikFilter: string[] = [];
+    if (typeof cliArgs.nik === 'string') {
+      nikFilter = cliArgs.nik.split(',');
+    } else if (Array.isArray(cliArgs.nik)) {
+      nikFilter = cliArgs.nik.flatMap((val) => (typeof val === 'string' ? val.split(',') : []));
+    }
+    nikFilter = nikFilter.map((nik) => (nik || '').trim()).filter((nik) => nik.length > 0);
+    mappedData = mappedData.filter((item) => nikFilter.includes((item.nik || '').trim()));
+  }
 
   // Async filter
   const filteredData: DataItem[] = [];
