@@ -131,12 +131,16 @@ async function getData(options?: DataOptions): Promise<DataItem[]> {
   const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getKemkesData();
   console.log(`Total data items retrieved from ${options.type}: ${data.length}`);
   const filtered = data.filter((item) => {
-    return item.data && item.data.nik && !('hadir' in item.data);
+    // Support both flat and wrapped data
+    const d = item.data || item;
+    if (!d || typeof d.nik !== 'string' || d.nik.length === 0) return false;
+    // Allow if 'hadir' is missing or explicitly false
+    if (!('hadir' in d) || d.hadir === false) return true;
+    return false;
   });
   console.log(`Total filtered data items: ${filtered.length}`);
-  let map = filtered.map((item) => {
-    return item.data;
-  });
+  // Map to flat DataItem
+  let map = filtered.map((item) => item.data || item);
   if (options.shuffle) {
     map = array_shuffle(map);
   }
@@ -248,4 +252,4 @@ async function processData(page: Page, item: DataItem) {
   });
 }
 
-export { main as mainKehadiran, processData as processKehadiranData };
+export { main as mainKehadiran, processData as processKehadiranData, getData as getKehadiranData };

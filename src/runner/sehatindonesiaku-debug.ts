@@ -1,5 +1,6 @@
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
 import { getKemkesData } from './sehatindonesiaku-kemkes.js';
 
 // This file for development only
@@ -10,7 +11,7 @@ async function _main(callback: (...args: any[]) => any | Promise<any>) {
   await sehatindonesiakuDb.close();
 }
 
-async function _debugSingle() {
+async function _debugKemkesData() {
   const allData = await getKemkesData();
   console.log(`Total records from Kemkes: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
@@ -19,6 +20,21 @@ async function _debugSingle() {
     if (get) {
       console.log(`${get.data.nik} - ${get.data.nama}`);
       console.log(`\t-> registered: ${get.data.registered}`);
+      console.log(`\t-> hadir: ${get.data.hadir}`);
+    }
+  }
+}
+
+async function _debugHadirData() {
+  const allData = await getKehadiranData();
+  console.log(`Total records from Kehadiran: ${allData.length}`);
+  for (const [index, item] of allData.entries()) {
+    const get = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik} - Existing: ${get ? 'Yes' : 'No'}`);
+    if (get) {
+      console.log(`${get.data.nik} - ${get.data.nama}`);
+      console.log(`\t-> registered: ${get.data.registered}`);
+      console.log(`\t-> hadir: ${get.data.hadir}`);
     }
   }
 }
@@ -42,7 +58,7 @@ async function _migrate() {
   }
 }
 
-async function _testFilter() {
+async function _testKemkesFilter() {
   // test register 3173050212880001
   // kemkes --nik=3173050212880001
   // Test filtering by NIK
@@ -54,4 +70,4 @@ async function _testFilter() {
   console.log(`Filtered results for NIK ${nik}:`, filteredData);
 }
 
-_main(_testFilter).catch(console.error);
+_main(_debugHadirData).catch(console.error);
