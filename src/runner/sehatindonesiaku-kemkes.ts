@@ -66,7 +66,7 @@ async function main() {
         break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
-      // Break the loop on unexpected errors
+      // Break the loop on unexpected errors (uncomment below for development)
       // break;
     }
 
@@ -78,6 +78,7 @@ async function main() {
     return;
   }
 
+  // comment below codes for development
   console.log('All data processed. Closing browser...');
   await browser.close();
   process.exit(0);
@@ -159,13 +160,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await waitForDomStable(page, 2000, 6000);
 
   // Handle age restriction modal
-  const isAgeLimitCheckDisplayed =
-    (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
-    (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
-  console.log(`Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
-  if (isAgeLimitCheckDisplayed) {
-    throw new PembatasanUmurError(item.nik);
-  }
+  await isPembatasanUmurVisible(page, item);
 
   // Handle modal "Kuota pemeriksaan habis"
   const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
@@ -183,6 +178,9 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   const isModalRegistrationVisible = await isSpecificModalVisible(page, 'formulir pendaftaran');
   console.log(`Modal formulir pendaftaran visible: ${isModalRegistrationVisible}`);
   if (isModalRegistrationVisible) {
+    // Re-check pembatasan umur
+    await isPembatasanUmurVisible(page, item);
+    // Click pilih
     console.log(`${item.nik} - Clicking "Pilih" button inside individu terdaftar table...`);
     await clickPilihButton(page);
     await waitForDomStable(page, 2000, 6000);
@@ -206,6 +204,16 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   if (isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
     console.log(`${item.nik} - Data belum sesuai KTP modal is visible.`);
     throw new DataTidakSesuaiKTPError(item.nik);
+  }
+}
+
+export async function isPembatasanUmurVisible(page: Page, item: DataItem) {
+  const isAgeLimitCheckDisplayed =
+    (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
+    (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
+  console.log(`Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
+  if (isAgeLimitCheckDisplayed) {
+    throw new PembatasanUmurError(item.nik);
   }
 }
 
