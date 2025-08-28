@@ -97,7 +97,7 @@ async function showHelp() {
   console.log('\nFor detailed help on a command, use: kemkes <command> --help');
   console.log(`\n${'='.repeat(60)}\n`);
 
-  for (const name of ['config', 'data', 'hadir', 'run', 'pelayanan']) {
+  for (const name of ['config', 'data', 'hadir', 'run', 'pelayanan', 'cleandb']) {
     centerLog(`==== ${name.toUpperCase()} Command Help ====`);
     await showCommandHelp(name);
   }
