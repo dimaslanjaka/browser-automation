@@ -26,8 +26,8 @@ const COMMANDS = {
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-data.js')
   },
   run: {
-    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-registrasi.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-registrasi.js')
   },
   config: {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
@@ -42,8 +42,8 @@ const COMMANDS = {
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-cleanDB.js')
   },
   default: {
-    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
-    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-registrasi.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-registrasi.js')
   }
 };
 

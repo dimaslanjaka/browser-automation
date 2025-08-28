@@ -1,7 +1,7 @@
 import minimist from 'minimist';
 import { sleep } from '../utils-browser.js';
 import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
-import { getRegistrasiData } from './sehatindonesiaku-kemkes.js';
+import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { normalizePathUnix } from 'sbg-utility';
 
 const args = minimist(process.argv.slice(2), { alias: { h: 'help' } });

@@ -1,7 +1,7 @@
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
-import { getRegistrasiData } from './sehatindonesiaku-kemkes.js';
+import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 
 // This file for development only
 
@@ -64,7 +64,7 @@ async function _testKemkesFilter() {
   // Test filtering by NIK
   const nik = '3173050212880001';
   process.argv.push(`--nik=${nik}`);
-  const { getRegistrasiData: getKemkesData } = await import('./sehatindonesiaku-kemkes.js');
+  const { getRegistrasiData: getKemkesData } = await import('./sehatindonesiaku-registrasi.js');
   const allData = await getKemkesData();
   const filteredData = allData.filter((item) => item.nik === nik);
   console.log(`Filtered results for NIK ${nik}:`, filteredData);

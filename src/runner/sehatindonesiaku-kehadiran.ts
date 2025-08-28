@@ -12,7 +12,7 @@ import {
 import { sleep } from '../utils-browser.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
-import { getRegistrasiData } from './sehatindonesiaku-kemkes.js';
+import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2), {
