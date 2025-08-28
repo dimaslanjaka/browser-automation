@@ -47,6 +47,16 @@ export class SQLiteLogDatabase {
   }
 
   /**
+   * Execute a raw SQL query on the underlying SQLite database.
+   * @param {string} sql - The SQL query string.
+   * @param {any[]} [params] - Optional parameters for the query.
+   * @returns {any} The result of the query.
+   */
+  query(sql, params = []) {
+    return this.db.prepare(sql).all(...params);
+  }
+
+  /**
    * Close the database connection.
    */
   close() {

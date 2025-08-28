@@ -53,6 +53,10 @@ export class LogDatabase implements BaseLogDatabase {
     }
   }
 
+  async query(sql: string, params?: any[]) {
+    this.store.query(sql, params);
+  }
+
   async close() {
     if (!this.store) return;
     // Run migration when closing SQLite database

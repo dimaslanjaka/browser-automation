@@ -52,6 +52,19 @@ export class MysqlLogDatabase implements BaseLogDatabase {
   }
 
   /**
+   * Execute a raw SQL query on the underlying MySQL pool.
+   *
+   * @param sql The SQL query string.
+   * @param params Optional parameters for the query.
+   * @returns Promise resolving to the query result.
+   */
+  public async query(sql: string, params?: any[]): Promise<any> {
+    await this.readyPromise;
+    const pool = await this.poolPromise;
+    return pool.query(sql, params);
+  }
+
+  /**
    * Add or update a log entry in the database.
    *
    * @param log Log entry object.
