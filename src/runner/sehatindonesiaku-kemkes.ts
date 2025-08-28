@@ -34,7 +34,7 @@ import {
   selectGender,
   selectPekerjaan,
   selectTanggalLahir
-} from './sehatindonesiaku-staging.js';
+} from './sehatindonesiaku-register-utils.js';
 import { clickDaftarBaru, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
