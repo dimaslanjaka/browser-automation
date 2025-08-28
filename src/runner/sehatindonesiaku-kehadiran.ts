@@ -1,3 +1,4 @@
+import fs from 'fs-extra';
 import minimist from 'minimist';
 import { Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
@@ -10,9 +11,8 @@ import {
   waitForDomStable
 } from '../puppeteer_utils.js';
 import { sleep } from '../utils-browser.js';
-import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
-import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 const args = minimist(process.argv.slice(2), {
@@ -103,6 +103,27 @@ async function main() {
   process.exit(0);
 }
 
+async function getExcelData() {
+  const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
+  for (let i = rawData.length - 1; i >= 0; i--) {
+    const item = rawData[i];
+    if (item.nik && typeof item.nik === 'string' && item.nik.trim().length === 16) {
+      // Merge DB data if exists
+      const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+      let merged = { ...item };
+      if (dbItem && dbItem.data) {
+        merged = { ...merged, ...dbItem.data };
+      }
+      if ('hadir' in merged) {
+        rawData.splice(i, 1); // Remove item if 'hadir' exists
+      }
+    } else {
+      rawData.splice(i, 1); // Remove invalid NIK
+    }
+  }
+  return rawData;
+}
+
 export interface DataOptions {
   shuffle?: boolean;
   single?: boolean;
@@ -128,7 +149,7 @@ export interface DataOptions {
 async function getData(options?: DataOptions): Promise<DataItem[]> {
   const defaultOptions: DataOptions = { shuffle: false, single: false, type: 'excel' };
   options = { ...defaultOptions, ...options };
-  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getRegistrasiData();
+  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getExcelData();
   console.log(`Total data items retrieved from ${options.type}: ${data.length}`);
   const filtered = data.filter((item) => {
     // Support both flat and wrapped data
@@ -252,4 +273,4 @@ async function processData(page: Page, item: DataItem) {
   });
 }
 
-export { main as mainKehadiran, processData as processKehadiranData, getData as getKehadiranData };
+export { getData as getKehadiranData, main as mainKehadiran, processData as processKehadiranData };

@@ -70,4 +70,4 @@ async function _testKemkesFilter() {
   console.log(`Filtered results for NIK ${nik}:`, filteredData);
 }
 
-_main(_debugRegistrasiData).catch(console.error);
+_main(_debugHadirData).catch(console.error);
