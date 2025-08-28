@@ -89,16 +89,17 @@ async function main() {
   process.exit(0);
 }
 
-async function processData(browser: Browser, item: DataItem) {
+async function processData(browserOrPage: Browser | Page, item: DataItem) {
   // Close tab when more than 5 tabs open
-  const pages = await browser.pages();
+  const pages = browserOrPage instanceof Browser ? await browserOrPage.pages() : await browserOrPage.browser().pages();
   if (pages.length > 5) {
     console.log(`Closing excess tab, current open tabs: ${pages.length}`);
     await pages[0].close(); // Close the first tab
   }
   // Create a new page for each data item
   console.log(`Processing data for NIK ${item.nik}`);
-  const page = await browser.newPage();
+  const page =
+    browserOrPage instanceof Browser ? await browserOrPage.newPage() : await browserOrPage.browser().newPage();
   const isLoggedIn = await enterSehatIndonesiaKu(page);
   if (!isLoggedIn) throw new UnauthorizedError();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
