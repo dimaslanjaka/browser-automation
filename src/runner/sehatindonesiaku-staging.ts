@@ -8,7 +8,8 @@ import {
   DataItem,
   downloadAndProcessXlsx,
   readSehatIndonesiakuDataAsync,
-  sehatindonesiakuDataPath
+  sehatindonesiakuDataPath,
+  sehatindonesiakuPref
 } from './sehatindonesiaku-data.js';
 import { DataTidakSesuaiKTPError, PembatasanUmurError } from './sehatindonesiaku-errors.js';
 import { clickKembali, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
@@ -16,10 +17,10 @@ import { clickKembali, enterSehatIndonesiaKu, selectCalendar } from './sehatindo
 // Usage:
 // node --no-warnings=ExperimentalWarning --loader ts-node/esm "d:\Repositories\browser-automation\src\runner\sehatindonesiaku-kemkes.ts" > output.txt 2>&1
 
-const provinsi = 'DKI Jakarta';
-const kabupaten = 'Kota Adm. Jakarta Barat';
-const kecamatan = 'Kebon Jeruk';
-const kelurahan = 'Kebon Jeruk';
+const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
+const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
+const kecamatan = sehatindonesiakuPref.getString('kecamatan', 'Kebon Jeruk');
+const kelurahan = sehatindonesiakuPref.getString('kelurahan', 'Kebon Jeruk');
 const db = new SQLiteLogDatabase('sehatindonesiaku-kemkes');
 
 /**
