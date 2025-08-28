@@ -1,5 +1,4 @@
 import ansiColors from 'ansi-colors';
-import readline from 'node:readline';
 import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
@@ -93,20 +92,6 @@ async function main() {
   console.log('All data processed. Closing browser...');
   await browser.close();
   process.exit(0);
-}
-
-/** Helper for async CLI prompt */
-function askQuestion(query: string): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  return new Promise((resolve) => {
-    rl.question(query, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
 }
 
 interface ProcessDataOptions {
@@ -281,79 +266,78 @@ async function isSuccessModalVisible(page: Page) {
   return false;
 }
 
-async function getData() {
-  const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
+export interface getDataOptions {
+  /** only process specific NIK */
+  nik?: string[];
+  /** enable debug mode */
+  debug?: boolean;
+}
 
-  // Fix tanggal_pemeriksaan empty to today
-  let mappedData = rawData.map((item) => {
-    if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
-      item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-    }
-    return item;
-  });
+async function getData(options: getDataOptions = {}) {
+  let rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
 
-  // Filter by NIK if provided via CLI
-  let nikFilter: string[] = [];
-  let overwriteNiks: string[] = [];
-  let disableDbFilter = false;
-  // Normalize nik to string if number (minimist may parse as number)
-  if (typeof cliArgs.nik === 'number') {
-    cliArgs.nik = String(cliArgs.nik);
-  }
-  if (cliArgs.nik) {
-    // Support multiple NIKs separated by comma, trim whitespace, filter out empty
-    if (typeof cliArgs.nik === 'string') {
-      nikFilter = cliArgs.nik.split(',');
-    } else if (Array.isArray(cliArgs.nik)) {
-      nikFilter = cliArgs.nik.flatMap((val) => (typeof val === 'string' ? val.split(',') : []));
-    }
-    nikFilter = nikFilter.map((nik) => (nik || '').trim()).filter((nik) => nik.length > 0);
-    mappedData = mappedData.filter((item) => nikFilter.includes((item.nik || '').trim()));
-
-    // Check if any NIK already exists in DB
-    const existingNiks: string[] = [];
-    for (const nik of nikFilter) {
-      const dbData = await sehatindonesiakuDb.getLogById(nik);
-      if (dbData && 'registered' in dbData) {
-        existingNiks.push(nik);
-      }
-    }
-    if (existingNiks.length > 0) {
-      // Prompt user for overwrite
-      const answer = await askQuestion(
-        `Data for the following NIK(s) already exists in the database: ${existingNiks.join(', ')}. Overwrite? (y/N): `
-      );
-      if (answer.trim().toLowerCase() === 'y') {
-        overwriteNiks = existingNiks;
-        disableDbFilter = true;
-      }
+  // Filter by NIK if provided
+  if (options.nik && options.nik.length > 0) {
+    rawData = rawData.filter((item) => options.nik!.includes(item.nik));
+    if (options.debug) {
+      console.log(`Filtering rawData for NIK(s): ${options.nik.join(', ')}`);
     }
   }
 
-  // Async filter
-  const filteredData: DataItem[] = [];
-  for (const item of mappedData) {
-    // Skip empty item
-    if (!item || Object.keys(item).length === 0) continue;
+  // Prepare result array
+  const result: DataItem[] = [];
+  for (const excelData of rawData) {
+    // Skip empty or invalid NIK
+    if (!excelData.nik || typeof excelData.nik !== 'string' || excelData.nik.trim().length === 0) {
+      if (options.debug) {
+        console.log(`Skipping row for empty/invalid NIK:`, excelData);
+      }
+      continue;
+    }
 
-    // Skip empty nik
-    if (!item.nik || item.nik.trim() === '') continue;
+    // Merge DB data if exists
+    const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(excelData.nik);
+    let merged = { ...excelData };
+    if (dbItem && dbItem.data) {
+      merged = { ...merged, ...dbItem.data };
+      if (options.debug) {
+        console.log(`Merging data from DB for NIK: ${excelData.nik}`);
+      }
+    }
 
-    // Skip items with past tanggal_pemeriksaan
+    // Fix tanggal_pemeriksaan if empty
+    if (!merged.tanggal_pemeriksaan || merged.tanggal_pemeriksaan.trim() === '') {
+      merged.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+      if (options.debug) {
+        console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${merged.nik}`);
+      }
+    }
+
+    // Skip if tanggal_pemeriksaan is in the past
     const today = moment().startOf('day');
-    const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
-    if (pemeriksaanDate.isBefore(today)) continue;
-
-    // Skip if registered exists in DB, unless overwrite is enabled for this NIK
-    if (!disableDbFilter || (disableDbFilter && !overwriteNiks.includes((item.nik || '').trim()))) {
-      const dbData = (await sehatindonesiakuDb.getLogById(item.nik)) ?? item;
-      if ('registered' in dbData) continue;
+    const pemeriksaanDate = moment(merged.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
+    if (pemeriksaanDate.isBefore(today)) {
+      if (options.debug) {
+        console.log(`Skipping row for past tanggal_pemeriksaan: ${merged.nik} - ${merged.tanggal_pemeriksaan}`);
+      }
+      continue;
     }
 
-    filteredData.push(item);
+    // Skip if object has 'registered' property
+    if (Object.prototype.hasOwnProperty.call(merged, 'registered')) {
+      if (options.debug) {
+        console.log(`Skipping row for registered property: ${merged.nik}`);
+      }
+      continue;
+    }
+
+    result.push(merged);
   }
 
-  return filteredData;
+  if (options.debug) {
+    console.log('Returning filtered data count:', result.length);
+  }
+  return result;
 }
 
 export function showHelp() {

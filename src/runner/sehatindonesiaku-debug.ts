@@ -11,8 +11,8 @@ async function _main(callback: (...args: any[]) => any | Promise<any>) {
   await sehatindonesiakuDb.close();
 }
 
-async function _debugKemkesData() {
-  const allData = await getRegistrasiData();
+async function _debugRegistrasiData() {
+  const allData = await getRegistrasiData({ debug: true });
   console.log(`Total records from Kemkes: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
     const get = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
@@ -70,4 +70,4 @@ async function _testKemkesFilter() {
   console.log(`Filtered results for NIK ${nik}:`, filteredData);
 }
 
-_main(_debugHadirData).catch(console.error);
+_main(_debugRegistrasiData).catch(console.error);
