@@ -378,7 +378,7 @@ export function showHelp() {
   console.log('For more information, see the documentation or README.');
 }
 
-if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
+if (process.argv.some((arg) => /sehatindonesiaku-kemkes\.(js|ts|cjs|mjs)$/i.test(arg))) {
   (async () => {
     // Show help if -h or --help is passed
     if (cliArgs.h || cliArgs.help) {
