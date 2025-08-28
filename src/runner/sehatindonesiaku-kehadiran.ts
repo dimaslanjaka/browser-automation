@@ -114,11 +114,14 @@ async function getExcelData() {
       if (dbItem && dbItem.data) {
         merged = { ...merged, ...dbItem.data };
       }
-      if ('hadir' in merged) {
-        rawData.splice(i, 1); // Remove item if 'hadir' exists
+      if (!('registered' in merged)) {
+        // Remove unregistered participants
+        rawData.splice(i, 1);
+        console.log(`${item.nik}: ${item.nama} - Exclude unregistered`);
       }
     } else {
-      rawData.splice(i, 1); // Remove invalid NIK
+      // Remove invalid NIK
+      rawData.splice(i, 1);
     }
   }
   return rawData;
