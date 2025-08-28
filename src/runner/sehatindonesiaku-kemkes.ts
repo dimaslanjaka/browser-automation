@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
-import { normalizePathUnix } from 'sbg-utility';
+import { array_shuffle, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import {
   DataItem,
@@ -41,12 +41,14 @@ const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
 const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
 const kecamatan = sehatindonesiakuPref.getString('kecamatan', 'Kebon Jeruk');
 const kelurahan = sehatindonesiakuPref.getString('kelurahan', 'Kebon Jeruk');
-const cliArgs = minimist(process.argv.slice(2));
+const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' } });
 const isSingleData = cliArgs.single || cliArgs.s || false;
+const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
 
 async function main() {
   const { browser } = await getPuppeteer();
-  const allData = await getData();
+  let allData = await getData();
+  if (isShuffle) allData = array_shuffle(allData);
   let needLogin = false;
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
@@ -261,6 +263,7 @@ export function showHelp() {
   console.log('Options:');
   console.log('  -h, --help     Show help');
   console.log('  -s, --single   Process only one data item');
+  console.log('  -sh, --shuffle Shuffle data before processing');
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
