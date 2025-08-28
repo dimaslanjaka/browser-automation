@@ -6,12 +6,7 @@ import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import {
-  DataItem,
-  sehatindonesiakuDataPath,
-  sehatindonesiakuDb,
-  sehatindonesiakuPref
-} from './sehatindonesiaku-data.js';
+import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
@@ -37,10 +32,7 @@ import {
 } from './sehatindonesiaku-register-utils.js';
 import { clickDaftarBaru, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
-const provinsi = sehatindonesiakuPref.getString('provinsi', 'DKI Jakarta');
-const kabupaten = sehatindonesiakuPref.getString('kabupaten', 'Kota Adm. Jakarta Barat');
-const kecamatan = sehatindonesiakuPref.getString('kecamatan', 'Kebon Jeruk');
-const kelurahan = sehatindonesiakuPref.getString('kelurahan', 'Kebon Jeruk');
+// Address defaults moved to processData options
 const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' } });
 const isSingleData = cliArgs.single || cliArgs.s || false;
 const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
@@ -91,7 +83,19 @@ async function main() {
   process.exit(0);
 }
 
-async function processData(browserOrPage: Browser | Page, item: DataItem) {
+interface ProcessDataOptions {
+  provinsi?: string;
+  kabupaten?: string;
+  kecamatan?: string;
+  kelurahan?: string;
+}
+
+async function processData(browserOrPage: Browser | Page, item: DataItem, options: ProcessDataOptions = {}) {
+  // Merge options with hardcoded defaults
+  const provinsi = options.provinsi ?? 'DKI Jakarta';
+  const kabupaten = options.kabupaten ?? 'Kota Adm. Jakarta Barat';
+  const kecamatan = options.kecamatan ?? 'Kebon Jeruk';
+  const kelurahan = options.kelurahan ?? 'Kebon Jeruk';
   // Close tab when more than 5 tabs open
   const pages =
     typeof (browserOrPage as any).browser === 'function'
