@@ -9,6 +9,7 @@ import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 type MySQL2Options = Partial<Parameters<typeof createDatabasePool>[0]>;
 export interface LogDatabaseOptions extends MySQL2Options {
   [key: string]: any;
+  type?: 'sqlite' | 'mysql';
 }
 
 export class LogDatabase implements BaseLogDatabase {
@@ -19,7 +20,7 @@ export class LogDatabase implements BaseLogDatabase {
 
   constructor(dbName?: string, options?: LogDatabaseOptions) {
     this.options = options;
-    this.dbName = dbName;
+    this.dbName = dbName || 'default';
     this.pref = new SharedPreferences({ namespace: this.constructor.name });
   }
 
@@ -72,12 +73,19 @@ export class LogDatabase implements BaseLogDatabase {
   }
 
   async initialize() {
-    try {
+    if (this.options?.type === 'sqlite') {
+      this.store = new SQLiteLogDatabase(this.dbName);
+    } else if (this.options?.type === 'mysql') {
       this.store = new MysqlLogDatabase(this.dbName, this.options);
-    } catch (error) {
-      console.error('Error initializing database:', (error as Error).message);
-      console.error('Falling back to SQLite database.');
-      this.store = new SQLiteLogDatabase(this.dbName || 'logs.db');
+    } else {
+      // auto
+      try {
+        this.store = new MysqlLogDatabase(this.dbName, this.options);
+      } catch (error) {
+        console.error('Error initializing database:', (error as Error).message);
+        console.error('Falling back to SQLite database.');
+        this.store = new SQLiteLogDatabase(this.dbName);
+      }
     }
   }
 
@@ -92,7 +100,7 @@ export class LogDatabase implements BaseLogDatabase {
    * @returns True if the checksum has changed, false otherwise.
    */
   private isChecksumChanged(save = false) {
-    const sqliteFile = getDatabaseFilePath(this.dbName || 'logs.db');
+    const sqliteFile = getDatabaseFilePath(this.dbName);
     const sqliteChecksum = getChecksum(sqliteFile);
     const checksumFile = path.join(process.cwd(), `.cache/migrations/${this.dbName || 'logs'}.checksum`);
     const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
@@ -122,8 +130,8 @@ export class LogDatabase implements BaseLogDatabase {
       return;
     }
     // Perform migration
-    const sqlite = new SQLiteLogDatabase(this.dbName || 'logs.db');
-    const mysql = new MysqlLogDatabase(this.dbName || 'logs.db');
+    const sqlite = new SQLiteLogDatabase(this.dbName);
+    const mysql = new MysqlLogDatabase(this.dbName);
 
     const logs = sqlite.getLogs();
     for await (const log of logs) {
