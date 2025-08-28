@@ -244,31 +244,38 @@ async function isSuccessModalVisible(page: Page) {
 }
 
 async function getData() {
-  const sehatindonesiakuData = (JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8')) as DataItem[])
-    .map((item) => {
-      // Fix tanggal_pemeriksaan empty to today
-      if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
-        item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-      }
-      return item;
-    })
-    .filter((item) => {
-      // Filter out empty item
-      const isEmptyItem = !item || Object.keys(item).length === 0;
-      // Filter out empty nik
-      const isNikEmpty = !item.nik || item.nik.trim() === '';
-      if (isEmptyItem || isNikEmpty) return false;
-      // Filter out items with past tanggal_pemeriksaan
-      const today = moment().startOf('day');
-      const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
-      const isPast = pemeriksaanDate.isBefore(today);
-      if (isPast) return false;
-      // Filter not have property registered
-      if ('registered' in item) return false;
+  const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
 
-      return true;
-    });
-  return sehatindonesiakuData;
+  // Fix tanggal_pemeriksaan empty to today
+  const mappedData = rawData.map((item) => {
+    if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
+      item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+    }
+    return item;
+  });
+
+  // Async filter
+  const filteredData: DataItem[] = [];
+  for (const item of mappedData) {
+    // Skip empty item
+    if (!item || Object.keys(item).length === 0) continue;
+
+    // Skip empty nik
+    if (!item.nik || item.nik.trim() === '') continue;
+
+    // Skip items with past tanggal_pemeriksaan
+    const today = moment().startOf('day');
+    const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
+    if (pemeriksaanDate.isBefore(today)) continue;
+
+    // Skip if registered exists in DB
+    const dbData = (await sehatindonesiakuDb.getLogById(item.nik)) ?? item;
+    if ('registered' in dbData) continue;
+
+    filteredData.push(item);
+  }
+
+  return filteredData;
 }
 
 export function showHelp() {
