@@ -58,10 +58,13 @@ export class LogDatabase implements BaseLogDatabase {
     if (this.store instanceof MysqlLogDatabase) {
       return await this.store.waitReady();
     }
+    // For SQLite or other stores without waitReady, just resolve
+    return;
   }
 
   async query(sql: string, params?: any[]) {
-    this.store.query(sql, params);
+    if (!this.store) await this.initialize();
+    return await this.store.query(sql, params);
   }
 
   async close() {
