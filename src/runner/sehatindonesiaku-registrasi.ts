@@ -39,7 +39,24 @@ const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
 async function main() {
   let needLogin = false;
   const { browser } = await getPuppeteer();
-  let allData = await getData();
+  // Parse --nik from CLI args and pass to getData
+  let nikList: string[] | undefined = undefined;
+  if (cliArgs.nik) {
+    if (typeof cliArgs.nik === 'number') {
+      nikList = [String(cliArgs.nik)];
+    } else if (typeof cliArgs.nik === 'string') {
+      nikList = cliArgs.nik
+        .split(',')
+        .map((n: string) => n.trim())
+        .filter(Boolean);
+    } else if (Array.isArray(cliArgs.nik)) {
+      nikList = cliArgs.nik
+        .flatMap((n: string | number) => String(n).split(','))
+        .map((n: string) => n.trim())
+        .filter(Boolean);
+    }
+  }
+  let allData = await getData({ nik: nikList });
   if (isShuffle) allData = array_shuffle(allData);
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
