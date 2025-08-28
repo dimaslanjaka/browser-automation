@@ -37,10 +37,13 @@ const isSingleData = cliArgs.single || cliArgs.s || false;
 const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
 
 async function main() {
+  let needLogin = false;
   const { browser } = await getPuppeteer();
   let allData = await getData();
   if (isShuffle) allData = array_shuffle(allData);
-  let needLogin = false;
+  if (cliArgs.nik) {
+    allData = allData.filter((item) => item.nik.trim() === cliArgs.nik.trim());
+  }
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
   // await processData(browser, sampleData);
@@ -288,12 +291,24 @@ async function getData() {
 
 export function showHelp() {
   const [node, script] = process.argv;
+  console.log('SehatIndonesiaku Kemkes CLI');
+  console.log('----------------------------');
   console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
   console.log('');
   console.log('Options:');
-  console.log('  -h, --help     Show help');
-  console.log('  -s, --single   Process only one data item');
-  console.log('  -sh, --shuffle Shuffle data before processing');
+  console.log('  -h, --help        Show this help message and exit');
+  console.log('  -s, --single      Process only one data item (first match or filtered by --nik)');
+  console.log('  -sh, --shuffle    Shuffle data before processing');
+  console.log('  --nik <NIK>       Process only data with specific NIK (useful with --single)');
+  console.log('');
+  console.log('Examples:');
+  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --help`);
+  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single`);
+  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --nik 1234567890123456`);
+  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single --nik 1234567890123456`);
+  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --shuffle`);
+  console.log('');
+  console.log('For more information, see the documentation or README.');
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kemkes'))) {
