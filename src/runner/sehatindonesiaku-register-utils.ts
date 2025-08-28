@@ -5,22 +5,27 @@ import { DataItem } from './sehatindonesiaku-data.js';
 import { PembatasanUmurError } from './sehatindonesiaku-errors.js';
 
 export async function isSpecificModalVisible(page: Page, textToMatch: string = 'Data belum sesuai KTP') {
-  // Select all divs with the custom shadow class (or another stable class)
+  // Select all divs that look like modals
   const modals = await page.$$('div.shadow-gmail');
 
   for (const modal of modals) {
     const text = await page.evaluate((el) => el.innerText, modal);
 
     // Check if it contains the specific text
-    if (text.trim().toLowerCase().includes(textToMatch.toLowerCase())) {
-      // Check if it is visible
-      const visible = await page.evaluate((el) => {
-        const style = window.getComputedStyle(el);
-        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-      }, modal);
+    if (!text.trim().toLowerCase().includes(textToMatch.toLowerCase())) continue;
 
-      if (visible) return true;
-    }
+    // Check if the element is visible in the layout
+    const visible = await page.evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        parseFloat(style.opacity) > 0 &&
+        el.offsetParent !== null
+      );
+    }, modal);
+
+    if (visible) return true;
   }
 
   return false;

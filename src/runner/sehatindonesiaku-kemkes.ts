@@ -30,7 +30,7 @@ import {
   selectPekerjaan,
   selectTanggalLahir
 } from './sehatindonesiaku-register-utils.js';
-import { clickDaftarBaru, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
+import { clickDaftarBaru, clickKembali, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 // Address defaults moved to processData options
 const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' }, string: ['nik'] });
@@ -59,7 +59,7 @@ async function main() {
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
         });
-        continue; // Skip this item and continue with the next
+        // continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
@@ -68,7 +68,7 @@ async function main() {
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
         });
-        continue; // Skip this item and continue with the next
+        // continue; // Skip this item and continue with the next
       } else if (e instanceof UnauthorizedError) {
         needLogin = true;
         console.warn(
@@ -78,7 +78,7 @@ async function main() {
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
       // Break the loop on unexpected errors (uncomment below for development)
-      // break;
+      break;
     }
 
     if (isSingleData) break; // Process only one item if --single or -s flag is passed
@@ -90,9 +90,9 @@ async function main() {
   }
 
   // comment below codes for development
-  console.log('All data processed. Closing browser...');
-  await browser.close();
-  process.exit(0);
+  // console.log('All data processed. Closing browser...');
+  // await browser.close();
+  // process.exit(0);
 }
 
 /** Helper for async CLI prompt */
@@ -215,10 +215,10 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   }
 
   if (await isSuccessModalVisible(page)) {
-    console.log(`${item.nik} - ${ansiColors.green('Data processed successfully!')}`);
+    console.log(`${item.nik} - ${ansiColors.green('Data registered successfully!')}`);
     // Save the data to database
     const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
-    message.push('Data processed successfully');
+    message.push('Data registered successfully');
     await sehatindonesiakuDb.addLog({
       id: item.nik,
       data: { ...item, registered: true },
@@ -227,8 +227,23 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     return; // Exit after successful processing
   }
 
+  // Handle modal "Peserta Menerima Pemeriksaan"
+  if (await isSpecificModalVisible(page, 'Peserta Menerima Pemeriksaan')) {
+    console.log(`${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
+    await clickKembali(page);
+    // Save the data to database
+    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    message.push('Peserta Sudah Menerima Pemeriksaan');
+    await sehatindonesiakuDb.addLog({
+      id: item.nik,
+      data: { ...item, registered: true },
+      message: array_unique(message).join(',')
+    });
+    return;
+  }
+
   // Check modal "Data belum sesuai KTP"
-  if (isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
+  if (await isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
     console.log(`${item.nik} - Data belum sesuai KTP modal is visible.`);
     throw new DataTidakSesuaiKTPError(item.nik);
   }
