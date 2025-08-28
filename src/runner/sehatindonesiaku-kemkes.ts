@@ -33,7 +33,7 @@ import {
 import { clickDaftarBaru, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 // Address defaults moved to processData options
-const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' } });
+const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' }, string: ['nik'] });
 const isSingleData = cliArgs.single || cliArgs.s || false;
 const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
 
@@ -281,6 +281,10 @@ async function getData() {
   let nikFilter: string[] = [];
   let overwriteNiks: string[] = [];
   let disableDbFilter = false;
+  // Normalize nik to string if number (minimist may parse as number)
+  if (typeof cliArgs.nik === 'number') {
+    cliArgs.nik = String(cliArgs.nik);
+  }
   if (cliArgs.nik) {
     // Support multiple NIKs separated by comma, trim whitespace, filter out empty
     if (typeof cliArgs.nik === 'string') {
