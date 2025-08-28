@@ -1,4 +1,5 @@
 import ansiColors from 'ansi-colors';
+import readline from 'node:readline';
 import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
@@ -92,6 +93,20 @@ async function main() {
   console.log('All data processed. Closing browser...');
   await browser.close();
   process.exit(0);
+}
+
+// Helper for async CLI prompt
+function askQuestion(query: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  return new Promise((resolve) => {
+    rl.question(query, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
 }
 
 interface ProcessDataOptions {
@@ -263,9 +278,11 @@ async function getData() {
   });
 
   // Filter by NIK if provided via CLI
+  let nikFilter: string[] = [];
+  let overwriteNiks: string[] = [];
+  let disableDbFilter = false;
   if (cliArgs.nik) {
     // Support multiple NIKs separated by comma, trim whitespace, filter out empty
-    let nikFilter: string[] = [];
     if (typeof cliArgs.nik === 'string') {
       nikFilter = cliArgs.nik.split(',');
     } else if (Array.isArray(cliArgs.nik)) {
@@ -273,6 +290,25 @@ async function getData() {
     }
     nikFilter = nikFilter.map((nik) => (nik || '').trim()).filter((nik) => nik.length > 0);
     mappedData = mappedData.filter((item) => nikFilter.includes((item.nik || '').trim()));
+
+    // Check if any NIK already exists in DB
+    const existingNiks: string[] = [];
+    for (const nik of nikFilter) {
+      const dbData = await sehatindonesiakuDb.getLogById(nik);
+      if (dbData && 'registered' in dbData) {
+        existingNiks.push(nik);
+      }
+    }
+    if (existingNiks.length > 0) {
+      // Prompt user for overwrite
+      const answer = await askQuestion(
+        `Data for the following NIK(s) already exists in the database: ${existingNiks.join(', ')}. Overwrite? (y/N): `
+      );
+      if (answer.trim().toLowerCase() === 'y') {
+        overwriteNiks = existingNiks;
+        disableDbFilter = true;
+      }
+    }
   }
 
   // Async filter
@@ -289,9 +325,11 @@ async function getData() {
     const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
     if (pemeriksaanDate.isBefore(today)) continue;
 
-    // Skip if registered exists in DB
-    const dbData = (await sehatindonesiakuDb.getLogById(item.nik)) ?? item;
-    if ('registered' in dbData) continue;
+    // Skip if registered exists in DB, unless overwrite is enabled for this NIK
+    if (!disableDbFilter || (disableDbFilter && !overwriteNiks.includes((item.nik || '').trim()))) {
+      const dbData = (await sehatindonesiakuDb.getLogById(item.nik)) ?? item;
+      if ('registered' in dbData) continue;
+    }
 
     filteredData.push(item);
   }
