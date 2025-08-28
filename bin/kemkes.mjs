@@ -69,29 +69,33 @@ async function showCommandHelp(name) {
 }
 
 async function showHelp() {
-  console.log(`
-Usage: kemkes <command> [options]
-
-Commands:
-  hadir         Run kehadiran (attendance) automation
-  data          Run data automation
-  run           Run main kemkes script
-  help          Show this help message
-
-Options:
-  -d, --dev         Run in development mode (TypeScript source)
-  --development     Same as --dev
-  -w, --watch       Watch src/ for changes and rerun command automatically
-  --watch           Same as -w
-Sub-options:
-  -h, --help        Show help (e.g., kemkes data --help)
-
-Examples:
-  kemkes --dev --watch hadir
-  kemkes data
-  kemkes run --help
-  kemkes hadir --single
-`);
+  console.log(`\n${'='.repeat(60)}\n`);
+  console.log('Usage: kemkes <command> [options]\n');
+  console.log('Commands:');
+  console.log('  hadir        Run kehadiran (attendance) automation');
+  console.log('  data         Run data automation');
+  console.log('  run          Run main kemkes script');
+  console.log('  config       Run kemkes config script');
+  console.log('  pelayanan    Run pelayanan automation');
+  console.log('  cleandb      Clean kemkes database');
+  console.log('  help         Show this help message');
+  console.log('\nOptions:');
+  console.log('  -d, --dev         Run in development mode (TypeScript source)');
+  console.log('  --development     Same as --dev');
+  console.log('  -w, --watch       Watch src/ for changes and rerun command automatically');
+  console.log('  --watch           Same as -w');
+  console.log('\nSub-options:');
+  console.log('  -h, --help        Show help for a command (e.g., kemkes data --help)');
+  console.log('\nExamples:');
+  console.log('  kemkes hadir --dev --watch');
+  console.log('  kemkes data');
+  console.log('  kemkes run --help');
+  console.log('  kemkes config');
+  console.log('  kemkes pelayanan --dev');
+  console.log('  kemkes cleandb');
+  console.log('  kemkes hadir --single');
+  console.log('\nFor detailed help on a command, use: kemkes <command> --help');
+  console.log(`\n${'='.repeat(60)}\n`);
 
   for (const name of ['config', 'data', 'hadir', 'run', 'pelayanan']) {
     centerLog(`==== ${name.toUpperCase()} Command Help ====`);
