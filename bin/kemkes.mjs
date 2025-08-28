@@ -37,6 +37,10 @@ const COMMANDS = {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-pelayanan.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-pelayanan.js')
   },
+  cleandb: {
+    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-cleanDB.ts'),
+    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-cleanDB.js')
+  },
   default: {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-kemkes.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-kemkes.js')
