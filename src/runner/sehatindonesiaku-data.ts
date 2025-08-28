@@ -311,7 +311,7 @@ export function showHelp() {
   console.log('  --help, -h       Show this help message');
 }
 
-if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data'))) {
+if (process.argv.some((arg) => /sehatindonesiaku-data\.(ts|mjs|js|cjs)$/.test(arg))) {
   (async () => {
     try {
       const args = minimist(process.argv.slice(2), {
