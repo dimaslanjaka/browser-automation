@@ -42,9 +42,9 @@ export class LogDatabase implements BaseLogDatabase {
     return await this.store.removeLog(id);
   }
 
-  async getLogById<T = any>(id: LogEntry<any>['id']): Promise<LogEntry<T> | undefined> {
+  async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
     if (!this.store) await this.initialize();
-    return await this.store.getLogById(id);
+    return await this.store.getLogById<T>(id);
   }
 
   async getLogs<T = any>(

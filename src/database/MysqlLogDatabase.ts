@@ -140,7 +140,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @param id Unique log identifier.
    * @returns Promise that resolves to the log object or undefined if not found.
    */
-  async getLogById<T = any>(id: LogEntry<any>['id']): Promise<LogEntry<T> | undefined> {
+  async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
     await this.readyPromise;
     const pool = await this.poolPromise;
     const [rows]: any = await pool.query('SELECT * FROM logs WHERE id = ?', [id]);
