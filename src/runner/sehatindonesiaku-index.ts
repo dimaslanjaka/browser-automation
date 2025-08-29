@@ -1,8 +1,10 @@
 import ansiColors from 'ansi-colors';
+import { spawnAsync } from 'cross-spawn';
 import { Page } from 'puppeteer';
 import { array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { noop } from '../utils-browser.js';
 import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
@@ -15,6 +17,8 @@ import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-reg
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 async function main() {
+  // Enable unicode
+  await spawnAsync('chcp', ['65001']).catch(noop);
   let needLogin = false;
   const { browser } = await getPuppeteer();
   const allData = await getRegistrasiData();
@@ -25,7 +29,7 @@ async function main() {
     }
 
     const item = allData[i];
-    const dbItem = (await sehatindonesiakuDb.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
+    const dbItem: Partial<LogEntry<DataItem>> = (await sehatindonesiakuDb.getLogById(item.nik)) ?? {};
 
     // Skip already processed items
     if (dbItem.data?.hadir && dbItem.data?.registered) {
