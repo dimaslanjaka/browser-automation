@@ -26,6 +26,13 @@ async function main() {
 
     const item = allData[i];
     const dbItem = (await sehatindonesiakuDb.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
+
+    // Skip already processed items
+    if (dbItem.data?.hadir && dbItem.data?.registered) {
+      console.log(`📝 ${item.nik} - Already processed`);
+      continue;
+    }
+
     try {
       console.log(`📝 ${item.nik} - Checking login status`);
       await checkLoginStatus(await browser.newPage());
@@ -41,11 +48,10 @@ async function main() {
       await processKehadiranData(await browser.newPage(), item);
       console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully processed attendance')}`);
     } catch (e) {
+      const message = (dbItem?.message ?? '').split(',');
       if (e instanceof AlreadyHadir) {
         continue;
-      }
-      const message = (dbItem?.message ?? '').split(',');
-      if (e instanceof ErrorDataKehadiranNotFound) {
+      } else if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
         message.push('Data Kehadiran not found');
         await sehatindonesiakuDb.addLog({
