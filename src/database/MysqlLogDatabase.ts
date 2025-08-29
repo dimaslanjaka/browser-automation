@@ -17,6 +17,23 @@ export const defaultOptions: Partial<Parameters<typeof createDatabasePool>[0]> =
 };
 
 /**
+ * Options for adding a log entry.
+ *
+ * @property timeout Optional timeout in milliseconds for the database operation.
+ * @property update Optional flag to update an existing log entry if it exists.
+ */
+export interface AddLogOptions {
+  /**
+   * Timeout in milliseconds for the database operation. (default: 60000)
+   */
+  timeout?: number;
+  /**
+   * Whether to update an existing log entry if it exists. (default: true)
+   */
+  update?: boolean;
+}
+
+/**
  * Class representing a log database using MySQL.
  */
 export class MysqlLogDatabase implements BaseLogDatabase {
@@ -76,14 +93,29 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @param options Optional query options (e.g., timeout in ms)
    * @returns Promise that resolves when the log is added or updated.
    */
-  async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: any = {}) {
+  async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: AddLogOptions = {}) {
     await this.readyPromise;
     const pool = await this.poolPromise;
     if (!timestamp) timestamp = getJakartaTimestamp();
+    const defaultOptions = {
+      timeout: 60000, // default 60s if not provided
+      update: true // always update by default
+    };
+    options = { ...defaultOptions, ...options };
+    if (options.update) {
+      // If updating, first get the existing log
+      const existing = await this.getLogById(id);
+      if (existing) {
+        // If existing log is found, merge data
+        if (typeof data === 'object' && typeof existing.data === 'object') {
+          data = { ...existing.data, ...data };
+        }
+      }
+    }
     await pool.query(
       {
         sql: `REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`,
-        timeout: options.timeout || 60000 // default 60s if not provided
+        timeout: options.timeout
       },
       [id, JSON.stringify(data), message, timestamp]
     );
