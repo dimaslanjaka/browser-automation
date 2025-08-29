@@ -1,33 +1,50 @@
 import ansiColors from 'ansi-colors';
-import { getPuppeteer } from '../puppeteer_utils.js';
-import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { Page } from 'puppeteer';
+import { array_unique } from 'sbg-utility';
+import { LogEntry } from '../database/BaseLogDatabase.js';
+import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   ErrorDataKehadiranNotFound,
   PembatasanUmurError,
   UnauthorizedError
 } from './sehatindonesiaku-errors.js';
+import { checkAlreadyHadir, processKehadiranData, searchNik } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-registrasi.js';
-import { array_unique } from 'sbg-utility';
-import { processKehadiranData } from './sehatindonesiaku-kehadiran.js';
+import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
 async function main() {
   let needLogin = false;
   const { browser } = await getPuppeteer();
   const allData = await getRegistrasiData();
-  for (const item of allData) {
+
+  for (let i = 0; i < allData.length; i++) {
     if ((await browser.pages()).length > 5) {
       (await browser.pages()).pop()?.close();
     }
+
+    const item = allData[i];
+    const dbItem = (await sehatindonesiakuDb.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
     try {
-      console.log(`${item.nik} - Processing registration`);
+      console.log(`📝 ${item.nik} - Checking login status`);
+      await checkLoginStatus(await browser.newPage());
+
+      console.log(`🔍 ${item.nik} - Checking registered status`);
+      await checkRegisteredStatus(await browser.newPage(), item);
+
+      console.log(`📝 ${item.nik} - Processing registration`);
       await processRegistrasiData(await browser.newPage(), item);
-      console.log(`${item.nik} - ✅ Successfully registered`);
-      console.log(`${item.nik} - Processing attendance`);
+      console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully registered')}`);
+
+      console.log(`📝 ${item.nik} - Processing attendance`);
       await processKehadiranData(await browser.newPage(), item);
-      console.log(`${item.nik} - ✅ Successfully processed attendance`);
+      console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully processed attendance')}`);
     } catch (e) {
-      const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+      if (e instanceof AlreadyHadir) {
+        continue;
+      }
+      const message = (dbItem?.message ?? '').split(',');
       if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
         message.push('Data Kehadiran not found');
@@ -63,21 +80,46 @@ async function main() {
         break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
-      // Break the loop on unexpected errors (uncomment below for development)
-      // break;
     }
 
-    // Wait a bit before next iteration
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    break; // Only process one item for now (development mode)
+  }
 
-    if (needLogin) {
-      console.warn('CTRL+C after logged in');
-      while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
+  if (!needLogin) {
+    console.log('All items processed successfully');
+    await sehatindonesiakuDb.close();
+    // await browser.close();
+  }
+}
 
-    // break; // Only process one item for now
+async function checkLoginStatus(page: Page) {
+  if (!(await enterSehatIndonesiaKu(page))) {
+    throw new UnauthorizedError();
+  }
+}
+
+async function checkRegisteredStatus(page: Page, item: DataItem) {
+  await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
+  await waitForDomStable(page, 500, 10000);
+  await searchNik(page, item.nik);
+  if (await checkAlreadyHadir(page, item)) {
+    const dbItem = (await sehatindonesiakuDb.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
+    const messages = (dbItem?.message ?? '').split(',');
+    messages.push('Data sudah hadir');
+    await sehatindonesiakuDb.addLog({
+      id: item.nik,
+      // Marked as hadir is same as already registered
+      data: { ...item, hadir: true, registered: true },
+      message: array_unique(messages).join(',')
+    });
+    throw new AlreadyHadir();
+  }
+}
+
+class AlreadyHadir extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = 'AlreadyHadir';
   }
 }
 

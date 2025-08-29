@@ -173,18 +173,7 @@ async function processData(page: Page, item: DataItem) {
   if (!isLoggedIn) throw new UnauthorizedError();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 2000, 5000);
-  console.log(`${item.nik} - change search type to NIK`);
-  // Select search dropdown <div data-v-c491f920="" class="h-[2.9rem] w-full flex cursor-pointer items-center justify-start overflow-hidden border-none bg-transparent pl-4 text-sm focus:outline-none text-black">Nomor Tiket</div>
-  await clickElementByText(page, 'div.cursor-pointer', 'Nomor Tiket');
-  await sleep(200);
-  await clickElementByText(page, 'div.cursor-pointer', 'NIK');
-  // Search for NIK <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black pl-12 border-rd-r-lg border-rd-l-0" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="19">
-  await page.focus('#nik');
-  await page.type('#nik', item.nik, { delay: 100 });
-  // Press enter on input
-  await page.keyboard.press('Enter');
-  await waitForDomStable(page, 2000, 10000);
-  await sleep(1000);
+  await searchNik(page, item.nik);
   // Check if data not found
   const isNoDataFound = await page.evaluate(() => {
     const el = document.querySelectorAll('.table-individu-terdaftar .font-bold');
@@ -197,16 +186,7 @@ async function processData(page: Page, item: DataItem) {
   if (isNoDataFound) {
     throw new ErrorDataKehadiranNotFound(item.nik);
   }
-  // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
-  if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
-    console.log(`${item.nik} - already marked as hadir`);
-    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
-    message.push('Data sudah hadir');
-    await sehatindonesiakuDb.addLog({
-      id: item.nik,
-      data: { ...item, hadir: true },
-      message: array_unique(message).join(',')
-    });
+  if (await checkAlreadyHadir(page, item)) {
     return;
   }
   // Click <button type="button" class="w-fill btn-fill-primary h-11"><div class="flex flex-row justify-center gap-2"><!----><div class="tracking-wide">Konfirmasi Hadir <!----></div></div></button>
@@ -268,6 +248,37 @@ async function processData(page: Page, item: DataItem) {
     data: { ...item, hadir: true },
     message: array_unique(message).join(',')
   });
+}
+
+export async function searchNik(page: Page, nik: string) {
+  console.log(`${nik} - change search type to NIK`);
+  // Select search dropdown <div data-v-c491f920="" class="h-[2.9rem] w-full flex cursor-pointer items-center justify-start overflow-hidden border-none bg-transparent pl-4 text-sm focus:outline-none text-black">Nomor Tiket</div>
+  await clickElementByText(page, 'div.cursor-pointer', 'Nomor Tiket');
+  await sleep(200);
+  await clickElementByText(page, 'div.cursor-pointer', 'NIK');
+  // Search for NIK <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black pl-12 border-rd-r-lg border-rd-l-0" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="19">
+  await page.focus('#nik');
+  await page.type('#nik', nik, { delay: 100 });
+  // Press enter on input
+  await page.keyboard.press('Enter');
+  await waitForDomStable(page, 2000, 10000);
+  await sleep(1000);
+}
+
+export async function checkAlreadyHadir(page: Page, item: DataItem) {
+  // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
+  if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
+    console.log(`${item.nik} - already marked as hadir`);
+    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    message.push('Data sudah hadir');
+    await sehatindonesiakuDb.addLog({
+      id: item.nik,
+      data: { ...item, hadir: true },
+      message: array_unique(message).join(',')
+    });
+    return true;
+  }
+  return false;
 }
 
 export { getData as getKehadiranData, main as mainKehadiran, processData as processKehadiranData };
