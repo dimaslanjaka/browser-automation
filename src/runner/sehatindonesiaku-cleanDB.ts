@@ -1,23 +1,28 @@
 import minimist from 'minimist';
-import { sleep } from '../utils-browser.js';
-import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
-import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { normalizePathUnix } from 'sbg-utility';
+import { sleep } from '../utils-browser.js';
+import { getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import fs from 'fs-extra';
 
 const args = minimist(process.argv.slice(2), { alias: { h: 'help' } });
 
 async function main() {
-  let allData = await getRegistrasiData();
+  await sehatindonesiakuDb.initialize();
+  let allData = await getExcelData();
   if (args.nik) {
     allData = allData.filter((item) => item.nik === args.nik);
   }
   for (const item of allData) {
-    const get = await sehatindonesiakuDb.getLogById(item.nik);
-    if (typeof get === 'object' && Object.keys(get).length > 0) {
-      console.log(`${item.nik} - Removing existing log`);
-      await sehatindonesiakuDb.removeLog(item.nik);
-      await sleep(500);
-    }
+    console.log(`${item.nik} - Removing existing log`);
+    await sehatindonesiakuDb.removeLog(item.nik);
+    await sleep(100);
+  }
+  if (sehatindonesiakuDb.dbPath && fs.existsSync(sehatindonesiakuDb.dbPath)) {
+    await sehatindonesiakuDb.close();
+    console.log(`Deleting sqlite database path: ${sehatindonesiakuDb.dbPath}`);
+    await fs.remove(sehatindonesiakuDb.dbPath).catch((error) => {
+      console.error('Error deleting database file:', (error as Error).message);
+    });
   }
 }
 
