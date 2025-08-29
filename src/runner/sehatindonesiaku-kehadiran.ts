@@ -28,7 +28,6 @@ export function showHelp() {
   console.log('  -h, --help     Show help');
   console.log('  -s, --single   Process a single item');
   console.log('  -sh, --shuffle      Shuffle the order of data items before processing');
-  console.log('  --dbtype      Type of database to use (db or excel). Default: excel');
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
@@ -49,8 +48,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
 async function main() {
   const puppeteer = await getPuppeteer();
   // Prepare data to process
-  const dataType = args.dbtype || 'excel';
-  let allData = await getData({ type: dataType });
+  let allData = await getData();
   // Shuffle data if --shuffle is passed
   if (args.shuffle || args.sh) {
     allData = array_shuffle(allData);
@@ -80,7 +78,8 @@ async function main() {
           `${item.nik} - UnauthorizedError: Login required. Please login first using sehatindonesiaku-login. (close browser and rerun the script after login)`
         );
         break; // Stop processing further if unauthorized
-      } else if (e instanceof ErrorDataKehadiranNotFound) {
+      }
+      if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
         const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
         message.push('Data Kehadiran not found');
@@ -130,7 +129,6 @@ async function getExcelData() {
 export interface DataOptions {
   shuffle?: boolean;
   single?: boolean;
-  type?: 'db' | 'excel';
 }
 
 /**
@@ -150,28 +148,24 @@ export interface DataOptions {
  * @returns Promise resolving to an array of DataItem objects to process.
  */
 async function getData(options?: DataOptions): Promise<DataItem[]> {
-  const defaultOptions: DataOptions = { shuffle: false, single: false, type: 'excel' };
+  const defaultOptions: DataOptions = { shuffle: false, single: false };
   options = { ...defaultOptions, ...options };
-  const data = options.type === 'db' ? await sehatindonesiakuDb.getLogs<DataItem>() : await getExcelData();
-  console.log(`Total data items retrieved from ${options.type}: ${data.length}`);
-  const filtered = data.filter((item) => {
-    // Support both flat and wrapped data
-    const d = item.data || item;
-    if (!d || typeof d.nik !== 'string' || d.nik.length === 0) return false;
-    // Allow if 'hadir' is missing or explicitly false
-    if (!('hadir' in d) || d.hadir === false) return true;
+  const data = await getExcelData();
+  console.log(`Total data items retrieved: ${data.length}`);
+  let filtered = data.filter((item) => {
+    if (!item || typeof item.nik !== 'string' || item.nik.length === 0) return false;
+    // Allow if 'hadir' is missing
+    if (!('hadir' in item)) return true;
     return false;
   });
   console.log(`Total filtered data items: ${filtered.length}`);
-  // Map to flat DataItem
-  let map = filtered.map((item) => item.data || item);
   if (options.shuffle) {
-    map = array_shuffle(map);
+    filtered = array_shuffle(filtered);
   }
   if (options.single) {
-    return map.slice(0, 1);
+    return filtered.slice(0, 1);
   }
-  return map;
+  return filtered;
 }
 
 async function processData(page: Page, item: DataItem) {
