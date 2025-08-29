@@ -17,10 +17,10 @@ async function main() {
     await sehatindonesiakuDb.removeLog(item.nik);
     await sleep(100);
   }
-  if (sehatindonesiakuDb.dbPath && fs.existsSync(sehatindonesiakuDb.dbPath)) {
+  if (sehatindonesiakuDb.sqliteDbPath && fs.existsSync(sehatindonesiakuDb.sqliteDbPath)) {
     await sehatindonesiakuDb.close();
-    console.log(`Deleting sqlite database path: ${sehatindonesiakuDb.dbPath}`);
-    await fs.remove(sehatindonesiakuDb.dbPath).catch((error) => {
+    console.log(`Deleting sqlite database path: ${sehatindonesiakuDb.sqliteDbPath}`);
+    await fs.remove(sehatindonesiakuDb.sqliteDbPath).catch((error) => {
       console.error('Error deleting database file:', (error as Error).message);
     });
   }

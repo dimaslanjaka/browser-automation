@@ -17,13 +17,13 @@ export class LogDatabase implements BaseLogDatabase {
   dbName: string;
   store: MysqlLogDatabase | SQLiteLogDatabase;
   pref: SharedPreferences;
-  dbPath: string;
-  sqlite: SQLiteLogDatabase;
+  sqliteDbPath: string;
 
   constructor(dbName?: string, options?: LogDatabaseOptions) {
     this.options = options;
     this.dbName = dbName || 'default';
     this.pref = new SharedPreferences({ namespace: this.constructor.name });
+    this.sqliteDbPath = getDatabaseFilePath(this.dbName);
   }
 
   async getType() {
@@ -81,18 +81,11 @@ export class LogDatabase implements BaseLogDatabase {
       }
     }
     await this.store.close();
-    try {
-      this.sqlite.close();
-    } catch {
-      //
-    }
   }
 
   async initialize() {
-    this.sqlite = new SQLiteLogDatabase(this.dbName);
-    this.dbPath = this.sqlite.dbPath;
     if (this.options?.type === 'sqlite') {
-      this.store = this.sqlite;
+      this.store = new SQLiteLogDatabase(this.dbName);
     } else if (this.options?.type === 'mysql') {
       this.store = new MysqlLogDatabase(this.dbName, this.options);
     } else {
@@ -102,7 +95,7 @@ export class LogDatabase implements BaseLogDatabase {
       } catch (error) {
         console.error('Error initializing database:', (error as Error).message);
         console.error('Falling back to SQLite database.');
-        this.store = this.sqlite;
+        this.store = new SQLiteLogDatabase(this.dbName);
       }
     }
   }
