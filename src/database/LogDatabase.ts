@@ -47,12 +47,12 @@ export class LogDatabase implements BaseLogDatabase {
     return await this.store.getLogById<T>(id);
   }
 
-  async getLogs<T = any>(
+  async getLogs<T>(
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
   ) {
     if (!this.store) await this.initialize();
-    return await this.store.getLogs(filterFn, options);
+    return (await this.store.getLogs<T>(filterFn, options)) as LogEntry<T>[];
   }
 
   async waitReady() {
