@@ -44,6 +44,11 @@ export interface DataItem {
   tanggal_pemeriksaan: string | null;
   tinggi_badan?: number | null;
   berat_badan?: number | null;
+  lingkar_perut?: number | null;
+  sistolik?: number | null;
+  diastolik?: number | null;
+  /** Gula Darah Saat Pemeriksaan (GDS) */
+  gula_darah?: number | null;
   /** Geocoding result */
   // resolved_address?: Awaited<ReturnType<typeof resolveAddress>>;
   [key: string]: any;
@@ -173,6 +178,22 @@ export async function parseXlsxFile(
       } else if (index === 45) {
         // Berat Badan
         obj['berat_badan'] = row[index];
+        continue;
+      } else if (index === 46) {
+        // Lingkar Perut
+        obj['lingkar_perut'] = row[index];
+        continue;
+      } else if (index === 47) {
+        // Sistolik
+        obj['sistolik'] = row[index];
+        continue;
+      } else if (index === 48) {
+        // Diastolik
+        obj['diastolik'] = row[index];
+        continue;
+      } else if (index === 49) {
+        // Gula Darah
+        obj['gula_darah'] = row[index];
         continue;
       }
       obj[`Column ${index + 1}`] = row[index];
