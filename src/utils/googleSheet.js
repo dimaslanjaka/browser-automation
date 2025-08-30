@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import axios from 'axios';
 import xlsx from 'xlsx';
+import { google } from 'googleapis';
 
 /**
  * Download a Google Spreadsheet as XLSX and cache it locally, along with metadata and CSV exports for each sheet.
@@ -105,4 +106,75 @@ async function downloadSheets(spreadsheetId) {
   return { xlsxFilePath, csvFiles, xlsxMetadataPath };
 }
 
-export { downloadSheets };
+/**
+ * Converts a color name to its corresponding RGB object with values in the range [0, 1].
+ *
+ * Supported color names: "red", "green", "blue", "yellow", "cyan", "magenta", "black", "white", "gray", "orange", "pink", "purple", "lightgreen", "lightblue".
+ *
+ * @param {string} colorName - The name of the color to convert.
+ * @returns {{ red: number, green: number, blue: number }} The RGB representation of the color.
+ * @throws {Error} If the color name is not supported.
+ */
+function colorNameToRgb(colorName) {
+  const colors = {
+    red: [1, 0, 0],
+    green: [0, 1, 0],
+    blue: [0, 0, 1],
+    yellow: [1, 1, 0],
+    cyan: [0, 1, 1],
+    magenta: [1, 0, 1],
+    black: [0, 0, 0],
+    white: [1, 1, 1],
+    gray: [0.5, 0.5, 0.5],
+    orange: [1, 0.65, 0],
+    pink: [1, 0.75, 0.8],
+    purple: [0.5, 0, 0.5],
+    lightgreen: [0.56, 0.93, 0.56],
+    lightblue: [0.68, 0.85, 0.9]
+  };
+
+  const rgb = colors[colorName.toLowerCase()];
+  if (!rgb) throw new Error(`Unsupported color name: ${colorName}`);
+
+  return { red: rgb[0], green: rgb[1], blue: rgb[2] };
+}
+
+/**
+ * Changes the background color of a specific row in a Google Sheet.
+ *
+ * @param {import('google-auth-library').OAuth2Client} auth - The authenticated OAuth2 client.
+ * @param {string} spreadsheetId - The ID of the Google Spreadsheet.
+ * @param {string} sheetId - The ID of the sheet to modify.
+ * @param {number} rowIndex - The index of the row to change (0-based).
+ * @param {string} colorName - The color name (e.g., "green", "red", "yellow", "orange", "magenta").
+ */
+async function changeRowColor(auth, spreadsheetId, sheetId, rowIndex, colorName) {
+  const color = colorNameToRgb(colorName);
+  const sheets = google.sheets({ version: 'v4', auth });
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId: sheetId,
+              startRowIndex: rowIndex, // inclusive
+              endRowIndex: rowIndex + 1 // exclusive
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: color
+              }
+            },
+            fields: 'userEnteredFormat.backgroundColor'
+          }
+        }
+      ]
+    }
+  });
+
+  console.log(`Row ${rowIndex + 1} color changed to ${colorName}!`);
+}
+
+export { downloadSheets, changeRowColor };
