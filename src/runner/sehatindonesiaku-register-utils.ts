@@ -130,9 +130,31 @@ export async function clickPilihButton(page: Page) {
     const isPilih = text.trim().toLowerCase() === 'pilih';
     // console.log(`Found button with text: "${text}" (isPilih: ${isPilih})`);
     if (isPilih) {
-      await btn.click();
-      clicked = true;
-      break;
+      // Check if button is enabled and visible
+      const isDisabled = await btn.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return style.opacity === '0.5' || style.pointerEvents === 'none';
+      });
+      const isVisible = await btn.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const isVisible =
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          parseFloat(style.opacity) > 0 &&
+          rect.width > 0 &&
+          rect.height > 0;
+        return isVisible;
+      });
+      if (isDisabled) {
+        throw new Error(`'Pilih' button is disabled`);
+      } else if (!isVisible) {
+        throw new Error(`'Pilih' button is not visible`);
+      } else {
+        await btn.click();
+        clicked = true;
+        break;
+      }
     }
   }
 
