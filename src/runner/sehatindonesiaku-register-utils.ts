@@ -66,7 +66,15 @@ export async function handleKuotaHabisModal(page: Page) {
       // Check visibility
       const visible = await page.evaluate((el) => {
         const style = window.getComputedStyle(el);
-        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+        const rect = el.getBoundingClientRect();
+        const isVisible =
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          parseFloat(style.opacity) > 0 &&
+          rect.width > 0 &&
+          rect.height > 0;
+
+        return isVisible;
       }, modal);
 
       if (!visible) return false;
