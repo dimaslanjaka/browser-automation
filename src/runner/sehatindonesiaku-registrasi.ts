@@ -98,8 +98,17 @@ async function main() {
           `${ansiColors.redBright('Login required')}, please ${ansiColors.bold('login manually')} from opened browser. (close browser manual)`
         );
         break;
+      } else if (e instanceof TanggalPemeriksaanError) {
+        console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}`);
+        message.push('Tanggal Pemeriksaan tidak valid');
+        await sehatindonesiakuDb.addLog({
+          id: item.nik,
+          message: array_unique(message).join(','),
+          data: { registered: false, ...item }
+        });
+        continue;
       }
-      console.error(`Error processing data for NIK ${item.nik}:`, e);
+
       // Break the loop on unexpected errors (uncomment below for development)
       // break;
     }
