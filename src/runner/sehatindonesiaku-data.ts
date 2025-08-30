@@ -272,27 +272,46 @@ export async function downloadAndProcessXlsx(
 }
 
 /**
- * Loads data from the Excel JSON file and optionally merges it with the latest data from the database.
- * If merge is true, for each item, attempts to update its fields with the corresponding database entry.
- * Returns the resulting array of DataItem objects.
+ * Loads data from the Excel JSON file.
  *
- * @param merge Whether to merge each item with the latest database data (default: true)
- * @returns Array of DataItem objects, possibly merged with database data
+ * Reads the processed data from the `.cache/sheets/sehatindonesiaku-data.json` file
+ * and returns it as an array of DataItem objects.
+ *
+ * @returns Promise resolving to an array of DataItem objects loaded from the Excel JSON file.
  */
 export async function getExcelData() {
   const rawData: DataItem[] = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
-  // for (let i = rawData.length - 1; i >= 0; i--) {
-  //   const item = rawData[i];
-  //   if (merge) {
-  //     const dbItem = (await sehatindonesiakuDb.getLogById<DataItem>(item.nik)) ?? ({} as Partial<DataItem>);
-  //     let merged = { ...item };
-  //     if (dbItem && dbItem.data) {
-  //       console.log(`Merging data for NIK: ${item.nik}`);
-  //       merged = { ...merged, ...dbItem.data };
-  //     }
-  //   }
-  // }
   return rawData;
+}
+
+/**
+ * Loads data from the database and updates it with the latest Excel data if available.
+ *
+ * For each entry in the database, attempts to find a matching entry in the Excel data (by NIK).
+ * If a match is found, updates the database entry with the Excel data and writes the updated entry back to the database.
+ * Returns the resulting array of updated database entries.
+ *
+ * @returns Promise resolving to an array of DataItem objects, merged with the latest Excel data where available.
+ */
+export async function getDbData() {
+  const dbData = (await sehatindonesiakuDb.getLogs<DataItem>()).filter((item) => item && item.data);
+  // Fix update additional data from excel (when update)
+  for (let i = dbData.length - 1; i >= 0; i--) {
+    const item = dbData[i];
+    const excelItem = (await getExcelData()).find((row) => row.nik === item.data.nik);
+    if (excelItem) {
+      console.log(`Updating data for NIK: ${item.data.nik}`);
+      const newItem = { ...item, ...excelItem };
+      dbData[i] = newItem;
+      // Update database
+      await sehatindonesiakuDb.addLog<DataItem>({
+        id: item.data.nik,
+        data: newItem,
+        message: item.message
+      });
+    }
+  }
+  return dbData;
 }
 
 export function showHelp() {
