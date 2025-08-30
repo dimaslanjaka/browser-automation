@@ -161,7 +161,7 @@ export async function selectCalendar(page: Page, dateStr: string) {
 
   // Click the day
   const clicked = await rootHandle.evaluate((root, wantedDay: number) => {
-    const grid = root.querySelector('.grid.grid-cols-7.gap-1.mt-2');
+    const grid = root.querySelector('.grid.grid-cols-7');
     if (!grid) return false;
     const btns = Array.from(grid.querySelectorAll('button')) as HTMLButtonElement[];
     for (const btn of btns) {
@@ -177,8 +177,10 @@ export async function selectCalendar(page: Page, dateStr: string) {
   }, targetDay);
 
   if (!clicked) {
-    throw new Error(`Day ${targetDay} not found in current month view`);
+    console.error(`Day ${targetDay} not found in current month view`);
   }
+
+  return clicked;
 }
 
 export async function screenshot(page: Page, filePath: string = 'tmp/screenshot.png') {

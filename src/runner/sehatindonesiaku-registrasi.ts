@@ -10,6 +10,7 @@ import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
   PembatasanUmurError,
+  TanggalPemeriksaanError,
   UnauthorizedError
 } from './sehatindonesiaku-errors.js';
 import {
@@ -186,7 +187,9 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
 
   // Select calendar date pemeriksaan
   console.log(`${item.nik} - Selecting tanggal pemeriksaan...`);
-  await selectCalendar(page, item.tanggal_pemeriksaan);
+  if (!(await selectCalendar(page, item.tanggal_pemeriksaan))) {
+    throw new TanggalPemeriksaanError(item.nik);
+  }
   await waitForDomStable(page, 2000, 6000);
 
   // click submit button

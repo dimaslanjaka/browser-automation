@@ -34,3 +34,9 @@ export class DataNotFound extends Error {
     this.name = 'DataNotFound';
   }
 }
+export class TanggalPemeriksaanError extends Error {
+  constructor(nik: string) {
+    super(`❌ Tanggal Pemeriksaan tidak valid for NIK: ${nik}`);
+    this.name = 'TanggalPemeriksaanError';
+  }
+}
