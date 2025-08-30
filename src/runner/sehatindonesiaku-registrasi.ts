@@ -198,13 +198,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await isPembatasanUmurVisible(page, item);
 
   // Handle modal "Kuota pemeriksaan habis"
-  let isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
-  console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
-  if (isKuotaHabisVisible) {
-    const isClicked = await handleKuotaHabisModal(page);
-    if (!isClicked) throw new KuotaHabisError(item.nik);
-    await waitForDomStable(page, 2000, 6000);
-  }
+  await kuotaHabisHandler(page, item);
 
   // Handle modal formulir pendaftaran
   console.log(`${item.nik} - Handling formulir pendaftaran modal...`);
@@ -221,13 +215,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     await clickDaftarkanDenganNIK(page);
     await waitForDomStable(page, 2000, 6000);
     // Re-check kuota pemeriksaan
-    isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
-    console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
-    if (isKuotaHabisVisible) {
-      const isClicked = await handleKuotaHabisModal(page);
-      if (!isClicked) throw new KuotaHabisError(item.nik);
-      await waitForDomStable(page, 2000, 6000);
-    }
+    await kuotaHabisHandler(page, item);
   }
 
   if (await isSuccessModalVisible(page)) {
@@ -262,6 +250,24 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   if (await isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
     console.log(`${item.nik} - Data belum sesuai KTP modal is visible.`);
     throw new DataTidakSesuaiKTPError(item.nik);
+  }
+}
+
+/**
+ * Handles the "Kuota pemeriksaan habis" modal during the registration process.
+ * If the modal is visible, attempts to close it and throws a KuotaHabisError if unsuccessful.
+ * Waits for the DOM to stabilize after handling the modal.
+ *
+ * @param page The Puppeteer Page instance to operate on.
+ * @param item The data item being processed.
+ */
+export async function kuotaHabisHandler(page: Page, item: DataItem) {
+  const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
+  console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
+  if (isKuotaHabisVisible) {
+    const isClicked = await handleKuotaHabisModal(page);
+    if (!isClicked) throw new KuotaHabisError(item.nik);
+    await waitForDomStable(page, 2000, 6000);
   }
 }
 
