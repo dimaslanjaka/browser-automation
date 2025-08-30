@@ -1,4 +1,6 @@
 import color from 'ansi-colors';
+import * as unicodeSymbols from 'unicode-symbols';
+import logSymbols from 'log-symbols';
 import { spawn, spawnSync } from 'child_process';
 import fs from 'fs-extra';
 import { getChecksum } from 'sbg-utility';
@@ -70,9 +72,9 @@ export async function build() {
   if (lastChecksum !== checksum) {
     console.log(
       [
-        'Checksum changed, running build...',
-        `  Previous: ${color.yellow(lastChecksum)}`,
-        `  Current:  ${color.green(checksum)}`
+        `${logSymbols.info} ${color.cyan('Checksum changed, running build...')}`,
+        ` ${unicodeSymbols.arrowLeft} Previous: ${color.yellow(lastChecksum)}`,
+        ` ${unicodeSymbols.arrowDown} Current:  ${color.green(checksum)}`
       ].join('\n')
     );
     // Run the build command with shell:true to ensure all output is shown
@@ -89,9 +91,9 @@ export async function build() {
   } else {
     console.log(
       [
-        'No changes detected, skipping build.',
-        `  Previous: ${color.yellow(lastChecksum)}`,
-        `  Current:  ${color.green(checksum)}`
+        `${logSymbols.success} ${color.green('No changes detected, skipping build.')}`,
+        ` ${unicodeSymbols.arrowLeft} Previous: ${color.yellow(lastChecksum)}`,
+        ` ${unicodeSymbols.arrowDown} Current:  ${color.green(checksum)}`
       ].join('\n')
     );
   }
