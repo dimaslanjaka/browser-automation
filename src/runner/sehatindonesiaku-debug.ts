@@ -1,9 +1,44 @@
+import fs from 'fs-extra';
+import path from 'path';
 import { LogEntry } from '../database/BaseLogDatabase.js';
-import { DataItem, getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 
 // This file for development only
+
+const logFile = path.join(process.cwd(), 'tmp/logs/debug.log');
+// reset log
+fs.ensureDirSync(path.dirname(logFile));
+fs.writeFileSync(logFile, '');
+const _log = console.log;
+const _error = console.error;
+
+console.log = (...args: any[]) => {
+  _log(...args);
+  const map = args.map((arg) => {
+    if (typeof arg === 'object') {
+      return JSON.stringify(arg);
+    } else if (typeof arg === 'boolean') {
+      return arg ? 'true' : 'false';
+    }
+    return arg;
+  });
+  fs.appendFileSync(logFile, `${map.join(' ')}\n`);
+};
+
+console.error = (...args: any[]) => {
+  _error(...args);
+  const map = args.map((arg) => {
+    if (typeof arg === 'object') {
+      return JSON.stringify(arg);
+    } else if (typeof arg === 'boolean') {
+      return arg ? 'true' : 'false';
+    }
+    return arg;
+  });
+  fs.appendFileSync(logFile, `[ERROR] ${map.join(' ')}\n`);
+};
 
 async function _main(callback: (...args: any[]) => any | Promise<any>) {
   await sehatindonesiakuDb.initialize();
@@ -33,23 +68,79 @@ async function _debugHadirData() {
   }
 }
 
-async function _debugData() {
-  const allExcelData = await getExcelData();
-  const allData = await sehatindonesiakuDb.getLogs<DataItem>();
-  console.log(`Total records from Excel: ${allExcelData.length}`);
-  console.log(`Total records from Database: ${allData.length}`);
-
-  for (let index = 0; index < allData.length; index++) {
-    const item = allData[index];
-    const found = allExcelData.find((d) => d.nik === item.data.nik);
-    if (found) {
-      console.log(`[${index + 1}/${allData.length}] NIK: ${item.data.nik} - ${item.data.nama}`);
-      console.log(`\t-> registered: ${item.data.registered}`);
-      console.log(`\t-> hadir: ${item.data.hadir}`);
-      console.log('');
-    }
-  }
+interface DebugItem extends DataItem {
+  type: 'excel' | 'db';
+  registered?: boolean;
+  pelayanan?: boolean;
+  hadir?: boolean;
 }
+
+async function _debugData(options?: { nik?: string }) {
+  const { getExcelData } = await import('./sehatindonesiaku-data.js');
+  const allExcelData: DataItem[] = await getExcelData();
+  const allDbData = await sehatindonesiakuDb.getLogs<DataItem>();
+
+  console.log(`Total records from Excel: ${allExcelData.length}`);
+  console.log(`Total records from Database: ${allDbData.length}`);
+
+  // Merge excel + db records with type tags (typed as DebugItem)
+  let allData: DebugItem[] = [
+    ...allExcelData.map<DebugItem>((item) => ({ ...item, type: 'excel' })),
+    ...allDbData.map<DebugItem>((log) => ({ ...log.data, type: 'db' }))
+  ].filter((item) => {
+    // Non-empty object
+    return item && Object.keys(item).length > 0;
+  });
+
+  // Filter by NIK if requested
+  if (options?.nik) {
+    allData = allData.filter((item) => item.nik === options.nik);
+
+    if (allData.length === 0) {
+      console.log(`No data found for NIK ${options.nik}`);
+      return;
+    }
+
+    console.log(`Filtered results for NIK ${options.nik}:`, allData);
+  }
+
+  // Print details
+  allData.forEach((item, index) => {
+    const foundInExcel = allExcelData.some((d) => d.nik === item.nik);
+    if (!foundInExcel) return;
+
+    console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik} - ${item.nama}`);
+    console.log(`\t-> from: ${item.type}`);
+    console.log(`\t-> registered: ${item.registered}`);
+    console.log(`\t-> hadir: ${item.hadir}\n`);
+  });
+}
+
+async function _testRegistrasiFilter() {
+  // test register 3173050212880001
+  // kemkes --nik=3173050212880001
+  // 3173055301750007 - data tidak sesuai KTP
+  // 3173052509010005 - sukses
+  // Test filtering by NIK
+  const nik = `3173054308990002`;
+  process.argv.push(`--nik=${nik.trim()}`);
+  await _debugData({ nik });
+}
+
+_main(async function () {
+  // console.log('all data');
+  // await _debugData();
+  // console.log('all registrasi data');
+  // await _debugRegistrasiData();
+  // console.log('all hadir data');
+  // await _debugHadirData();
+  await _testRegistrasiFilter();
+  // await _migrate();
+})
+  .catch(console.error)
+  .finally(() => {
+    _log(`Log saved ${logFile}`);
+  });
 
 async function _migrate() {
   const allData = await sehatindonesiakuDb.getLogs<DataItem>();
@@ -71,22 +162,3 @@ async function _migrate() {
     }
   }
 }
-
-async function _testRegistrasiFilter() {
-  // test register 3173050212880001
-  // kemkes --nik=3173050212880001
-  // Test filtering by NIK
-  const nik = '3173050212880001';
-  process.argv.push(`--nik=${nik}`);
-  const { getRegistrasiData: getKemkesData } = await import('./sehatindonesiaku-registrasi.js');
-  const allData = await getKemkesData();
-  const filteredData = allData.filter((item) => item.nik === nik);
-  console.log(`Filtered results for NIK ${nik}:`, filteredData);
-}
-
-_main(async function () {
-  console.log('all data');
-  await _debugData();
-  console.log('all registrasi data');
-  await _debugRegistrasiData();
-}).catch(console.error);
