@@ -1,1 +1,1 @@
-node bin/build.mjs
+node bin/build.mjs || (touch yarn.lock && yarn install && node bin/build.mjs)
