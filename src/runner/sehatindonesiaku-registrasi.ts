@@ -31,30 +31,37 @@ import {
 import { clickDaftarBaru, clickKembali, enterSehatIndonesiaKu, selectCalendar } from './sehatindonesiaku-utils.js';
 
 // Address defaults moved to processData options
-const cliArgs = minimist(process.argv.slice(2), { alias: { h: 'help', s: 'single', sh: 'shuffle' }, string: ['nik'] });
+const cliArgs = minimist(process.argv.slice(2), {
+  alias: { h: 'help', s: 'single', sh: 'shuffle' },
+  string: ['nik']
+});
 const isSingleData = cliArgs.single || cliArgs.s || false;
 const isShuffle = cliArgs.shuffle || cliArgs.sh || false;
+
+/** Normalize --nik CLI arg into string[] */
+function parseNikArg(arg: unknown): string[] | undefined {
+  if (!arg) return;
+  if (typeof arg === 'string' || typeof arg === 'number') {
+    return String(arg)
+      .split(',')
+      .map((n) => n.trim())
+      .filter(Boolean);
+  }
+  if (Array.isArray(arg)) {
+    return arg
+      .flatMap((n) => String(n).split(','))
+      .map((n) => n.trim())
+      .filter(Boolean);
+  }
+  return;
+}
 
 async function main() {
   let needLogin = false;
   const { browser } = await getPuppeteer();
+
   // Parse --nik from CLI args and pass to getData
-  let nikList: string[] | undefined = undefined;
-  if (cliArgs.nik) {
-    if (typeof cliArgs.nik === 'number') {
-      nikList = [String(cliArgs.nik)];
-    } else if (typeof cliArgs.nik === 'string') {
-      nikList = cliArgs.nik
-        .split(',')
-        .map((n: string) => n.trim())
-        .filter(Boolean);
-    } else if (Array.isArray(cliArgs.nik)) {
-      nikList = cliArgs.nik
-        .flatMap((n: string | number) => String(n).split(','))
-        .map((n: string) => n.trim())
-        .filter(Boolean);
-    }
-  }
+  const nikList = parseNikArg(cliArgs.nik);
   let allData = await getData({ nik: nikList });
   if (isShuffle) allData = array_shuffle(allData);
 
@@ -123,6 +130,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   const kabupaten = options.kabupaten ?? 'Kota Adm. Jakarta Barat';
   const kecamatan = options.kecamatan ?? 'Kebon Jeruk';
   const kelurahan = options.kelurahan ?? 'Kebon Jeruk';
+
   // Close tab when more than 5 tabs open
   const pages =
     typeof (browserOrPage as any).browser === 'function'
@@ -132,6 +140,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     console.log(`Closing excess tab, current open tabs: ${pages.length}`);
     await pages[0].close(); // Close the first tab
   }
+
   // Create a new page for each data item
   console.log(`Processing data for NIK ${item.nik} - ${item.nama}`);
   const page =
@@ -193,9 +202,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
   if (isKuotaHabisVisible) {
     const isClicked = await handleKuotaHabisModal(page);
-    if (!isClicked) {
-      throw new KuotaHabisError(item.nik);
-    }
+    if (!isClicked) throw new KuotaHabisError(item.nik);
     await waitForDomStable(page, 2000, 6000);
   }
 
@@ -218,9 +225,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
     if (isKuotaHabisVisible) {
       const isClicked = await handleKuotaHabisModal(page);
-      if (!isClicked) {
-        throw new KuotaHabisError(item.nik);
-      }
+      if (!isClicked) throw new KuotaHabisError(item.nik);
       await waitForDomStable(page, 2000, 6000);
     }
   }
@@ -265,18 +270,14 @@ export async function isPembatasanUmurVisible(page: Page, item: DataItem) {
     (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
     (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
   console.log(`Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
-  if (isAgeLimitCheckDisplayed) {
-    throw new PembatasanUmurError(item.nik);
-  }
+  if (isAgeLimitCheckDisplayed) throw new PembatasanUmurError(item.nik);
 }
 
 async function isSuccessModalVisible(page: Page) {
   // Find all divs that could contain modals
   const modals = await page.$$('div.p-2');
-
   for (const modal of modals) {
     const text = await page.evaluate((el) => el.innerText, modal);
-
     // Check if it contains the exact success text
     if (text.includes('Berhasil Daftar')) {
       // Check if it is visible
@@ -284,11 +285,9 @@ async function isSuccessModalVisible(page: Page) {
         const style = window.getComputedStyle(el);
         return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
       }, modal);
-
       if (visible) return true;
     }
   }
-
   return false;
 }
 
@@ -303,58 +302,46 @@ async function getData(options: getDataOptions = {}) {
   let rawData: DataItem[] = await getExcelData();
 
   // Filter by NIK if provided
-  if (options.nik && options.nik.length > 0) {
-    rawData = rawData.filter((item) => options.nik!.includes(item.nik));
-    if (options.debug) {
-      console.log(`Filtering rawData for NIK(s): ${options.nik.join(', ')}`);
-    }
+  if (options.nik?.length) {
+    const nikSet = new Set(options.nik);
+    rawData = rawData.filter((item) => nikSet.has(item.nik));
+    if (options.debug) console.log(`Filtering rawData for NIK(s): ${options.nik.join(', ')}`);
   }
 
-  for (let i = rawData.length - 1; i >= 0; i--) {
-    let item = rawData[i];
+  const today = moment().startOf('day');
+  return rawData.filter((item) => {
     // Skip empty or invalid NIK
     if (!item.nik || String(item.nik).trim().length === 0) {
-      if (options.debug) {
-        console.log(`Skipping row for empty/invalid NIK:`, item);
-      }
-      rawData.splice(i, 1);
-      continue;
+      if (options.debug) console.log(`Skipping row for empty/invalid NIK:`, item);
+      return false;
     }
 
     // Merge data with database
-    const dbItem = (await sehatindonesiakuDb.getLogById<DataItem>(item.nik)) ?? ({} as Partial<DataItem>);
-    item = Object.assign(item, dbItem.data ?? {});
+    const dbItem = sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+    dbItem.then((db) => Object.assign(item, db?.data ?? {}));
 
     // Fix tanggal_pemeriksaan if empty
-    if (!item.tanggal_pemeriksaan || item.tanggal_pemeriksaan.trim() === '') {
+    if (!item.tanggal_pemeriksaan?.trim()) {
       item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-      if (options.debug) {
-        console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${item.nik}`);
-      }
+      if (options.debug) console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${item.nik}`);
     }
 
     // Skip if tanggal_pemeriksaan is in the past
-    const today = moment().startOf('day');
     const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
     if (pemeriksaanDate.isBefore(today)) {
-      if (options.debug) {
+      if (options.debug)
         console.log(`Skipping row for past tanggal_pemeriksaan: ${item.nik} - ${item.tanggal_pemeriksaan}`);
-      }
-      rawData.splice(i, 1);
-      continue;
+      return false;
     }
 
     // Skip if object has 'registered' property
     if (Object.prototype.hasOwnProperty.call(item, 'registered')) {
-      if (options.debug) {
-        console.log(`Skipping row for registered property: ${item.nik}`);
-      }
-      rawData.splice(i, 1);
-      continue;
+      if (options.debug) console.log(`Skipping row for registered property: ${item.nik}`);
+      return false;
     }
-  }
 
-  return rawData;
+    return true;
+  });
 }
 
 export function showHelp() {
@@ -381,7 +368,6 @@ export function showHelp() {
 
 if (process.argv.some((arg) => /sehatindonesiaku-registrasi\.(js|ts|cjs|mjs)$/i.test(arg))) {
   (async () => {
-    // Show help if -h or --help is passed
     if (cliArgs.h || cliArgs.help) {
       showHelp();
       return;
