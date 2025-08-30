@@ -189,7 +189,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await isPembatasanUmurVisible(page, item);
 
   // Handle modal "Kuota pemeriksaan habis"
-  const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
+  let isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
   console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
   if (isKuotaHabisVisible) {
     const isClicked = await handleKuotaHabisModal(page);
@@ -213,6 +213,16 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
     console.log(`${item.nik} - Clicking "Daftarkan dengan NIK" button...`);
     await clickDaftarkanDenganNIK(page);
     await waitForDomStable(page, 2000, 6000);
+    // Re-check kuota pemeriksaan
+    isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
+    console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
+    if (isKuotaHabisVisible) {
+      const isClicked = await handleKuotaHabisModal(page);
+      if (!isClicked) {
+        throw new KuotaHabisError(item.nik);
+      }
+      await waitForDomStable(page, 2000, 6000);
+    }
   }
 
   if (await isSuccessModalVisible(page)) {
