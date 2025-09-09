@@ -91,6 +91,8 @@ function monthIndexFromHeader(text: string): number {
   throw new Error(`Unrecognized month label in header: "${text}"`);
 }
 
+export async function selectRegistrationTanggalPemeriksaan(page: Page, dateStr: string) {}
+
 /**
  * Selects a date in the custom calendar widget by navigating to the correct month/year and clicking the day.
  * @param page Puppeteer page instance
@@ -107,7 +109,10 @@ export async function selectCalendar(page: Page, dateStr: string) {
   const targetMonth = m.month(); // 0-based
   const targetYear = m.year();
 
-  const daysGrid = await page.waitForSelector('.grid.grid-cols-7.gap-1.mt-2', { visible: true, timeout: 10000 });
+  // Instead of waiting for selector, just sleep for 1 second to allow calendar to render
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 1000)));
+  // Now try to get the days grid
+  const daysGrid = await page.$('.grid.grid-cols-7.gap-1.mt-2');
   if (!daysGrid) throw new Error('Calendar days grid not found');
 
   const rootHandle = (await daysGrid.evaluateHandle((el) => el.closest('div.relative'))) as ElementHandle<Element>;
