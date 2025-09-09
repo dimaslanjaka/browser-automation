@@ -91,7 +91,28 @@ function monthIndexFromHeader(text: string): number {
   throw new Error(`Unrecognized month label in header: "${text}"`);
 }
 
-export async function selectRegistrationTanggalPemeriksaan(page: Page, dateStr: string) {}
+export async function selectTodayFromRegistrationTanggalPemeriksaan(page: Page, dateStr: string): Promise<boolean> {
+  // Parse day number from dateStr
+  const day = moment(dateStr, 'DD/MM/YYYY', true).date().toString();
+
+  const calendarSelector = 'div.shadow-gmail';
+
+  // Search and click, return true if found
+  const clicked = await page.$$eval(
+    `${calendarSelector} button`,
+    (buttons, targetDay) => {
+      const btn = buttons.find((b) => b.innerText.trim() === targetDay);
+      if (btn) {
+        (btn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    },
+    day
+  );
+
+  return clicked;
+}
 
 /**
  * Selects a date in the custom calendar widget by navigating to the correct month/year and clicking the day.
