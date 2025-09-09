@@ -99,8 +99,8 @@ async function main() {
         );
         break;
       } else if (e instanceof TanggalPemeriksaanError) {
-        console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}`);
-        message.push('Tanggal Pemeriksaan tidak valid');
+        console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`);
+        message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
         await sehatindonesiakuDb.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
