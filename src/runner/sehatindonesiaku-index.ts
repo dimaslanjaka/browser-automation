@@ -118,7 +118,7 @@ async function main() {
       console.error(`Error processing data for NIK ${item.nik}:`, e);
     }
 
-    break; // Only process one item for now (development mode)
+    // break; // Only process one item for now (development mode)
   }
 
   if (!needLogin) {
