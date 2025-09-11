@@ -1,7 +1,7 @@
 import ansiColors from 'ansi-colors';
 import { spawnAsync } from 'cross-spawn';
 import { Page } from 'puppeteer';
-import { array_unique } from 'sbg-utility';
+import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop } from '../utils-browser.js';
@@ -17,13 +17,28 @@ import {
 import { checkAlreadyHadir, processKehadiranData, searchNik } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
+import minimist from 'minimist';
+
+const args = minimist(process.argv.slice(2), {
+  boolean: ['help', 'single', 'shuffle'],
+  alias: { h: 'help', s: 'single', sh: 'shuffle' }
+});
 
 async function main() {
   // Enable unicode
   await spawnAsync('chcp', ['65001']).catch(noop);
   let needLogin = false;
   const { browser } = await getPuppeteer();
-  const allData = await getRegistrasiData();
+  let allData = await getRegistrasiData();
+
+  if (args.shuffle) {
+    // Shuffle array
+    allData = array_shuffle(allData);
+  }
+
+  if (args.single) {
+    allData = allData.slice(0, 1);
+  }
 
   for (let i = 0; i < allData.length; i++) {
     if ((await browser.pages()).length > 5) {
