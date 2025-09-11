@@ -2,7 +2,7 @@ import fs from 'fs';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
-import { dbPath, getLogs } from '../src/database/SQLiteLogDatabase.js';
+import { getLogs, getDatabaseFilePath } from '../src/database/SQLiteLogDatabase.js';
 import dotenv from 'dotenv';
 import { encryptJson } from '../src/utils/json-crypto.js';
 
@@ -12,6 +12,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
 const filename = process.env.DATABASE_FILENAME;
+const dbPath = getDatabaseFilePath(filename);
 const currentYear = new Date().getFullYear();
 export const outHtmlPath = path.resolve(process.cwd(), `public/log-${filename}-${currentYear}.html`);
 export const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
