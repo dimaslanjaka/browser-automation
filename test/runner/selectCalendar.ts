@@ -3,7 +3,8 @@ import { getPuppeteer, waitForDomStable } from '../../src/puppeteer_utils.js';
 import {
   clickDaftarBaru,
   enterSehatIndonesiaKu,
-  selectTodayFromRegistrationTanggalPemeriksaan
+  selectCalendar,
+  selectDayFromCalendar
 } from '../../src/runner/sehatindonesiaku-utils.js';
 
 async function main() {
@@ -18,10 +19,12 @@ async function main() {
     await waitForDomStable(page, 2000, 6000);
 
     const today = moment().format('DD/MM/YYYY');
-    if (!(await selectTodayFromRegistrationTanggalPemeriksaan(page, today))) {
-      console.error('Failed to select date');
-    } else {
+    if (await selectDayFromCalendar(page, today)) {
       console.log('Date selected successfully');
+    } else if (await selectCalendar(page, today)) {
+      console.log('Date selected successfully');
+    } else {
+      console.error('Failed to select date');
     }
   }
 }

@@ -91,27 +91,28 @@ function monthIndexFromHeader(text: string): number {
   throw new Error(`Unrecognized month label in header: "${text}"`);
 }
 
-export async function selectTodayFromRegistrationTanggalPemeriksaan(page: Page, dateStr: string): Promise<boolean> {
-  // Parse day number from dateStr
+export async function selectDayFromCalendar(page: Page, dateStr: string): Promise<boolean> {
   const day = moment(dateStr, 'DD/MM/YYYY', true).date().toString();
+  const calendarWrapper = await page.$('.form-data-individu');
+  if (!calendarWrapper) return false;
+  const calendarPanels = await calendarWrapper.$$('div.shadow-gmail');
 
-  const calendarSelector = 'div.shadow-gmail';
-
-  // Search and click, return true if found
-  const clicked = await page.$$eval(
-    `${calendarSelector} button`,
-    (buttons, targetDay) => {
-      const btn = buttons.find((b) => b.innerText.trim() === targetDay);
-      if (btn) {
-        (btn as HTMLElement).click();
-        return true;
+  for (const panel of calendarPanels) {
+    const clicked = await panel.evaluate((root, wantedDay) => {
+      const buttons = Array.from(root.querySelectorAll('button'));
+      for (const btn of buttons) {
+        if (btn.disabled || btn.classList.contains('cursor-not-allowed')) continue;
+        const span = btn.querySelector('span.font-bold');
+        if (span && span.textContent?.trim() === wantedDay) {
+          (btn as HTMLElement).click();
+          return true;
+        }
       }
       return false;
-    },
-    day
-  );
-
-  return clicked;
+    }, day);
+    if (clicked) return true;
+  }
+  return false;
 }
 
 /**

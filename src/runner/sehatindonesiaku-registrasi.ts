@@ -33,7 +33,7 @@ import {
   clickDaftarBaru,
   clickKembali,
   enterSehatIndonesiaKu,
-  selectTodayFromRegistrationTanggalPemeriksaan
+  selectDayFromCalendar
 } from './sehatindonesiaku-utils.js';
 
 // Address defaults moved to processData options
@@ -201,7 +201,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
 
   // Select calendar date pemeriksaan
   console.log(`${item.nik} - Selecting tanggal pemeriksaan...`);
-  if (!(await selectTodayFromRegistrationTanggalPemeriksaan(page, item.tanggal_pemeriksaan))) {
+  if (!(await selectDayFromCalendar(page, item.tanggal_pemeriksaan))) {
     throw new TanggalPemeriksaanError(item.nik);
   }
   await waitForDomStable(page, 2000, 6000);
