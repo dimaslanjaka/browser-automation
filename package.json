@@ -29,6 +29,7 @@
     "vite:deploy": "node -r ./.vscode/js-hook.cjs vite.deploy.js",
     "vite:dev": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js --mode development",
     "vite:preview": "node -r ./.vscode/js-hook.cjs node_modules/vite/bin/vite.js preview",
+    "vite:prepare": "node -r ./.vscode/js-hook.cjs scripts/prepare-vite-plugin.js",
     "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log"
   },
   "keywords": [],

@@ -7,6 +7,7 @@ import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
 import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automation-plugin.js';
 import SitemapVitePlugin from './scripts/sitemap-vite-plugin.js';
+import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
 
 /**
  * Vite configuration for browser-automation project.
@@ -22,6 +23,7 @@ import SitemapVitePlugin from './scripts/sitemap-vite-plugin.js';
  */
 export default defineConfig({
   plugins: [
+    PrepareVitePlugin(),
     mkcert(),
     RedirectBrowserAutomationPlugin(),
     dbLogHtmlStatic(),
