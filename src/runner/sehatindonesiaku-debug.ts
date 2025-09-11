@@ -1,9 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { LogEntry } from '../database/BaseLogDatabase.js';
-import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
+import { DataItem, DebugItem } from './types.js';
 
 // This file for development only
 
@@ -68,13 +69,6 @@ async function _debugHadirData() {
   }
 }
 
-interface DebugItem extends DataItem {
-  type: 'excel' | 'db';
-  registered?: boolean;
-  pelayanan?: boolean;
-  hadir?: boolean;
-}
-
 async function _debugData(options?: { nik?: string }) {
   const { getExcelData } = await import('./sehatindonesiaku-data.js');
   const allExcelData: DataItem[] = await getExcelData();
@@ -121,8 +115,9 @@ async function _testRegistrasiFilter() {
   // kemkes --nik=3173050212880001
   // 3173055301750007 - data tidak sesuai KTP
   // 3173052509010005 - sukses
+  // 3173056206040006 - data kuota penuh pada tanggal tertentu
   // Test filtering by NIK
-  const nik = `3173054308990002`;
+  const nik = `3173055605081003`;
   process.argv.push(`--nik=${nik.trim()}`);
   await _debugData({ nik });
 }

@@ -5,7 +5,8 @@ import { array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop } from '../utils-browser.js';
-import { DataItem, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
   ErrorDataKehadiranNotFound,

@@ -5,7 +5,8 @@ import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { DataItem, getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,

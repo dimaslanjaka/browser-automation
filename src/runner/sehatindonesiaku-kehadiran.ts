@@ -11,7 +11,8 @@ import {
   waitForDomStable
 } from '../puppeteer_utils.js';
 import { sleep } from '../utils-browser.js';
-import { DataItem, sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { DataItem } from './types.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 
