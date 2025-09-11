@@ -18,6 +18,7 @@ import { checkAlreadyHadir, processKehadiranData, searchNik } from './sehatindon
 import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 import minimist from 'minimist';
+import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle'],
@@ -117,6 +118,9 @@ async function main() {
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
     }
+
+    // Generate data display after each item is processed
+    await generateDataDisplay();
 
     // break; // Only process one item for now (development mode)
   }
