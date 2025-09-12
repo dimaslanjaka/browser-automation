@@ -1,6 +1,14 @@
+/* eslint-disable no-global-assign */
+/* eslint-disable no-redeclare */
 const dotenv = require('dotenv');
 const path = require('node:path');
 const childProcess = require('node:child_process');
+// Only require TextEncoder/TextDecoder from 'util' if not already global
+let TextEncoder = global.TextEncoder;
+let TextDecoder = global.TextDecoder;
+if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
+  ({ TextEncoder, TextDecoder } = require('util'));
+}
 
 // Set console to UTF-8 on Windows
 if (process.platform === 'win32') {
@@ -9,6 +17,16 @@ if (process.platform === 'win32') {
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoder;
+}
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = TextDecoder;
+}
+if (typeof setImmediate === 'undefined') {
+  global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args);
+}
 
 // Set up common Node.js environment variables (already available in CommonJS)
 // globalThis.__filename = __filename;
