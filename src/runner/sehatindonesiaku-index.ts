@@ -1,11 +1,14 @@
 import ansiColors from 'ansi-colors';
 import { spawnAsync } from 'cross-spawn';
+import { SqlError } from 'mariadb';
+import minimist from 'minimist';
 import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { noop, sleep } from '../utils-browser.js';
-import { DataItem } from './types.js';
+import { noop } from '../utils-browser.js';
+import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
+import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   ErrorDataKehadiranNotFound,
@@ -16,10 +19,7 @@ import {
 import { checkAlreadyHadir, processKehadiranData, searchNik } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
-import minimist from 'minimist';
-import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
-import { SqlError } from 'mariadb';
-import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
+import { DataItem } from './types.js';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle', 'priority'],
@@ -32,6 +32,7 @@ async function main() {
   await spawnAsync('chcp', ['65001']).catch(noop);
   // Initialize database
   await getSehatIndonesiaKuDb().initialize();
+
   let needLogin = false;
   const { browser } = await getPuppeteer();
   // Handle browser closed event to exit process
@@ -63,15 +64,8 @@ async function main() {
     const pages = await browser.pages();
     const maxPages = 3;
     if (pages.length > maxPages) {
-      const toClose = pages.slice(0, pages.length - maxPages);
-      console.log(`Too many pages open (${pages.length}), closing ${toClose.length} oldest...`);
-      await Promise.all(toClose.map((page) => page.close()));
-      for (let i = 0; i < 2; i++) {
-        const page = pages[i];
-        await page.bringToFront();
-        await sleep(1000);
-        await page.close();
-      }
+      console.log(`Too many pages open (${pages.length}), closing oldest...`);
+      pages[0]?.close(); // Close the first page if exists
     }
 
     const item = allData[i];
