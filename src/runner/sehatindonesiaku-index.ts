@@ -4,7 +4,7 @@ import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { noop } from '../utils-browser.js';
+import { noop, sleep } from '../utils-browser.js';
 import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import {
@@ -64,6 +64,12 @@ async function main() {
       const toClose = pages.slice(0, pages.length - maxPages);
       console.log(`Too many pages open (${pages.length}), closing ${toClose.length} oldest...`);
       await Promise.all(toClose.map((page) => page.close()));
+      for (let i = 0; i < 2; i++) {
+        const page = pages[i];
+        await page.bringToFront();
+        await sleep(1000);
+        await page.close();
+      }
     }
 
     const item = allData[i];
