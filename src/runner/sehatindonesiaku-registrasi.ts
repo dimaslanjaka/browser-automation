@@ -343,16 +343,18 @@ async function getData(options: getDataOptions = {}) {
   }
 
   const today = moment().startOf('day');
-  return rawData.filter((item) => {
+  // Use async map/filter to await DB calls
+  const filtered = [];
+  for (const item of rawData) {
     // Skip empty or invalid NIK
     if (!item.nik || String(item.nik).trim().length === 0) {
       if (options.debug) console.log(`[registrasi] Skipping row for empty/invalid NIK:`, item);
-      return false;
+      continue;
     }
 
-    // Merge data with database
-    const dbItem = getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
-    dbItem.then((db) => Object.assign(item, db?.data ?? {}));
+    // Merge data with database (awaited)
+    const db = await getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
+    Object.assign(item, db?.data ?? {});
 
     // Fix tanggal_pemeriksaan if empty
     if (!item.tanggal_pemeriksaan?.trim()) {
@@ -367,17 +369,18 @@ async function getData(options: getDataOptions = {}) {
         console.log(
           `[registrasi] Skipping row for past tanggal_pemeriksaan: ${item.nik} - ${item.tanggal_pemeriksaan}`
         );
-      return false;
+      continue;
     }
 
     // Skip if object has 'registered' property
     if (Object.prototype.hasOwnProperty.call(item, 'registered')) {
       if (options.debug) console.log(`[registrasi] Skipping row for registered property: ${item.nik}`);
-      return false;
+      continue;
     }
 
-    return true;
-  });
+    filtered.push(item);
+  }
+  return filtered;
 }
 
 export function showHelp() {
