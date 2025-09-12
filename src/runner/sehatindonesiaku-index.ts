@@ -51,15 +51,6 @@ async function main() {
     allData = allData.slice(0, 1);
   }
 
-  if (args.priority) {
-    // Priority hadir and registered undefined
-    allData.sort((a, b) => {
-      if (a && !a.data?.hadir && !a.data?.registered) return -1;
-      if (b && !b.data?.hadir && !b.data?.registered) return 1;
-      return 0;
-    });
-  }
-
   for (let i = 0; i < allData.length; i++) {
     const pages = await browser.pages();
     const maxPages = 3;
@@ -70,6 +61,17 @@ async function main() {
 
     const item = allData[i];
     const dbItem: Partial<LogEntry<DataItem>> = (await getSehatIndonesiaKuDb().getLogById(item.nik)) ?? {};
+
+    if (args.priority) {
+      // Priority mode: move already processed item to the end of the list
+      if (dbItem.data?.hadir && dbItem.data?.registered) {
+        allData.push(item); // Move to end
+        allData.splice(i, 1); // Remove from current position
+        i--; // Adjust index to account for removed item
+        console.log(`📝 ${item.nik} - Already processed, moving to end of the list`);
+        continue;
+      }
+    }
 
     // Skip already processed items
     if (dbItem.data?.hadir && dbItem.data?.registered) {
