@@ -77,13 +77,14 @@ export async function getPuppeteer(options = {}) {
   }
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
-    if (!fs.existsSync(merged.executablePath)) {
-      throw new Error(`Chrome executable not found at: ${merged.executablePath}`);
+    let execPath = merged.executablePath;
+    if (execPath && !fs.existsSync(execPath)) {
+      execPath = undefined; // Use Puppeteer's default Chromium
     }
     puppeteer_browser = await puppeteer.launch({
       headless: merged.headless,
       userDataDir: merged.userDataDir,
-      executablePath: merged.executablePath,
+      executablePath: execPath,
       args: merged.args
     });
   }
@@ -142,13 +143,14 @@ export async function getPlaywright(options = {}) {
   }
 
   if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
-    if (!fs.existsSync(merged.executablePath)) {
-      throw new Error(`Chrome executable not found at: ${merged.executablePath}`);
+    let execPath = merged.executablePath;
+    if (execPath && !fs.existsSync(execPath)) {
+      execPath = undefined; // Use Playwright's default Chromium
     }
     playwright_browser = await chromium.launch({
       headless: merged.headless,
       userDataDir: merged.userDataDir,
-      executablePath: merged.executablePath,
+      executablePath: execPath,
       args: merged.args
     });
   }
