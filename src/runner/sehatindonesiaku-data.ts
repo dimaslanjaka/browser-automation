@@ -204,30 +204,23 @@ export { outPath as sehatindonesiakuDataPath };
  * Downloads the Kemkes spreadsheet from Google Sheets, parses the "Format Full" sheet,
  * and writes the processed data as JSON to the cache directory.
  *
- * Behavior:
- * - If a `spreadsheetId` is passed, it will be used.
- * - Otherwise, falls back to the `KEMKES_SPREADSHEET_ID` environment variable.
- * - If neither is provided, the function throws an error.
- *
- * Processing:
- * - Downloads the spreadsheet as XLSX.
- * - Parses rows from the given range (`rangeIndex` to `rangeEndIndex`).
- * - Saves the parsed data as JSON.
- *
- * Output:
- * - File is written to: `.cache/sheets/sehatindonesiaku-data.json` (relative to project root).
- *
- * @param rangeIndex - 0-based row index to start parsing (default: 6 → row 7).
- * @param rangeEndIndex - 0-based row index to end parsing (inclusive, default: Number.MAX_SAFE_INTEGER).
- * @param spreadsheetId - Optional Google Sheets spreadsheet ID. If not provided, falls back to `process.env.KEMKES_SPREADSHEET_ID`.
- * @returns Promise<void> - Resolves when the process is complete.
+ * @param options - Options object
+ * @param options.rangeIndex 0-based row index to start parsing (default: 6 → row 7)
+ * @param options.rangeEndIndex 0-based row index to end parsing (inclusive, default: Number.MAX_SAFE_INTEGER)
+ * @param options.spreadsheetId Optional Google Sheets spreadsheet ID. If not provided, falls back to `process.env.KEMKES_SPREADSHEET_ID`.
+ * @param options.cache If true (default), use cache and skip download if up-to-date. If false, always download.
+ * @returns Promise<void> Resolves when the process is complete.
  * @throws {Error} If neither a `spreadsheetId` argument nor the `KEMKES_SPREADSHEET_ID` environment variable is provided.
  */
 export async function downloadAndProcessXlsx(
-  rangeIndex = 6,
-  rangeEndIndex: number = Number.MAX_SAFE_INTEGER,
-  spreadsheetId?: string
+  options: {
+    rangeIndex?: number;
+    rangeEndIndex?: number;
+    spreadsheetId?: string;
+    cache?: boolean;
+  } = {}
 ) {
+  const { rangeIndex = 6, rangeEndIndex = Number.MAX_SAFE_INTEGER, spreadsheetId, cache = true } = options;
   const resolvedSpreadsheetId = spreadsheetId || process.env.KEMKES_SPREADSHEET_ID;
 
   if (!resolvedSpreadsheetId) {
@@ -237,7 +230,11 @@ export async function downloadAndProcessXlsx(
     );
   }
 
-  const downloadResult = await downloadSheets(resolvedSpreadsheetId);
+  if (!cache) {
+    console.log('Cache is disabled. Forcing download of the spreadsheet.');
+  }
+
+  const downloadResult = await downloadSheets(resolvedSpreadsheetId, !cache);
   const result = await parseXlsxFile(downloadResult.xlsxFilePath, rangeIndex, rangeEndIndex);
   fs.ensureDirSync(path.dirname(outPath));
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf-8');
@@ -293,26 +290,29 @@ export function showHelp() {
   console.log('Options:');
   console.log('  --start <row>    Start row index (default: 320)');
   console.log('  --end <row>      End row index (default: 500)');
+  console.log('  --cache          Use cache (default: true). If set to false, always download the spreadsheet.');
+  console.log('  --nc, --no-cache Alias for --cache false (no cache, always download)');
   console.log('  --help, -h       Show this help message');
 }
 
 if (process.argv.some((arg) => /sehatindonesiaku-data\.(ts|mjs|js|cjs)$/.test(arg))) {
   (async () => {
     try {
-      const args = minimist(process.argv.slice(2), {
-        alias: { h: 'help' }
+      const cliArgs = minimist(process.argv.slice(2), {
+        alias: { h: 'help', nc: 'cache' }, // `--nc` works as shorthand
+        default: { cache: true } // cache enabled unless explicitly disabled
       });
-      if (args.help) {
+      if (cliArgs.help) {
         showHelp();
         process.exit(0);
       }
       // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
-      const start = args.start !== undefined && !isNaN(parseInt(args.start)) ? parseInt(args.start) - 1 : 315;
+      const start = cliArgs.start !== undefined && !isNaN(parseInt(cliArgs.start)) ? parseInt(cliArgs.start) - 1 : 315;
       let end: number;
-      if (typeof args.end === 'string' && args.end.toLowerCase() === 'max') {
+      if (typeof cliArgs.end === 'string' && cliArgs.end.toLowerCase() === 'max') {
         end = Number.MAX_SAFE_INTEGER;
-      } else if (args.end !== undefined && !isNaN(parseInt(args.end))) {
-        end = parseInt(args.end) - 1;
+      } else if (cliArgs.end !== undefined && !isNaN(parseInt(cliArgs.end))) {
+        end = parseInt(cliArgs.end) - 1;
       } else {
         end = 1000;
       }
@@ -320,9 +320,11 @@ if (process.argv.some((arg) => /sehatindonesiaku-data\.(ts|mjs|js|cjs)$/.test(ar
         throw new Error(`Invalid range: end (${end + 1}) cannot be less than start (${start + 1})`);
       }
 
+      const cache = cliArgs.cache !== false;
+
       console.log(`Downloading and processing XLSX with range ${start + 1}-${end + 1}...`);
       // download excel and parse with range 320-500
-      await downloadAndProcessXlsx(start, end);
+      await downloadAndProcessXlsx({ rangeIndex: start, rangeEndIndex: end, cache: cache });
     } finally {
       await sehatindonesiakuDb.close();
     }
