@@ -1,5 +1,11 @@
 const dotenv = require('dotenv');
 const path = require('node:path');
+const childProcess = require('node:child_process');
+
+// Set console to UTF-8 on Windows
+if (process.platform === 'win32') {
+  childProcess.execSync('chcp 65001', { stdio: 'ignore' });
+}
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(process.cwd(), '.env') });
