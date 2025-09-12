@@ -202,6 +202,10 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
 
   // Select calendar date pemeriksaan
   console.log(`${item.nik} - Selecting tanggal pemeriksaan...`);
+  if (!item.tanggal_pemeriksaan) {
+    item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+    console.log(`${item.nik} - tanggal_pemeriksaan is empty, defaulting to today: ${item.tanggal_pemeriksaan}`);
+  }
   if (!(await selectDayFromCalendar(page, item.tanggal_pemeriksaan))) {
     throw new TanggalPemeriksaanError(item.nik);
   }
