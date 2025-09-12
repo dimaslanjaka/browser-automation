@@ -130,6 +130,9 @@ export async function parseXlsxFile(
         continue;
       } else if (index === 5) {
         // Nomor WhatsApp (WA)
+        if (String(row[index]).trim().length === 0 || !row[index] || row[index] === 'null') {
+          obj['nomor_wa'] = '81316270797';
+        }
         obj['nomor_wa'] = '+62' + row[index];
         continue;
       } else if (index === 6) {
