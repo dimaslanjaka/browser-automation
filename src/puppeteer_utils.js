@@ -34,14 +34,7 @@ let playwright_browser = null;
  *
  * @async
  * @function getPuppeteer
- * @param {Object} [options] - Configuration options for launching Puppeteer.
- * @param {boolean} [options.headless=false] - Launch browser in headless mode.
- * @param {string} [options.userDataDir] - Path to store browser profile data (user data directory).
- * @param {string} [options.executablePath] - Path to Chrome or Chromium executable. If not found, uses Puppeteer's default.
- * @param {Array<string>} [options.args] - Additional arguments to pass to the browser instance.
- * @param {boolean} [options.reuse=true] - Reuse existing browser instance if available.
- * @param {boolean} [options.useStealth=true] - Enable stealth plugin for anti-bot evasion.
- * @param {boolean} [options.devtools=false] - Open DevTools panel on launch.
+ * @param {import('puppeteer').LaunchOptions} [options] - Configuration options for launching Puppeteer.
  * @returns {Promise<{page: import('puppeteer').Page, browser: import('puppeteer').Browser, puppeteer: typeof import('puppeteer-extra')}>}
  * Resolves with an object containing:
  *   - `page`: A new Puppeteer `Page` instance.
@@ -70,28 +63,18 @@ export async function getPuppeteer(options = {}) {
       '--autoplay-policy=no-user-gesture-required'
     ],
     reuse: true,
-    useStealth: true,
     devtools: false
   };
   const merged = { ...defaultOptions, ...options };
 
-  // Add stealth plugin and use defaults (all evasion techniques)
-  if (merged.useStealth) {
-    puppeteer.use(StealthPlugin());
-  }
+  // Always use stealth plugin
+  puppeteer.use(StealthPlugin());
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
-    let execPath = merged.executablePath;
-    if (execPath && !fs.existsSync(execPath)) {
-      execPath = undefined; // Use Puppeteer's default Chromium
+    if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
+      merged.executablePath = undefined; // Use Puppeteer's default Chromium
     }
-    puppeteer_browser = await puppeteer.launch({
-      headless: merged.headless,
-      userDataDir: merged.userDataDir,
-      executablePath: execPath,
-      args: merged.args,
-      devtools: merged.devtools
-    });
+    puppeteer_browser = await puppeteer.launch(merged);
   }
 
   const page = await puppeteer_browser.newPage();
@@ -103,13 +86,7 @@ export async function getPuppeteer(options = {}) {
  *
  * @async
  * @function getPlaywright
- * @param {Object} [options] - Optional configuration for launching Playwright
- * @param {boolean} [options.headless=false] - Whether to launch browser in headless mode
- * @param {string} [options.userDataDir] - Path to user data directory
- * @param {string} [options.executablePath] - Path to Chrome executable
- * @param {Array<string>} [options.args] - Additional launch arguments
- * @param {boolean} [options.reuse=true] - Whether to reuse existing browser instance
- * @param {boolean} [options.useStealth=true] - Whether to use stealth plugin
+ * @param {import('playwright').LaunchOptions} [options] - Optional configuration for launching Playwright
  * @returns {Promise<{
  *   page: import('playwright').Page,
  *   browser: import('playwright').Browser,
@@ -137,27 +114,18 @@ export async function getPlaywright(options = {}) {
       '--hide-crash-restore-bubble',
       '--autoplay-policy=no-user-gesture-required'
     ],
-    reuse: true,
-    useStealth: true
+    reuse: true
   };
   const merged = { ...defaultOptions, ...options };
 
-  // Add the plugin to playwright (any number of plugins can be added)
-  if (merged.useStealth) {
-    chromium.use(StealthPlugin());
-  }
+  // Always use stealth plugin
+  chromium.use(StealthPlugin());
 
   if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
-    let execPath = merged.executablePath;
-    if (execPath && !fs.existsSync(execPath)) {
-      execPath = undefined; // Use Playwright's default Chromium
+    if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
+      merged.executablePath = undefined; // Use Playwright's default Chromium
     }
-    playwright_browser = await chromium.launch({
-      headless: merged.headless,
-      userDataDir: merged.userDataDir,
-      executablePath: execPath,
-      args: merged.args
-    });
+    playwright_browser = await chromium.launch(merged);
   }
 
   const page = await playwright_browser.newPage();
