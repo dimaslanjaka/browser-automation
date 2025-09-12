@@ -1,8 +1,8 @@
 import { describe, it, expect } from '@jest/globals';
 import createDatabasePool from '../../src/database/mysql.js';
-import { Pool, PoolConnection } from 'mysql2/promise.js';
+import { Pool, PoolConnection } from 'mariadb';
 
-describe('MySQL Pool', () => {
+describe('MariaDB Pool', () => {
   let pool: Pool;
 
   beforeAll(async () => {
@@ -22,7 +22,7 @@ describe('MySQL Pool', () => {
   });
 
   it('should connect and query the database (mocked)', async () => {
-    let conn: PoolConnection;
+    let conn: PoolConnection | undefined;
     try {
       conn = await pool.getConnection();
       expect(conn).toBeDefined();
@@ -30,7 +30,7 @@ describe('MySQL Pool', () => {
     } catch (err) {
       expect(err).toBeDefined();
     } finally {
-      if (conn) conn.release();
+      if (conn) await conn.release();
     }
   });
 });

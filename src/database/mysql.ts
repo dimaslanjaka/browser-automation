@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import mariadb from 'mariadb';
 import 'dotenv/config';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DBNAME, MYSQL_PORT } = process.env;
@@ -10,7 +10,7 @@ const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DBNAME, MYSQL_PORT } = process
  * @returns A promise that resolves to a MySQL connection pool.
  * @throws If required environment variables are missing.
  */
-async function createDatabasePool(config: mysql.PoolOptions = {}) {
+async function createDatabasePool(config: mariadb.PoolConfig = {}) {
   if (!MYSQL_HOST || !MYSQL_USER || !MYSQL_PASS) {
     throw new Error('Missing one of the required environment variables: MYSQL_HOST, MYSQL_USER, MYSQL_PASS');
   }
@@ -19,30 +19,26 @@ async function createDatabasePool(config: mysql.PoolOptions = {}) {
   if (!dbName) {
     throw new Error('No database name provided in config or MYSQL_DBNAME');
   }
-  // Connect without specifying a DB
-  const connection = await mysql.createConnection({
+  // Connect without specifying a DB to create the database if needed
+  const adminConn = await mariadb.createConnection({
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASS,
     port: parseInt(MYSQL_PORT ?? '3306', 10),
-    connectTimeout: config.connectTimeout || 60000 // default 60s if not provided
+    connectTimeout: config.connectTimeout || 60000
   });
-
-  // Create database if it doesn't exist
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-  await connection.end();
+  await adminConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+  await adminConn.end();
 
   // Now create a pool that connects to that DB
-  return mysql.createPool({
+  return mariadb.createPool({
     host: MYSQL_HOST,
     user: MYSQL_USER,
     password: MYSQL_PASS,
     database: dbName,
     port: parseInt(MYSQL_PORT ?? '3306', 10),
-    waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0,
-    connectTimeout: config.connectTimeout || 60000, // default 60s if not provided
+    connectTimeout: config.connectTimeout || 60000,
     ...config
   });
 }

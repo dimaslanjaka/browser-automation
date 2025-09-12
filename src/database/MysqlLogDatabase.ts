@@ -37,7 +37,7 @@ export interface AddLogOptions {
  * Class representing a log database using MySQL.
  */
 export class MysqlLogDatabase implements BaseLogDatabase {
-  private poolPromise: Promise<import('mysql2/promise').Pool>;
+  private poolPromise: Promise<import('mariadb').Pool>;
   private readyPromise: Promise<void>;
 
   /**
@@ -112,13 +112,13 @@ export class MysqlLogDatabase implements BaseLogDatabase {
         }
       }
     }
-    await pool.query(
-      {
-        sql: `REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`,
-        timeout: options.timeout
-      },
-      [id, JSON.stringify(data), message, timestamp]
-    );
+    // mariadb does not support object with sql/timeout, so use query options directly
+    await pool.query(`REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`, [
+      id,
+      JSON.stringify(data),
+      message,
+      timestamp
+    ]);
   }
 
   /**
@@ -130,7 +130,8 @@ export class MysqlLogDatabase implements BaseLogDatabase {
   async removeLog(id: LogEntry<any>['id']): Promise<boolean> {
     await this.readyPromise;
     const pool = await this.poolPromise;
-    const [result]: any = await pool.query('DELETE FROM logs WHERE id = ?', [id]);
+    const result: any = await pool.query('DELETE FROM logs WHERE id = ?', [id]);
+    // mariadb returns an object with affectedRows
     return result.affectedRows > 0;
   }
 
@@ -143,7 +144,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
   async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
     await this.readyPromise;
     const pool = await this.poolPromise;
-    const [rows]: any = await pool.query('SELECT * FROM logs WHERE id = ?', [id]);
+    const rows: any = await pool.query('SELECT * FROM logs WHERE id = ?', [id]);
     if (!rows[0]) return undefined;
     return {
       id: rows[0].id,
@@ -176,7 +177,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
         params.push(options.offset);
       }
     }
-    const [rows]: any = await pool.query(query, params);
+    const rows: any = await pool.query(query, params);
     const logsArr: LogEntry<T>[] = rows.map((row: any) => ({
       id: row.id,
       data: JSON.parse(row.data),
