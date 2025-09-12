@@ -8,6 +8,7 @@ import xlsx from 'xlsx';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 import { DataItem } from './types.js';
+import moment from 'moment';
 
 let sehatindonesiakuDb: LogDatabase;
 export function getSehatIndonesiaKuDb() {
@@ -344,6 +345,10 @@ export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
     item.nomor_wa = '+62' + String(item.nomor_wa).substring(1);
   } else if (item.nomor_wa && !String(item.nomor_wa).startsWith('+62')) {
     item.nomor_wa = '+62' + String(item.nomor_wa);
+  }
+  // Set default tanggal_pemeriksaan if missing
+  if (!item.tanggal_pemeriksaan) {
+    item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
   }
   return item;
 }
