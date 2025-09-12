@@ -150,7 +150,6 @@ export async function parseXlsxFile(
           const jsDate = new Date(Math.round((tgl_lahir - 25569) * 86400 * 1000));
           tgl_lahir = jsDate.toLocaleDateString('en-GB'); // DD/MM/YYYY
         }
-        // console.log(`${obj['nama']} Tanggal Lahir: ${tgl_lahir}`);
         obj['tanggal_lahir'] = tgl_lahir;
         continue;
       } else if (index === 3) {
@@ -162,12 +161,10 @@ export async function parseXlsxFile(
         let tglPemeriksaan = row[index];
         // Convert Excel date number to DD/MM/YYYY if needed
         if (typeof tglPemeriksaan === 'number') {
-          // Excel date number to JS date
           const jsDate = new Date(Math.round((tglPemeriksaan - 25569) * 86400 * 1000));
           tglPemeriksaan = jsDate.toLocaleDateString('en-GB'); // DD/MM/YYYY
         }
         obj['tanggal_pemeriksaan'] = tglPemeriksaan;
-        // if (tglPemeriksaan) console.log(`${obj['nama']} Tanggal Pemeriksaan: ${tglPemeriksaan}`);
         continue;
       } else if (index === 5) {
         // Nomor WhatsApp (WA)
@@ -227,7 +224,7 @@ export async function parseXlsxFile(
     // }
     result.push(obj);
   }
-  // Remove undefined or null or spesific patterns values
+  // Remove undefined or null or specific patterns values
   return (
     result
       .map((item) => {
@@ -364,36 +361,32 @@ export function showHelp() {
 
 if (process.argv.some((arg) => /sehatindonesiaku-data\.(ts|mjs|js|cjs)$/.test(arg))) {
   (async () => {
-    try {
-      const cliArgs = minimist(process.argv.slice(2), {
-        alias: { h: 'help', nc: 'cache' }, // `--nc` works as shorthand
-        default: { cache: true } // cache enabled unless explicitly disabled
-      });
-      if (cliArgs.help) {
-        showHelp();
-        process.exit(0);
-      }
-      // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
-      const start = cliArgs.start !== undefined && !isNaN(parseInt(cliArgs.start)) ? parseInt(cliArgs.start) - 1 : 315;
-      let end: number;
-      if (typeof cliArgs.end === 'string' && cliArgs.end.toLowerCase() === 'max') {
-        end = Number.MAX_SAFE_INTEGER;
-      } else if (cliArgs.end !== undefined && !isNaN(parseInt(cliArgs.end))) {
-        end = parseInt(cliArgs.end) - 1;
-      } else {
-        end = 1000;
-      }
-      if (end < start) {
-        throw new Error(`Invalid range: end (${end + 1}) cannot be less than start (${start + 1})`);
-      }
-
-      const cache = cliArgs.cache !== false;
-
-      console.log(`Downloading and processing XLSX with range ${start + 1}-${end + 1}...`);
-      // download excel and parse with range 320-500
-      await downloadAndProcessXlsx({ rangeIndex: start, rangeEndIndex: end, cache: cache });
-    } finally {
-      await closeSehatIndonesiaKuDb();
+    const cliArgs = minimist(process.argv.slice(2), {
+      alias: { h: 'help', nc: 'cache' }, // `--nc` works as shorthand
+      default: { cache: true } // cache enabled unless explicitly disabled
+    });
+    if (cliArgs.help) {
+      showHelp();
+      process.exit(0);
     }
+    // Convert user input (Excel row numbers, 1-based) to 0-based indices for parsing
+    const start = cliArgs.start !== undefined && !isNaN(parseInt(cliArgs.start)) ? parseInt(cliArgs.start) - 1 : 315;
+    let end: number;
+    if (typeof cliArgs.end === 'string' && cliArgs.end.toLowerCase() === 'max') {
+      end = Number.MAX_SAFE_INTEGER;
+    } else if (cliArgs.end !== undefined && !isNaN(parseInt(cliArgs.end))) {
+      end = parseInt(cliArgs.end) - 1;
+    } else {
+      end = 1000;
+    }
+    if (end < start) {
+      throw new Error(`Invalid range: end (${end + 1}) cannot be less than start (${start + 1})`);
+    }
+
+    const cache = cliArgs.cache !== false;
+
+    console.log(`Downloading and processing XLSX with range ${start + 1}-${end + 1}...`);
+    // download excel and parse with range 320-500
+    await downloadAndProcessXlsx({ rangeIndex: start, rangeEndIndex: end, cache: cache });
   })();
 }
