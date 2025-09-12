@@ -8,7 +8,7 @@ import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop } from '../utils-browser.js';
 import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
-import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
+import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
   ErrorDataKehadiranNotFound,
@@ -17,7 +17,7 @@ import {
   UnauthorizedError
 } from './sehatindonesiaku-errors.js';
 import { checkAlreadyHadir, processKehadiranData, searchNik } from './sehatindonesiaku-kehadiran.js';
-import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-registrasi.js';
+import { processRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 import { DataItem } from './types.js';
 
@@ -40,7 +40,7 @@ async function main() {
     process.exit(0);
   });
 
-  let allData = await getRegistrasiData();
+  let allData = await getExcelData();
 
   if (args.shuffle) {
     // Shuffle array
@@ -142,6 +142,7 @@ async function main() {
         if ('sql' in e) {
           console.error('SQL:', e.sql);
         }
+        console.error(e.stack);
         break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
