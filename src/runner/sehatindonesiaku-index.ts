@@ -19,6 +19,7 @@ import { getRegistrasiData, processRegistrasiData } from './sehatindonesiaku-reg
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 import minimist from 'minimist';
 import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
+import { SqlError } from 'mariadb';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle', 'priority'],
@@ -134,6 +135,12 @@ async function main() {
           data: { registered: false, ...item }
         });
         continue;
+      } else if (e instanceof SqlError) {
+        console.error(`SQL Error for NIK ${item.nik}:`, e.message);
+        if (e.sql) {
+          console.error('SQL:', e.sql);
+        }
+        break;
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
     }
