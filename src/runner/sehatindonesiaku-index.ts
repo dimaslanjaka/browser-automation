@@ -44,7 +44,10 @@ async function main() {
   for (let i = 0; i < allData.length; i++) {
     if ((await browser.pages()).length > 5) {
       console.log(`Total opened pages exceed limit (${(await browser.pages()).length}), closing the oldest page...`);
-      (await browser.pages())[0].close();
+      const pages = await browser.pages();
+      for (let j = 0; j < 3 && j < pages.length; j++) {
+        await pages[j].close();
+      }
     }
 
     const item = allData[i];
