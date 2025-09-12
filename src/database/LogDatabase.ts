@@ -81,6 +81,19 @@ export class LogDatabase implements BaseLogDatabase {
       }
     }
     await this.store.close();
+    this.store = undefined as any;
+  }
+
+  /**
+   * Returns true if the underlying database connection (MySQL/SQLite) is closed.
+   */
+  isClosed(): boolean {
+    if (!this.store) return true;
+    if (typeof (this.store as any).isClosed === 'function') {
+      return (this.store as any).isClosed();
+    }
+    // Fallback: if no isClosed method, assume not closed
+    return false;
   }
 
   async initialize() {

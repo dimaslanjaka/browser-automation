@@ -61,6 +61,15 @@ export class SQLiteLogDatabase {
    */
   close() {
     this.db.close();
+    this.db = undefined;
+  }
+
+  /**
+   * Check if the pool is closed.
+   * @returns {boolean}
+   */
+  isClosed() {
+    return !this.db;
   }
 
   /**

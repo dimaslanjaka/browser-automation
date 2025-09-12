@@ -37,4 +37,13 @@ describe('LogDatabase (SQLite)', () => {
     expect(log?.data).toEqual({ foo: 'bar' });
     expect(log?.message).toBe('SQLite test log');
   });
+
+  it('should report closed state correctly', async () => {
+    expect(db.isClosed()).toBe(false);
+    await db.close();
+    expect(db.isClosed()).toBe(true);
+    // Reopen for other tests
+    db = new LogDatabase(dbName, { type: 'sqlite' });
+    await db.addLog({ id: '1', data: { foo: 'bar' }, message: 'SQLite test log' }, { timeout: 60000 });
+  });
 });

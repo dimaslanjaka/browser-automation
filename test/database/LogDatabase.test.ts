@@ -40,4 +40,13 @@ describe('LogDatabase', () => {
     const deletedLog = await db.getLogById('1');
     expect(!deletedLog).toBe(true);
   });
+
+  it('should report closed state correctly', async () => {
+    expect(db.isClosed()).toBe(false);
+    await db.close();
+    expect(db.isClosed()).toBe(true);
+    // Reopen for other tests
+    db = new LogDatabase(dbName);
+    await db.initialize();
+  });
 });

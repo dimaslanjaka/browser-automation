@@ -20,4 +20,6 @@ export interface BaseLogDatabase {
   waitReady(): Promise<void>;
 
   close(): Promise<void> | void;
+
+  isClosed(): boolean | Promise<boolean>;
 }

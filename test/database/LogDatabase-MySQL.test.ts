@@ -51,4 +51,13 @@ describe('LogDatabase (MySQL)', () => {
     expect(log?.data).toEqual({ foo: 'baz' });
     expect(log?.message).toBe('MySQL test log');
   });
+
+  it('should report closed state correctly', async () => {
+    expect(db.isClosed()).toBe(false);
+    await db.close();
+    expect(db.isClosed()).toBe(true);
+    // Reopen for other tests
+    db = new LogDatabase(dbName, { connectTimeout: 60000, type: 'mysql' });
+    await db.initialize();
+  });
 });

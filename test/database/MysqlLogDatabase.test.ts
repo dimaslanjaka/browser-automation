@@ -59,4 +59,13 @@ describe('MysqlLogDatabase', () => {
     expect(logs.length).toBe(1);
     expect(logs[0].id).toBe('log2');
   }, 60000);
+
+  it('should report closed state correctly', async () => {
+    expect(db.isClosed()).toBe(false);
+    await db.close();
+    expect(db.isClosed()).toBe(true);
+    // Reopen for other tests
+    db = new MysqlLogDatabase(dbName);
+    await db.waitReady();
+  });
 });

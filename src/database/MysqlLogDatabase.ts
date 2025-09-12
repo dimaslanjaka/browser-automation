@@ -201,6 +201,10 @@ export class MysqlLogDatabase implements BaseLogDatabase {
 
   private closed = false;
 
+  public isClosed(): boolean {
+    return this.closed;
+  }
+
   /**
    * Close the database connection pool.
    *
