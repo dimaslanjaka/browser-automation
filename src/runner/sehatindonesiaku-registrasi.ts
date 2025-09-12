@@ -81,7 +81,7 @@ async function main() {
     } catch (e) {
       const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
       if (e instanceof DataTidakSesuaiKTPError) {
-        console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
+        console.warn(`[registrasi] ${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
         await sehatindonesiakuDb.addLog({
           id: item.nik,
@@ -90,7 +90,7 @@ async function main() {
         });
         continue; // Skip this item and continue with the next
       } else if (e instanceof PembatasanUmurError) {
-        console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
+        console.warn(`[registrasi] Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
         await sehatindonesiakuDb.addLog({
           id: item.nik,
@@ -101,11 +101,13 @@ async function main() {
       } else if (e instanceof UnauthorizedError) {
         needLogin = true;
         console.warn(
-          `${ansiColors.redBright('Login required')}, please ${ansiColors.bold('login manually')} from opened browser. (close browser manual)`
+          `[registrasi] ${ansiColors.redBright('Login required')}, please ${ansiColors.bold('login manually')} from opened browser. (close browser manual)`
         );
         break;
       } else if (e instanceof TanggalPemeriksaanError) {
-        console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`);
+        console.warn(
+          `[registrasi] ${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`
+        );
         message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
         await sehatindonesiakuDb.addLog({
           id: item.nik,
@@ -128,7 +130,7 @@ async function main() {
   }
 
   // comment below codes for development
-  console.log('All data processed. Closing browser...');
+  console.log('[registrasi] All data processed. Closing browser...');
   await browser.close();
   process.exit(0);
 }
@@ -153,12 +155,12 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
       ? await (browserOrPage as Page).browser().pages()
       : await (browserOrPage as Browser).pages();
   if (pages.length > 5) {
-    console.log(`Closing excess tab, current open tabs: ${pages.length}`);
+    console.log(`[registrasi] Closing excess tab, current open tabs: ${pages.length}`);
     await pages[0].close(); // Close the first tab
   }
 
   // Create a new page for each data item
-  console.log(`Processing data`, item);
+  console.log(`[registrasi] Processing data`, item);
   const page =
     typeof (browserOrPage as any).browser === 'function'
       ? await (browserOrPage as Page).browser().newPage()
@@ -172,27 +174,27 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await waitForDomStable(page, 2000, 6000);
 
   // Common input
-  console.log(`${item.nik} - Filling common input fields...`);
+  console.log(`[registrasi] ${item.nik} - Filling common input fields...`);
   await commonInput(page, item);
   await waitForDomStable(page, 2000, 6000);
 
   // Input datepicker
-  console.log(`${item.nik} - Selecting date of birth...`);
+  console.log(`[registrasi] ${item.nik} - Selecting date of birth...`);
   await selectTanggalLahir(page, item);
   await waitForDomStable(page, 2000, 6000);
 
   // Select gender (Jenis Kelamin)
-  console.log(`${item.nik} - Selecting gender...`);
+  console.log(`[registrasi] ${item.nik} - Selecting gender...`);
   await selectGender(page, item);
   await waitForDomStable(page, 2000, 6000);
 
   // Select pekerjaan (Pekerjaan)
-  console.log(`${item.nik} - Selecting pekerjaan...`);
+  console.log(`[registrasi] ${item.nik} - Selecting pekerjaan...`);
   await selectPekerjaan(page, item);
   await waitForDomStable(page, 2000, 6000);
 
   // Select address
-  console.log(`${item.nik} - Selecting address...`);
+  console.log(`[registrasi] ${item.nik} - Selecting address...`);
   await clickAddressModal(page);
   await clickProvinsi(page, provinsi);
   await clickKabupatenKota(page, kabupaten);
@@ -201,10 +203,12 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await waitForDomStable(page, 2000, 6000);
 
   // Select calendar date pemeriksaan
-  console.log(`${item.nik} - Selecting tanggal pemeriksaan...`);
+  console.log(`[registrasi] ${item.nik} - Selecting tanggal pemeriksaan...`);
   if (!item.tanggal_pemeriksaan) {
     item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-    console.log(`${item.nik} - tanggal_pemeriksaan is empty, defaulting to today: ${item.tanggal_pemeriksaan}`);
+    console.log(
+      `[registrasi] ${item.nik} - tanggal_pemeriksaan is empty, defaulting to today: ${item.tanggal_pemeriksaan}`
+    );
   }
   if (!(await selectDayFromCalendar(page, item.tanggal_pemeriksaan))) {
     throw new TanggalPemeriksaanError(item.nik);
@@ -212,7 +216,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await waitForDomStable(page, 2000, 6000);
 
   // click submit button
-  console.log(`${item.nik} - Submitting form...`);
+  console.log(`[registrasi] ${item.nik} - Submitting form...`);
   await clickSubmit(page);
   await waitForDomStable(page, 2000, 6000);
 
@@ -223,17 +227,17 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   await kuotaHabisHandler(page, item);
 
   // Handle modal formulir pendaftaran
-  console.log(`${item.nik} - Handling formulir pendaftaran modal...`);
+  console.log(`[registrasi] ${item.nik} - Handling formulir pendaftaran modal...`);
   const isModalRegistrationVisible = await isSpecificModalVisible(page, 'formulir pendaftaran');
-  console.log(`Modal formulir pendaftaran visible: ${isModalRegistrationVisible}`);
+  console.log(`[registrasi] Modal formulir pendaftaran visible: ${isModalRegistrationVisible}`);
   if (isModalRegistrationVisible) {
     // Re-check pembatasan umur
     await isPembatasanUmurVisible(page, item);
     // Click pilih
-    console.log(`${item.nik} - Clicking "Pilih" button inside individu terdaftar table...`);
+    console.log(`[registrasi] ${item.nik} - Clicking "Pilih" button inside individu terdaftar table...`);
     await clickPilihButton(page);
     await waitForDomStable(page, 2000, 6000);
-    console.log(`${item.nik} - Clicking "Daftarkan dengan NIK" button...`);
+    console.log(`[registrasi] ${item.nik} - Clicking "Daftarkan dengan NIK" button...`);
     await clickDaftarkanDenganNIK(page);
     await waitForDomStable(page, 2000, 6000);
     // Re-check kuota pemeriksaan
@@ -241,7 +245,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   }
 
   if (await isSuccessModalVisible(page)) {
-    console.log(`${item.nik} - ${ansiColors.green('Data registered successfully!')}`);
+    console.log(`[registrasi] ${item.nik} - ${ansiColors.green('Data registered successfully!')}`);
     // Save the data to database
     const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data registered successfully');
@@ -255,7 +259,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
 
   // Handle modal "Peserta Menerima Pemeriksaan"
   if (await isSpecificModalVisible(page, 'Peserta Menerima Pemeriksaan')) {
-    console.log(`${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
+    console.log(`[registrasi] ${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
     await clickKembali(page);
     // Save the data to database
     const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
@@ -270,7 +274,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
 
   // Check modal "Data belum sesuai KTP"
   if (await isSpecificModalVisible(page, 'Data belum sesuai KTP')) {
-    console.log(`${item.nik} - Data belum sesuai KTP modal is visible.`);
+    console.log(`[registrasi] ${item.nik} - Data belum sesuai KTP modal is visible.`);
     throw new DataTidakSesuaiKTPError(item.nik);
   }
 }
@@ -285,7 +289,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
  */
 export async function kuotaHabisHandler(page: Page, item: DataItem) {
   const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
-  console.log(`Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
+  console.log(`[registrasi] Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
   if (isKuotaHabisVisible) {
     const isClicked = await handleKuotaHabisModal(page);
     if (!isClicked) throw new KuotaHabisError(item.nik);
@@ -297,7 +301,7 @@ export async function isPembatasanUmurVisible(page: Page, item: DataItem) {
   const isAgeLimitCheckDisplayed =
     (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
     (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
-  console.log(`Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
+  console.log(`[registrasi] Is age limit check displayed: ${isAgeLimitCheckDisplayed}`);
   if (isAgeLimitCheckDisplayed) throw new PembatasanUmurError(item.nik);
 }
 
@@ -333,14 +337,14 @@ async function getData(options: getDataOptions = {}) {
   if (options.nik?.length) {
     const nikSet = new Set(options.nik);
     rawData = rawData.filter((item) => nikSet.has(item.nik));
-    if (options.debug) console.log(`Filtering rawData for NIK(s): ${options.nik.join(', ')}`);
+    if (options.debug) console.log(`[registrasi] Filtering rawData for NIK(s): ${options.nik.join(', ')}`);
   }
 
   const today = moment().startOf('day');
   return rawData.filter((item) => {
     // Skip empty or invalid NIK
     if (!item.nik || String(item.nik).trim().length === 0) {
-      if (options.debug) console.log(`Skipping row for empty/invalid NIK:`, item);
+      if (options.debug) console.log(`[registrasi] Skipping row for empty/invalid NIK:`, item);
       return false;
     }
 
@@ -351,20 +355,22 @@ async function getData(options: getDataOptions = {}) {
     // Fix tanggal_pemeriksaan if empty
     if (!item.tanggal_pemeriksaan?.trim()) {
       item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
-      if (options.debug) console.log(`Fixing empty tanggal_pemeriksaan for NIK: ${item.nik}`);
+      if (options.debug) console.log(`[registrasi] Fixing empty tanggal_pemeriksaan for NIK: ${item.nik}`);
     }
 
     // Skip if tanggal_pemeriksaan is in the past
     const pemeriksaanDate = moment(item.tanggal_pemeriksaan, 'DD/MM/YYYY').startOf('day');
     if (pemeriksaanDate.isBefore(today)) {
       if (options.debug)
-        console.log(`Skipping row for past tanggal_pemeriksaan: ${item.nik} - ${item.tanggal_pemeriksaan}`);
+        console.log(
+          `[registrasi] Skipping row for past tanggal_pemeriksaan: ${item.nik} - ${item.tanggal_pemeriksaan}`
+        );
       return false;
     }
 
     // Skip if object has 'registered' property
     if (Object.prototype.hasOwnProperty.call(item, 'registered')) {
-      if (options.debug) console.log(`Skipping row for registered property: ${item.nik}`);
+      if (options.debug) console.log(`[registrasi] Skipping row for registered property: ${item.nik}`);
       return false;
     }
 
@@ -374,24 +380,24 @@ async function getData(options: getDataOptions = {}) {
 
 export function showHelp() {
   const [node, script] = process.argv;
-  console.log('SehatIndonesiaku Kemkes CLI');
-  console.log('----------------------------');
-  console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
-  console.log('');
-  console.log('Options:');
-  console.log('  -h, --help        Show this help message and exit');
-  console.log('  -s, --single      Process only one data item (first match or filtered by --nik)');
-  console.log('  -sh, --shuffle    Shuffle data before processing');
-  console.log('  --nik <NIK>       Process only data with specific NIK (useful with --single)');
-  console.log('');
-  console.log('Examples:');
-  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --help`);
-  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single`);
-  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --nik 1234567890123456`);
-  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single --nik 1234567890123456`);
-  console.log(`  ${normalizePathUnix(node)} ${normalizePathUnix(script)} --shuffle`);
-  console.log('');
-  console.log('For more information, see the documentation or README.');
+  console.log('[registrasi] SehatIndonesiaku Kemkes CLI');
+  console.log('[registrasi] ----------------------------');
+  console.log(`[registrasi] Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
+  console.log('[registrasi]');
+  console.log('[registrasi] Options:');
+  console.log('[registrasi]   -h, --help        Show this help message and exit');
+  console.log('[registrasi]   -s, --single      Process only one data item (first match or filtered by --nik)');
+  console.log('[registrasi]   -sh, --shuffle    Shuffle data before processing');
+  console.log('[registrasi]   --nik <NIK>       Process only data with specific NIK (useful with --single)');
+  console.log('[registrasi]');
+  console.log('[registrasi] Examples:');
+  console.log(`[registrasi]   ${normalizePathUnix(node)} ${normalizePathUnix(script)} --help`);
+  console.log(`[registrasi]   ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single`);
+  console.log(`[registrasi]   ${normalizePathUnix(node)} ${normalizePathUnix(script)} --nik 1234567890123456`);
+  console.log(`[registrasi]   ${normalizePathUnix(node)} ${normalizePathUnix(script)} --single --nik 1234567890123456`);
+  console.log(`[registrasi]   ${normalizePathUnix(node)} ${normalizePathUnix(script)} --shuffle`);
+  console.log('[registrasi]');
+  console.log('[registrasi] For more information, see the documentation or README.');
 }
 
 if (process.argv.some((arg) => /sehatindonesiaku-registrasi\.(js|ts|cjs|mjs)$/i.test(arg))) {
