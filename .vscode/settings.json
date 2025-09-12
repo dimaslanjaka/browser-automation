@@ -176,7 +176,7 @@
   "typescript.disableAutomaticTypeAcquisition": false,
   "typescript.tsserver.enableTracing": false,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
-  "typescript.tsserver.log": "verbose",
+  "typescript.tsserver.log": "off",
   "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
   "typescript.tsserver.web.typeAcquisition.enabled": true,
