@@ -34,6 +34,13 @@ let playwright_browser = null;
  *
  * @async
  * @function getPuppeteer
+ * @param {Object} [options] - Optional configuration for launching Puppeteer
+ * @param {boolean} [options.headless=false] - Whether to launch browser in headless mode
+ * @param {string} [options.userDataDir] - Path to user data directory
+ * @param {string} [options.executablePath] - Path to Chrome executable
+ * @param {Array<string>} [options.args] - Additional launch arguments
+ * @param {boolean} [options.reuse=true] - Whether to reuse existing browser instance
+ * @param {boolean} [options.useStealth=true] - Whether to use stealth plugin
  * @returns {Promise<{
  *   page: import('puppeteer').Page,
  *   browser: import('puppeteer').Browser,
@@ -44,29 +51,40 @@ let playwright_browser = null;
  * - `browser`: The launched or reused Puppeteer `Browser` instance.
  * - `puppeteer`: The `puppeteer-extra` module reference.
  */
-export async function getPuppeteer() {
-  // Add stealth plugin and use defaults (all evasion techniques)
-  puppeteer.use(StealthPlugin());
+export async function getPuppeteer(options = {}) {
+  const defaultOptions = {
+    headless: false,
+    userDataDir: userDataDir,
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    args: [
+      '--disable-features=HeavyAdIntervention',
+      '--disable-features=AdInterestGroupAPI',
+      '--disable-popup-blocking',
+      '--no-default-browser-check',
+      '--no-first-run',
+      '--ignore-certificate-errors',
+      '--hide-crash-restore-bubble',
+      '--autoplay-policy=no-user-gesture-required'
+    ],
+    reuse: true,
+    useStealth: true
+  };
+  const merged = { ...defaultOptions, ...options };
 
-  if (!puppeteer_browser || !puppeteer_browser.connected) {
-    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-    if (!fs.existsSync(chromePath)) {
-      throw new Error(`Chrome executable not found at: ${chromePath}`);
+  // Add stealth plugin and use defaults (all evasion techniques)
+  if (merged.useStealth) {
+    puppeteer.use(StealthPlugin());
+  }
+
+  if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
+    if (!fs.existsSync(merged.executablePath)) {
+      throw new Error(`Chrome executable not found at: ${merged.executablePath}`);
     }
     puppeteer_browser = await puppeteer.launch({
-      headless: false,
-      userDataDir,
-      executablePath: chromePath,
-      args: [
-        '--disable-features=HeavyAdIntervention',
-        '--disable-features=AdInterestGroupAPI',
-        '--disable-popup-blocking',
-        '--no-default-browser-check',
-        '--no-first-run',
-        '--ignore-certificate-errors',
-        '--hide-crash-restore-bubble',
-        '--autoplay-policy=no-user-gesture-required'
-      ]
+      headless: merged.headless,
+      userDataDir: merged.userDataDir,
+      executablePath: merged.executablePath,
+      args: merged.args
     });
   }
 
@@ -79,40 +97,59 @@ export async function getPuppeteer() {
  *
  * @async
  * @function getPlaywright
+ * @param {Object} [options] - Optional configuration for launching Playwright
+ * @param {boolean} [options.headless=false] - Whether to launch browser in headless mode
+ * @param {string} [options.userDataDir] - Path to user data directory
+ * @param {string} [options.executablePath] - Path to Chrome executable
+ * @param {Array<string>} [options.args] - Additional launch arguments
+ * @param {boolean} [options.reuse=true] - Whether to reuse existing browser instance
+ * @param {boolean} [options.useStealth=true] - Whether to use stealth plugin
  * @returns {Promise<{
  *   page: import('playwright').Page,
  *   browser: import('playwright').Browser,
  *   context: import('playwright').BrowserContext,
  *   playwright: typeof import('playwright').chromium
- * }>} Resolves with an object containing:
+ * }>}
+ * Resolves with an object containing:
  * - `page`: A new Playwright `Page` instance.
  * - `browser`: The launched or reused Playwright `Browser` instance.
  * - `context`: The Playwright `BrowserContext` instance.
  * - `playwright`: The Playwright `chromium` module reference.
  */
-export async function getPlaywright() {
-  // Add the plugin to playwright (any number of plugins can be added)
-  chromium.use(StealthPlugin());
+export async function getPlaywright(options = {}) {
+  const defaultOptions = {
+    headless: false,
+    userDataDir: userDataDir,
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    args: [
+      '--disable-features=HeavyAdIntervention',
+      '--disable-features=AdInterestGroupAPI',
+      '--disable-popup-blocking',
+      '--no-default-browser-check',
+      '--no-first-run',
+      '--ignore-certificate-errors',
+      '--hide-crash-restore-bubble',
+      '--autoplay-policy=no-user-gesture-required'
+    ],
+    reuse: true,
+    useStealth: true
+  };
+  const merged = { ...defaultOptions, ...options };
 
-  if (!playwright_browser || !playwright_browser.isConnected()) {
-    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-    if (!fs.existsSync(chromePath)) {
-      throw new Error(`Chrome executable not found at: ${chromePath}`);
+  // Add the plugin to playwright (any number of plugins can be added)
+  if (merged.useStealth) {
+    chromium.use(StealthPlugin());
+  }
+
+  if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
+    if (!fs.existsSync(merged.executablePath)) {
+      throw new Error(`Chrome executable not found at: ${merged.executablePath}`);
     }
     playwright_browser = await chromium.launch({
-      headless: false,
-      userDataDir,
-      executablePath: chromePath,
-      args: [
-        '--disable-features=HeavyAdIntervention',
-        '--disable-features=AdInterestGroupAPI',
-        '--disable-popup-blocking',
-        '--no-default-browser-check',
-        '--no-first-run',
-        '--ignore-certificate-errors',
-        '--hide-crash-restore-bubble',
-        '--autoplay-policy=no-user-gesture-required'
-      ]
+      headless: merged.headless,
+      userDataDir: merged.userDataDir,
+      executablePath: merged.executablePath,
+      args: merged.args
     });
   }
 
