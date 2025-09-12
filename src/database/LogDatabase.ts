@@ -97,6 +97,9 @@ export class LogDatabase implements BaseLogDatabase {
   }
 
   async initialize() {
+    // Avoid re-initializing if already done
+    if (this.store) return;
+    // Decide which database to use based on options.type
     if (this.options?.type === 'sqlite') {
       this.store = new SQLiteLogDatabase(this.dbName);
     } else if (this.options?.type === 'mysql') {
