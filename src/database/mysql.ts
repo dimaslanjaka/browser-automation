@@ -49,7 +49,7 @@ async function createDatabasePool(config: mariadb.PoolConfig = {}) {
       password: MYSQL_PASS,
       database: dbName,
       port: parseInt(MYSQL_PORT ?? '3306', 10),
-      connectionLimit: 1,
+      connectionLimit: config.connectionLimit || 1,
       connectTimeout: config.connectTimeout || 60000,
       allowPublicKeyRetrieval: true,
       ...config
