@@ -25,7 +25,8 @@ async function createDatabasePool(config: mariadb.PoolConfig = {}) {
     user: MYSQL_USER,
     password: MYSQL_PASS,
     port: parseInt(MYSQL_PORT ?? '3306', 10),
-    connectTimeout: config.connectTimeout || 60000
+    connectTimeout: config.connectTimeout || 60000,
+    allowPublicKeyRetrieval: true
   });
   await adminConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
   await adminConn.end();
@@ -39,6 +40,7 @@ async function createDatabasePool(config: mariadb.PoolConfig = {}) {
     port: parseInt(MYSQL_PORT ?? '3306', 10),
     connectionLimit: 50,
     connectTimeout: config.connectTimeout || 60000,
+    allowPublicKeyRetrieval: true,
     ...config
   });
 }
