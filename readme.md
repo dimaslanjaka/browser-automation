@@ -24,6 +24,7 @@ This repository provides tools and scripts for browser automation, data extracti
 
 - [Node.js](https://nodejs.org/) (v18 or later recommended)
 - [Yarn Berry (Yarn 2+)](https://yarnpkg.com/getting-started/install)
+- optional: MySQL Server [read here](https://www.webmanajemen.com/2025/08/setup-mysql-for-multiple-devices.html)
 
 ## Getting Started
 
