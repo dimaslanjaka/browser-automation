@@ -5,7 +5,6 @@ import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop, sleep } from '../utils-browser.js';
-import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
@@ -20,6 +19,7 @@ import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
 import minimist from 'minimist';
 import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
 import { SqlError } from 'mariadb';
+import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle', 'priority'],
@@ -73,7 +73,7 @@ async function main() {
     }
 
     const item = allData[i];
-    const dbItem: Partial<LogEntry<DataItem>> = (await sehatindonesiakuDb.getLogById(item.nik)) ?? {};
+    const dbItem: Partial<LogEntry<DataItem>> = (await getSehatIndonesiaKuDb().getLogById(item.nik)) ?? {};
 
     // Skip already processed items
     if (dbItem.data?.hadir && dbItem.data?.registered) {
@@ -102,7 +102,7 @@ async function main() {
       } else if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
         message.push('Data Kehadiran not found');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           data: { ...item, hadir: false },
           message: array_unique(message).join(',')
@@ -111,7 +111,7 @@ async function main() {
       } else if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -120,7 +120,7 @@ async function main() {
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -135,7 +135,7 @@ async function main() {
       } else if (e instanceof TanggalPemeriksaanError) {
         console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`);
         message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -143,7 +143,7 @@ async function main() {
         continue;
       } else if (e instanceof SqlError) {
         console.error(`SQL Error for NIK ${item.nik}:`, e.message);
-        if (e.sql) {
+        if ('sql' in e) {
           console.error('SQL:', e.sql);
         }
         break;
@@ -175,10 +175,10 @@ async function checkRegisteredStatus(page: Page, item: DataItem) {
   await waitForDomStable(page, 500, 10000);
   await searchNik(page, item.nik);
   if (await checkAlreadyHadir(page, item)) {
-    const dbItem = (await sehatindonesiakuDb.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
+    const dbItem = (await getSehatIndonesiaKuDb().getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
     const messages = (dbItem?.message ?? '').split(',');
     messages.push('Data sudah hadir');
-    await sehatindonesiakuDb.addLog({
+    await getSehatIndonesiaKuDb().addLog({
       id: item.nik,
       // Marked as hadir is same as already registered
       data: { ...item, hadir: true, registered: true },
@@ -200,7 +200,7 @@ if (process.argv.some((arg) => /sehatindonesiaku-index\.(js|cjs|ts|mjs)$/.test(a
     try {
       await main().catch(console.error);
     } finally {
-      // sehatindonesiakuDb.close() is handled by SIGINT or process exit
+      // getSehatIndonesiaKuDb().close() is handled by SIGINT or process exit
     }
   })();
 }

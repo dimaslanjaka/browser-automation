@@ -1,10 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { LogEntry } from '../database/BaseLogDatabase.js';
-import { sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { DataItem, DebugItem } from './types.js';
+import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 
 // This file for development only
 
@@ -42,9 +42,9 @@ console.error = (...args: any[]) => {
 };
 
 async function _main(callback: (...args: any[]) => any | Promise<any>) {
-  await sehatindonesiakuDb.initialize();
+  await getSehatIndonesiaKuDb().initialize();
   await callback();
-  await sehatindonesiakuDb.close();
+  await getSehatIndonesiaKuDb().close();
 }
 
 async function _debugRegistrasiData() {
@@ -72,7 +72,7 @@ async function _debugHadirData() {
 async function _debugData(options?: { nik?: string }) {
   const { getExcelData } = await import('./sehatindonesiaku-data.js');
   const allExcelData: DataItem[] = await getExcelData();
-  const allDbData = await sehatindonesiakuDb.getLogs<DataItem>();
+  const allDbData = await getSehatIndonesiaKuDb().getLogs<DataItem>();
 
   console.log(`Total records from Excel: ${allExcelData.length}`);
   console.log(`Total records from Database: ${allDbData.length}`);
@@ -138,7 +138,7 @@ _main(async function () {
   });
 
 async function _migrate() {
-  const allData = await sehatindonesiakuDb.getLogs<DataItem>();
+  const allData = await getSehatIndonesiaKuDb().getLogs<DataItem>();
   for (let i = 0; i < (allData as LogEntry<DataItem>[]).length; i++) {
     const item = (allData as LogEntry<DataItem>[])[i];
     process.stdout.write(`\rProcessing [${i + 1}/${(allData as LogEntry<DataItem>[]).length}] ${item.id}... `);
@@ -152,7 +152,7 @@ async function _migrate() {
         }
       }
       delete item.data.status;
-      await sehatindonesiakuDb.addLog(item);
+      await getSehatIndonesiaKuDb().addLog(item);
       console.log(`${item.id} migrated`);
     }
   }

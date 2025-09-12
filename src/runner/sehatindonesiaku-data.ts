@@ -9,10 +9,29 @@ import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 import { DataItem } from './types.js';
 
-export const sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
-  connectTimeout: 60000,
-  connectionLimit: 50
-});
+let sehatindonesiakuDb: LogDatabase;
+export function getSehatIndonesiaKuDb() {
+  if (!sehatindonesiakuDb) {
+    sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
+      connectTimeout: 60000,
+      connectionLimit: 50
+    });
+  }
+  return sehatindonesiakuDb;
+}
+export function restartSehatIndonesiaKuDb() {
+  if (sehatindonesiakuDb) {
+    sehatindonesiakuDb.close().catch(() => {
+      // Ignore close error
+    });
+  }
+  sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
+    connectTimeout: 60000,
+    connectionLimit: 50
+  });
+  return sehatindonesiakuDb;
+}
+
 export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
 const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan', '24/08/2025');

@@ -11,7 +11,7 @@ import {
   waitForDomStable
 } from '../puppeteer_utils.js';
 import { sleep } from '../utils-browser.js';
-import { sehatindonesiakuDataPath, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { getSehatIndonesiaKuDb, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
@@ -41,7 +41,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
     try {
       await main();
     } finally {
-      await sehatindonesiakuDb.close();
+      await getSehatIndonesiaKuDb().close();
     }
   })();
 }
@@ -82,9 +82,9 @@ async function main() {
       }
       if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
-        const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+        const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
         message.push('Data Kehadiran not found');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           data: { ...item, hadir: false },
           message: array_unique(message).join(',')
@@ -109,7 +109,7 @@ async function getExcelData() {
     const item = rawData[i];
     if (item.nik && typeof item.nik === 'string' && item.nik.trim().length === 16) {
       // Merge DB data if exists
-      const dbItem = await sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+      const dbItem = await getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
       let merged = { ...item };
       if (dbItem && dbItem.data) {
         merged = { ...merged, ...dbItem.data };
@@ -242,9 +242,9 @@ async function processData(page: Page, item: DataItem) {
   await clickElementByText(page, 'div.flex.flex-row.justify-center.gap-2', 'Tutup');
   await waitForDomStable(page, 2000, 10000);
   console.log(`${item.nik} - hadir confirmed`);
-  const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+  const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
   message.push('Data hadir confirmed');
-  await sehatindonesiakuDb.addLog({
+  await getSehatIndonesiaKuDb().addLog({
     id: item.nik,
     data: { ...item, hadir: true },
     message: array_unique(message).join(',')
@@ -270,9 +270,9 @@ export async function checkAlreadyHadir(page: Page, item: DataItem) {
   // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
   if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
     console.log(`${item.nik} - already marked as hadir`);
-    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data sudah hadir');
-    await sehatindonesiakuDb.addLog({
+    await getSehatIndonesiaKuDb().addLog({
       id: item.nik,
       data: { ...item, hadir: true },
       message: array_unique(message).join(',')

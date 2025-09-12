@@ -5,7 +5,7 @@ import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { fixKemkesDataItem, getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { fixKemkesDataItem, getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
@@ -79,11 +79,11 @@ async function main() {
     try {
       await processData(browser, item);
     } catch (e) {
-      const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+      const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`[registrasi] ${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -92,7 +92,7 @@ async function main() {
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`[registrasi] Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -109,7 +109,7 @@ async function main() {
           `[registrasi] ${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`
         );
         message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
-        await sehatindonesiakuDb.addLog({
+        await getSehatIndonesiaKuDb().addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -249,9 +249,9 @@ async function processData(browserOrPage: Browser | Page, item: Partial<DataItem
   if (await isSuccessModalVisible(page)) {
     console.log(`[registrasi] ${item.nik} - ${ansiColors.green('Data registered successfully!')}`);
     // Save the data to database
-    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data registered successfully');
-    await sehatindonesiakuDb.addLog({
+    await getSehatIndonesiaKuDb().addLog({
       id: item.nik,
       data: { ...item, registered: true },
       message: array_unique(message).join(',')
@@ -264,9 +264,9 @@ async function processData(browserOrPage: Browser | Page, item: Partial<DataItem
     console.log(`[registrasi] ${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
     await clickKembali(page);
     // Save the data to database
-    const message = ((await sehatindonesiakuDb.getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
     message.push('Peserta Sudah Menerima Pemeriksaan');
-    await sehatindonesiakuDb.addLog({
+    await getSehatIndonesiaKuDb().addLog({
       id: item.nik,
       data: { ...item, registered: true },
       message: array_unique(message).join(',')
@@ -351,7 +351,7 @@ async function getData(options: getDataOptions = {}) {
     }
 
     // Merge data with database
-    const dbItem = sehatindonesiakuDb.getLogById<DataItem>(item.nik);
+    const dbItem = getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
     dbItem.then((db) => Object.assign(item, db?.data ?? {}));
 
     // Fix tanggal_pemeriksaan if empty
@@ -411,7 +411,7 @@ if (process.argv.some((arg) => /sehatindonesiaku-registrasi\.(js|ts|cjs|mjs)$/i.
     try {
       await main();
     } finally {
-      await sehatindonesiakuDb.close();
+      await getSehatIndonesiaKuDb().close();
     }
   })();
 }
