@@ -434,7 +434,7 @@ export async function clickAddressModal(page: Page) {
  * @param page Puppeteer page instance
  * @param item Data item containing input values
  */
-export async function commonInput(page: Page, item: DataItem) {
+export async function commonInput(page: Page, item: Partial<DataItem>) {
   // Input <input id="nik" type="text" class="form-input border-gray-3 focus-within:border-black" name="NIK" placeholder="Masukkan NIK" autocomplete="off" maxlength="16">
   await page.focus('input[id="nik"]');
   await page.type('input[id="nik"]', item.nik, { delay: 100 });
@@ -457,7 +457,7 @@ export async function commonInput(page: Page, item: DataItem) {
  * @param page Puppeteer page instance
  * @param item Data item containing pekerjaan
  */
-export async function selectPekerjaan(page: Page, item: DataItem) {
+export async function selectPekerjaan(page: Page, item: Partial<DataItem>) {
   // Map pekerjaan to a standardized value using regex patterns matching the button text
   const pekerjaanPatterns = [
     { re: /Belum\/?Tidak Bekerja/i, value: 'Belum/Tidak Bekerja' },
@@ -587,7 +587,7 @@ export async function selectPekerjaan(page: Page, item: DataItem) {
  * @param page Puppeteer page instance
  * @param item Data item containing gender
  */
-export async function selectGender(page: Page, item: DataItem) {
+export async function selectGender(page: Page, item: Partial<DataItem>) {
   // Select gender (Jenis Kelamin) by clicking the SVG icon near the label (from Puppeteer context)
   const clickGenderDropdown = await page.evaluate(() => {
     // Find the label div
@@ -636,7 +636,7 @@ export async function selectGender(page: Page, item: DataItem) {
   }, item.jenis_kelamin);
 }
 
-export async function selectTanggalLahir(page: Page, item: DataItem): Promise<void> {
+export async function selectTanggalLahir(page: Page, item: Partial<DataItem>): Promise<void> {
   /**
    * Select a date in the datepicker popup.
    * @param page Puppeteer page instance
