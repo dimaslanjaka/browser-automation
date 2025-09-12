@@ -30,26 +30,29 @@ let puppeteer_browser = null;
 let playwright_browser = null;
 
 /**
- * Launches a new browser instance using `puppeteer-extra` or reuses an existing one.
+ * Launches or reuses a Puppeteer browser instance using `puppeteer-extra` with optional stealth plugin.
  *
  * @async
  * @function getPuppeteer
- * @param {Object} [options] - Optional configuration for launching Puppeteer
- * @param {boolean} [options.headless=false] - Whether to launch browser in headless mode
- * @param {string} [options.userDataDir] - Path to user data directory
- * @param {string} [options.executablePath] - Path to Chrome executable
- * @param {Array<string>} [options.args] - Additional launch arguments
- * @param {boolean} [options.reuse=true] - Whether to reuse existing browser instance
- * @param {boolean} [options.useStealth=true] - Whether to use stealth plugin
- * @returns {Promise<{
- *   page: import('puppeteer').Page,
- *   browser: import('puppeteer').Browser,
- *   puppeteer: typeof import('puppeteer-extra')
- * }>}
+ * @param {Object} [options] - Configuration options for launching Puppeteer.
+ * @param {boolean} [options.headless=false] - Launch browser in headless mode.
+ * @param {string} [options.userDataDir] - Path to store browser profile data (user data directory).
+ * @param {string} [options.executablePath] - Path to Chrome or Chromium executable. If not found, uses Puppeteer's default.
+ * @param {Array<string>} [options.args] - Additional arguments to pass to the browser instance.
+ * @param {boolean} [options.reuse=true] - Reuse existing browser instance if available.
+ * @param {boolean} [options.useStealth=true] - Enable stealth plugin for anti-bot evasion.
+ * @param {boolean} [options.devtools=false] - Open DevTools panel on launch.
+ * @returns {Promise<{page: import('puppeteer').Page, browser: import('puppeteer').Browser, puppeteer: typeof import('puppeteer-extra')}>}
  * Resolves with an object containing:
- * - `page`: A new Puppeteer `Page` instance.
- * - `browser`: The launched or reused Puppeteer `Browser` instance.
- * - `puppeteer`: The `puppeteer-extra` module reference.
+ *   - `page`: A new Puppeteer `Page` instance.
+ *   - `browser`: The launched or reused Puppeteer `Browser` instance.
+ *   - `puppeteer`: The `puppeteer-extra` module reference.
+ *
+ * @example
+ * const { page, browser } = await getPuppeteer({ headless: true });
+ * await page.goto('https://example.com');
+ * // ...
+ * await browser.close();
  */
 export async function getPuppeteer(options = {}) {
   const defaultOptions = {
@@ -67,7 +70,8 @@ export async function getPuppeteer(options = {}) {
       '--autoplay-policy=no-user-gesture-required'
     ],
     reuse: true,
-    useStealth: true
+    useStealth: true,
+    devtools: false
   };
   const merged = { ...defaultOptions, ...options };
 
@@ -85,7 +89,8 @@ export async function getPuppeteer(options = {}) {
       headless: merged.headless,
       userDataDir: merged.userDataDir,
       executablePath: execPath,
-      args: merged.args
+      args: merged.args,
+      devtools: merged.devtools
     });
   }
 
