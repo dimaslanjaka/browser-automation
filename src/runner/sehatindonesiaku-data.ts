@@ -20,6 +20,7 @@ export function getSehatIndonesiaKuDb() {
   }
   return sehatindonesiakuDb;
 }
+
 export function restartSehatIndonesiaKuDb() {
   if (sehatindonesiakuDb) {
     sehatindonesiakuDb
@@ -39,23 +40,31 @@ export function restartSehatIndonesiaKuDb() {
   return sehatindonesiakuDb;
 }
 
+export async function closeSehatIndonesiaKuDb() {
+  if (sehatindonesiakuDb) {
+    await sehatindonesiakuDb.close();
+    sehatindonesiakuDb = undefined;
+    console.log('[DB] Closed sehatindonesiaku-kemkes pool');
+  }
+}
+
 export const sehatindonesiakuPref = new SharedPreferences({ namespace: 'sehatindonesiaku-kemkes' });
 const xlsxFile = path.join(process.cwd(), '.cache/sheets/sehatindonesiaku.xlsx');
 const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan', '24/08/2025');
 
 process.on('SIGINT', async () => {
-  await sehatindonesiakuDb.close();
+  await closeSehatIndonesiaKuDb();
   console.log('[DB] Closed sehatindonesiaku-kemkes pool (SIGINT)');
   process.exit(0);
 });
 process.on('SIGTERM', async () => {
-  await sehatindonesiakuDb.close();
+  await closeSehatIndonesiaKuDb();
   console.log('[DB] Closed sehatindonesiaku-kemkes pool (SIGTERM)');
   process.exit(0);
 });
 process.on('exit', () => {
   // Not async, but best effort
-  sehatindonesiakuDb.close();
+  closeSehatIndonesiaKuDb();
   console.log('[DB] Closed sehatindonesiaku-kemkes pool (exit)');
 });
 
@@ -384,7 +393,7 @@ if (process.argv.some((arg) => /sehatindonesiaku-data\.(ts|mjs|js|cjs)$/.test(ar
       // download excel and parse with range 320-500
       await downloadAndProcessXlsx({ rangeIndex: start, rangeEndIndex: end, cache: cache });
     } finally {
-      await sehatindonesiakuDb.close();
+      await closeSehatIndonesiaKuDb();
     }
   })();
 }
