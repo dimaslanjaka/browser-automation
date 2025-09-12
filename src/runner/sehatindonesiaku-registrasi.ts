@@ -5,7 +5,7 @@ import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
+import { fixKemkesDataItem, getExcelData, sehatindonesiakuDb } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
@@ -142,12 +142,14 @@ interface ProcessDataOptions {
   kelurahan?: string;
 }
 
-async function processData(browserOrPage: Browser | Page, item: DataItem, options: ProcessDataOptions = {}) {
+async function processData(browserOrPage: Browser | Page, item: Partial<DataItem>, options: ProcessDataOptions = {}) {
   // Merge options with hardcoded defaults
   const provinsi = options.provinsi ?? 'DKI Jakarta';
   const kabupaten = options.kabupaten ?? 'Kota Adm. Jakarta Barat';
   const kecamatan = options.kecamatan ?? 'Kebon Jeruk';
   const kelurahan = options.kelurahan ?? 'Kebon Jeruk';
+
+  item = fixKemkesDataItem(item);
 
   // Close tab when more than 5 tabs open
   const pages =
@@ -287,7 +289,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
  * @param page The Puppeteer Page instance to operate on.
  * @param item The data item being processed.
  */
-export async function kuotaHabisHandler(page: Page, item: DataItem) {
+export async function kuotaHabisHandler(page: Page, item: Partial<DataItem>) {
   const isKuotaHabisVisible = await isSpecificModalVisible(page, 'Kuota pemeriksaan habis');
   console.log(`[registrasi] Modal "Kuota pemeriksaan habis" visible: ${isKuotaHabisVisible}`);
   if (isKuotaHabisVisible) {
@@ -297,7 +299,7 @@ export async function kuotaHabisHandler(page: Page, item: DataItem) {
   }
 }
 
-export async function isPembatasanUmurVisible(page: Page, item: DataItem) {
+export async function isPembatasanUmurVisible(page: Page, item: Partial<DataItem>) {
   const isAgeLimitCheckDisplayed =
     (await anyElementWithTextExists(page, 'div.pb-2', 'Pembatasan Umur Pemeriksaan')) ||
     (await isSpecificModalVisible(page, 'Pembatasan Umur Pemeriksaan'));
