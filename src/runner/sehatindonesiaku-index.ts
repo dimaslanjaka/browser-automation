@@ -58,12 +58,12 @@ async function main() {
   }
 
   for (let i = 0; i < allData.length; i++) {
-    if ((await browser.pages()).length > 5) {
-      console.log(`Total opened pages exceed limit (${(await browser.pages()).length}), closing the oldest page...`);
-      const pages = await browser.pages();
-      for (let j = 0; j < 3 && j < pages.length; j++) {
-        await pages[j].close();
-      }
+    const pages = await browser.pages();
+    const maxPages = 3;
+    if (pages.length > maxPages) {
+      const toClose = pages.slice(0, pages.length - maxPages);
+      console.log(`Too many pages open (${pages.length}), closing ${toClose.length} oldest...`);
+      await Promise.all(toClose.map((page) => page.close()));
     }
 
     const item = allData[i];
