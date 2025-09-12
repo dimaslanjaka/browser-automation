@@ -3,31 +3,24 @@ import path from 'path';
 import axios from 'axios';
 import xlsx from 'xlsx';
 import { google } from 'googleapis';
-import minimist from 'minimist';
-
-const args = minimist(process.argv.slice(2), {
-  alias: { h: 'help', nc: 'cache' }, // `--nc` is just an alias for `--cache`
-  default: { cache: true } // default = enabled
-});
 
 /**
  * Download a Google Spreadsheet as XLSX and cache it locally, along with metadata and CSV exports for each sheet.
  *
- * - Checks remote file size and metadata to avoid unnecessary downloads (caching).
+ * - Checks remote file size and metadata to avoid unnecessary downloads (caching), unless forceDownload is true.
  * - Saves metadata (including file size and CSV file paths) to a JSON file in the cache directory.
  * - Converts each sheet in the XLSX to CSV and saves them in the cache directory.
  *
- * @param {string} spreadsheetId - The Google Spreadsheet ID to download.
- * @returns {Promise<{ xlsxFilePath: string, csvFiles: string[], xlsxMetadataPath: string }>} An object containing the XLSX file path and an array of CSV file paths.
+ * @param {string} spreadsheetId The Google Spreadsheet ID to download.
+ * @param {boolean} [forceDownload=false] If true, always download the spreadsheet, ignoring cache.
+ * @returns {Promise<{ xlsxFilePath: string, csvFiles: string[], xlsxMetadataPath: string }>} An object containing the XLSX file path, array of CSV file paths, and metadata path.
  */
-export async function downloadSheets(spreadsheetId) {
+async function downloadSheets(spreadsheetId, forceDownload = false) {
   const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');
   const xlsxFilePath = path.join(CACHE_DIR, `spreadsheet-pub-${spreadsheetId}.xlsx`);
   const xlsxMetadataPath = path.join(CACHE_DIR, `spreadsheet-pub-${spreadsheetId}.json`);
   const publicUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx&id=${spreadsheetId}`;
   fs.ensureDirSync(CACHE_DIR);
-
-  const skipCache = args.cache === false;
 
   /**
    * @typedef {Object} Metadata
@@ -37,38 +30,45 @@ export async function downloadSheets(spreadsheetId) {
    */
 
   /** @type {Metadata} */
-  let metadata = { csvFiles: [] };
+  let metadata = {
+    csvFiles: []
+  };
+
+  if (fs.existsSync(xlsxMetadataPath)) {
+    try {
+      metadata = JSON.parse(fs.readFileSync(xlsxMetadataPath, 'utf-8'));
+      console.log(`Loaded existing metadata from ${xlsxMetadataPath}`);
+    } catch (err) {
+      console.error('Failed to parse existing metadata:', err.message || err);
+    }
+  }
+
   let shouldDownload = true;
 
-  if (!skipCache) {
-    if (fs.existsSync(xlsxMetadataPath)) {
-      try {
-        metadata = JSON.parse(fs.readFileSync(xlsxMetadataPath, 'utf-8'));
-        console.log(`Loaded existing metadata from ${xlsxMetadataPath}`);
-      } catch (err) {
-        console.error('Failed to parse existing metadata:', err.message || err);
-      }
-    }
-
+  if (!forceDownload) {
     try {
       const response = await axios.head(publicUrl);
-      const remoteMetadata = { size: response.headers['content-length'] || 0 };
+      /** @type {Partial<Metadata>} */
+      const remoteMetadata = {
+        size: response.headers['content-length'] || 0
+      };
       console.log(`Remote size: ${remoteMetadata.size}, local size: ${metadata.size}`);
       if (fs.existsSync(xlsxFilePath) && metadata.size == remoteMetadata.size) {
         shouldDownload = false;
       } else {
-        metadata = { ...metadata, ...remoteMetadata };
+        metadata = {
+          ...metadata,
+          ...remoteMetadata
+        };
       }
     } catch (err) {
       console.error('Failed to fetch metadata for public export URL:', err.message || err);
     }
+  }
 
-    if (!shouldDownload) {
-      console.log('Local file is up-to-date, skipping download.');
-      return { xlsxFilePath, csvFiles: metadata.csvFiles };
-    }
-  } else {
-    console.log('Skipping cache due to --no-cache/--nc flag. Will always download.');
+  if (!shouldDownload) {
+    console.log('Local file is up-to-date, skipping download.');
+    return { xlsxFilePath, csvFiles: metadata.csvFiles };
   }
 
   console.log(`Downloading via public export URL: ${publicUrl}`);
@@ -84,6 +84,7 @@ export async function downloadSheets(spreadsheetId) {
   } else if (Buffer.isBuffer(response.data)) {
     fs.writeFileSync(xlsxFilePath, response.data);
   } else {
+    // Try to write as binary if not a stream or buffer
     fs.writeFileSync(xlsxFilePath, response.data, 'binary');
   }
 
@@ -179,4 +180,4 @@ async function changeRowColor(auth, spreadsheetId, sheetId, rowIndex, colorName)
   console.log(`Row ${rowIndex + 1} color changed to ${colorName}!`);
 }
 
-export { changeRowColor };
+export { downloadSheets, changeRowColor };
