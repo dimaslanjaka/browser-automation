@@ -10,7 +10,8 @@ import {
   isElementVisible,
   isIframeElementVisible,
   typeAndTriggerIframe,
-  validateAndRetryIframeInput
+  validateAndRetryIframeInput,
+  waitForDomStable
 } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
@@ -44,6 +45,7 @@ async function processData(page, data) {
 
   // Wait for the dialog window iframe to appear
   await page.waitForSelector(iframeSelector, { visible: true, timeout: 30000 });
+  await waitForDomStable(page, 3000, 30000);
 
   // Wait for the iframe to load and the datepicker element to be ready
   await page.waitForFunction(
@@ -147,6 +149,7 @@ async function processData(page, data) {
   await typeAndTriggerIframe(page, iframeSelector, '#nik', NIK);
 
   await sleep(4000); // Wait for the NIK input to process
+  await waitForDomStable(page, 3000, 30000);
 
   const isInvalidAlertVisible = async () =>
     await isIframeElementVisible(page, iframeSelector, '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');

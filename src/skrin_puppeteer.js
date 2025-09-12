@@ -1,3 +1,5 @@
+import { waitForDomStable } from './puppeteer_utils.js';
+
 /**
  * Logs into the skrining web application using provided credentials.
  *
@@ -29,6 +31,8 @@ export async function enterSkriningPage(page, replacePage = true) {
     timeout: 120000
   });
 
+  await waitForDomStable(page, 3000, 30000);
+
   await page.waitForSelector('#btnAdd_ta_skrining', { visible: true });
   await page.click('#btnAdd_ta_skrining');
 
@@ -38,4 +42,6 @@ export async function enterSkriningPage(page, replacePage = true) {
       timeout: 120000
     });
   }
+
+  await waitForDomStable(page, 3000, 30000);
 }
