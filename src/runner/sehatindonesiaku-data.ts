@@ -302,7 +302,14 @@ export async function getDbData() {
  * @returns The updated Partial<DataItem> with a valid `nomor_wa` field.
  */
 export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
-  if (!item.nomor_wa) item.nomor_wa = '81316270797';
+  if (!item.nomor_wa) {
+    item.nomor_wa = '81316270797';
+  }
+  if (item.nomor_wa && String(item.nomor_wa).startsWith('0')) {
+    item.nomor_wa = '+62' + String(item.nomor_wa).substring(1);
+  } else if (item.nomor_wa && !String(item.nomor_wa).startsWith('+62')) {
+    item.nomor_wa = '+62' + String(item.nomor_wa);
+  }
   return item;
 }
 
