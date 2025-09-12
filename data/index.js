@@ -14,6 +14,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const csvFilePath = path.join(__dirname, 'data.csv');
 
+if (!fs.existsSync(csvFilePath)) {
+  // Create empty data.csv if it doesn't exist
+  fs.writeFileSync(csvFilePath, '');
+}
+
 const keyMap = {
   TANGGAL: 'tanggal',
   'TANGGAL ENTRY': 'tanggal',
