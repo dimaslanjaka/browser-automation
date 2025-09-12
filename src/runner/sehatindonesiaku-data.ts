@@ -12,22 +12,29 @@ import { DataItem } from './types.js';
 let sehatindonesiakuDb: LogDatabase;
 export function getSehatIndonesiaKuDb() {
   if (!sehatindonesiakuDb) {
+    console.log('[DB] Creating sehatindonesiaku-kemkes pool (connectionLimit: 10)');
     sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
       connectTimeout: 60000,
-      connectionLimit: 50
+      connectionLimit: 10
     });
   }
   return sehatindonesiakuDb;
 }
 export function restartSehatIndonesiaKuDb() {
   if (sehatindonesiakuDb) {
-    sehatindonesiakuDb.close().catch(() => {
-      // Ignore close error
-    });
+    sehatindonesiakuDb
+      .close()
+      .then(() => {
+        console.log('[DB] Closed sehatindonesiaku-kemkes pool');
+      })
+      .catch(() => {
+        // Ignore close error
+      });
   }
+  console.log('[DB] Restarting sehatindonesiaku-kemkes pool (connectionLimit: 10)');
   sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
     connectTimeout: 60000,
-    connectionLimit: 50
+    connectionLimit: 10
   });
   return sehatindonesiakuDb;
 }
@@ -38,15 +45,18 @@ const tanggal_pemeriksaan = sehatindonesiakuPref.getString('tanggal_pemeriksaan'
 
 process.on('SIGINT', async () => {
   await sehatindonesiakuDb.close();
+  console.log('[DB] Closed sehatindonesiaku-kemkes pool (SIGINT)');
   process.exit(0);
 });
 process.on('SIGTERM', async () => {
   await sehatindonesiakuDb.close();
+  console.log('[DB] Closed sehatindonesiaku-kemkes pool (SIGTERM)');
   process.exit(0);
 });
 process.on('exit', () => {
   // Not async, but best effort
   sehatindonesiakuDb.close();
+  console.log('[DB] Closed sehatindonesiaku-kemkes pool (exit)');
 });
 
 /**
