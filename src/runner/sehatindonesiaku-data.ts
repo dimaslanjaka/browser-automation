@@ -133,9 +133,6 @@ export async function parseXlsxFile(
         continue;
       } else if (index === 5) {
         // Nomor WhatsApp (WA)
-        if (String(row[index]).trim().length === 0 || !row[index] || row[index] === 'null') {
-          obj['nomor_wa'] = '81316270797';
-        }
         obj['nomor_wa'] = '+62' + row[index];
         continue;
       } else if (index === 6) {
@@ -288,6 +285,19 @@ export async function getDbData() {
     }
   }
   return dbData;
+}
+
+/**
+ * Ensures a valid WhatsApp number exists in the Kemkes data item.
+ *
+ * If the `nomor_wa` field is missing or falsy, sets it to a default value.
+ *
+ * @param item - Partial DataItem object to fix.
+ * @returns The updated Partial<DataItem> with a valid `nomor_wa` field.
+ */
+export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
+  if (!item.nomor_wa) item.nomor_wa = '81316270797';
+  return item;
 }
 
 export function showHelp() {
