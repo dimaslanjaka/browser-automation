@@ -174,7 +174,7 @@
   "typescript.updateImportsOnPaste.enabled": false,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "typescript.disableAutomaticTypeAcquisition": false,
-  "typescript.tsserver.enableTracing": true,
+  "typescript.tsserver.enableTracing": false,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "typescript.tsserver.log": "verbose",
   "typescript.tsserver.maxTsServerMemory": 4096,
