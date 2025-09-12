@@ -131,8 +131,8 @@ async function main() {
 
   if (!needLogin) {
     console.log('All items processed successfully');
-    await sehatindonesiakuDb.close();
-    // await browser.close();
+    await browser.close();
+    process.exit(0);
   }
 }
 
@@ -170,9 +170,9 @@ class AlreadyHadir extends Error {
 if (process.argv.some((arg) => /sehatindonesiaku-index\.(js|cjs|ts|mjs)$/.test(arg))) {
   (async () => {
     try {
-      await main();
+      await main().catch(console.error);
     } finally {
-      await sehatindonesiakuDb.close();
+      // sehatindonesiakuDb.close() is handled by SIGINT or process exit
     }
   })();
 }
