@@ -30,6 +30,8 @@ const args = minimist(process.argv.slice(2), {
 async function main() {
   // Enable unicode
   await spawnAsync('chcp', ['65001']).catch(noop);
+  // Initialize database
+  await getSehatIndonesiaKuDb().initialize();
   let needLogin = false;
   const { browser } = await getPuppeteer();
   // Handle browser closed event to exit process
