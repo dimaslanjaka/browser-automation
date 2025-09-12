@@ -158,7 +158,7 @@ async function processData(browserOrPage: Browser | Page, item: DataItem, option
   }
 
   // Create a new page for each data item
-  console.log(`Processing data for NIK ${item.nik} - ${item.nama}`);
+  console.log(`Processing data`, item);
   const page =
     typeof (browserOrPage as any).browser === 'function'
       ? await (browserOrPage as Page).browser().newPage()
