@@ -31,6 +31,11 @@ async function main() {
   await spawnAsync('chcp', ['65001']).catch(noop);
   let needLogin = false;
   const { browser } = await getPuppeteer();
+  // Handle browser closed event to exit process
+  browser.on('disconnected', () => {
+    process.exit(0);
+  });
+
   let allData = await getRegistrasiData();
 
   if (args.shuffle) {
@@ -143,11 +148,6 @@ async function main() {
     console.log('All items processed successfully');
     await browser.close();
     process.exit(0);
-  } else {
-    // Wait for browser to be closed manually, then exit
-    browser.on('disconnected', () => {
-      process.exit(0);
-    });
   }
 }
 
