@@ -133,7 +133,13 @@ export async function parseXlsxFile(
         continue;
       } else if (index === 5) {
         // Nomor WhatsApp (WA)
-        obj['nomor_wa'] = '+62' + row[index];
+        if (row[index] && String(row[index]).startsWith('+62')) {
+          obj['nomor_wa'] = String(row[index]);
+        } else if (row[index] && String(row[index]).startsWith('0')) {
+          obj['nomor_wa'] = '+62' + String(row[index]).substring(1);
+        } else if (row[index] && String(row[index]).toString().trim() !== '') {
+          obj['nomor_wa'] = '+62' + String(row[index]);
+        }
         continue;
       } else if (index === 6) {
         // Pekerjaan
