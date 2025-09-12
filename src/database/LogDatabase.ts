@@ -99,6 +99,7 @@ export class LogDatabase implements BaseLogDatabase {
   async initialize() {
     // Avoid re-initializing if already done
     if (this.store) return;
+    console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, this.options);
     // Decide which database to use based on options.type
     if (this.options?.type === 'sqlite') {
       this.store = new SQLiteLogDatabase(this.dbName);
@@ -114,6 +115,20 @@ export class LogDatabase implements BaseLogDatabase {
         this.store = new SQLiteLogDatabase(this.dbName);
       }
     }
+  }
+
+  async showProcessList(print = false) {
+    if (!this.store) await this.initialize();
+    if (this.store instanceof MysqlLogDatabase) {
+      const [rows] = await this.store.query('SHOW PROCESSLIST');
+      if (print) {
+        const e = new Error();
+        console.log('Called from:', e.stack?.split('\n')[3].trim());
+        console.log('Process List:', rows);
+      }
+      return rows;
+    }
+    if (print) console.log('showProcessList is only available for MySQL databases');
   }
 
   /**

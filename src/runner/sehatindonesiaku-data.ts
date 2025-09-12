@@ -12,7 +12,7 @@ import { DataItem } from './types.js';
 let sehatindonesiakuDb: LogDatabase;
 export function getSehatIndonesiaKuDb() {
   if (!sehatindonesiakuDb) {
-    console.log('[DB] Creating sehatindonesiaku-kemkes pool (connectionLimit: 10)');
+    console.log('[DB] Creating sehatindonesiaku-kemkes pool');
     sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
       connectTimeout: 60000,
       connectionLimit: 10
@@ -32,7 +32,7 @@ export function restartSehatIndonesiaKuDb() {
         // Ignore close error
       });
   }
-  console.log('[DB] Restarting sehatindonesiaku-kemkes pool (connectionLimit: 10)');
+  console.log('[DB] Restarting sehatindonesiaku-kemkes pool');
   sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
     connectTimeout: 60000,
     connectionLimit: 10
