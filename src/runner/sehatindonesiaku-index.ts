@@ -21,8 +21,9 @@ import minimist from 'minimist';
 import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
 
 const args = minimist(process.argv.slice(2), {
-  boolean: ['help', 'single', 'shuffle'],
-  alias: { h: 'help', s: 'single', sh: 'shuffle' }
+  boolean: ['help', 'single', 'shuffle', 'priority'],
+  alias: { h: 'help', s: 'single', sh: 'shuffle', prior: 'priority' },
+  default: { single: false, shuffle: false, priority: false }
 });
 
 async function main() {
@@ -39,6 +40,15 @@ async function main() {
 
   if (args.single) {
     allData = allData.slice(0, 1);
+  }
+
+  if (args.priority) {
+    // Priority hadir and registered undefined
+    allData.sort((a, b) => {
+      if (a && !a.data?.hadir && !a.data?.registered) return -1;
+      if (b && !b.data?.hadir && !b.data?.registered) return 1;
+      return 0;
+    });
   }
 
   for (let i = 0; i < allData.length; i++) {
