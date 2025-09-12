@@ -143,6 +143,11 @@ async function main() {
     console.log('All items processed successfully');
     await browser.close();
     process.exit(0);
+  } else {
+    // Wait for browser to be closed manually, then exit
+    browser.on('disconnected', () => {
+      process.exit(0);
+    });
   }
 }
 
