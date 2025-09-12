@@ -17,8 +17,27 @@ import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
 import { fixData } from '../xlsx-helper.js';
+import minimist from 'minimist';
 
 console.clear();
+
+const cliArgs = minimist(process.argv.slice(2), {
+  boolean: ['help', 'shuffle'],
+  alias: {
+    h: 'help',
+    sh: 'shuffle'
+  }
+});
+
+function showHelp() {
+  console.log(`
+    Usage: node skrin2.js [options]
+
+    Options:
+      -h, --help        Show help
+      -sh, --shuffle    Shuffle the data
+  `);
+}
 
 /**
  * Processes a single data entry in the skrining workflow.
@@ -140,6 +159,7 @@ async function processData(page, data) {
     }
 
     await sleep(1500); // Extended wait for the datepicker to process the input
+    await waitForDomStable(page, 3000, 30000);
   }
 
   // Insert default skrining inputs
@@ -711,6 +731,14 @@ const _main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
   const dataKunto = await loadCsvData();
+  if (cliArgs.shuffle) {
+    // Shuffle data array using Fisher-Yates algorithm
+    for (let i = dataKunto.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [dataKunto[i], dataKunto[j]] = [dataKunto[j], dataKunto[i]];
+    }
+    logLine('Data shuffled');
+  }
   const unprocessedData = dataKunto.filter((item) => {
     // Check if the data for this NIK has already been processed
     const nik = getNumbersOnly(item.nik);
@@ -747,4 +775,17 @@ const _test2 = async () => {
   processData(page, dataKunto[0]);
 };
 
-_main();
+if (cliArgs.help) {
+  showHelp();
+  process.exit(0);
+} else {
+  _main()
+    .then(() => {
+      logLine('All done!');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Fatal error:', err);
+      process.exit(1);
+    });
+}
