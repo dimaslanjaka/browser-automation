@@ -18,13 +18,17 @@ export async function generateDataDisplay() {
 }
 
 export default function PrepareVitePlugin() {
+  let generated = false;
   return {
     name: 'prepare-vite-plugin',
-    async options(options) {
+    options(options) {
       // Run data generation before Vite processes any options or files
-      console.log('Generating required JSON data before Vite build...');
-      await generateDataDisplay();
-      console.log('Required JSON data generated.');
+      if (!generated) {
+        console.log('Generating required JSON data before Vite build...');
+        generateDataDisplay(); // Run in background, not awaited
+        console.log('Required JSON data generated.');
+        generated = true;
+      }
       return options;
     }
   };
