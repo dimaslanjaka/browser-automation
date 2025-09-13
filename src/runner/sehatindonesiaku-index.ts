@@ -5,7 +5,7 @@ import minimist from 'minimist';
 import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
-import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { closeFirstTab, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop } from '../utils-browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
@@ -88,22 +88,24 @@ async function main() {
       continue;
     }
 
-    // Open a single page for all actions for this item
-    const page = await browser.newPage();
     try {
       console.log(`📝 ${item.nik} - Checking login status`);
-      await checkLoginStatus(page);
+      await checkLoginStatus(await browser.newPage());
+      await closeFirstTab(browser);
 
       console.log(`🔍 ${item.nik} - Checking registered status`);
-      await checkRegisteredStatus(page, item, db);
+      await checkRegisteredStatus(await browser.newPage(), item, db);
+      await closeFirstTab(browser);
 
       console.log(`📝 ${item.nik} - Processing registration`);
-      await processRegistrasiData(page, item, db);
+      await processRegistrasiData(await browser.newPage(), item, db);
       console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully registered')}`);
+      await closeFirstTab(browser);
 
       console.log(`📝 ${item.nik} - Processing attendance`);
-      await processKehadiranData(page, item, db);
+      await processKehadiranData(await browser.newPage(), item, db);
       console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully processed attendance')}`);
+      await closeFirstTab(browser);
     } catch (e) {
       const message = (dbItem?.message ?? '').split(',');
       if (e instanceof AlreadyHadir) {
