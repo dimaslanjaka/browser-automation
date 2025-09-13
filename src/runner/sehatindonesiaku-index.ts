@@ -52,13 +52,23 @@ async function main() {
 
   for (let i = 0; i < allData.length; i++) {
     const pages = await browser.pages();
-    const maxPages = 3;
-    if (pages.length > maxPages) {
+    if (pages.length > 3) {
       console.log(`Too many pages open (${pages.length}), closing oldest...`);
       pages[0].close(); // Close the first page if exists
     }
 
     const item = allData[i];
+
+    if (!item.nik) {
+      console.log(`⚠️  Skipping entry with empty NIK at index ${i}`);
+      continue;
+    }
+
+    if (!item.tanggal_lahir) {
+      console.log(`⚠️  Skipping entry with empty Tanggal Lahir for NIK ${item.nik}`);
+      continue;
+    }
+
     const dbItem: Partial<LogEntry<DataItem>> = (await db.getLogById(item.nik)) ?? {};
 
     if (args.priority) {
