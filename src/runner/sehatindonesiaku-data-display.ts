@@ -6,9 +6,10 @@ import { DataItem, DataMerged } from './types.js';
 const json = JSON.parse(readfile(sehatindonesiakuDataPath)) as DataItem[];
 
 async function getData() {
+  const db = await getSehatIndonesiaKuDb();
   for (let i = 0; i < json.length; i++) {
     const data = json[i];
-    const dataDb = await getSehatIndonesiaKuDb().getLogById<DataItem>(data.nik);
+    const dataDb = (await db.getLogById(data.nik)) as any;
     if (dataDb && dataDb.id) {
       // console.log('data from json', data);
       // console.log('data from db', dataDb);
@@ -16,7 +17,7 @@ async function getData() {
       break;
     }
   }
-  getSehatIndonesiaKuDb().close();
+  await db.close();
   return json as DataMerged[];
 }
 

@@ -15,6 +15,7 @@ import { getSehatIndonesiaKuDb, sehatindonesiakuDataPath } from './sehatindonesi
 import { DataItem } from './types.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';
 import { enterSehatIndonesiaKu } from './sehatindonesiaku-utils.js';
+import { LogDatabase } from '../database/LogDatabase.js';
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'single', 'shuffle'],
@@ -38,18 +39,20 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
       showHelp();
       return;
     }
+    let db;
     try {
-      await main();
+      db = await getSehatIndonesiaKuDb();
+      await main(db);
     } finally {
-      await getSehatIndonesiaKuDb().close();
+      if (db) await db.close();
     }
   })();
 }
 
-async function main() {
+async function main(db) {
   const puppeteer = await getPuppeteer();
   // Prepare data to process
-  let allData = await getData();
+  let allData = await getData(db);
   // Shuffle data if --shuffle is passed
   if (args.shuffle || args.sh) {
     allData = array_shuffle(allData);
@@ -72,7 +75,7 @@ async function main() {
         const pages = await puppeteer.browser.pages();
         await pages[0].close();
       }
-      await processData(await puppeteer.browser.newPage(), item);
+      await processData(await puppeteer.browser.newPage(), item, db);
     } catch (e) {
       if (e instanceof UnauthorizedError) {
         console.error(
@@ -82,9 +85,9 @@ async function main() {
       }
       if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
-        const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+        const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
         message.push('Data Kehadiran not found');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           data: { ...item, hadir: false },
           message: array_unique(message).join(',')
@@ -103,13 +106,13 @@ async function main() {
   process.exit(0);
 }
 
-async function getExcelData() {
+async function getExcelData(db) {
   const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
   for (let i = rawData.length - 1; i >= 0; i--) {
     const item = rawData[i];
     if (item.nik && typeof item.nik === 'string' && item.nik.trim().length === 16) {
       // Merge DB data if exists
-      const dbItem = await getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
+      const dbItem = await db.getLogById(item.nik);
       let merged = { ...item };
       if (dbItem && dbItem.data) {
         merged = { ...merged, ...dbItem.data };
@@ -148,10 +151,10 @@ export interface DataOptions {
  *   - type: Source of data, either 'db' (database logs) or 'excel' (Kemkes data). Defaults to 'excel'.
  * @returns Promise resolving to an array of DataItem objects to process.
  */
-async function getData(options?: DataOptions): Promise<DataItem[]> {
+async function getData(db, options?: DataOptions): Promise<DataItem[]> {
   const defaultOptions: DataOptions = { shuffle: false, single: false };
   options = { ...defaultOptions, ...options };
-  const data = await getExcelData();
+  const data = await getExcelData(db);
   console.log(`Total data items retrieved: ${data.length}`);
   let filtered = data.filter((item) => {
     if (!item || typeof item.nik !== 'string' || item.nik.length === 0) return false;
@@ -169,7 +172,7 @@ async function getData(options?: DataOptions): Promise<DataItem[]> {
   return filtered;
 }
 
-async function processData(page: Page, item: DataItem) {
+async function processData(page: Page, item: DataItem, db: LogDatabase) {
   const isLoggedIn = await enterSehatIndonesiaKu(page);
   if (!isLoggedIn) throw new UnauthorizedError();
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
@@ -187,7 +190,7 @@ async function processData(page: Page, item: DataItem) {
   if (isNoDataFound) {
     throw new ErrorDataKehadiranNotFound(item.nik);
   }
-  if (await checkAlreadyHadir(page, item)) {
+  if (await checkAlreadyHadir(page, item, db)) {
     return;
   }
   // Click <button type="button" class="w-fill btn-fill-primary h-11"><div class="flex flex-row justify-center gap-2"><!----><div class="tracking-wide">Konfirmasi Hadir <!----></div></div></button>
@@ -242,9 +245,9 @@ async function processData(page: Page, item: DataItem) {
   await clickElementByText(page, 'div.flex.flex-row.justify-center.gap-2', 'Tutup');
   await waitForDomStable(page, 2000, 10000);
   console.log(`${item.nik} - hadir confirmed`);
-  const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+  const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
   message.push('Data hadir confirmed');
-  await getSehatIndonesiaKuDb().addLog({
+  await db.addLog({
     id: item.nik,
     data: { ...item, hadir: true },
     message: array_unique(message).join(',')
@@ -266,13 +269,13 @@ export async function searchNik(page: Page, nik: string) {
   await sleep(1000);
 }
 
-export async function checkAlreadyHadir(page: Page, item: DataItem) {
+export async function checkAlreadyHadir(page: Page, item: DataItem, db: LogDatabase) {
   // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
   if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
     console.log(`${item.nik} - already marked as hadir`);
-    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data sudah hadir');
-    await getSehatIndonesiaKuDb().addLog({
+    await db.addLog({
       id: item.nik,
       data: { ...item, hadir: true },
       message: array_unique(message).join(',')

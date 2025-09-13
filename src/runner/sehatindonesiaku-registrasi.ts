@@ -65,25 +65,26 @@ function parseNikArg(arg: unknown): string[] | undefined {
 
 async function main() {
   let needLogin = false;
+  const db = await getSehatIndonesiaKuDb();
   const { browser } = await getPuppeteer();
 
   // Parse --nik from CLI args and pass to getData
   const nikList = parseNikArg(cliArgs.nik);
-  let allData = await getData({ nik: nikList });
+  let allData = await getData(db, { nik: nikList });
   if (isShuffle) allData = array_shuffle(allData);
 
   // const sampleData = allData.find((item) => item.nik === '3173051407091002');
-  // await processData(browser, sampleData);
+  // await processData(browser, sampleData, db);
 
   for (const item of allData) {
     try {
-      await processData(browser, item);
+      await processData(browser, item, db);
     } catch (e) {
-      const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+      const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
       if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`[registrasi] ${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -92,7 +93,7 @@ async function main() {
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`[registrasi] Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -109,7 +110,7 @@ async function main() {
           `[registrasi] ${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`
         );
         message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -132,6 +133,7 @@ async function main() {
   // comment below codes for development
   console.log('[registrasi] All data processed. Closing browser...');
   await browser.close();
+  await db.close();
   process.exit(0);
 }
 
@@ -142,7 +144,12 @@ interface ProcessDataOptions {
   kelurahan?: string;
 }
 
-async function processData(browserOrPage: Browser | Page, item: Partial<DataItem>, options: ProcessDataOptions = {}) {
+async function processData(
+  browserOrPage: Browser | Page,
+  item: Partial<DataItem>,
+  db,
+  options: ProcessDataOptions = {}
+) {
   // Merge options with hardcoded defaults
   const provinsi = options.provinsi ?? 'DKI Jakarta';
   const kabupaten = options.kabupaten ?? 'Kota Adm. Jakarta Barat';
@@ -249,9 +256,9 @@ async function processData(browserOrPage: Browser | Page, item: Partial<DataItem
   if (await isSuccessModalVisible(page)) {
     console.log(`[registrasi] ${item.nik} - ${ansiColors.green('Data registered successfully!')}`);
     // Save the data to database
-    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data registered successfully');
-    await getSehatIndonesiaKuDb().addLog({
+    await db.addLog({
       id: item.nik,
       data: { ...item, registered: true },
       message: array_unique(message).join(',')
@@ -264,9 +271,9 @@ async function processData(browserOrPage: Browser | Page, item: Partial<DataItem
     console.log(`[registrasi] ${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
     await clickKembali(page);
     // Save the data to database
-    const message = ((await getSehatIndonesiaKuDb().getLogById(item.nik))?.message ?? '').split(',');
+    const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Peserta Sudah Menerima Pemeriksaan');
-    await getSehatIndonesiaKuDb().addLog({
+    await db.addLog({
       id: item.nik,
       data: { ...item, registered: true },
       message: array_unique(message).join(',')
@@ -332,7 +339,7 @@ export interface getDataOptions {
   debug?: boolean;
 }
 
-async function getData(options: getDataOptions = {}) {
+async function getData(db, options: getDataOptions = {}) {
   let rawData: DataItem[] = await getExcelData();
 
   // Filter by NIK if provided
@@ -353,8 +360,8 @@ async function getData(options: getDataOptions = {}) {
     }
 
     // Merge data with database (awaited)
-    const db = await getSehatIndonesiaKuDb().getLogById<DataItem>(item.nik);
-    Object.assign(item, db?.data ?? {});
+    const dbItem = await db.getLogById(item.nik);
+    Object.assign(item, dbItem?.data ?? {});
 
     // Fix tanggal_pemeriksaan if empty
     if (!item.tanggal_pemeriksaan?.trim()) {
@@ -411,11 +418,7 @@ if (process.argv.some((arg) => /sehatindonesiaku-registrasi\.(js|ts|cjs|mjs)$/i.
       showHelp();
       return;
     }
-    try {
-      await main();
-    } finally {
-      await getSehatIndonesiaKuDb().close();
-    }
+    await main();
   })();
 }
 

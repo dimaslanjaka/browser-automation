@@ -3,24 +3,24 @@ import { normalizePathUnix } from 'sbg-utility';
 import { sleep } from '../utils-browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import fs from 'fs-extra';
+import { LogDatabase } from '../database/LogDatabase.js';
 
 const args = minimist(process.argv.slice(2), { alias: { h: 'help' } });
 
-async function main() {
-  await getSehatIndonesiaKuDb().initialize();
+async function main(db: LogDatabase) {
   let allData = await getExcelData();
   if (args.nik) {
     allData = allData.filter((item) => item.nik === args.nik);
   }
   for (const item of allData) {
     console.log(`${item.nik} - Removing existing log`);
-    await getSehatIndonesiaKuDb().removeLog(item.nik);
+    await db.removeLog(item.nik);
     await sleep(100);
   }
-  if (getSehatIndonesiaKuDb().sqliteDbPath && fs.existsSync(getSehatIndonesiaKuDb().sqliteDbPath)) {
-    await getSehatIndonesiaKuDb().close();
-    console.log(`Deleting sqlite database path: ${getSehatIndonesiaKuDb().sqliteDbPath}`);
-    await fs.remove(getSehatIndonesiaKuDb().sqliteDbPath).catch((error) => {
+  if (db.sqliteDbPath && fs.existsSync(db.sqliteDbPath)) {
+    await db.close();
+    console.log(`Deleting sqlite database path: ${db.sqliteDbPath}`);
+    await fs.remove(db.sqliteDbPath).catch((error) => {
       console.error('Error deleting database file:', (error as Error).message);
     });
   }
@@ -44,14 +44,16 @@ function showHelp() {
 
 if (process.argv.some((arg) => /sehatindonesiaku-cleanDB\.(js|ts|cjs|mjs)$/.test(arg))) {
   (async () => {
+    let db: LogDatabase;
     try {
       if (args.help || args.h) {
         showHelp();
         return;
       }
-      await main();
+      db = await getSehatIndonesiaKuDb();
+      await main(db);
     } finally {
-      await getSehatIndonesiaKuDb().close();
+      if (db) await db.close();
     }
   })();
 }

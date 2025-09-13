@@ -5,6 +5,7 @@ import { getKehadiranData } from './sehatindonesiaku-kehadiran.js';
 import { getRegistrasiData } from './sehatindonesiaku-registrasi.js';
 import { DataItem, DebugItem } from './types.js';
 import { getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
+import { LogDatabase } from '../database/LogDatabase.js';
 
 // This file for development only
 
@@ -41,10 +42,10 @@ console.error = (...args: any[]) => {
   fs.appendFileSync(logFile, `[ERROR] ${map.join(' ')}\n`);
 };
 
-async function _main(callback: (...args: any[]) => any | Promise<any>) {
-  await getSehatIndonesiaKuDb().initialize();
-  await callback();
-  await getSehatIndonesiaKuDb().close();
+async function _main(callback: (db: Awaited<ReturnType<typeof getSehatIndonesiaKuDb>>) => any | Promise<any>) {
+  const db = await getSehatIndonesiaKuDb();
+  await callback(db);
+  await db.close();
 }
 
 async function _debugRegistrasiData() {
@@ -58,8 +59,8 @@ async function _debugRegistrasiData() {
   }
 }
 
-async function _debugHadirData() {
-  const allData = await getKehadiranData();
+async function _debugHadirData(db: LogDatabase) {
+  const allData = await getKehadiranData(db);
   console.log(`Total records from Kehadiran: ${allData.length}`);
   for (const [index, item] of allData.entries()) {
     console.log(`[${index + 1}/${allData.length}] NIK: ${item.nik}`);
@@ -69,22 +70,22 @@ async function _debugHadirData() {
   }
 }
 
-async function _debugData(options?: { nik?: string }) {
+async function _debugData(db, options?: { nik?: string }) {
   const { getExcelData } = await import('./sehatindonesiaku-data.js');
   const allExcelData: DataItem[] = await getExcelData();
-  const allDbData = await getSehatIndonesiaKuDb().getLogs<DataItem>();
+  const allDbData = (await db.getLogs()) as LogEntry<DataItem>[];
 
   console.log(`Total records from Excel: ${allExcelData.length}`);
   console.log(`Total records from Database: ${allDbData.length}`);
 
   // Merge excel + db records with type tags (typed as DebugItem)
-  let allData: DebugItem[] = [
-    ...allExcelData.map<DebugItem>((item) => ({ ...item, type: 'excel' })),
-    ...allDbData.map<DebugItem>((log) => ({ ...log.data, type: 'db' }))
+  let allData = [
+    ...allExcelData.map((item) => ({ ...item, type: 'excel' as const })),
+    ...allDbData.map((log) => ({ ...log.data, type: 'db' as const }))
   ].filter((item) => {
     // Non-empty object
     return item && Object.keys(item).length > 0;
-  });
+  }) as DebugItem[];
 
   // Filter by NIK if requested
   if (options?.nik) {
@@ -110,7 +111,7 @@ async function _debugData(options?: { nik?: string }) {
   });
 }
 
-async function _testRegistrasiFilter() {
+async function _testRegistrasiFilter(db) {
   // test register 3173050212880001
   // kemkes --nik=3173050212880001
   // 3173055301750007 - data tidak sesuai KTP
@@ -119,26 +120,26 @@ async function _testRegistrasiFilter() {
   // Test filtering by NIK
   const nik = `3173055605081003`;
   process.argv.push(`--nik=${nik.trim()}`);
-  await _debugData({ nik });
+  await _debugData(db, { nik });
 }
 
-_main(async function () {
+_main(async function (db) {
   // console.log('all data');
-  // await _debugData();
+  // await _debugData(db);
   // console.log('all registrasi data');
   // await _debugRegistrasiData();
   // console.log('all hadir data');
   // await _debugHadirData();
-  await _testRegistrasiFilter();
-  // await _migrate();
+  await _testRegistrasiFilter(db);
+  // await _migrate(db);
 })
   .catch(console.error)
   .finally(() => {
     _log(`Log saved ${logFile}`);
   });
 
-async function _migrate() {
-  const allData = await getSehatIndonesiaKuDb().getLogs<DataItem>();
+async function _migrate(db) {
+  const allData = (await db.getLogs()) as LogEntry<DataItem>[];
   for (let i = 0; i < (allData as LogEntry<DataItem>[]).length; i++) {
     const item = (allData as LogEntry<DataItem>[])[i];
     process.stdout.write(`\rProcessing [${i + 1}/${(allData as LogEntry<DataItem>[]).length}] ${item.id}... `);
@@ -152,7 +153,7 @@ async function _migrate() {
         }
       }
       delete item.data.status;
-      await getSehatIndonesiaKuDb().addLog(item);
+      await db.addLog(item);
       console.log(`${item.id} migrated`);
     }
   }

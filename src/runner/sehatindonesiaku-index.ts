@@ -31,7 +31,7 @@ async function main() {
   // Enable unicode
   await spawnAsync('chcp', ['65001']).catch(noop);
   // Initialize database
-  await getSehatIndonesiaKuDb().initialize();
+  const db = await getSehatIndonesiaKuDb();
 
   let needLogin = false;
   const { browser } = await getPuppeteer();
@@ -56,11 +56,11 @@ async function main() {
     const maxPages = 3;
     if (pages.length > maxPages) {
       console.log(`Too many pages open (${pages.length}), closing oldest...`);
-      pages[0]?.close(); // Close the first page if exists
+      pages[0].close(); // Close the first page if exists
     }
 
     const item = allData[i];
-    const dbItem: Partial<LogEntry<DataItem>> = (await getSehatIndonesiaKuDb().getLogById(item.nik)) ?? {};
+    const dbItem: Partial<LogEntry<DataItem>> = (await db.getLogById(item.nik)) ?? {};
 
     if (args.priority) {
       // Priority mode: move already processed item to the end of the list
@@ -79,19 +79,21 @@ async function main() {
       continue;
     }
 
+    // Open a single page for all actions for this item
+    const page = await browser.newPage();
     try {
       console.log(`📝 ${item.nik} - Checking login status`);
-      await checkLoginStatus(await browser.newPage());
+      await checkLoginStatus(page);
 
       console.log(`🔍 ${item.nik} - Checking registered status`);
-      await checkRegisteredStatus(await browser.newPage(), item);
+      await checkRegisteredStatus(page, item, db);
 
       console.log(`📝 ${item.nik} - Processing registration`);
-      await processRegistrasiData(await browser.newPage(), item);
+      await processRegistrasiData(page, item, db);
       console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully registered')}`);
 
       console.log(`📝 ${item.nik} - Processing attendance`);
-      await processKehadiranData(await browser.newPage(), item);
+      await processKehadiranData(page, item, db);
       console.log(`✅ ${item.nik} - ${ansiColors.green('Successfully processed attendance')}`);
     } catch (e) {
       const message = (dbItem?.message ?? '').split(',');
@@ -100,7 +102,7 @@ async function main() {
       } else if (e instanceof ErrorDataKehadiranNotFound) {
         console.error(`${item.nik} - Error: Data Kehadiran not found.`);
         message.push('Data Kehadiran not found');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           data: { ...item, hadir: false },
           message: array_unique(message).join(',')
@@ -109,7 +111,7 @@ async function main() {
       } else if (e instanceof DataTidakSesuaiKTPError) {
         console.warn(`${item.nik} - ${ansiColors.red('Data tidak sesuai KTP')}`);
         message.push('Data tidak sesuai KTP');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -118,7 +120,7 @@ async function main() {
       } else if (e instanceof PembatasanUmurError) {
         console.warn(`Pembatasan umur untuk NIK ${item.nik}:`);
         message.push('Pembatasan umur');
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -133,7 +135,7 @@ async function main() {
       } else if (e instanceof TanggalPemeriksaanError) {
         console.warn(`${item.nik} - ${ansiColors.red('Tanggal Pemeriksaan tidak valid')}: ${item.tanggal_pemeriksaan}`);
         message.push(`Tanggal Pemeriksaan tidak valid. ${item.tanggal_pemeriksaan}`);
-        await getSehatIndonesiaKuDb().addLog({
+        await db.addLog({
           id: item.nik,
           message: array_unique(message).join(','),
           data: { registered: false, ...item }
@@ -169,15 +171,15 @@ async function checkLoginStatus(page: Page) {
   }
 }
 
-async function checkRegisteredStatus(page: Page, item: DataItem) {
+async function checkRegisteredStatus(page: Page, item: DataItem, db) {
   await page.goto('https://sehatindonesiaku.kemkes.go.id/ckg-pendaftaran-individu', { waitUntil: 'networkidle2' });
   await waitForDomStable(page, 500, 10000);
   await searchNik(page, item.nik);
-  if (await checkAlreadyHadir(page, item)) {
-    const dbItem = (await getSehatIndonesiaKuDb().getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
+  if (await checkAlreadyHadir(page, item, db)) {
+    const dbItem = (await db.getLogById(item.nik)) ?? ({} as LogEntry<DataItem>);
     const messages = (dbItem?.message ?? '').split(',');
     messages.push('Data sudah hadir');
-    await getSehatIndonesiaKuDb().addLog({
+    await db.addLog({
       id: item.nik,
       // Marked as hadir is same as already registered
       data: { ...item, hadir: true, registered: true },
@@ -196,10 +198,6 @@ class AlreadyHadir extends Error {
 
 if (process.argv.some((arg) => /sehatindonesiaku-index\.(js|cjs|ts|mjs)$/.test(arg))) {
   (async () => {
-    try {
-      await main().catch(console.error);
-    } finally {
-      // getSehatIndonesiaKuDb().close() is handled by SIGINT or process exit
-    }
+    await main().catch(console.error);
   })();
 }

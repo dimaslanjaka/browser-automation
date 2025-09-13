@@ -1,6 +1,7 @@
 import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
+import moment from 'moment';
 import { normalizePathUnix } from 'sbg-utility';
 import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
 import path from 'upath';
@@ -8,16 +9,22 @@ import xlsx from 'xlsx';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 import { DataItem } from './types.js';
-import moment from 'moment';
 
 let sehatindonesiakuDb: LogDatabase;
-export function getSehatIndonesiaKuDb() {
+const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
+
+export async function getSehatIndonesiaKuDb() {
   if (!sehatindonesiakuDb) {
     console.log('[DB] Creating sehatindonesiaku-kemkes pool');
     sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
       connectTimeout: 60000,
-      connectionLimit: 10
+      connectionLimit: 10,
+      host: MYSQL_HOST || 'localhost',
+      user: MYSQL_USER || 'root',
+      password: MYSQL_PASS || '',
+      port: Number(MYSQL_PORT) || 3306
     });
+    await sehatindonesiakuDb.waitReady();
   }
   return sehatindonesiakuDb;
 }
