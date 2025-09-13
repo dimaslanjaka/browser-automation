@@ -1,3 +1,5 @@
+import { ExcelRowData } from '../../globals';
+
 /**
  * Select a date in a Vue-based mx-datepicker component by simulating user interaction.
  * Handles year, month, and day navigation robustly for DD/MM/YYYY format.
@@ -37,4 +39,9 @@ export interface DebugItem extends DataItem {
   registered?: boolean;
   pelayanan?: boolean;
   hadir?: boolean;
+}
+
+export interface SkrinData extends ExcelRowData {
+  [key: string]: any;
+  skip?: boolean;
 }
