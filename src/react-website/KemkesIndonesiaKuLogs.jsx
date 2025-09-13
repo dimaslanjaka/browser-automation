@@ -8,8 +8,6 @@ import Footer from './components/Footer';
 // <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
 // <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
 
-const DATA_URL = '/assets/data/sehatindonesiaku-data.json';
-
 const KemkesIndonesiaKuLogs = () => {
   /**
    * @type {[DataMerged[], React.Dispatch<React.SetStateAction<DataMerged[]>>]}
@@ -29,10 +27,15 @@ const KemkesIndonesiaKuLogs = () => {
   const rowsPerPage = 20;
 
   useEffect(() => {
-    fetch(getViteUrl(DATA_URL))
-      .then((res) => res.json())
-      .then((json) => setData(json))
-      .catch((err) => console.error('Failed to fetch data:', err));
+    import('../utils/json-crypto.js').then(({ decryptJson }) => {
+      fetch(getViteUrl('/assets/data/sehatindonesiaku-data.json'))
+        .then((res) => res.text())
+        .then((res) => {
+          return decryptJson(res, import.meta.env.VITE_JSON_SECRET);
+        })
+        .then((json) => setData(json))
+        .catch((err) => console.error('Failed to fetch data:', err));
+    });
   }, []);
 
   useEffect(() => {

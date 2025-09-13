@@ -37,8 +37,7 @@ async function getData() {
 export async function generateDataDisplay() {
   const data = await getData();
   const outputPath = path.join(process.cwd(), 'public/assets/data/sehatindonesiaku-data.json');
-  encryptJson(data, process.env.VITE_JSON_SECRET);
-  writefile(outputPath, JSON.stringify(data, null, 2));
+  writefile(outputPath, encryptJson(data, process.env.VITE_JSON_SECRET));
   console.log(`Output written to: ${outputPath}`);
 }
 
