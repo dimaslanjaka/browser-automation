@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
-import { loadCsvData } from '../../data/index.js';
+import { loadCsvData, parseBabyName } from '../../data/index.js';
 import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import {
   clickIframeElement,
@@ -18,6 +18,7 @@ import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, wai
 import { ucwords } from '../utils/string.js';
 import { fixData } from '../xlsx-helper.js';
 import minimist from 'minimist';
+import ansiColors from 'ansi-colors';
 
 console.clear();
 
@@ -730,7 +731,25 @@ async function _test(page) {
 const _main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
+  /**
+   * @type {import('./types.js').SkrinData[]}
+   */
   const dataKunto = await loadCsvData();
+
+  // Fix data names
+  for (let i = 0; i < dataKunto.length; i++) {
+    if (/bayi/i.test(dataKunto[i].nama)) {
+      const namaBayi = parseBabyName(dataKunto[i].nama);
+      if (namaBayi) {
+        logLine(`Parsed baby name: ${dataKunto[i].nama} -> ${ansiColors.green(namaBayi)}`);
+        dataKunto[i].nama = namaBayi;
+      } else {
+        logLine(`Failed to parse baby name: ${dataKunto[i].nama}`);
+        dataKunto[i].skip = true; // Mark to skip
+      }
+    }
+  }
+
   if (cliArgs.shuffle) {
     // Shuffle data array using Fisher-Yates algorithm
     for (let i = dataKunto.length - 1; i > 0; i--) {
@@ -739,6 +758,7 @@ const _main = async () => {
     }
     logLine('Data shuffled');
   }
+
   const unprocessedData = dataKunto.filter((item) => {
     // Check if the data for this NIK has already been processed
     const nik = getNumbersOnly(item.nik);
@@ -747,6 +767,9 @@ const _main = async () => {
 
   while (unprocessedData.length > 0) {
     const currentData = unprocessedData.shift();
+    if (currentData.skip) {
+      continue; // Skip this entry
+    }
     if (!nikUtils.isValidNIK(currentData.nik)) {
       logLine(`Skipping invalid NIK: ${currentData.nik}`);
       addLog({

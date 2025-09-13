@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { encryptJson } from '../src/utils/json-crypto.js';
 import { parseDate } from '../src/utils/date.js';
+import ansiColors from 'ansi-colors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,6 +86,27 @@ export async function loadCsvData() {
   return results;
 }
 
+export function parseBabyName(entry) {
+  // kasus: "<NAMA>, BY (...)" atau "<NAMA>, AN (...)"
+  let match = entry.match(/^([^,]+),\s*(BY|AN)\s*\(/i);
+  if (match) return match[1].trim();
+
+  // kasus: "BAYI NY..." atau "BAYI NYONYA..."
+  // ambil setelah "/" atau dalam kurung "(...)" sebagai nama bayi
+  match = entry.match(/\/\s*([A-Z].+)$/i);
+  if (match) {
+    return match[1]
+      .replace(/[,)]\s*$/g, '') // buang koma/penutup
+      .trim();
+  }
+
+  match = entry.match(/\(([^)]+)\)/);
+  if (match) return match[1].trim();
+
+  // kalau tidak ketemu
+  return undefined;
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // This module is being run directly
   (async () => {
@@ -93,5 +115,19 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     console.log(`Loaded ${data.length} records from CSV.`);
     console.log(data.at(0)); // Output the first mapped record to verify mapping
     console.log(data.at(-1)); // Output the last mapped record to verify mapping
+    const aneh = data.filter((item) => {
+      if (/bayi/i.test(item.nama)) {
+        return true;
+      }
+      return false;
+    });
+    console.log(
+      aneh
+        .map(
+          (item) =>
+            `${item.nama} -> ${parseBabyName(item.nama) ? ansiColors.greenBright(parseBabyName(item.nama)) : ansiColors.gray('undefined')}`
+        )
+        .join('\n')
+    );
   })();
 }
