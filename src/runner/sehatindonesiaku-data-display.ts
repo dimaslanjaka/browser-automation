@@ -2,6 +2,7 @@ import path from 'path';
 import { writefile } from 'sbg-utility';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import { DataItem, DataMerged } from './types.js';
+import { encryptJson } from '../utils/json-crypto.js';
 
 async function getData() {
   const db = await getSehatIndonesiaKuDb();
@@ -36,6 +37,7 @@ async function getData() {
 export async function generateDataDisplay() {
   const data = await getData();
   const outputPath = path.join(process.cwd(), 'public/assets/data/sehatindonesiaku-data.json');
+  encryptJson(data, process.env.VITE_JSON_SECRET);
   writefile(outputPath, JSON.stringify(data, null, 2));
   console.log(`Output written to: ${outputPath}`);
 }
