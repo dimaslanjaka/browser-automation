@@ -1,23 +1,16 @@
-import { promisify } from 'util';
-import { exec } from 'child_process';
-import { fileURLToPath } from 'url';
+import { spawnAsync } from 'cross-spawn';
 import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export async function generateDataDisplay() {
-  const execAsync = promisify(exec);
-
   try {
     const scriptPath = resolve(__dirname, '../src/runner/sehatindonesiaku-data-display.ts');
-    const { stdout, stderr } = await execAsync(
-      `node --no-warnings=ExperimentalWarning --loader ts-node/esm "${scriptPath}"`
-    );
-    if (stderr) {
-      console.error('Error:', stderr);
-    }
-    console.log('Output:', stdout);
+    await spawnAsync('node', ['--no-warnings=ExperimentalWarning', '--loader', 'ts-node/esm', scriptPath], {
+      stdio: 'inherit'
+    });
   } catch (error) {
     console.error('Execution failed:', error);
     throw error;
