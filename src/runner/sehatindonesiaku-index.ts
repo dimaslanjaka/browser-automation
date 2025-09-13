@@ -62,12 +62,14 @@ async function main() {
     const item = allData[i];
 
     if (!item.nik) {
-      console.log(`⚠️  Skipping entry with empty NIK at index ${i}`);
+      const msg = `NIK kosong pada index ${i}`;
+      console.log(`⚠️  ${msg}`);
       continue;
     }
 
     if (!item.tanggal_lahir) {
-      console.log(`⚠️  Skipping entry with empty Tanggal Lahir for NIK ${item.nik}`);
+      const msg = `Tanggal Lahir kosong`;
+      console.log(`⚠️  ${item.nik} - ${msg}`);
       continue;
     }
 
