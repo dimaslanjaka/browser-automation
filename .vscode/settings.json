@@ -63,7 +63,7 @@
   },
   "code-runner.executorMap": {
     "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs",
-    "typescript": "node --no-warnings=ExperimentalWarning --loader ts-node/esm"
+    "typescript": "node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs"
   },
   "code-runner.ignoreSelection": true,
   "code-runner.respectShebang": true,
