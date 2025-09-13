@@ -520,7 +520,7 @@ export async function selectPekerjaan(page: Page, item: Partial<DataItem>) {
     }
   }
 
-  console.log(`${item.pekerjaan} -> ${pekerjaanValue}`);
+  console.log(`[job] ${item.nik} - ${item.pekerjaan} -> ${pekerjaanValue}`);
 
   // Click the SVG icon near the "Pekerjaan" label to open the dropdown
   const clicked = await page.evaluate(() => {
