@@ -22,7 +22,8 @@ export async function getSehatIndonesiaKuDb() {
       host: MYSQL_HOST || 'localhost',
       user: MYSQL_USER || 'root',
       password: MYSQL_PASS || '',
-      port: Number(MYSQL_PORT) || 3306
+      port: Number(MYSQL_PORT) || 3306,
+      type: MYSQL_HOST ? 'mysql' : 'sqlite'
     });
     await sehatindonesiakuDb.waitReady();
   }
