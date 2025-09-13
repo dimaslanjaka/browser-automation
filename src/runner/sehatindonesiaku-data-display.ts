@@ -1,31 +1,43 @@
-import { readfile, writefile } from 'sbg-utility';
-import { getSehatIndonesiaKuDb, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
 import path from 'path';
+import { writefile } from 'sbg-utility';
+import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import { DataItem, DataMerged } from './types.js';
-
-const json = JSON.parse(readfile(sehatindonesiakuDataPath)) as DataItem[];
 
 async function getData() {
   const db = await getSehatIndonesiaKuDb();
-  for (let i = 0; i < json.length; i++) {
-    const data = json[i];
-    const dataDb = (await db.getLogById(data.nik)) as any;
-    if (dataDb && dataDb.id) {
-      // console.log('data from json', data);
-      // console.log('data from db', dataDb);
-      json[i] = { ...data, ...dataDb.data, messages: dataDb.messages || [] };
+  const excelData = await getExcelData();
+  let logIndex = 0;
+  for (let i = 0; i < excelData.length; i++) {
+    const data = excelData[i];
+    if (!data.nik) {
+      process.stdout.write(`\n[${logIndex}] dropping data for empty NIK\n`);
+      excelData.splice(i, 1);
+      i--; // Adjust index after removal
+      logIndex++;
+      continue;
     }
+    // Find matching data in DB
+    const dataDb = await db.getLogById<DataItem>(data.nik);
+    if (dataDb && dataDb.id) {
+      process.stdout.write(`\r[${logIndex}] modifying data for NIK : ${data.nik}`);
+      excelData[i] = { ...data, ...dataDb.data, messages: (dataDb.message || '').split(',').map((s) => s.trim()) };
+    } else {
+      // Drop item if not found in DB
+      process.stdout.write(`\r[${logIndex}] dropping data for NIK  : ${data.nik}`);
+      excelData.splice(i, 1);
+      i--; // Adjust index after removal
+    }
+    logIndex++;
   }
   await db.close();
-  return json as DataMerged[];
+  return excelData as DataMerged[];
 }
 
 export async function generateDataDisplay() {
-  getData().then((data) => {
-    const outputPath = path.join(process.cwd(), 'public/assets/data/sehatindonesiaku-data.json');
-    writefile(outputPath, JSON.stringify(data, null, 2));
-    console.log(`Output written to: ${outputPath}`);
-  });
+  const data = await getData();
+  const outputPath = path.join(process.cwd(), 'public/assets/data/sehatindonesiaku-data.json');
+  writefile(outputPath, JSON.stringify(data, null, 2));
+  console.log(`Output written to: ${outputPath}`);
 }
 
 if (process.argv.some((arg) => arg.includes('sehatindonesiaku-data-display'))) {
