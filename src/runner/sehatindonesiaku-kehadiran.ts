@@ -24,12 +24,12 @@ const args = minimist(process.argv.slice(2), {
 
 export function showHelp() {
   const [node, script] = process.argv;
-  console.log(`Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
-  console.log('');
-  console.log('Options:');
-  console.log('  -h, --help     Show help');
-  console.log('  -s, --single   Process a single item');
-  console.log('  -sh, --shuffle      Shuffle the order of data items before processing');
+  console.log(`[hadir] Usage: ${normalizePathUnix(node)} ${normalizePathUnix(script)} [options]`);
+  console.log('[hadir]', '');
+  console.log('[hadir]', 'Options:');
+  console.log('[hadir]', '  -h, --help     Show help');
+  console.log('[hadir]', '  -s, --single   Process a single item');
+  console.log('[hadir]', '  -sh, --shuffle      Shuffle the order of data items before processing');
 }
 
 if (process.argv.some((arg) => /sehatindonesiaku-kehadiran\.(cjs|js|mjs|ts)$/i.test(arg))) {
@@ -63,10 +63,10 @@ async function main(db: LogDatabase) {
       allData.splice(1); // Keep only the first item
     }
   }
-  console.log(`Processing ${allData.length} items...`);
+  console.log(`[hadir] Processing ${allData.length} items...`);
   for (const item of allData) {
     if (!item.nik) {
-      console.error(`Skipping item with missing NIK: ${JSON.stringify(item)}`);
+      console.error(`[hadir] Skipping item with missing NIK: ${JSON.stringify(item)}`);
       continue;
     }
     try {
@@ -79,12 +79,13 @@ async function main(db: LogDatabase) {
     } catch (e) {
       if (e instanceof UnauthorizedError) {
         console.error(
+          '[hadir]',
           `${item.nik} - UnauthorizedError: Login required. Please login first using sehatindonesiaku-login. (close browser and rerun the script after login)`
         );
         break; // Stop processing further if unauthorized
       }
       if (e instanceof ErrorDataKehadiranNotFound) {
-        console.error(`${item.nik} - Error: Data Kehadiran not found.`);
+        console.error(`[hadir] ${item.nik} - Error: Data Kehadiran not found.`);
         const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
         message.push('Data Kehadiran not found');
         await db.addLog({
@@ -94,13 +95,13 @@ async function main(db: LogDatabase) {
         });
         continue; // Continue to next item
       }
-      console.error(`${item.nik} - Error processing data: ${(e as Error).message}`);
-      console.error((e as Error).stack);
+      console.error(`[hadir] ${item.nik} - Error processing data: ${(e as Error).message}`);
+      console.error('[hadir]', (e as Error).stack);
     }
     if (args.single || args.s) break; // Process only one item
   }
 
-  console.log('All data processed. Closing browser...');
+  console.log('[hadir]', 'All data processed. Closing browser...');
   await sleep(2000);
   await puppeteer.browser.close();
   process.exit(0);
@@ -120,7 +121,7 @@ async function getExcelData(db: LogDatabase) {
       if (!('registered' in merged)) {
         // Remove unregistered participants
         rawData.splice(i, 1);
-        console.log(`${item.nik}: ${item.nama} - Exclude unregistered`);
+        console.log(`[hadir] ${item.nik}: ${item.nama} - Exclude unregistered`);
       }
     } else {
       // Remove invalid NIK
@@ -155,14 +156,14 @@ async function getData(db: LogDatabase, options?: DataOptions): Promise<DataItem
   const defaultOptions: DataOptions = { shuffle: false, single: false };
   options = { ...defaultOptions, ...options };
   const data = await getExcelData(db);
-  console.log(`Total data items retrieved: ${data.length}`);
+  console.log(`[hadir] Total data items retrieved: ${data.length}`);
   let filtered = data.filter((item) => {
     if (!item || typeof item.nik !== 'string' || item.nik.length === 0) return false;
     // Allow if 'hadir' is missing
     if (!('hadir' in item)) return true;
     return false;
   });
-  console.log(`Total filtered data items: ${filtered.length}`);
+  console.log(`[hadir] Total filtered data items: ${filtered.length}`);
   if (options.shuffle) {
     filtered = array_shuffle(filtered);
   }
@@ -186,7 +187,7 @@ async function processData(page: Page, item: DataItem, db: LogDatabase) {
       (item) => (item as HTMLElement).innerText.trim().toLowerCase() === 'data tidak ditemukan'
     );
   });
-  console.log(`${item.nik} - isNoDataFound: ${isNoDataFound}`);
+  console.log(`[hadir] ${item.nik} - isNoDataFound: ${isNoDataFound}`);
   if (isNoDataFound) {
     throw new ErrorDataKehadiranNotFound(item.nik);
   }
@@ -200,7 +201,7 @@ async function processData(page: Page, item: DataItem, db: LogDatabase) {
   await waitForDomStable(page, 2000, 10000);
   await sleep(1000);
   // Check checkbox <div><input id="verify" name="verify" type="checkbox" class="" value="false"><div id="verify" class="check"></div></div>
-  console.log(`${item.nik} - checking hadir checkbox`);
+  console.log(`[hadir] ${item.nik} - checking hadir checkbox`);
   let checkboxFound = false;
   for (const verifyCheckboxSelector of ['div#verify', '[name="verify"]']) {
     if (await isElementExist(page, verifyCheckboxSelector, { visible: true })) {
@@ -230,7 +231,7 @@ async function processData(page: Page, item: DataItem, db: LogDatabase) {
       checkboxFound = true;
       break;
     } else {
-      console.log(`${item.nik} - ${verifyCheckboxSelector} checkbox not found`);
+      console.log(`[hadir] ${item.nik} - ${verifyCheckboxSelector} checkbox not found`);
     }
   }
 
@@ -244,7 +245,7 @@ async function processData(page: Page, item: DataItem, db: LogDatabase) {
   // Click tutup button on modal <div class="flex flex-row justify-center gap-2"><!----><div class="tracking-wide">Tutup <!----></div></div>
   await clickElementByText(page, 'div.flex.flex-row.justify-center.gap-2', 'Tutup');
   await waitForDomStable(page, 2000, 10000);
-  console.log(`${item.nik} - hadir confirmed`);
+  console.log(`[hadir] ${item.nik} - hadir confirmed`);
   const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
   message.push('Data hadir confirmed');
   await db.addLog({
@@ -255,7 +256,7 @@ async function processData(page: Page, item: DataItem, db: LogDatabase) {
 }
 
 export async function searchNik(page: Page, nik: string) {
-  console.log(`${nik} - change search type to NIK`);
+  console.log(`[hadir] ${nik} - change search type to NIK`);
   // Select search dropdown <div data-v-c491f920="" class="h-[2.9rem] w-full flex cursor-pointer items-center justify-start overflow-hidden border-none bg-transparent pl-4 text-sm focus:outline-none text-black">Nomor Tiket</div>
   await clickElementByText(page, 'div.cursor-pointer', 'Nomor Tiket');
   await sleep(200);
@@ -272,7 +273,7 @@ export async function searchNik(page: Page, nik: string) {
 export async function checkAlreadyHadir(page: Page, item: DataItem, db: LogDatabase) {
   // Check sudah hadir text <div data-v-7b617409="" class="w-[50%] lt-sm:w-full text-[12px] font-600 text-[#16B3AC] flex items-center gap-2 justify-center"><img data-v-7b617409="" src="/images/icons/icon-success.svg" class="w-[13.33px] h-[13.33px]"> Sudah Hadir </div>
   if (await anyElementWithTextExists(page, 'div.w-full', 'Sudah Hadir')) {
-    console.log(`${item.nik} - already marked as hadir`);
+    console.log(`[hadir] ${item.nik} - already marked as hadir`);
     const message = ((await db.getLogById(item.nik))?.message ?? '').split(',');
     message.push('Data sudah hadir');
     await db.addLog({
