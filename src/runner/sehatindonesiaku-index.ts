@@ -197,7 +197,5 @@ class AlreadyHadir extends Error {
 }
 
 if (process.argv.some((arg) => /sehatindonesiaku-index\.(js|cjs|ts|mjs)$/.test(arg))) {
-  (async () => {
-    await main().catch(console.error);
-  })();
+  main().catch(console.error);
 }
