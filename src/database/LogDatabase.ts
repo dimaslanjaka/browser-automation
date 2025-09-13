@@ -1,12 +1,12 @@
 import { getChecksum, SharedPreferences } from 'sbg-utility';
 import fs from 'fs-extra';
 import path from 'upath';
-import createDatabasePool from './mysql.js';
 import { MysqlLogDatabase } from './MysqlLogDatabase.js';
 import { getDatabaseFilePath, SQLiteLogDatabase } from './SQLiteLogDatabase.js';
 import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
+import { MySQLConfig } from './MySQLHelper.js';
 
-type MySQL2Options = Partial<Parameters<typeof createDatabasePool>[0]>;
+type MySQL2Options = Partial<MySQLConfig>;
 export interface LogDatabaseOptions extends MySQL2Options {
   [key: string]: any;
   type?: 'sqlite' | 'mysql';
