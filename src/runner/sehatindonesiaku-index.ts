@@ -7,7 +7,6 @@ import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
 import { noop } from '../utils-browser.js';
-import { generateDataDisplay } from './sehatindonesiaku-data-display.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
@@ -151,9 +150,6 @@ async function main() {
       }
       console.error(`Error processing data for NIK ${item.nik}:`, e);
     }
-
-    // Generate data display after each item is processed
-    await generateDataDisplay();
 
     // break; // Only process one item for now (development mode)
   }
