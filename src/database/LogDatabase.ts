@@ -99,7 +99,11 @@ export class LogDatabase implements BaseLogDatabase {
   async initialize() {
     // Avoid re-initializing if already done
     if (this.store) return;
-    console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, this.options);
+    // Anonymize sensitive fields in options for logging
+    const safeOptions = { ...this.options };
+    if (safeOptions.password) safeOptions.password = '***';
+    if (safeOptions.user) safeOptions.user = '***';
+    console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, safeOptions);
     // Decide which database to use based on options.type
     if (this.options?.type === 'sqlite') {
       this.store = new SQLiteLogDatabase(this.dbName);
