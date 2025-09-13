@@ -6,7 +6,7 @@ import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { closeFirstTab, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { noop } from '../utils-browser.js';
+import { noop, sleep } from '../utils-browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,
@@ -51,10 +51,12 @@ async function main() {
   }
 
   for (let i = 0; i < allData.length; i++) {
-    const pages = await browser.pages();
-    if (pages.length > 3) {
+    let pages = await browser.pages();
+    while (pages.length > 3) {
       console.log(`Too many pages open (${pages.length}), closing oldest...`);
-      pages[0].close(); // Close the first page if exists
+      await pages[0].close(); // Close the first page if exists
+      await sleep(1000); // Wait a bit for the browser to stabilize
+      pages = await browser.pages(); // Refresh the pages list
     }
 
     const item = allData[i];
