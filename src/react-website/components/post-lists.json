@@ -39,5 +39,12 @@
     "image": "https://i.ytimg.com/vi/nmAHDEO9RW8/maxresdefault.jpg?300x180",
     "href": "/moment/timezones",
     "dest": "/moment/timezones/index.html"
+  },
+  {
+    "title": "Logs - Sehat Indonesia Ku",
+    "excerpt": "Display merged data from Excel and database for Sehat Indonesia Ku.",
+    "image": "https://sehatindonesiaku.kemkes.go.id/images/asik.svg",
+    "href": "/sehatindonesiaku-logs",
+    "dest": "/sehatindonesiaku-logs/index.html"
   }
 ]
