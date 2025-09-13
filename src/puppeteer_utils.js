@@ -5,6 +5,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
 import { chromium } from 'playwright-extra';
+import { Browser, Page } from 'puppeteer';
 
 /**
  * Get the absolute path of the current script.
@@ -1011,4 +1012,28 @@ export async function clickElementByText(page, selector, text) {
     }
   }
   return false;
+}
+
+/**
+ * Closes the first tab (page) in the browser context if more than one tab is open.
+ *
+ * @param {import('puppeteer').Page|import('puppeteer').Browser} context - The Puppeteer Page or Browser instance.
+ * If a Page is provided, its browser will be used to get all pages.
+ * If a Browser is provided, its pages will be used directly.
+ * The first tab will only be closed if there is more than one tab open.
+ * @returns {Promise<void>}
+ */
+export async function closeFirstTab(context) {
+  if (context instanceof Page) {
+    const browser = context.browser();
+    const pages = await browser.pages();
+    if (pages.length > 1) {
+      await pages[0].close();
+    }
+  } else if (context instanceof Browser) {
+    const pages = await context.pages();
+    if (pages.length > 1) {
+      await pages[0].close();
+    }
+  }
 }
