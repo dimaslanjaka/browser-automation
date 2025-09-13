@@ -33,8 +33,8 @@ export async function getSehatIndonesiaKuDb() {
       port: Number(MYSQL_PORT) || 3306,
       type: MYSQL_HOST ? 'mysql' : 'sqlite'
     });
-    await sehatindonesiakuDb.waitReady();
   }
+  await sehatindonesiakuDb.waitReady();
   return sehatindonesiakuDb;
 }
 
