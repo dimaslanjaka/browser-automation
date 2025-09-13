@@ -1,35 +1,43 @@
-import createDatabasePool from './mysql.js';
+import 'dotenv/config';
+import { MySQLHelper } from './MySQLHelper.js';
+
+const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DBNAME, MYSQL_PORT } = process.env;
 
 async function main() {
-  const pool = await createDatabasePool();
+  const pool = new MySQLHelper({
+    host: MYSQL_HOST,
+    user: MYSQL_USER,
+    password: MYSQL_PASS,
+    database: MYSQL_DBNAME,
+    port: MYSQL_PORT ? parseInt(MYSQL_PORT, 10) : undefined
+  });
+
   try {
-    // Run a SELECT query
-    const [rows] = await pool.query('SELECT NOW() AS now');
-    console.log('Current DB time:', rows);
+    await pool.initialize(); // 👈 make sure pool is initialized!
 
-    // Show MySQL variables
-    const [maxAllowedPacket] = await pool.query("SHOW VARIABLES LIKE 'max_allowed_packet'");
-    const [netReadTimeout] = await pool.query("SHOW VARIABLES LIKE 'net_read_timeout'");
-    const [netWriteTimeout] = await pool.query("SHOW VARIABLES LIKE 'net_write_timeout'");
-    console.log('max_allowed_packet:', maxAllowedPacket);
-    console.log('net_read_timeout:', netReadTimeout);
-    console.log('net_write_timeout:', netWriteTimeout);
+    const rows = await pool.query<{ now: string }>('SELECT NOW() AS now');
+    console.log('Current DB time:', rows[0].now);
 
-    // Show process list
-    const [processList] = await pool.query('SHOW PROCESSLIST');
-    console.log('Process List:', processList);
+    const maxAllowedPacket = await pool.query("SHOW VARIABLES LIKE 'max_allowed_packet'");
+    const netReadTimeout = await pool.query("SHOW VARIABLES LIKE 'net_read_timeout'");
+    const netWriteTimeout = await pool.query("SHOW VARIABLES LIKE 'net_write_timeout'");
+    console.log('max_allowed_packet:', maxAllowedPacket[0]);
+    console.log('net_read_timeout:', netReadTimeout[0]);
+    console.log('net_write_timeout:', netWriteTimeout[0]);
 
-    // Show additional MySQL variables and status
-    const [maxConnections] = await pool.query("SHOW VARIABLES LIKE 'max_connections'");
-    const [threadsConnected] = await pool.query("SHOW STATUS LIKE 'Threads_connected'");
-    const [threadsRunning] = await pool.query("SHOW STATUS LIKE 'Threads_running'");
-    console.log('max_connections:', maxConnections);
-    console.log('Threads_connected:', threadsConnected);
-    console.log('Threads_running:', threadsRunning);
+    const processList = await pool.query('SHOW PROCESSLIST');
+    console.log('Process List count:', processList.length);
+
+    const maxConnections = await pool.query("SHOW VARIABLES LIKE 'max_connections'");
+    const threadsConnected = await pool.query("SHOW STATUS LIKE 'Threads_connected'");
+    const threadsRunning = await pool.query("SHOW STATUS LIKE 'Threads_running'");
+    console.log('max_connections:', maxConnections[0]);
+    console.log('Threads_connected:', threadsConnected[0]);
+    console.log('Threads_running:', threadsRunning[0]);
   } catch (err) {
     console.error('Database error:', err);
   } finally {
-    await pool.end(); // Close the pool when your app exits
+    await pool.close();
   }
 }
 

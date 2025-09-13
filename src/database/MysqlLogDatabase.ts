@@ -1,5 +1,5 @@
 import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
-import createDatabasePool from './mysql.js';
+import { MySQLConfig, MySQLHelper } from './MySQLHelper.js';
 
 /**
  * Utility to get current timestamp in Asia/Jakarta in ISO8601 format.
@@ -12,7 +12,7 @@ function getJakartaTimestamp() {
   return jakarta.toISOString().replace('Z', '+07:00');
 }
 
-export const defaultOptions: Partial<Parameters<typeof createDatabasePool>[0]> = {
+export const defaultOptions: Partial<MySQLConfig> = {
   connectTimeout: 60000 // default 60s
 };
 
@@ -37,8 +37,8 @@ export interface AddLogOptions {
  * Class representing a log database using MySQL.
  */
 export class MysqlLogDatabase implements BaseLogDatabase {
-  private poolPromise: Promise<import('mariadb').Pool>;
-  private readyPromise: Promise<void>;
+  private helper: MySQLHelper;
+  private config: MySQLConfig;
 
   /**
    * Create a new MysqlLogDatabase instance.
@@ -46,26 +46,24 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @param dbName Optional database name (not used, for compatibility)
    * @param options Optional pool options (e.g., connectTimeout)
    */
-  constructor(dbName?: string, options: Partial<Parameters<typeof createDatabasePool>[0]> = {}) {
+  constructor(dbName?: string, options: Partial<MySQLConfig> = {}) {
     const poolOptions = dbName ? { database: dbName, ...options } : { ...options };
     // filter out 'type' property if present
     if ('type' in poolOptions) {
       delete (poolOptions as any).type;
     }
     const mergedOptions = Object.assign({}, defaultOptions, poolOptions);
-    this.poolPromise = createDatabasePool(mergedOptions);
-    this.readyPromise = this._initializeDatabase();
+    this.config = mergedOptions as MySQLConfig;
+    this.helper = new MySQLHelper(mergedOptions as MySQLConfig);
   }
 
-  /**
-   * Initialize the database: create logs table if not exists.
-   *
-   * @private
-   * @returns Promise that resolves when initialization is complete.
-   */
-  private async _initializeDatabase() {
-    const pool = await this.poolPromise;
-    await pool.query(`CREATE TABLE IF NOT EXISTS logs (
+  async waitReady() {
+    // Avoid re-initializing if already ready
+    if (!this.helper.ready) {
+      await this.helper.initialize();
+    }
+    // Ensure logs table exists
+    await this.helper.query(`CREATE TABLE IF NOT EXISTS logs (
       id VARCHAR(255) PRIMARY KEY,
       data TEXT,
       message TEXT,
@@ -81,9 +79,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise resolving to the query result.
    */
   public async query(sql: string, params?: any[]): Promise<any> {
-    await this.readyPromise;
-    const pool = await this.poolPromise;
-    return pool.query(sql, params);
+    return this.helper.query(sql, params);
   }
 
   /**
@@ -94,8 +90,6 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves when the log is added or updated.
    */
   async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: AddLogOptions = {}) {
-    await this.readyPromise;
-    const pool = await this.poolPromise;
     if (!timestamp) timestamp = getJakartaTimestamp();
     const defaultOptions = {
       timeout: 60000, // default 60s if not provided
@@ -113,7 +107,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
       }
     }
     // mariadb does not support object with sql/timeout, so use query options directly
-    await pool.query(`REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`, [
+    await this.helper.query(`REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`, [
       id,
       JSON.stringify(data),
       message,
@@ -128,10 +122,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves to true if a log was removed, false otherwise.
    */
   async removeLog(id: LogEntry<any>['id']): Promise<boolean> {
-    await this.readyPromise;
-    const pool = await this.poolPromise;
-    const result: any = await pool.query('DELETE FROM logs WHERE id = ?', [id]);
-    // mariadb returns an object with affectedRows
+    const result = await this.helper.execute('DELETE FROM logs WHERE id = ?', [id]);
     return result.affectedRows > 0;
   }
 
@@ -142,9 +133,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves to the log object or undefined if not found.
    */
   async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
-    await this.readyPromise;
-    const pool = await this.poolPromise;
-    const rows: any = await pool.query('SELECT * FROM logs WHERE id = ?', [id]);
+    const rows: any = await this.helper.query('SELECT * FROM logs WHERE id = ?', [id]);
     if (!rows[0]) return undefined;
     return {
       id: rows[0].id,
@@ -165,8 +154,6 @@ export class MysqlLogDatabase implements BaseLogDatabase {
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
   ) {
-    await this.readyPromise;
-    const pool = await this.poolPromise;
     let query = 'SELECT * FROM logs';
     const params: any[] = [];
     if (options?.limit) {
@@ -177,7 +164,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
         params.push(options.offset);
       }
     }
-    const rows: any = await pool.query(query, params);
+    const rows: any = await this.helper.query(query, params);
     const logsArr: LogEntry<T>[] = rows.map((row: any) => ({
       id: row.id,
       data: JSON.parse(row.data),
@@ -190,16 +177,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
     return results.filter(Boolean);
   }
 
-  /**
-   * Wait until the database is ready for operations.
-   *
-   * @returns Promise that resolves when the database is ready.
-   */
-  public async waitReady() {
-    return await this.readyPromise;
-  }
-
-  private closed = false;
+  public closed = false;
 
   public isClosed(): boolean {
     return this.closed;
@@ -212,9 +190,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    */
   async close() {
     if (this.closed) return;
-    await this.readyPromise;
-    const pool = await this.poolPromise;
-    await pool.end();
+    await this.helper.close();
     this.closed = true;
   }
 }

@@ -32,7 +32,6 @@ export class SQLiteLogDatabase {
     const dbPath = getDatabaseFilePath(name);
     this.dbPath = dbPath;
     this.db = new Database(dbPath);
-    this._initializeDatabase();
 
     // Auto run backup on process exit
     process.on('exit', () => {
@@ -124,7 +123,7 @@ export class SQLiteLogDatabase {
    * Initialize the database: set journal mode and create logs table if not exists.
    * @private
    */
-  _initializeDatabase() {
+  initialize() {
     this.db.pragma('journal_mode = WAL');
     this.db
       .prepare(
