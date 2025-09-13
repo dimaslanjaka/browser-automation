@@ -32,14 +32,14 @@ export function showHelp() {
   console.log('  -sh, --shuffle      Shuffle the order of data items before processing');
 }
 
-if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
+if (process.argv.some((arg) => /sehatindonesiaku-kehadiran\.(cjs|js|mjs|ts)$/i.test(arg))) {
   (async () => {
     // Show help if -h or --help is passed
     if (args.h || args.help) {
       showHelp();
       return;
     }
-    let db;
+    let db: LogDatabase;
     try {
       db = await getSehatIndonesiaKuDb();
       await main(db);
@@ -49,7 +49,7 @@ if (process.argv.some((arg) => arg.includes('sehatindonesiaku-kehadiran'))) {
   })();
 }
 
-async function main(db) {
+async function main(db: LogDatabase) {
   const puppeteer = await getPuppeteer();
   // Prepare data to process
   let allData = await getData(db);
@@ -106,7 +106,7 @@ async function main(db) {
   process.exit(0);
 }
 
-async function getExcelData(db) {
+async function getExcelData(db: LogDatabase) {
   const rawData: DataItem[] = JSON.parse(fs.readFileSync(sehatindonesiakuDataPath, 'utf-8'));
   for (let i = rawData.length - 1; i >= 0; i--) {
     const item = rawData[i];
@@ -151,7 +151,7 @@ export interface DataOptions {
  *   - type: Source of data, either 'db' (database logs) or 'excel' (Kemkes data). Defaults to 'excel'.
  * @returns Promise resolving to an array of DataItem objects to process.
  */
-async function getData(db, options?: DataOptions): Promise<DataItem[]> {
+async function getData(db: LogDatabase, options?: DataOptions): Promise<DataItem[]> {
   const defaultOptions: DataOptions = { shuffle: false, single: false };
   options = { ...defaultOptions, ...options };
   const data = await getExcelData(db);
