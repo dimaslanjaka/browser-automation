@@ -10,8 +10,16 @@ import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 import { DataItem } from './types.js';
 
-let sehatindonesiakuDb: LogDatabase;
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
+let sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
+  connectTimeout: 60000,
+  connectionLimit: 10,
+  host: MYSQL_HOST || 'localhost',
+  user: MYSQL_USER || 'root',
+  password: MYSQL_PASS || '',
+  port: Number(MYSQL_PORT) || 3306,
+  type: MYSQL_HOST ? 'mysql' : 'sqlite'
+});
 
 export async function getSehatIndonesiaKuDb() {
   if (!sehatindonesiakuDb) {
