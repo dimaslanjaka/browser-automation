@@ -13,7 +13,7 @@ async function getData() {
     if (dataDb && dataDb.id) {
       // console.log('data from json', data);
       // console.log('data from db', dataDb);
-      json[i] = { ...data, ...dataDb.data };
+      json[i] = { ...data, ...dataDb.data, messages: dataDb.messages || [] };
       break;
     }
   }
