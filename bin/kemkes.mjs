@@ -33,10 +33,6 @@ const COMMANDS = {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-config.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-config.js')
   },
-  pelayanan: {
-    dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-pelayanan.ts'),
-    prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-pelayanan.js')
-  },
   cleandb: {
     dev: path.resolve(CWD, 'src/runner/sehatindonesiaku-cleanDB.ts'),
     prod: path.resolve(CWD, 'dist/runner/sehatindonesiaku-cleanDB.js')
@@ -78,7 +74,6 @@ async function showHelp() {
   console.log('  data         Run data extraction/processing');
   console.log('  registrasi   Run registration automation (main)');
   console.log('  config       Run configuration utility');
-  console.log('  pelayanan    Run service automation (pelayanan)');
   console.log('  cleandb      Clean Kemkes database');
   console.log('  help         Show this help message');
   console.log('\nGlobal Options:');
@@ -96,7 +91,6 @@ async function showHelp() {
   console.log('  kemkes data                       # Run data automation');
   console.log('  kemkes registrasi --help          # Show help for registration');
   console.log('  kemkes config                     # Run config utility');
-  console.log('  kemkes pelayanan --dev            # Run pelayanan in dev mode');
   console.log('  kemkes cleandb                    # Clean Kemkes database');
   console.log('  kemkes hadir --single             # Process only one data item');
   console.log('  kemkes registrasi --nik 1234      # Filter registration by NIK');
@@ -104,7 +98,7 @@ async function showHelp() {
   console.log('\nFor detailed help on a command, use: kemkes <command> --help');
   console.log(`\n${'='.repeat(60)}\n`);
 
-  for (const name of ['config', 'data', 'hadir', 'registrasi', 'pelayanan', 'cleandb']) {
+  for (const name of ['config', 'data', 'hadir', 'registrasi', 'cleandb']) {
     centerLog(`==== ${name.toUpperCase()} Command Help ====`);
     await showCommandHelp(name);
   }
