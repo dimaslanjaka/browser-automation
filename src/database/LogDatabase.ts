@@ -64,9 +64,9 @@ export class LogDatabase implements BaseLogDatabase {
     return;
   }
 
-  async query(sql: string, params?: any[]) {
+  async query<T>(sql: string, params?: any[]): Promise<T[]> {
     if (!this.store) await this.initialize();
-    return await this.store.query(sql, params);
+    return await this.store.query<T>(sql, params);
   }
 
   async close() {
