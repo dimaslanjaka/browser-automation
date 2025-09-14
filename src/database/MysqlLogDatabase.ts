@@ -78,8 +78,8 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @param params Optional parameters for the query.
    * @returns Promise resolving to the query result.
    */
-  public async query(sql: string, params?: any[]): Promise<any> {
-    return this.helper.query(sql, params);
+  public async query<T>(sql: string, params?: any[]): Promise<any> {
+    return this.helper.query<T>(sql, params);
   }
 
   /**
