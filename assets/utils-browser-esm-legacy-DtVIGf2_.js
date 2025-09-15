@@ -1,0 +1,1 @@
+System.register([],function(e,t){"use strict";return{execute:function(){e("g",function(...e){let t="/";"undefined"!=typeof window&&(t="/browser-automation/");const n=e.filter(Boolean).map(e=>e.replace(/^\/+|\/+$/g,"")).join("/");return t.replace(/\/+$/,"")+(n?"/"+n:"")})}}});
