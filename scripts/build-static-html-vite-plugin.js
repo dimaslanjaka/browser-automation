@@ -16,8 +16,8 @@ const dbPath = getDatabaseFilePath(filename);
 const currentYear = new Date().getFullYear();
 export const outHtmlPath = path.resolve(process.cwd(), `public/log-${filename}-${currentYear}.html`);
 export const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
-fs.emptyDirSync(path.dirname(outHtmlPath));
-fs.emptyDirSync(path.dirname(outLogsPath));
+fs.ensureDirSync(path.dirname(outHtmlPath));
+fs.ensureDirSync(path.dirname(outLogsPath));
 
 /**
  * Builds the static HTML log file from database logs and template.

@@ -1,13 +1,14 @@
-import legacy from '@vitejs/plugin-legacy';
-import react from '@vitejs/plugin-react';
+import vitePluginLegacy from '@vitejs/plugin-legacy';
+import vitePluginReact from '@vitejs/plugin-react';
+import path from 'path';
 import { defineConfig } from 'vite';
-import mkcert from 'vite-plugin-mkcert';
+import vitePluginMkcert from 'vite-plugin-mkcert';
 import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
 import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
+import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
 import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automation-plugin.js';
 import SitemapVitePlugin from './scripts/sitemap-vite-plugin.js';
-import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
 
 /**
  * Vite configuration for browser-automation project.
@@ -22,16 +23,16 @@ import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
  * @type {import('vite').UserConfig}
  */
 export default defineConfig({
-  cacheDir: 'tmp/.vite',
+  cacheDir: path.resolve(__dirname, 'node_modules/.vite'),
   plugins: [
     PrepareVitePlugin(),
-    mkcert(),
+    vitePluginMkcert(),
     RedirectBrowserAutomationPlugin(),
     dbLogHtmlStatic(),
     HtmlListPlugin(),
-    react(),
+    vitePluginReact(),
     AfterBuildCopyPlugin(),
-    legacy({
+    vitePluginLegacy({
       targets: ['defaults', 'not IE 11'],
       additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
       modernPolyfills: true,
