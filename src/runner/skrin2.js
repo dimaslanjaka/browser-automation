@@ -745,7 +745,7 @@ const _main = async () => {
         dataKunto[i].nama = namaBayi;
       } else {
         logLine(`Failed to parse baby name: ${dataKunto[i].nama}`);
-        dataKunto[i].skip = true; // Mark to skip
+        // dataKunto[i].skip = true; // Mark to skip
       }
     }
   }
