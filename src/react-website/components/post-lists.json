@@ -43,7 +43,7 @@
   {
     "title": "Logs - Sehat Indonesia Ku",
     "excerpt": "Display merged data from Excel and database for Sehat Indonesia Ku.",
-    "image": "https://sehatindonesiaku.kemkes.go.id/images/asik.svg",
+    "image": "https://sh.webmanajemen.com/php_backend/img.php?url=https://sehatindonesiaku.kemkes.go.id/images/asik.svg",
     "href": "/sehatindonesiaku-logs",
     "dest": "/sehatindonesiaku-logs/index.html"
   }
