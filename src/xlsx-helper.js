@@ -412,6 +412,14 @@ export async function fixData(data) {
   initialData.alamat = alamat; // Ensure both lowercase and uppercase keys are set
   initialData.ALAMAT = alamat; // Ensure both lowercase and uppercase keys are set
 
+  if (initialData.parsed_nik && initialData.parsed_nik.status === 'success') {
+    const parsed_data = initialData.parsed_nik.data;
+    if (/kota adm\.?/i.test(parsed_data.kotakab.toLowerCase())) {
+      parsed_data.kotakab = parsed_data.kotakab.replace(/kota adm\.?/i, 'kota').trim();
+    }
+    initialData.parsed_nik.data = parsed_data; // Update parsed_nik with new
+  }
+
   // Fix tinggi and berat badan
   let tinggi = initialData.TB || initialData.tb || null;
   let berat = initialData.bb || initialData.BB || null;
