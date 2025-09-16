@@ -6,10 +6,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function generateDataDisplay() {
+export async function generateDataDisplay(force = false) {
   const lockFile = path.join(__dirname, 'tmp/sehatindonesiaku-data-display.lock');
   // Skip if lock file exists (another process is running)
-  if (fs.existsSync(lockFile)) {
+  if (fs.existsSync(lockFile) && !force) {
     console.log('Data generation already in progress, skipping...');
     return;
   }
@@ -60,6 +60,6 @@ export default function PrepareVitePlugin() {
   };
 }
 
-if (process.argv.some((arg) => arg.includes('prepare-vite-plugin'))) {
-  generateDataDisplay();
+if (process.argv.some((arg) => /prepare-vite-plugin\.(js|ts)$/.test(arg))) {
+  generateDataDisplay(true);
 }
