@@ -48,16 +48,12 @@ export default function PrepareVitePlugin() {
       isBuild = config.command === 'build';
     },
     async options(options) {
-      // Run data generation before Vite processes any options or files
-      console.log('Generating required JSON data before Vite build...');
-      if (!isBuild) {
-        generateDataDisplay().then(() => {
-          console.log('Required JSON data generated.');
-        }); // Do not await during dev server start
-      } else {
+      if (isBuild) {
+        // Run data generation before Vite processes any options or files
+        console.log('Generating required JSON data before Vite build...');
         await generateDataDisplay().then(() => {
           console.log('Required JSON data generated.');
-        }); // Await during build
+        });
       }
       return options;
     }
