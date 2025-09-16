@@ -22,6 +22,7 @@ import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
  * @type {import('vite').UserConfig}
  */
 export default defineConfig({
+  cacheDir: 'tmp/.vite',
   plugins: [
     PrepareVitePlugin(),
     mkcert(),
