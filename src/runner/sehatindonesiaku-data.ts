@@ -375,9 +375,13 @@ export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
     } else if (['p', 'pr', 'perempuan', 'female'].includes(jk)) {
       item.jenis_kelamin = 'Perempuan';
     }
+    // Throw invalid gender
+    if (!['Laki-laki', 'Perempuan'].includes(String(item.jenis_kelamin).trim())) {
+      throw new Error(`Invalid jenis_kelamin: ${item.jenis_kelamin}`);
+    }
     // Force capitalize first letter
     if (typeof item.jenis_kelamin === 'string' && item.jenis_kelamin.length > 0) {
-      item.jenis_kelamin = ucwords(String(item.jenis_kelamin).toLowerCase());
+      item.jenis_kelamin = ucwords(String(item.jenis_kelamin).toLowerCase()).trim();
     }
   }
   return item;
