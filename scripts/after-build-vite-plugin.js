@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import { logLine } from '../src/utils.js';
 import * as cheerio from 'cheerio';
@@ -31,6 +31,10 @@ function AfterBuildCopyPlugin() {
     closeBundle() {
       if (!isBuild) return;
       const src = path.join(distDir, 'index.html');
+      if (!fs.existsSync(src)) {
+        console.warn(`Source file ${src} does not exist, skipping copy.`);
+        return;
+      }
       /** @type {HtmlOption[]} */
       const options = [
         {
@@ -39,7 +43,8 @@ function AfterBuildCopyPlugin() {
           canonical: 'https://www.webmanajemen.com/browser-automation/'
         }
       ];
-      postList.forEach((post) => {
+      for (let i = 0; i < postList.length; i++) {
+        const post = postList[i];
         const option = {};
         for (const key in post) {
           if (key === 'dest') {
@@ -53,16 +58,15 @@ function AfterBuildCopyPlugin() {
           }
         }
         options.push(option);
-      });
+      }
+      console.log(`Processing ${options.length} HTML files...`);
       for (const option of options) {
         const { dest = undefined, title, canonical, thumbnail = '', author = '', description = '', icon = '' } = option;
         if (typeof dest !== 'string' || !dest) {
           logLine('Skipped option with invalid dest:', option);
           continue;
         }
-        if (!fs.existsSync(path.dirname(dest))) {
-          fs.mkdirSync(path.dirname(dest), { recursive: true });
-        }
+        fs.ensureDirSync(path.dirname(dest));
         fs.copyFileSync(src, dest);
         logLine(`Copied ${src} to ${dest}`);
 

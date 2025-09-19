@@ -1,3 +1,5 @@
+import { NikParseResult } from 'nik-parser-jurusid/dist/esm/src/globals.js';
+
 export interface ExcelRowData {
   rowIndex: number;
   tanggal: string;
@@ -32,7 +34,7 @@ export interface ExcelRowData4 {
 
 export interface fixDataResult extends ExcelRowData, ExcelRowData4 {
   [key: string]: any; // Allow additional properties
-  parsed_nik: ReturnType<(typeof import('nik-parser-jurusid'))['nikParserStrict']> | null;
+  parsed_nik: NikParseResult | null;
   gender: 'Laki-laki' | 'Perempuan' | 'Tidak Diketahui';
   age: number;
 }
