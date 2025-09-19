@@ -36,6 +36,7 @@ import {
   enterSehatIndonesiaKu,
   selectDayFromCalendar
 } from './sehatindonesiaku-utils.js';
+import { LogDatabase } from '../database/LogDatabase.js';
 
 // Address defaults moved to processData options
 const cliArgs = minimist(process.argv.slice(2), {
@@ -147,7 +148,7 @@ interface ProcessDataOptions {
 async function processData(
   browserOrPage: Browser | Page,
   item: Partial<DataItem>,
-  db,
+  db: LogDatabase,
   options: ProcessDataOptions = {}
 ) {
   // Merge options with hardcoded defaults
