@@ -9,6 +9,7 @@ import xlsx from 'xlsx';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
 import { DataItem } from './types.js';
+import { ucwords } from '../utils/string.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 let sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
@@ -365,6 +366,19 @@ export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
   // Set default tanggal_pemeriksaan if missing
   if (!item.tanggal_pemeriksaan) {
     item.tanggal_pemeriksaan = moment().format('DD/MM/YYYY');
+  }
+  // Fix jenis kelamin
+  if (item.jenis_kelamin) {
+    const jk = String(item.jenis_kelamin).toLowerCase();
+    if (['l', 'lk', 'laki', 'laki-laki', 'male'].includes(jk)) {
+      item.jenis_kelamin = 'Laki-laki';
+    } else if (['p', 'pr', 'perempuan', 'female'].includes(jk)) {
+      item.jenis_kelamin = 'Perempuan';
+    }
+    // Force capitalize first letter
+    if (typeof item.jenis_kelamin === 'string' && item.jenis_kelamin.length > 0) {
+      item.jenis_kelamin = ucwords(String(item.jenis_kelamin).toLowerCase());
+    }
   }
   return item;
 }
