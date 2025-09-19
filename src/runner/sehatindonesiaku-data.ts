@@ -383,6 +383,10 @@ export function fixKemkesDataItem(item: Partial<DataItem>): Partial<DataItem> {
     if (typeof item.jenis_kelamin === 'string' && item.jenis_kelamin.length > 0) {
       item.jenis_kelamin = ucwords(String(item.jenis_kelamin).toLowerCase()).trim();
     }
+    // Enforce Laki-laki
+    if (item.jenis_kelamin.toLowerCase().includes('laki')) {
+      item.jenis_kelamin = 'Laki-laki';
+    }
   }
   return item;
 }
