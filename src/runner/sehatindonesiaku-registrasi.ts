@@ -269,6 +269,7 @@ async function processData(
 
   // Handle modal "Peserta Menerima Pemeriksaan"
   if (await isSpecificModalVisible(page, 'Peserta Menerima Pemeriksaan')) {
+    // Data sudah menerima pemeriksaan, tidak perlu diproses ulang
     console.log(`[registrasi] ${item.nik} - Peserta Menerima Pemeriksaan modal is visible.`);
     await clickKembali(page);
     // Save the data to database
@@ -279,6 +280,14 @@ async function processData(
       data: { ...item, registered: true },
       message: array_unique(message).join(',')
     });
+
+    console.log(`[registrasi] ${item.nik} - ${ansiColors.greenBright('Peserta Sudah Menerima Pemeriksaan.')}`);
+
+    if ((await page.browser().pages()).length > 1) {
+      console.log(`[registrasi] ${item.nik} - Closing tab...`);
+      await page.close();
+    }
+
     return;
   }
 
