@@ -728,6 +728,11 @@ async function _test(page) {
   }
 }
 
+async function _testSkriningData() {
+  const dataKunto = await loadCsvData();
+  console.log(dataKunto[0]);
+}
+
 const _main = async () => {
   const { page, browser } = await getPuppeteer();
   await skrinLogin(page);
@@ -802,13 +807,14 @@ if (cliArgs.help) {
   showHelp();
   process.exit(0);
 } else {
-  _main()
-    .then(() => {
+  (async () => {
+    try {
+      await _main();
       logLine('All done!');
       process.exit(0);
-    })
-    .catch((err) => {
+    } catch (err) {
       console.error('Fatal error:', err);
       process.exit(1);
-    });
+    }
+  })();
 }
