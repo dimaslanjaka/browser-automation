@@ -31,7 +31,12 @@ export class SQLiteLogDatabase {
 
     const dbPath = getDatabaseFilePath(name);
     this.dbPath = dbPath;
+    // Ensure backup directory exists
+    fs.ensureDirSync(backupDirectoryPath);
+
     this.db = new Database(dbPath);
+    // Initialize database schema (create tables, pragmas, etc.)
+    this.initialize();
 
     // Auto run backup on process exit
     process.on('exit', () => {
