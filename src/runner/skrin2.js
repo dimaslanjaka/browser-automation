@@ -26,7 +26,8 @@ const cliArgs = minimist(process.argv.slice(2), {
   boolean: ['help', 'shuffle'],
   alias: {
     h: 'help',
-    sh: 'shuffle'
+    sh: 'shuffle',
+    s: 'single'
   }
 });
 
@@ -37,6 +38,7 @@ function showHelp() {
     Options:
       -h, --help        Show help
       -sh, --shuffle    Shuffle the data
+      -s, --single      Process a single data entry
   `);
 }
 
@@ -731,6 +733,7 @@ async function _test(page) {
 async function _testSkriningData() {
   const dataKunto = await loadCsvData();
   console.log(dataKunto[0]);
+  console.log('total data:', dataKunto.length);
 }
 
 const _main = async () => {
@@ -770,37 +773,53 @@ const _main = async () => {
     return !getLogById(nik) || Object.hasOwn(getLogById(nik).data, 'status') === false;
   });
 
-  while (unprocessedData.length > 0) {
-    const currentData = unprocessedData.shift();
-    if (currentData.skip) {
-      continue; // Skip this entry
+  const isSingle = cliArgs.single ? true : false;
+
+  if (!isSingle) {
+    while (unprocessedData.length > 0) {
+      const currentData = unprocessedData.shift();
+      if (currentData.skip) {
+        continue; // Skip this entry
+      }
+      if (!nikUtils.isValidNIK(currentData.nik)) {
+        logLine(`Skipping invalid NIK: ${currentData.nik}`);
+        addLog({
+          id: getNumbersOnly(currentData.nik),
+          data: { ...currentData, status: 'invalid' },
+          message: 'Invalid NIK format'
+        });
+        continue; // Skip invalid NIKs
+      }
+      // Close the first page if there are more than 3 pages open
+      if ((await browser.pages()).length > 3) {
+        const pages = await browser.pages();
+        await pages[0].close();
+      }
+      // Start new page for each data entry
+      if (currentData) await processData(await browser.newPage(), currentData);
+      // Log remaining unprocessed data count
+      logLine(`Remaining unprocessed data: ${unprocessedData.length}`);
     }
-    if (!nikUtils.isValidNIK(currentData.nik)) {
-      logLine(`Skipping invalid NIK: ${currentData.nik}`);
-      addLog({
-        id: getNumbersOnly(currentData.nik),
-        data: { ...currentData, status: 'invalid' },
-        message: 'Invalid NIK format'
-      });
-      continue; // Skip invalid NIKs
+  } else {
+    // Single mode - process only the first unprocessed data
+    if (unprocessedData.length > 0) {
+      const currentData = unprocessedData[0];
+      if (currentData.skip) {
+        logLine('The first unprocessed data is marked to skip. Exiting single mode.');
+      } else if (!nikUtils.isValidNIK(currentData.nik)) {
+        logLine(`Skipping invalid NIK: ${currentData.nik}`);
+        addLog({
+          id: getNumbersOnly(currentData.nik),
+          data: { ...currentData, status: 'invalid' },
+          message: 'Invalid NIK format'
+        });
+      } else {
+        await processData(page, currentData);
+      }
+    } else {
+      logLine('No unprocessed data available for single mode.');
     }
-    // Close the first page if there are more than 3 pages open
-    if ((await browser.pages()).length > 3) {
-      const pages = await browser.pages();
-      await pages[0].close();
-    }
-    // Start new page for each data entry
-    if (currentData) await processData(await browser.newPage(), currentData);
   }
-
-  // await _test(page);
-};
-
-const _test2 = async () => {
-  const { page } = await getPuppeteer();
-  await skrinLogin(page);
-  const dataKunto = await loadCsvData();
-  processData(page, dataKunto[0]);
 };
 
 if (cliArgs.help) {
