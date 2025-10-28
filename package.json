@@ -165,12 +165,12 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/0bde69c6f08999b29879ed85957230fe20f90917/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/9d2f7ebf4c37cf1d58487951c9e2ad3a20b917c1/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/5a1ea4a2647f2a9dc1281defea47a25d28cdf244/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/bf527c71f001f6ae7c5315e921a274db6d74fa53/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/e0e6596038ced068fd68355f42630c8296ede94e/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/8842ca494bf4b89817263839fb8e8f845eb909c6/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
