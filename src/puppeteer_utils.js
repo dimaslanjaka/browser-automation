@@ -481,6 +481,82 @@ export async function isIframeElementVisible(page, iframeSelector, elementSelect
 }
 
 /**
+ * Check if a visible element inside an iframe (matched by selector) contains specific text
+ * @param {import('puppeteer').Page} page - Puppeteer page instance
+ * @param {string} iframeSelector - CSS selector for the iframe
+ * @param {string} parentSelector - Selector for the parent container to scope the search (e.g., modal wrapper)
+ * @param {string} textToMatch - Substring to match inside the parent element
+ * @returns {Promise<boolean>}
+ */
+export async function isIframeTextVisible(page, iframeSelector, parentSelector, textToMatch) {
+  const iframeHandle = await page.$(iframeSelector);
+  if (!iframeHandle) return false;
+
+  const frame = await iframeHandle.contentFrame();
+  if (!frame) return false;
+
+  // Get all matching parent elements inside iframe
+  const parents = await frame.$$(parentSelector);
+  for (const parent of parents) {
+    const text = await frame.evaluate((el) => el.innerText, parent);
+
+    if (!text.trim().toLowerCase().includes(textToMatch.toLowerCase())) continue;
+
+    // Check visibility more accurately
+    const visible = await frame.evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        parseFloat(style.opacity) > 0 &&
+        el.offsetParent !== null
+      );
+    }, parent);
+
+    if (visible) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Find a visible element inside an iframe whose text content contains a given substring.
+ *
+ * @param {import('puppeteer').Page} page - Puppeteer Page instance
+ * @param {string} iframeSelector - CSS selector for the iframe
+ * @param {string} parentSelector - Selector for the container to search within
+ * @param {string} textToMatch - Substring to match (case-insensitive)
+ * @returns {Promise<import('puppeteer').ElementHandle | null>} - The matched element handle, or null if not found
+ */
+export async function findIframeElementByText(page, iframeSelector, parentSelector, textToMatch) {
+  const iframeHandle = await page.$(iframeSelector);
+  if (!iframeHandle) return null;
+
+  const frame = await iframeHandle.contentFrame();
+  if (!frame) return null;
+
+  const parents = await frame.$$(parentSelector);
+  for (const parent of parents) {
+    const text = await frame.evaluate((el) => el.innerText, parent);
+    if (!text?.toLowerCase().includes(textToMatch.toLowerCase())) continue;
+
+    const visible = await frame.evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        parseFloat(style.opacity) > 0 &&
+        el.offsetParent !== null
+      );
+    }, parent);
+
+    if (visible) return parent; // ✅ return element handle
+  }
+
+  return null;
+}
+
+/**
  * Click an element inside an iframe
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
  * @param {string} iframeSelector - CSS selector for the iframe
