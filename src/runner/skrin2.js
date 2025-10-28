@@ -1,14 +1,18 @@
+import ansiColors from 'ansi-colors';
 import 'dotenv/config';
+import minimist from 'minimist';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import { loadCsvData, parseBabyName } from '../../data/index.js';
 import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import {
   clickIframeElement,
+  findIframeElementByText,
   getFormValuesFromFrame,
   getPuppeteer,
   isElementVisible,
   isIframeElementVisible,
+  isIframeTextVisible,
   typeAndTriggerIframe,
   validateAndRetryIframeInput,
   waitForDomStable
@@ -17,8 +21,6 @@ import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
 import { fixData } from '../xlsx-helper.js';
-import minimist from 'minimist';
-import ansiColors from 'ansi-colors';
 
 console.clear();
 
@@ -169,10 +171,34 @@ async function processData(page, data) {
 
   await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
   await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
-  await typeAndTriggerIframe(page, iframeSelector, '#nik', NIK);
+  await typeAndTriggerIframe(page, iframeSelector, 'input[name="nik"]', NIK);
 
-  await sleep(4000); // Wait for the NIK input to process
+  await sleep(10000); // Wait for the NIK input to process
   await waitForDomStable(page, 3000, 30000);
+
+  // Narrow the search to Kendo modal container:
+  const parentSelector = 'div.k-window[data-role="draggable"]';
+
+  const modal = await findIframeElementByText(page, iframeSelector, parentSelector, 'Data tidak ditemukan');
+
+  if (modal) {
+    console.log('❌ Visible modal with "Data tidak ditemukan" found in iframe');
+    const yesButton = await modal.$('#yesButton');
+    if (yesButton) await yesButton.click();
+    await sleep(500);
+  }
+
+  const modalDataNotFoundVisible = await isIframeTextVisible(
+    page,
+    iframeSelector,
+    parentSelector,
+    'Data tidak ditemukan'
+  );
+
+  if (modalDataNotFoundVisible) {
+    console.log('❌ Visible modal with "Data tidak ditemukan" found in iframe');
+    await waitEnter('Please handle the "Data tidak ditemukan" modal manually, then press Enter to continue...');
+  }
 
   const isInvalidAlertVisible = async () =>
     await isIframeElementVisible(page, iframeSelector, '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');
@@ -655,79 +681,6 @@ async function re_evaluate(page) {
     await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
   if (await isInputEmpty('input[name="tempat_skrining_id_input"]'))
     await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
-}
-
-/**
- *
- * @param {import('puppeteer').Page} page
- */
-async function _test(page) {
-  await enterSkriningPage(page, false);
-
-  await sleep(3000);
-
-  const iframeSelector = '.k-window-content iframe.k-content-frame';
-  const iframeElement = await page.$(iframeSelector);
-  const iframe = await iframeElement.contentFrame();
-  const iframeType = async (selector, value) => {
-    // Skip if element is hidden
-    const isVisible = await iframe.$eval(selector, (el) => {
-      const style = window.getComputedStyle(el);
-      return style && style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
-    });
-    if (!isVisible) {
-      logLine(`Element ${selector} is not visible, skipping typing.`);
-      return;
-    }
-    // Scroll to the element before typing
-    await iframe.$eval(selector, (el) => el.scrollIntoView({ behavior: 'auto', block: 'center' }));
-    // Focus the element before typing
-    await iframe.focus(selector);
-    // Reset existing value before typing
-    await page.evaluate(
-      (iframeSelector, selector) => {
-        const iframe = document.querySelector(iframeSelector);
-        const element = iframe.contentDocument.querySelector(selector);
-        element.value = '';
-        element.dispatchEvent(new iframe.contentWindow.Event('input', { bubbles: true }));
-      },
-      iframeSelector,
-      selector
-    );
-    // Type the value into the input field
-    await iframe.type(selector, value, { delay: 100 });
-    // Trigger input and change events
-    await iframe.$eval(selector, (el) => {
-      const event = new Event('change', { bubbles: true });
-      el.dispatchEvent(event);
-    });
-    // Wait for the input to stabilize
-    await sleep(1000);
-  };
-  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
-  await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
-  await iframeType('#field_item_nama_peserta input[type="text"]', 'MUHAMMAD NATHAN ALFATIR');
-  const tidakFields = [
-    '#field_item_cxr_pemeriksaan_id input[type="text"]',
-    '#field_item_gejala_2_3_id input[type="text"]',
-    '#field_item_gejala_2_4_id input[type="text"]',
-    '#field_item_gejala_2_5_id input[type="text"]',
-    '#field_item_gejala_6_id input[type="text"]',
-    '#field_item_risiko_1_id input[type="text"]',
-    '#field_item_risiko_10_id input[type="text"]',
-    '#field_item_risiko_11_id input[type="text"]',
-    '#field_item_risiko_4_id input[type="text"]',
-    '#field_item_risiko_5_id input[type="text"]',
-    '#field_item_risiko_7_id input[type="text"]',
-    '#field_item_riwayat_kontak_tb_id input[type="text"]',
-    '#field_item_gejala_1_1_id input[type="text"]',
-    '#field_item_gejala_1_3_id input[type="text"]',
-    '#form_item_gejala_1_4_id input[type="text"]',
-    '#field_item_gejala_1_5_id input[type="text"]'
-  ];
-  for (const selector of tidakFields) {
-    await iframeType(selector, 'Tidak');
-  }
 }
 
 async function _testSkriningData() {

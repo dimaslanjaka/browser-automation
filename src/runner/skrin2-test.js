@@ -61,8 +61,6 @@ export async function _test() {
 
   await sleep(10000); // Wait for the NIK input to process
 
-  await iframeType('#field_item_nama_peserta input[type="text"]', singleData.nama);
-
   // Narrow the search to Kendo modal container:
   const parentSelector = 'div.k-window[data-role="draggable"]';
 
@@ -84,6 +82,8 @@ export async function _test() {
   } else {
     console.log('❌ Modal text not visible or not found');
   }
+
+  await iframeType('#field_item_nama_peserta input[type="text"]', singleData.nama);
 
   // await page.browser().close();
 }
