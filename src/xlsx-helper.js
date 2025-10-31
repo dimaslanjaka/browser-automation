@@ -288,7 +288,7 @@ export async function fixData(data) {
   }
 
   // TGL LAHIR normalization
-  let tglLahir = initialData['TGL LAHIR'] || null;
+  let tglLahir = initialData['TGL LAHIR'] || initialData.tgl_lahir || null;
   if (tglLahir) {
     if (typeof tglLahir === 'number') {
       const baseDate = moment('1900-01-01');
@@ -299,8 +299,21 @@ export async function fixData(data) {
     } else if (typeof tglLahir === 'string' && !moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
     }
-    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid())
+    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(`Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)`);
+    }
+    // Check if year of TGL LAHIR is more than current year
+    const yearOfTglLahir = moment(tglLahir, 'DD/MM/YYYY').year();
+    const currentYear = moment().year();
+    if (yearOfTglLahir > currentYear) {
+      if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
+        tglLahir = parsed_nik.data.lahir;
+        logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
+      } else {
+        console.log('\nTGL LAHIR year cannot be greater than current year', initialData, '\n');
+        throw new Error(`TGL LAHIR year cannot be greater than current year: ${tglLahir}`);
+      }
+    }
     initialData['TGL LAHIR'] = tglLahir;
   }
 
