@@ -1,5 +1,5 @@
 import * as data from '../data/index.js';
-import { fixData } from '../src/xlsx-helper.js';
+import fixData from '../src/utils/xlsx/fixData.js';
 
 (async () => {
   console.log('Loading CSV data...');

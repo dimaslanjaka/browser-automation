@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { fixData } from '../src/xlsx-helper.js';
+import fixData from '../src/utils/xlsx/fixData.js';
 
 describe('fixData - Basic Tests', () => {
   test('throws error when data is null', async () => {

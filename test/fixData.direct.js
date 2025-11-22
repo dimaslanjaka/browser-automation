@@ -1,7 +1,7 @@
 // MAIN SCRIPT
 import moment from 'moment';
 import { fetchXlsxData4 } from '../src/fetchXlsxData4.js';
-import { fixData } from '../src/xlsx-helper.js';
+import fixData from '../src/utils/xlsx/fixData.js';
 
 (async () => {
   const rows = await fetchXlsxData4();

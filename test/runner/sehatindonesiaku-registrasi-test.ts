@@ -1,10 +1,12 @@
+import { array_shuffle } from 'sbg-utility';
 import { getPuppeteer } from '../../src/puppeteer_utils.js';
 import { getExcelData, getSehatIndonesiaKuDb } from '../../src/runner/sehatindonesiaku-data.js';
 import { processRegistrasiData } from '../../src/runner/sehatindonesiaku-registrasi.js';
 
 async function main() {
   const db = await getSehatIndonesiaKuDb();
-  const data = (await getExcelData()).find((item) => item.nik === '3173055506680016');
+  const data = array_shuffle(await getExcelData()).find((item) => item.nik === '3173054106910011');
+  // const data = array_shuffle(await getExcelData())[0];
   if (!data) {
     throw new Error('Data not found');
   }

@@ -1,4 +1,4 @@
-import { fixData } from '../src/xlsx-helper.js';
+import fixData from '../src/utils/xlsx/fixData.js';
 
 // ========== NODE.JS EXIT INSPECTION UTILITIES ==========
 

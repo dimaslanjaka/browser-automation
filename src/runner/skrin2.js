@@ -20,7 +20,7 @@ import {
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
-import { fixData } from '../xlsx-helper.js';
+import fixData from '../utils/xlsx/fixData.js';
 
 console.clear();
 
