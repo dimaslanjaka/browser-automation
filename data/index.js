@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { encryptJson } from '../src/utils/json-crypto.js';
 import { parseDate } from '../src/utils/date.js';
 import ansiColors from 'ansi-colors';
+import { Transform } from 'stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +17,6 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const csvFilePath = path.join(__dirname, 'data.csv');
 
 if (!fs.existsSync(csvFilePath)) {
-  // Create empty data.csv if it doesn't exist
   fs.writeFileSync(csvFilePath, '');
 }
 
@@ -44,19 +44,41 @@ const keyMap = {
   'PETUGAS ENTRY': 'petugas'
 };
 
-/**
- * Loads and processes CSV data from the data.csv file
- * Maps column headers using keyMap, parses dates, and saves encrypted JSON output
- * @returns {Promise<import('./types.js').DataArray>} Promise that resolves to an array of processed CSV records
- */
+// -------------------------------------------------------------
+// ADD: comment filter stream (simple, safe, chunk-aware)
+// -------------------------------------------------------------
+function createCommentFilter(commentChar = '#') {
+  let leftover = '';
+
+  return new Transform({
+    transform(chunk, enc, cb) {
+      const text = leftover + chunk.toString();
+      const lines = text.split(/\r?\n/);
+      leftover = lines.pop(); // last line may be partial
+
+      const filtered = lines.filter((line) => !line.trim().startsWith(commentChar)).join('\n');
+
+      cb(null, filtered + '\n');
+    },
+    flush(cb) {
+      if (leftover && !leftover.trim().startsWith('#')) {
+        cb(null, leftover + '\n');
+      } else {
+        cb();
+      }
+    }
+  });
+}
+
+// -------------------------------------------------------------
+// CSV Loader (unchanged — just adds .pipe(createCommentFilter())
+// -------------------------------------------------------------
 export async function loadCsvData() {
-  /**
-   * @type {import('./types.js').DataArray}
-   */
   const results = await new Promise((resolve, reject) => {
     const mappedRecords = [];
 
     fs.createReadStream(csvFilePath)
+      .pipe(createCommentFilter('#')) // <<<<<< ADD THIS
       .pipe(csvParser())
       .on('data', (row) => {
         const mappedRow = {};
@@ -74,7 +96,6 @@ export async function loadCsvData() {
           return row;
         });
 
-        // Save as JSON (optional)
         const outputDir = path.join(__dirname, '../public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
         fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
@@ -86,46 +107,44 @@ export async function loadCsvData() {
   return results;
 }
 
+// -------------------------------------------------------------
+// parseBabyName (unchanged)
+// -------------------------------------------------------------
 export function parseBabyName(entry) {
-  // kasus: "<NAMA>, BY (...)" atau "<NAMA>, AN (...)"
   let match = entry.match(/^([^,]+),\s*(BY|AN)\s*\(/i);
   if (match) return match[1].trim();
 
-  // kasus: "BAYI NY..." atau "BAYI NYONYA..."
-  // ambil setelah "/" atau dalam kurung "(...)" sebagai nama bayi
   match = entry.match(/\/\s*([A-Z].+)$/i);
   if (match) {
-    return match[1]
-      .replace(/[,)]\s*$/g, '') // buang koma/penutup
-      .trim();
+    return match[1].replace(/[,)]\s*$/g, '').trim();
   }
 
   match = entry.match(/\(([^)]+)\)/);
   if (match) return match[1].trim();
 
-  // kalau tidak ketemu
   return undefined;
 }
 
+// -------------------------------------------------------------
+// Direct run (unchanged)
+// -------------------------------------------------------------
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  // This module is being run directly
   (async () => {
     console.log('Loading CSV data...');
     const data = await loadCsvData();
     console.log(`Loaded ${data.length} records from CSV.`);
-    console.log(data.at(0)); // Output the first mapped record to verify mapping
-    console.log(data.at(-1)); // Output the last mapped record to verify mapping
-    const aneh = data.filter((item) => {
-      if (/bayi/i.test(item.nama)) {
-        return true;
-      }
-      return false;
-    });
+    console.log(data.at(0));
+    console.log(data.at(-1));
+
+    const aneh = data.filter((item) => /bayi/i.test(item.nama));
+
     console.log(
       aneh
         .map(
           (item) =>
-            `${item.nama} -> ${parseBabyName(item.nama) ? ansiColors.greenBright(parseBabyName(item.nama)) : ansiColors.gray('undefined')}`
+            `${item.nama} -> ${
+              parseBabyName(item.nama) ? ansiColors.greenBright(parseBabyName(item.nama)) : ansiColors.gray('undefined')
+            }`
         )
         .join('\n')
     );
