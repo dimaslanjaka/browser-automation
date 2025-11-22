@@ -61,6 +61,7 @@ export async function geocodeWithNominatim(keyword, method = 'GET', options = {}
     q: keyword,
     format: 'json',
     addressdetails: 1,
+    polygon_kml: 1, // request polygon KML when available
     limit: 1
   };
 
@@ -97,13 +98,27 @@ export async function geocodeWithNominatim(keyword, method = 'GET', options = {}
     const data = response.data?.[0];
     if (!data) return null;
 
+    // Ensure numeric coordinates when possible
+    const lat = data.lat ? Number(data.lat) : null;
+    const lon = data.lon ? Number(data.lon) : null;
+
     const result = {
       keyword,
       fullAddress: data.display_name,
-      latitude: data.lat,
-      longitude: data.lon,
-      googleMapsUrl: `https://www.google.com/maps?q=${data.lat},${data.lon}`,
-      address: data.address
+      // backward-compatible fields (original tests expect these)
+      display_name: data.display_name,
+      lat: data.lat || (lat !== null ? String(lat) : null),
+      lon: data.lon || (lon !== null ? String(lon) : null),
+      // newer, normalized fields
+      latitude: lat,
+      longitude: lon,
+      googleMapsUrl: lat && lon ? `https://www.google.com/maps?q=${lat},${lon}` : null,
+      address: data.address || null,
+      osm_type: data.osm_type || null,
+      osm_id: data.osm_id || null,
+      // Nominatim can return geojson or polygon_kml; include both if present
+      geojson: data.geojson || null,
+      polygon_kml: data.polygon_kml || null
     };
 
     // Write to cache
