@@ -2,33 +2,94 @@ import ansiColors from 'ansi-colors';
 import moment from 'moment';
 import { nikParserStrictSync as nikParserStrict } from 'nik-parser-jurusid';
 import { array_random } from 'sbg-utility';
-import { getAge } from '../../date.js';
 import { geocodeWithNominatim } from '../../address/nominatim.js';
-import { extractMonthName, getDatesWithoutSundays } from '../../date.js';
-import { logLine } from '../../utils.js';
-import { getNumbersOnly } from '../../utils-browser.js';
+import { extractMonthName, getAge, getDatesWithoutSundays } from '../../date.js';
 import { getBeratBadan, getTinggiBadan } from '../../skrin_utils.js';
+import { getNumbersOnly } from '../../utils-browser.js';
+import { logLine } from '../../utils.js';
 
 /**
- * Fixes and validates data object by normalizing field access and validating required fields.
- * Handles both ExcelRowData (lowercase) and ExcelRowData4 (uppercase) field naming conventions.
+ * Normalize, validate and augment a row of Excel data.
  *
- * @param {import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData | null} data - The data object to fix and validate
- * @returns The validated and potentially modified data object
- * @throws {Error} When required fields are missing or invalid
+ * This function accepts different Excel row shapes (legacy lowercase keys or
+ * uppercase keys produced by various parsers) and normalizes them to a
+ * consistent shape. It performs the following transformations and checks:
+ *
+ * - Ensure `nik`/`NIK` exists and is numeric with length 16. Parses NIK for
+ *   birth date and gender and stores the parser result on `parsed_nik`.
+ * - Normalize `nama`/`NAMA` by trimming, collapsing whitespace and removing
+ *   quotes.
+ * - Normalize and validate `tanggal`/`TANGGAL ENTRY`. Can autofill or choose a
+ *   date from a month name when `options.autofillTanggalEntry` is truthy.
+ * - Convert Excel serial dates for `TGL LAHIR` to `DD/MM/YYYY` and validate.
+ * - Derive `age` from `TGL LAHIR` or from parsed NIK when necessary.
+ * - Normalize `pekerjaan`/`PEKERJAAN` into a small set of canonical values.
+ * - Resolve `alamat`/`ALAMAT` from parsed NIK and optionally by calling
+ *   `geocodeWithNominatim`. Augmented address is attached on `_address`.
+ * - Fill `tb`/`TB` and `bb`/`BB` (height/weight) if missing using helper
+ *   heuristics.
+ *
+ * The function mutates the provided object in place and also returns the
+ * updated object. Augmented or canonical fields are written to both the
+ * lowercase and uppercase variants (when applicable) so downstream code can
+ * reliably read either form.
+ *
+ * Contract
+ * - Input: partial Excel row object (see `globals.ExcelfRowData` /
+ *   `globals.ExcelfRowData4`).
+ * - Output: the same object mutated to include normalized fields described
+ *   below.
+ * - Error modes: throws Error on missing required fields, invalid formats,
+ *   Sunday or future `tanggal` entries, or when critical resolution steps
+ *   (like `pekerjaan` mapping or address resolution) cannot be completed.
+ *
+ * Augmented fields (examples)
+ * - `nik`, `NIK` (string, digits only, length 16)
+ * - `nama`, `NAMA` (normalized string)
+ * - `parsed_nik` (object|null) — result of `nik-parser-jurusid` strict parser
+ * - `tanggal`, `TANGGAL ENTRY` (string in `DD/MM/YYYY`)
+ * - `TGL LAHIR` (string in `DD/MM/YYYY`)
+ * - `age` (number)
+ * - `gender` (string: `Laki-laki`, `Perempuan`, or `Tidak Diketahui`)
+ * - `pekerjaan`, `PEKERJAAN` (canonical string)
+ * - `alamat`, `ALAMAT` (string)
+ * - `_address` (object) — raw geocode result when geocoding was performed
+ * - `tb`/`TB`, `bb`/`BB` (numbers or strings depending on helpers)
+ *
+ * @param {import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData | null} data
+ *   The raw Excel row object to normalize and validate. The object is mutated
+ *   in-place and returned.
+ * @param {object} [options]
+ * @param {boolean} [options.autofillTanggalEntry=true]
+ *   When true, missing or month-name-only `tanggal` entries are auto-filled
+ *   from the helper `getDatesWithoutSundays` (uses November 2025 by default
+ *   in current implementation). When false, a missing `tanggal` will cause an
+ *   error.
+ * @returns {Promise<import('../../../globals').fixDataResult>}
+ *   The same (mutated) data object augmented with normalized fields and any
+ *   additional data (for example `_address` when geocoding occurred).
+ * @throws {Error} When required fields are missing or invalid (invalid NIK,
+ *   invalid dates, Sunday/future tanggal, unresolved pekerjaan or address,
+ *   etc.).
  */
-export default async function fixData(data) {
+export default async function fixData(
+  data,
+  options = {
+    autofillTanggalEntry: false
+  }
+) {
   /** @type {Partial<import('../../../globals').fixDataResult>} */
   const initialData = data || null;
   if (!initialData) throw new Error('Invalid data format: data is required');
 
   // Normalize key fields
   let nik = initialData.NIK || initialData.nik || null;
+  let nama = initialData.NAMA || initialData.nama || null;
+  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
+
   nik = getNumbersOnly(nik);
   if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
 
-  const nama = initialData.NAMA || initialData.nama || null;
-  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
   const normalizedNama = nama
     // Remove extra spaces
     .replace(/\s+/g, ' ')
@@ -43,9 +104,6 @@ export default async function fixData(data) {
 
   initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
   initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
-
-  initialData.nama = nama; // Ensure both lowercase and uppercase keys are set
-  initialData.NAMA = nama; // Ensure both lowercase and uppercase keys are set
 
   // Parse NIK
   const parsed_nik = nikParserStrict(nik);
@@ -62,8 +120,12 @@ export default async function fixData(data) {
   // Tanggal entry normalization
   let tanggalEntry = initialData['TANGGAL ENTRY'] || initialData.tanggal || '';
   if (String(tanggalEntry).trim().length === 0) {
-    console.log('\nTanggal entry is required', initialData, '\n');
-    process.exit(1);
+    if (options.autofillTanggalEntry) {
+      tanggalEntry = getDatesWithoutSundays('november', 2025, 'DD/MM/YYYY', true)[0];
+      logLine(`${ansiColors.cyan('[fixData]')} Generated new tanggal entry for missing value: ${tanggalEntry}`);
+    } else {
+      throw new Error(`Tanggal entry is required.\n\n${JSON.stringify(initialData, null, 2)}\n`);
+    }
   }
   if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
     if (
@@ -89,7 +151,7 @@ export default async function fixData(data) {
     const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
     // Check if the date is a Sunday
     if (parsedDate.day() === 0) {
-      throw new Error(`Tanggal entry ${nik} cannot be a Sunday: ${tanggalEntry}`);
+      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
     }
     // Check if the date is not greater than today
     if (parsedDate.isAfter(moment())) {
