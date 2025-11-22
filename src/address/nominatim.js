@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pkg from '../../package.json' with { type: 'json' };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,7 +55,7 @@ export async function geocodeWithNominatim(keyword, method = 'GET', options = {}
   }
 
   const baseURL = 'https://nominatim.openstreetmap.org/search';
-  const headers = { 'User-Agent': `${pkg.name}/${pkg.version}` };
+  const headers = { 'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0` };
 
   const params = {
     q: keyword,
