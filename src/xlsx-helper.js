@@ -225,11 +225,22 @@ export async function fixData(data) {
 
   // Normalize key fields
   let nik = initialData.NIK || initialData.nik || null;
-  const nama = initialData.NAMA || initialData.nama || null;
-  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
   nik = getNumbersOnly(nik);
   if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
-  if (nama.length < 3) throw new Error(`Invalid NAMA length: ${nama} (expected at least 3 characters)`);
+
+  const nama = initialData.NAMA || initialData.nama || null;
+  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
+  const normalizedNama = nama
+    // Remove extra spaces
+    .replace(/\s+/g, ' ')
+    // Remove quotation marks
+    .replace(/['"]/g, '')
+    .trim();
+  initialData.nama = normalizedNama; // Update nama to normalized version
+  initialData.NAMA = normalizedNama; // Update NAMA to normalized version
+  if (normalizedNama.length < 3) {
+    throw new Error(`Invalid NAMA length: ${normalizedNama} (expected at least 3 characters)`);
+  }
 
   initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
   initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
