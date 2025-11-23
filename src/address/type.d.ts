@@ -1,10 +1,12 @@
 export interface GeocodeResult {
+  [key: string]: any;
   keyword: string;
   fullAddress: string;
   latitude: string;
   longitude: string;
   googleMapsUrl: string;
   address: {
+    [key: string]: any;
     road?: string;
     neighbourhood?: string;
     village?: string;
