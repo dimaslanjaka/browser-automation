@@ -323,3 +323,22 @@ export default async function fixData(
 
   return initialData;
 }
+
+// CLI test
+if (process.argv[1].includes('fixData.js')) {
+  (async () => {
+    try {
+      const sampleData = {
+        NIK: '3573041506980002',
+        NAMA: '  John   Doe  ',
+        'TANGGAL ENTRY': '15 November',
+        PEKERJAAN: 'Guru',
+        ALAMAT: ''
+      };
+      const fixedData = await fixData(sampleData, { autofillTanggalEntry: true });
+      console.log('Fixed Data:', fixedData);
+    } catch (error) {
+      console.error('Error in fixData CLI test:', error);
+    }
+  })();
+}

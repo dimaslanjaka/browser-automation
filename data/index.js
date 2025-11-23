@@ -70,9 +70,14 @@ function createCommentFilter(commentChar = '#') {
   });
 }
 
-// -------------------------------------------------------------
-// CSV Loader (unchanged — just adds .pipe(createCommentFilter())
-// -------------------------------------------------------------
+/**
+ * Load and parse CSV data from data.csv file
+ * Filters out comments (lines starting with #) before parsing
+ * Maps column names to standardized keys (e.g., 'NAMA' -> 'nama')
+ * Parses dates and adds rowIndex to each record
+ * Encrypts and saves output as dataKunto.json
+ * @returns {Promise<Array<Object>>} Array of mapped and parsed CSV records
+ */
 export async function loadCsvData() {
   const results = await new Promise((resolve, reject) => {
     const mappedRecords = [];
