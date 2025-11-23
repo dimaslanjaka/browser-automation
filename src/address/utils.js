@@ -31,7 +31,7 @@ export function getCacheFilePath(keyword) {
  * Build axios configuration with optional proxy support
  * @param {Object} options Configuration options
  * @param {string} [options.proxy] Optional proxy URL (socks4, socks5, http, or https)
- * @returns {Promise<Object>} Axios configuration object with headers and optional proxy agents
+ * @returns {Promise<import('./type').AxiosConfigBuilderOptions>} Axios configuration object with headers and optional proxy agents
  */
 export async function axiosConfigBuilder(options = {}) {
   const headers = { 'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0` };

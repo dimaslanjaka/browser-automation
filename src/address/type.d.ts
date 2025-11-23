@@ -1,3 +1,5 @@
+import { AxiosRequestConfig } from 'axios';
+
 export interface GeocodeResult {
   [key: string]: any;
   keyword: string;
@@ -22,8 +24,16 @@ export interface GeocodeResult {
   };
 }
 
-export interface AxiosConfigBuilderOptions {
+export interface AxiosConfigBuilderOptions extends AxiosRequestConfig {
   [key: string]: any;
+  /**
+   * Optional proxy URL to route requests through.
+   * Example:
+   *   - socks5://host:port
+   *   - socks4://host:port
+   *   - http://host:port
+   *   - https://host:port
+   */
   proxy?: string;
 }
 
