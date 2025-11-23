@@ -8,10 +8,7 @@ import { axiosConfigBuilder, getCacheFilePath } from './utils.js';
  * Geocode a keyword using the Geoapify API with caching support
  * @param {string} keyword The location/address string to geocode
  * @param {string} apiKey Geoapify API key for authentication
- * @param {Object} options Configuration options
- * @param {boolean} [options.noCache] If true, bypass cache and fetch fresh data
- * @param {boolean} [options.verbose] If true, log cache operations
- * @param {string} [options.proxy] Optional proxy URL (socks4, socks5, http, or https)
+ * @param {import('./type.js').GeocodeOptions} [options] Configuration options
  * @returns {Promise<import('./type.js').GeocodeResult|null>} Geocoding results or null on error
  */
 export async function geoCodeWithGeoapify(keyword, apiKey, options = {}) {

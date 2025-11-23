@@ -17,13 +17,7 @@ const __dirname = path.dirname(__filename);
  * - Returns `null` when no result is found or on network/error.
  *
  * @param {string} keyword - The address or place name to search for.
- * @param {object} [options] - Optional settings.
- * @param {string} [options.proxy] - Proxy URL. Supported formats:
- *   - socks5://host:port
- *   - socks4://host:port
- *   - http://host:port
- *   - https://host:port
- * @param {boolean} [options.noCache=false] - When true, skip reading cache before the request (cache is still written).
+ * @param {import('./type.js').GeocodeOptions} [options] - Configuration options.
  * @returns {Promise<import('./type').GeocodeResult|null>} - A geocoded result object or `null` if not found.
  *
  * Result object fields (may be `null` when not available):
