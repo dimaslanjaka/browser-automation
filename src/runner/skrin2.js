@@ -53,7 +53,7 @@ function showHelp() {
  * @returns {Promise<void>} Resolves when processing is complete.
  */
 async function processData(page, data) {
-  const fixedData = await fixData(data);
+  const fixedData = await fixData(data, { autofillTanggalEntry: true });
   const NIK = getNumbersOnly(fixedData.nik);
   const cachedData = getLogById(NIK);
   if (cachedData && cachedData.data && cachedData.data.status === 'success') {
