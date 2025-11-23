@@ -12,11 +12,7 @@ const __dirname = path.dirname(__filename);
  *
  * @param {string} keyword - The address or place name to search for.
  * @param {string} apiKey - Your Google Maps Geocoding API key.
- * @returns {Promise<{
- *   fullAddress: string,
- *   latitude: number,
- *   longitude: number
- * } | null>} - A promise that resolves to a geocoded object or null if not found.
+ * @returns {Promise<import('./type').GeocodeResult | null>} - A promise that resolves to a geocoded object or null if not found.
  */
 export async function geocodeWithGoogle(keyword, apiKey) {
   const query = encodeURIComponent(keyword);
