@@ -7,6 +7,7 @@ import { extractMonthName, getAge, getDatesWithoutSundays } from '../../date.js'
 import { getBeratBadan, getTinggiBadan } from '../../skrin_utils.js';
 import { getNumbersOnly } from '../../utils-browser.js';
 import { logLine } from '../../utils.js';
+import { loadCsvData } from '../../../data/index.js';
 
 /**
  * Normalize, validate and augment a row of Excel data.
@@ -143,10 +144,9 @@ export default async function fixData(
     }
     const reparseTglLahir = moment(tanggalEntry, 'DD/MM/YYYY', true);
     if (reparseTglLahir.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
-    if (!reparseTglLahir.isValid())
+    if (!reparseTglLahir.isValid()) {
       throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
-    initialData.tanggal = tanggalEntry;
-    initialData['TANGGAL ENTRY'] = tanggalEntry;
+    }
   } else {
     const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
     // Check if the date is a Sunday
@@ -158,6 +158,10 @@ export default async function fixData(
       throw new Error(`Tanggal entry ${nik} cannot be in the future: ${tanggalEntry}`);
     }
   }
+
+  // Assign the valid tanggal entry
+  initialData.tanggal = tanggalEntry;
+  initialData['TANGGAL ENTRY'] = tanggalEntry;
 
   // TGL LAHIR normalization
   let tglLahir = initialData['TGL LAHIR'] || initialData.tgl_lahir || null;
@@ -328,13 +332,8 @@ export default async function fixData(
 if (process.argv[1].includes('fixData.js')) {
   (async () => {
     try {
-      const sampleData = {
-        NIK: '3573041506980002',
-        NAMA: '  John   Doe  ',
-        'TANGGAL ENTRY': '15 November',
-        PEKERJAAN: 'Guru',
-        ALAMAT: ''
-      };
+      const dataKunto = await loadCsvData();
+      const sampleData = array_random(dataKunto);
       const fixedData = await fixData(sampleData, { autofillTanggalEntry: true });
       console.log('Fixed Data:', fixedData);
     } catch (error) {
