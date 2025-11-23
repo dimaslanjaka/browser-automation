@@ -13,7 +13,18 @@ describe('geocodeWithNominatim (no mocks)', () => {
   }, 20000);
 
   test('returns valid result for a known place', async () => {
-    const result = await geocodeWithNominatim('Eiffel Tower, Paris');
+    const result = await geocodeWithNominatim('Eiffel Tower, Paris', { noCache: true });
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('lat');
+    expect(result).toHaveProperty('lon');
+    expect(result).toHaveProperty('display_name');
+    expect(result.display_name).toMatch(/Eiffel Tower/i);
+  }, 20000);
+
+  test('uses proxy to make request', async () => {
+    // Adjust the proxy URL as needed for your test environment.
+    const proxyUrl = 'http://13.59.113.45:8819';
+    const result = await geocodeWithNominatim('Eiffel Tower, Paris', 'GET', { proxy: proxyUrl, noCache: true });
     expect(result).not.toBeNull();
     expect(result).toHaveProperty('lat');
     expect(result).toHaveProperty('lon');
