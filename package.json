@@ -45,7 +45,7 @@
     "better-sqlite3": "^12.2.0",
     "bootstrap": "^5",
     "cheerio": "^1",
-    "cross-spawn": "^7",
+    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
     "crypto-js": "^4",
     "csv-parser": "^3",
     "dateformat": "^5",
@@ -167,10 +167,10 @@
   "resolutions": {
     "binary-collections": "https://github.com/dimaslanjaka/bin/raw/9d2f7ebf4c37cf1d58487951c9e2ad3a20b917c1/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
-    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/bf527c71f001f6ae7c5315e921a274db6d74fa53/packages/sbg-utility/release/sbg-utility.tgz",
+    "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/3f36c7384fa414d0207460e00c0d7d362dba995f/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/dff0f9dcca6cc65bd045b6156dcaf1292d2122c6/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/f6b7a1941004a1e780043858739c964490cf3e48/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
