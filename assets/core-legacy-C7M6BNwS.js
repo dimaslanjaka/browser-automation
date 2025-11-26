@@ -1,0 +1,1 @@
+System.register(["./react-legacy-CPrHKssV.js","./highlight-legacy-ow-o6nbk.js"],function(e,t){"use strict";var r,g;return{setters:[e=>{r=e.g},e=>{g=e.r}],execute:function(){e("HighlightJS",r(g()))}}});
