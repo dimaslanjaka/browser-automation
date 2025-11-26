@@ -89,7 +89,9 @@ export default async function fixData(
   if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
 
   nik = getNumbersOnly(nik);
-  if (nik.length !== 16) throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)`);
+  if (nik.length !== 16) {
+    throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)\n\n${JSON.stringify(initialData, null, 2)}`);
+  }
 
   const normalizedNama = nama
     // Remove extra spaces
@@ -333,9 +335,16 @@ if (process.argv[1].includes('fixData.js')) {
   (async () => {
     try {
       const dataKunto = await loadCsvData();
-      const sampleData = array_random(dataKunto);
-      const fixedData = await fixData(sampleData, { autofillTanggalEntry: true });
-      console.log('Fixed Data:', fixedData);
+      for (const item of dataKunto) {
+        try {
+          const fixed = await fixData(item, { autofillTanggalEntry: true });
+          console.log('✅ Fixed data for NIK:', fixed.nik);
+        } catch (error) {
+          console.error('❌ Error fixing data for item:', item);
+          console.error(error);
+          process.exit(1);
+        }
+      }
     } catch (error) {
       console.error('Error in fixData CLI test:', error);
     }
