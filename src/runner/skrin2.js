@@ -7,7 +7,8 @@ import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import { getPuppeteer } from '../puppeteer_utils.js';
 import { skrinLogin } from '../skrin_puppeteer.js';
 import { getNumbersOnly, logLine } from '../utils.js';
-import { parseBabyName, processData } from './skrin-utils.js';
+import { parseBabyName } from './skrin-utils.js';
+import { processData } from './skrin-process-data.js';
 
 console.clear();
 
