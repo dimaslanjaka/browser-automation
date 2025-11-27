@@ -2,12 +2,12 @@ import ansiColors from 'ansi-colors';
 import 'dotenv/config';
 import minimist from 'minimist';
 import * as nikUtils from 'nik-parser-jurusid/index';
-import { loadCsvData, parseBabyName } from '../../data/index.js';
+import { loadCsvData } from '../../data/index.js';
 import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import { getPuppeteer } from '../puppeteer_utils.js';
 import { skrinLogin } from '../skrin_puppeteer.js';
 import { getNumbersOnly, logLine } from '../utils.js';
-import { processData } from './skrin-utils.js';
+import { parseBabyName, processData } from './skrin-utils.js';
 
 console.clear();
 

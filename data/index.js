@@ -7,6 +7,7 @@ import { encryptJson } from '../src/utils/json-crypto.js';
 import { parseDate } from '../src/utils/date.js';
 import ansiColors from 'ansi-colors';
 import { Transform } from 'stream';
+import { parseBabyName } from '../src/runner/skrin-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,25 +124,6 @@ export async function loadCsvData(customCsvPath) {
   return results;
 }
 
-// -------------------------------------------------------------
-// parseBabyName (unchanged)
-// -------------------------------------------------------------
-export function parseBabyName(entry) {
-  let match = entry.match(/^([^,]+),\s*(BY|AN)\s*\(/i);
-  if (match) return match[1].trim();
-
-  match = entry.match(/\/\s*([A-Z].+)$/i);
-  if (match) {
-    return match[1].replace(/[,)]\s*$/g, '').trim();
-  }
-
-  match = entry.match(/\(([^)]+)\)/);
-  if (match) return match[1].trim();
-
-  return undefined;
-}
-
-// -------------------------------------------------------------
 // Direct run (unchanged)
 // -------------------------------------------------------------
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
