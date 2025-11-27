@@ -1,13 +1,13 @@
-import ansiColors from 'ansi-colors';
 import moment from 'moment';
 import { nikParserStrictSync as nikParserStrict } from 'nik-parser-jurusid';
-import { array_random } from 'sbg-utility';
-import { geocodeWithNominatim } from '../../address/nominatim.js';
-import { extractMonthName, getAge, getDatesWithoutSundays } from '../../date.js';
-import { getBeratBadan, getTinggiBadan } from '../../skrin_utils.js';
 import { getNumbersOnly } from '../../utils-browser.js';
-import { logLine } from '../../utils.js';
 import { loadCsvData } from '../../../data/index.js';
+import { fixNama } from './fixData/nama.js';
+import { fixPekerjaan } from './fixData/pekerjaan.js';
+import { fixAlamat } from './fixData/alamat.js';
+import { fixBirth } from './fixData/birth.js';
+import { fixTanggalEntry } from './fixData/tanggal-entry.js';
+import { fixTbBb } from './fixData/tb-bb.js';
 
 /**
  * Normalize, validate and augment a row of Excel data.
@@ -97,27 +97,13 @@ export default async function fixData(
   if (nik.length !== 16) {
     throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)\n\n${JSON.stringify(initialData, null, 2)}`);
   }
-
-  const normalizedNama = nama
-    // Remove extra spaces
-    .replace(/\s+/g, ' ')
-    // Remove quotation marks
-    .replace(/['"]/g, '')
-    .trim();
-  initialData.nama = normalizedNama; // Update nama to normalized version
-  initialData.NAMA = normalizedNama; // Update NAMA to normalized version
-  if (normalizedNama.length < 3) {
-    throw new Error(
-      `Invalid NAMA length: ${normalizedNama} (expected at least 3 characters)\n\n${JSON.stringify(
-        initialData,
-        null,
-        2
-      )}`
-    );
-  }
-
   initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
   initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
+
+  // Normalize nama
+  const namaResult = fixNama(initialData, { verbose: options.verbose });
+  initialData.nama = namaResult.nama;
+  initialData.NAMA = namaResult.nama;
 
   // Parse NIK
   const parsed_nik = nikParserStrict(nik);
@@ -132,108 +118,18 @@ export default async function fixData(
   initialData.parsed_nik = parsed_nik.status === 'success' ? parsed_nik : null;
 
   // Tanggal entry normalization
-  let tanggalEntry = initialData['TANGGAL ENTRY'] || initialData.tanggal || '';
-  if (String(tanggalEntry).trim().length === 0) {
-    if (options.autofillTanggalEntry) {
-      tanggalEntry = getDatesWithoutSundays('november', 2025, 'DD/MM/YYYY', true)[0];
-      if (options.verbose)
-        logLine(`${ansiColors.cyan('[fixData]')} Generated new tanggal entry for missing value: ${tanggalEntry}`);
-    } else {
-      throw new Error(`Tanggal entry is required.\n\n${JSON.stringify(initialData, null, 2)}\n`);
-    }
-  }
-  if (!moment(tanggalEntry, 'DD/MM/YYYY', true).isValid()) {
-    if (
-      typeof tanggalEntry === 'string' &&
-      /\b(jan(uari)?|feb(ruari)?|mar(et)?|apr(il)?|mei|jun(i|e)?|jul(i|y)?|agu(stus)?|aug(ust)?|sep(tember)?|okt(ober)?|oct(ober)?|nov(ember)?|des(ember)?|dec(ember)?|bln\s+\w+|bulan\s+\w+)\b/i.test(
-        tanggalEntry
-      )
-    ) {
-      const monthName = extractMonthName(tanggalEntry);
-      if (!monthName)
-        throw new Error(
-          `Month name not found in tanggalEntry: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`
-        );
-      tanggalEntry = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
-      if (options.verbose)
-        logLine(
-          `${ansiColors.cyan('[fixData]')} Generated new date for "${tanggalEntry}" from month name in entry: ${tanggalEntry}`
-        );
-    }
-    const reparseTglLahir = moment(tanggalEntry, 'DD/MM/YYYY', true);
-    if (reparseTglLahir.day() === 0)
-      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`);
-    if (!reparseTglLahir.isValid()) {
-      throw new Error(
-        `Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
-      );
-    }
-  } else {
-    const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
-    // Check if the date is a Sunday
-    if (parsedDate.day() === 0) {
-      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`);
-    }
-    // Check if the date is not greater than today
-    if (parsedDate.isAfter(moment())) {
-      throw new Error(
-        `Tanggal entry ${nik} cannot be in the future: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`
-      );
-    }
-  }
+  const tanggalResult = fixTanggalEntry(initialData, {
+    verbose: options.verbose,
+    autofillTanggalEntry: options.autofillTanggalEntry
+  });
+  initialData.tanggal = tanggalResult.tanggalEntry;
+  initialData['TANGGAL ENTRY'] = tanggalResult.tanggalEntry;
 
-  // Assign the valid tanggal entry
-  initialData.tanggal = tanggalEntry;
-  initialData['TANGGAL ENTRY'] = tanggalEntry;
-
-  // TGL LAHIR normalization
-  let tglLahir = initialData['TGL LAHIR'] || initialData.tgl_lahir || null;
-  if (tglLahir) {
-    if (typeof tglLahir === 'number') {
-      const baseDate = moment('1900-01-01');
-      let days = tglLahir - 1;
-      if (days > 59) days--;
-      tglLahir = baseDate.add(days, 'days').format('DD/MM/YYYY');
-      logLine(`${ansiColors.cyan('[fixData]')} Converted Excel serial date to: ${tglLahir}`);
-    } else if (typeof tglLahir === 'string' && !moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-      // Try get data from parsed NIK if available
-      if (
-        parsed_nik.status === 'success' &&
-        parsed_nik.data.lahir &&
-        moment(parsed_nik.data.lahir, 'DD/MM/YYYY', true).isValid()
-      ) {
-        if (options.verbose) {
-          logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${parsed_nik.data.lahir}`);
-        }
-        tglLahir = parsed_nik.data.lahir;
-        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
-      } else {
-        throw new Error(
-          `Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
-        );
-      }
-    }
-    if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-      throw new Error(
-        `Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
-      );
-    }
-    // Check if year of TGL LAHIR is more than current year
-    const yearOfTglLahir = moment(tglLahir, 'DD/MM/YYYY').year();
-    const currentYear = moment().year();
-    if (yearOfTglLahir > currentYear) {
-      if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
-        tglLahir = parsed_nik.data.lahir;
-        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
-      } else {
-        console.log('\nTGL LAHIR year cannot be greater than current year', initialData, '\n');
-        throw new Error(
-          `TGL LAHIR year cannot be greater than current year: ${tglLahir}\n\n${JSON.stringify(initialData, null, 2)}`
-        );
-      }
-    }
-    initialData['TGL LAHIR'] = tglLahir;
-  }
+  // TGL LAHIR normalization and age calculation
+  let age = 0;
+  const birthResult = fixBirth(initialData, { verbose: options.verbose });
+  age = birthResult.age;
+  initialData.age = age;
 
   // Gender
   let gender = parsed_nik.status === 'success' ? parsed_nik?.data.kelamin : 'Tidak Diketahui';
@@ -244,139 +140,25 @@ export default async function fixData(
   }
   initialData.gender = gender; // fixData gender result
 
-  // Age calculation
-  let age = 0;
-  let birthDate = initialData.tgl_lahir || initialData['TGL LAHIR'] || null;
-  if (birthDate) {
-    // Validate and parse birthDate
-    if (!moment(birthDate, 'DD/MM/YYYY', true).isValid()) {
-      if (
-        parsed_nik.status === 'success' &&
-        parsed_nik.data.lahir &&
-        moment(parsed_nik.data.lahir, 'DD/MM/YYYY', true).isValid()
-      ) {
-        birthDate = parsed_nik.data.lahir;
-        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
-      }
-    }
-    age = getAge(birthDate, 'DD/MM/YYYY');
-    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
-  } else if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
-    age = getAge(parsed_nik.data.lahir);
-    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
-  }
-  data.age = age; // Ensure age is set in the data object
-
   // Pekerjaan normalization
-  let pekerjaan = initialData.pekerjaan || initialData.PEKERJAAN || null;
-  if (!pekerjaan) {
-    if (!pekerjaan) {
-      if (age > 55 || age <= 20) {
-        pekerjaan = 'Tidak Bekerja';
-      } else {
-        pekerjaan = gender && gender.toLowerCase() === 'perempuan' ? 'IRT' : 'Wiraswasta';
-      }
-    }
-  } else {
-    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
-  }
-  const jobMappings = [
-    { pattern: /rumah\s*tangga|irt/i, value: 'IRT' },
-    { pattern: /swasta|pedagang/i, value: 'Wiraswasta' },
-    { pattern: /tukang|buruh/i, value: 'Buruh ' },
-    { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun|belum\/tidak\s*bekerja/i, value: 'Tidak Bekerja' },
-    { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/i, value: 'PNS ' },
-    { pattern: /guru|dosen/i, value: 'Guru/ Dosen' },
-    { pattern: /perawat|dokter/i, value: 'Tenaga Profesional Medis ' },
-    { pattern: /pengacara|wartawan/i, value: 'Tenaga Profesional Non Medis ' },
-    { pattern: /pelajar|siswa|siswi|sekolah/i, value: 'Pelajar/ Mahasiswa' },
-    { pattern: /s[o,u]pir/i, value: 'Sopir ' }
-  ];
-  for (const { pattern, value } of jobMappings) {
-    if (pattern.test(pekerjaan.toLowerCase())) {
-      pekerjaan = value;
-      if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
-      break;
-    }
-  }
-  if (pekerjaan) {
-    initialData.pekerjaan = pekerjaan;
-    initialData.PEKERJAAN = pekerjaan;
-    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
-  } else {
-    throw new Error(`Pekerjaan could not be determined for NIK: ${nik}\n\n${JSON.stringify(initialData, null, 2)}`);
-  }
+  const pekerjaanResult = fixPekerjaan(initialData, { verbose: options.verbose });
+  initialData.pekerjaan = pekerjaanResult.pekerjaan;
+  initialData.PEKERJAAN = pekerjaanResult.pekerjaan;
 
   // Fix alamat
   let alamat = initialData.alamat || initialData.ALAMAT || null;
-  if (!alamat) {
-    if (initialData.parsed_nik && initialData.parsed_nik.status === 'success') {
-      const parsed_data = initialData.parsed_nik.data;
-      alamat = [parsed_data.kelurahan?.[0]?.name, parsed_data.namaKec, parsed_data.kotakab, parsed_data.provinsi]
-        .filter((part) => part !== undefined && part !== null && part !== '')
-        .join(', ');
-      if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Alamat from parsed NIK: ${alamat}`);
-      const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
-      const address = await geocodeWithNominatim(keywordAddr);
-      data._address = address;
-
-      let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_data;
-
-      if (kotakab.length === 0 || namaKec.length === 0 || provinsi.length === 0) {
-        if (options.verbose) logLine(`Fetching address from Nominatim for: ${keywordAddr}`);
-        if (options.verbose) logLine('Nominatim result:', address);
-
-        const addr = address.address || {};
-
-        if (kelurahan.length === 0) kelurahan = [addr.village || addr.hamlet || ''];
-        if (namaKec.length === 0) namaKec = addr.suburb || addr.city_district || '';
-        if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
-        if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
-
-        if (kotakab.toLowerCase().includes('surabaya')) {
-          kotakab = 'Kota Surabaya';
-        }
-
-        if (kotakab.length === 0 || namaKec.length === 0) {
-          throw new Error(`❌ Failed to take the patient's city or town\n\n${JSON.stringify(initialData, null, 2)}`);
-        }
-
-        parsed_data.kelurahan = kelurahan;
-        parsed_data.namaKec = namaKec;
-        parsed_data.kotakab = kotakab;
-        parsed_data.provinsi = provinsi;
-        initialData.parsed_nik.data = parsed_data; // Update parsed_nik with new
-      }
-    } else {
-      throw new Error(`Alamat is required for NIK: ${nik}\n\n${JSON.stringify(initialData, null, 2)}`);
-    }
-  }
-  initialData.alamat = alamat; // Ensure both lowercase and uppercase keys are set
-  initialData.ALAMAT = alamat; // Ensure both lowercase and uppercase keys are set
-
-  if (initialData.parsed_nik && initialData.parsed_nik.status === 'success') {
-    const parsed_data = initialData.parsed_nik.data;
-    if (/kota adm\.?/i.test(parsed_data.kotakab.toLowerCase())) {
-      parsed_data.kotakab = parsed_data.kotakab.replace(/kota adm\.?/i, 'kota').trim();
-    }
-    initialData.parsed_nik.data = parsed_data; // Update parsed_nik with new
-  }
+  const alamatResult = await fixAlamat(alamat, initialData.parsed_nik, nik, initialData, data, {
+    verbose: options.verbose
+  });
+  initialData.alamat = alamatResult.alamat;
+  initialData.ALAMAT = alamatResult.alamat;
 
   // Fix tinggi and berat badan
-  let tinggi = initialData.TB || initialData.tb || null;
-  let berat = initialData.bb || initialData.BB || null;
-
-  if (!tinggi) {
-    tinggi = getTinggiBadan(age, gender);
-  }
-  if (!berat) {
-    berat = getBeratBadan(age, gender);
-  }
-
-  initialData.tb = tinggi; // Ensure both lowercase and uppercase keys are set
-  initialData.TB = tinggi; // Ensure both lowercase and uppercase keys are set
-  initialData.bb = berat; // Ensure both lowercase and uppercase keys are set
-  initialData.BB = berat; // Ensure both lowercase and uppercase keys are set
+  const tbBbResult = fixTbBb(initialData, { verbose: options.verbose });
+  initialData.tb = tbBbResult.tb;
+  initialData.TB = tbBbResult.tb;
+  initialData.bb = tbBbResult.bb;
+  initialData.BB = tbBbResult.bb;
 
   return initialData;
 }
