@@ -69,6 +69,9 @@ import { fixTbBb } from './fixData/tb-bb.js';
  * @param {boolean} [options.verbose=false]
  *   When true, logs will be printed during processing. When false, no logs
  *   will be output.
+ * @param {boolean} [options.fixNamaBayi=false]
+ *   When true, parses baby names (e.g., "Bayi Laki-laki" is parsed).
+ *   When false, baby names are allowed as-is without parsing.
  * @returns {Promise<import('../../../globals').fixDataResult>}
  *   The same (mutated) data object augmented with normalized fields and any
  *   additional data (for example `_address` when geocoding occurred).
@@ -101,7 +104,7 @@ export default async function fixData(
   initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
 
   // Normalize nama
-  const namaResult = fixNama(initialData, { verbose: options.verbose });
+  const namaResult = fixNama(initialData, { verbose: options.verbose, fixNamaBayi: options.fixNamaBayi === true });
   initialData.nama = namaResult.nama;
   initialData.NAMA = namaResult.nama;
 
