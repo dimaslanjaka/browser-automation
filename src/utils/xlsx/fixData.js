@@ -8,6 +8,7 @@ import { fixAlamat } from './fixData/alamat.js';
 import { fixBirth } from './fixData/birth.js';
 import { fixTanggalEntry } from './fixData/tanggal-entry.js';
 import { fixTbBb } from './fixData/tb-bb.js';
+import { FixDataCache } from './fixData-cache.js';
 
 /**
  * Normalize, validate and augment a row of Excel data.
@@ -72,6 +73,12 @@ import { fixTbBb } from './fixData/tb-bb.js';
  * @param {boolean} [options.fixNamaBayi=false]
  *   When true, parses baby names (e.g., "Bayi Laki-laki" is parsed).
  *   When false, baby names are allowed as-is without parsing.
+ * @param {boolean} [options.useCache=true]
+ *   When true, results are cached by NIK to avoid reprocessing the same
+ *   entries. The cache preserves the original generation timestamp. When
+ *   false, caching is bypassed and fresh data is always generated.
+ * @param {string} [options.cacheDir]
+ *   Optional custom cache directory path. Defaults to `./tmp/fixdata-cache`.
  * @returns {Promise<import('../../../globals').fixDataResult>}
  *   The same (mutated) data object augmented with normalized fields and any
  *   additional data (for example `_address` when geocoding occurred).
@@ -83,14 +90,15 @@ export default async function fixData(
   data,
   options = {
     autofillTanggalEntry: false,
-    verbose: false
+    verbose: false,
+    useCache: true
   }
 ) {
   /** @type {Partial<import('../../../globals').fixDataResult>} */
   const initialData = data || null;
   if (!initialData) throw new Error(`Invalid data format: data is required\n\n${JSON.stringify(initialData, null, 2)}`);
 
-  // Normalize key fields
+  // Normalize key fields for cache lookup
   let nik = initialData.NIK || initialData.nik || null;
   let nama = initialData.NAMA || initialData.nama || null;
   if (!nik || !nama)
@@ -100,8 +108,23 @@ export default async function fixData(
   if (nik.length !== 16) {
     throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)\n\n${JSON.stringify(initialData, null, 2)}`);
   }
-  initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
-  initialData.NIK = nik; // Ensure both lowercase and uppercase keys are set
+
+  // Initialize cache with custom directory if provided
+  const cache = new FixDataCache(options.cacheDir);
+
+  // Check cache before processing
+  const cachedResult = await cache.get({ nik, ...initialData }, options);
+  if (cachedResult) {
+    if (options.verbose) {
+      console.log(`✅ Using cached result for NIK: ${nik}`);
+    }
+    // Return cached result but preserve any new input data properties
+    return { ...cachedResult, ...initialData };
+  }
+
+  // Set normalized NIK on both key variants
+  initialData.nik = nik;
+  initialData.NIK = nik;
 
   // Normalize nama
   const namaResult = fixNama(initialData, { verbose: options.verbose, fixNamaBayi: options.fixNamaBayi === true });
@@ -162,6 +185,9 @@ export default async function fixData(
   initialData.TB = tbBbResult.tb;
   initialData.bb = tbBbResult.bb;
   initialData.BB = tbBbResult.bb;
+
+  // Cache the result before returning (preserves generation timestamp)
+  await cache.set({ nik, ...initialData }, initialData, options);
 
   return initialData;
 }
