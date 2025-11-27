@@ -196,9 +196,22 @@ export default async function fixData(
       tglLahir = baseDate.add(days, 'days').format('DD/MM/YYYY');
       logLine(`${ansiColors.cyan('[fixData]')} Converted Excel serial date to: ${tglLahir}`);
     } else if (typeof tglLahir === 'string' && !moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-      throw new Error(
-        `Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
-      );
+      // Try get data from parsed NIK if available
+      if (
+        parsed_nik.status === 'success' &&
+        parsed_nik.data.lahir &&
+        moment(parsed_nik.data.lahir, 'DD/MM/YYYY', true).isValid()
+      ) {
+        if (options.verbose) {
+          logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${parsed_nik.data.lahir}`);
+        }
+        tglLahir = parsed_nik.data.lahir;
+        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
+      } else {
+        throw new Error(
+          `Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
+        );
+      }
     }
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
       throw new Error(
@@ -235,6 +248,17 @@ export default async function fixData(
   let age = 0;
   let birthDate = initialData.tgl_lahir || initialData['TGL LAHIR'] || null;
   if (birthDate) {
+    // Validate and parse birthDate
+    if (!moment(birthDate, 'DD/MM/YYYY', true).isValid()) {
+      if (
+        parsed_nik.status === 'success' &&
+        parsed_nik.data.lahir &&
+        moment(parsed_nik.data.lahir, 'DD/MM/YYYY', true).isValid()
+      ) {
+        birthDate = parsed_nik.data.lahir;
+        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
+      }
+    }
     age = getAge(birthDate, 'DD/MM/YYYY');
     if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
   } else if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
