@@ -24,25 +24,32 @@ import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
  *
  * Extracts baby name from various formats:
  * - "Mother Name, BY (Baby Name)" format
- * - "/Baby Name" format at the end
+ * - "/Baby Name" format at the end (returns mother name if baby name is "BAYI")
  * - "(Baby Name)" parenthesized format
  *
  * @param {string} entry - The entry string containing baby name information
  * @returns {string|undefined} Extracted baby name or undefined if no match found
  */
 export function parseBabyName(entry) {
+  let result = undefined;
   let match = entry.match(/^([^,]+),\s*(BY|AN)\s*\(/i);
-  if (match) return match[1].trim();
+  if (match) result = match[1].trim();
 
   match = entry.match(/\/\s*([A-Z].+)$/i);
   if (match) {
-    return match[1].replace(/[,)]\s*$/g, '').trim();
+    const extractedPart = match[1].replace(/[,)]\s*$/g, '').trim();
+    // If the extracted part is just "BAYI", return the part before the slash
+    if (/^bayi$/i.test(extractedPart)) {
+      result = entry.replace(/\s*\/\s*bayi\s*$/i, '').trim();
+    } else {
+      result = extractedPart;
+    }
   }
 
   match = entry.match(/\(([^)]+)\)/);
-  if (match) return match[1].trim();
+  if (match) result = match[1].trim();
 
-  return undefined;
+  return result;
 }
 
 /**
