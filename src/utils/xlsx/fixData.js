@@ -66,6 +66,9 @@ import { loadCsvData } from '../../../data/index.js';
  *   from the helper `getDatesWithoutSundays` (uses November 2025 by default
  *   in current implementation). When false, a missing `tanggal` will cause an
  *   error.
+ * @param {boolean} [options.verbose=false]
+ *   When true, logs will be printed during processing. When false, no logs
+ *   will be output.
  * @returns {Promise<import('../../../globals').fixDataResult>}
  *   The same (mutated) data object augmented with normalized fields and any
  *   additional data (for example `_address` when geocoding occurred).
@@ -76,17 +79,19 @@ import { loadCsvData } from '../../../data/index.js';
 export default async function fixData(
   data,
   options = {
-    autofillTanggalEntry: false
+    autofillTanggalEntry: false,
+    verbose: false
   }
 ) {
   /** @type {Partial<import('../../../globals').fixDataResult>} */
   const initialData = data || null;
-  if (!initialData) throw new Error('Invalid data format: data is required');
+  if (!initialData) throw new Error(`Invalid data format: data is required\n\n${JSON.stringify(initialData, null, 2)}`);
 
   // Normalize key fields
   let nik = initialData.NIK || initialData.nik || null;
   let nama = initialData.NAMA || initialData.nama || null;
-  if (!nik || !nama) throw new Error('Invalid data format: NIK and NAMA are required');
+  if (!nik || !nama)
+    throw new Error(`Invalid data format: NIK and NAMA are required\n\n${JSON.stringify(initialData, null, 2)}`);
 
   nik = getNumbersOnly(nik);
   if (nik.length !== 16) {
@@ -102,7 +107,13 @@ export default async function fixData(
   initialData.nama = normalizedNama; // Update nama to normalized version
   initialData.NAMA = normalizedNama; // Update NAMA to normalized version
   if (normalizedNama.length < 3) {
-    throw new Error(`Invalid NAMA length: ${normalizedNama} (expected at least 3 characters)`);
+    throw new Error(
+      `Invalid NAMA length: ${normalizedNama} (expected at least 3 characters)\n\n${JSON.stringify(
+        initialData,
+        null,
+        2
+      )}`
+    );
   }
 
   initialData.nik = nik; // Ensure both lowercase and uppercase keys are set
@@ -125,7 +136,8 @@ export default async function fixData(
   if (String(tanggalEntry).trim().length === 0) {
     if (options.autofillTanggalEntry) {
       tanggalEntry = getDatesWithoutSundays('november', 2025, 'DD/MM/YYYY', true)[0];
-      logLine(`${ansiColors.cyan('[fixData]')} Generated new tanggal entry for missing value: ${tanggalEntry}`);
+      if (options.verbose)
+        logLine(`${ansiColors.cyan('[fixData]')} Generated new tanggal entry for missing value: ${tanggalEntry}`);
     } else {
       throw new Error(`Tanggal entry is required.\n\n${JSON.stringify(initialData, null, 2)}\n`);
     }
@@ -138,26 +150,35 @@ export default async function fixData(
       )
     ) {
       const monthName = extractMonthName(tanggalEntry);
-      if (!monthName) throw new Error(`Month name not found in tanggalEntry: ${tanggalEntry}`);
+      if (!monthName)
+        throw new Error(
+          `Month name not found in tanggalEntry: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`
+        );
       tanggalEntry = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
-      logLine(
-        `${ansiColors.cyan('[fixData]')} Generated new date for "${tanggalEntry}" from month name in entry: ${tanggalEntry}`
-      );
+      if (options.verbose)
+        logLine(
+          `${ansiColors.cyan('[fixData]')} Generated new date for "${tanggalEntry}" from month name in entry: ${tanggalEntry}`
+        );
     }
     const reparseTglLahir = moment(tanggalEntry, 'DD/MM/YYYY', true);
-    if (reparseTglLahir.day() === 0) throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
+    if (reparseTglLahir.day() === 0)
+      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`);
     if (!reparseTglLahir.isValid()) {
-      throw new Error(`Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)`);
+      throw new Error(
+        `Invalid tanggalEntry format: ${tanggalEntry} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
+      );
     }
   } else {
     const parsedDate = moment(tanggalEntry, 'DD/MM/YYYY', true);
     // Check if the date is a Sunday
     if (parsedDate.day() === 0) {
-      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}`);
+      throw new Error(`Tanggal entry cannot be a Sunday: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`);
     }
     // Check if the date is not greater than today
     if (parsedDate.isAfter(moment())) {
-      throw new Error(`Tanggal entry ${nik} cannot be in the future: ${tanggalEntry}`);
+      throw new Error(
+        `Tanggal entry ${nik} cannot be in the future: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`
+      );
     }
   }
 
@@ -175,10 +196,14 @@ export default async function fixData(
       tglLahir = baseDate.add(days, 'days').format('DD/MM/YYYY');
       logLine(`${ansiColors.cyan('[fixData]')} Converted Excel serial date to: ${tglLahir}`);
     } else if (typeof tglLahir === 'string' && !moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-      throw new Error(`Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)`);
+      throw new Error(
+        `Invalid TGL LAHIR format: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
+      );
     }
     if (!moment(tglLahir, 'DD/MM/YYYY', true).isValid()) {
-      throw new Error(`Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)`);
+      throw new Error(
+        `Invalid TGL LAHIR date: ${tglLahir} (expected DD/MM/YYYY)\n\n${JSON.stringify(initialData, null, 2)}`
+      );
     }
     // Check if year of TGL LAHIR is more than current year
     const yearOfTglLahir = moment(tglLahir, 'DD/MM/YYYY').year();
@@ -186,10 +211,12 @@ export default async function fixData(
     if (yearOfTglLahir > currentYear) {
       if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
         tglLahir = parsed_nik.data.lahir;
-        logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
+        if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Corrected TGL LAHIR from NIK: ${tglLahir}`);
       } else {
         console.log('\nTGL LAHIR year cannot be greater than current year', initialData, '\n');
-        throw new Error(`TGL LAHIR year cannot be greater than current year: ${tglLahir}`);
+        throw new Error(
+          `TGL LAHIR year cannot be greater than current year: ${tglLahir}\n\n${JSON.stringify(initialData, null, 2)}`
+        );
       }
     }
     initialData['TGL LAHIR'] = tglLahir;
@@ -209,10 +236,10 @@ export default async function fixData(
   let birthDate = initialData.tgl_lahir || initialData['TGL LAHIR'] || null;
   if (birthDate) {
     age = getAge(birthDate, 'DD/MM/YYYY');
-    logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
+    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from TGL LAHIR: ${age} years`);
   } else if (parsed_nik.status === 'success' && parsed_nik.data.lahir) {
     age = getAge(parsed_nik.data.lahir);
-    logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
+    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Age from NIK: ${age} years`);
   }
   data.age = age; // Ensure age is set in the data object
 
@@ -227,7 +254,7 @@ export default async function fixData(
       }
     }
   } else {
-    logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
+    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan: ${pekerjaan}`);
   }
   const jobMappings = [
     { pattern: /rumah\s*tangga|irt/i, value: 'IRT' },
@@ -244,16 +271,16 @@ export default async function fixData(
   for (const { pattern, value } of jobMappings) {
     if (pattern.test(pekerjaan.toLowerCase())) {
       pekerjaan = value;
-      logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
+      if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan mapped: ${pekerjaan}`);
       break;
     }
   }
   if (pekerjaan) {
     initialData.pekerjaan = pekerjaan;
     initialData.PEKERJAAN = pekerjaan;
-    logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
+    if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Pekerjaan fixed: ${pekerjaan}`);
   } else {
-    throw new Error(`Pekerjaan could not be determined for NIK: ${nik}`);
+    throw new Error(`Pekerjaan could not be determined for NIK: ${nik}\n\n${JSON.stringify(initialData, null, 2)}`);
   }
 
   // Fix alamat
@@ -264,7 +291,7 @@ export default async function fixData(
       alamat = [parsed_data.kelurahan?.[0]?.name, parsed_data.namaKec, parsed_data.kotakab, parsed_data.provinsi]
         .filter((part) => part !== undefined && part !== null && part !== '')
         .join(', ');
-      logLine(`${ansiColors.cyan('[fixData]')} Alamat from parsed NIK: ${alamat}`);
+      if (options.verbose) logLine(`${ansiColors.cyan('[fixData]')} Alamat from parsed NIK: ${alamat}`);
       const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
       const address = await geocodeWithNominatim(keywordAddr);
       data._address = address;
@@ -272,8 +299,8 @@ export default async function fixData(
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_data;
 
       if (kotakab.length === 0 || namaKec.length === 0 || provinsi.length === 0) {
-        logLine(`Fetching address from Nominatim for: ${keywordAddr}`);
-        logLine('Nominatim result:', address);
+        if (options.verbose) logLine(`Fetching address from Nominatim for: ${keywordAddr}`);
+        if (options.verbose) logLine('Nominatim result:', address);
 
         const addr = address.address || {};
 
@@ -287,7 +314,7 @@ export default async function fixData(
         }
 
         if (kotakab.length === 0 || namaKec.length === 0) {
-          throw new Error("❌ Failed to take the patient's city or town");
+          throw new Error(`❌ Failed to take the patient's city or town\n\n${JSON.stringify(initialData, null, 2)}`);
         }
 
         parsed_data.kelurahan = kelurahan;
@@ -297,7 +324,7 @@ export default async function fixData(
         initialData.parsed_nik.data = parsed_data; // Update parsed_nik with new
       }
     } else {
-      throw new Error(`Alamat is required for NIK: ${nik}`);
+      throw new Error(`Alamat is required for NIK: ${nik}\n\n${JSON.stringify(initialData, null, 2)}`);
     }
   }
   initialData.alamat = alamat; // Ensure both lowercase and uppercase keys are set
