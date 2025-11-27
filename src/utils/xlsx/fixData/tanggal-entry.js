@@ -28,7 +28,7 @@ export function fixTanggalEntry(initialData, options = { verbose: false, autofil
     if (options.autofillTanggalEntry) {
       const currentMonth = moment().format('MMMM').toLowerCase();
       const currentYear = moment().year();
-      tanggalEntry = getDatesWithoutSundays(currentMonth, currentYear, 'DD/MM/YYYY', true)[0];
+      tanggalEntry = array_random(getDatesWithoutSundays(currentMonth, currentYear, 'DD/MM/YYYY', true));
       if (options.verbose)
         logLine(
           `${ansiColors.cyan('[fixTanggalEntry]')} Generated new tanggal entry for missing value: ${tanggalEntry}`
