@@ -71,19 +71,30 @@ function createCommentFilter(commentChar = '#') {
 }
 
 /**
- * Load and parse CSV data from data.csv file
+ * Load and parse CSV data from a specified CSV file
  * Filters out comments (lines starting with #) before parsing
  * Maps column names to standardized keys (e.g., 'NAMA' -> 'nama')
  * Parses dates and adds rowIndex to each record
  * Encrypts and saves output as dataKunto.json
+ *
+ * @async
+ * @param {string} [customCsvPath] - Optional custom path to CSV file. Defaults to './data.csv'
  * @returns {Promise<Array<Object>>} Array of mapped and parsed CSV records
  */
-export async function loadCsvData() {
+export async function loadCsvData(customCsvPath) {
+  // Use custom path if provided, otherwise use default
+  const targetCsvPath = customCsvPath ? path.resolve(customCsvPath) : csvFilePath;
+
+  // Ensure the file exists before processing
+  if (!fs.existsSync(targetCsvPath)) {
+    throw new Error(`CSV file not found: ${targetCsvPath}`);
+  }
+
   const results = await new Promise((resolve, reject) => {
     const mappedRecords = [];
 
-    fs.createReadStream(csvFilePath)
-      .pipe(createCommentFilter('#')) // <<<<<< ADD THIS
+    fs.createReadStream(targetCsvPath)
+      .pipe(createCommentFilter('#'))
       .pipe(csvParser())
       .on('data', (row) => {
         const mappedRow = {};
