@@ -262,6 +262,7 @@ export function removeLog(id) {
 /**
  * Get a log entry by id (singleton DB).
  * @param {string} id
+ * @returns {import('./BaseLogDatabase').LogEntry | undefined} Log object or undefined if not found.
  */
 export function getLogById(id) {
   return db.getLogById(id);
