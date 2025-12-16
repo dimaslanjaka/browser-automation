@@ -335,8 +335,11 @@ async function processData(page, data) {
     if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
       const parsed_nik = fixedData.parsed_nik.data;
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik;
+      const selectedKelurahan = kelurahan[0];
+      logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
 
       if (provinsi.length > 0) {
+        logLine(`Inputting provinsi: ${provinsi} for NIK: ${NIK}`);
         await typeAndTriggerIframe(
           page,
           iframeSelector,
@@ -346,6 +349,7 @@ async function processData(page, data) {
       }
 
       if (kotakab.length > 0) {
+        logLine(`Inputting kotakab: ${kotakab} for NIK: ${NIK}`);
         await typeAndTriggerIframe(
           page,
           iframeSelector,
@@ -355,6 +359,7 @@ async function processData(page, data) {
       }
 
       if (namaKec.length > 0) {
+        logLine(`Inputting namaKec: ${namaKec} for NIK: ${NIK}`);
         await typeAndTriggerIframe(
           page,
           iframeSelector,
@@ -364,10 +369,8 @@ async function processData(page, data) {
       }
 
       if (kelurahan.length > 0) {
-        const selectedKelurahan = kelurahan[0];
         if (selectedKelurahan && selectedKelurahan.name) {
-          logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
-
+          logLine(`Inputting kelurahan: ${selectedKelurahan.name} for NIK: ${NIK}`);
           await typeAndTriggerIframe(
             page,
             iframeSelector,
