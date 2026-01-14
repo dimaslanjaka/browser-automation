@@ -72,6 +72,16 @@ async function processData(page, data) {
   await page.waitForSelector(iframeSelector, { visible: true, timeout: 30000 });
   await waitForDomStable(page, 3000, 30000);
 
+  // Request a screen wake lock
+  await page.evaluate(async () => {
+    try {
+      await navigator.wakeLock.request('screen');
+      console.log('Screen Wake Lock is active!');
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  });
+
   // Wait for the iframe to load and the datepicker element to be ready
   await page.waitForFunction(
     () => {
@@ -334,9 +344,13 @@ async function processData(page, data) {
     // input address: provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
     if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
       const parsed_nik = fixedData.parsed_nik.data;
-      let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik;
-      const selectedKelurahan = kelurahan[0];
-      logLine(`Using parsed NIK data for address: ${selectedKelurahan.name}, ${namaKec}, ${kotakab}, ${provinsi}`);
+      let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik || {};
+      const selectedKelurahan = Array.isArray(kelurahan) && kelurahan.length > 0 ? kelurahan[0] : null;
+      logLine(
+        `Using parsed NIK data for address: ${selectedKelurahan && selectedKelurahan.name ? selectedKelurahan.name : '<unknown kelurahan>'}, ${
+          namaKec || '<unknown kec>'
+        }, ${kotakab || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
+      );
 
       if (provinsi.length > 0) {
         logLine(`Inputting provinsi: ${provinsi} for NIK: ${NIK}`);
