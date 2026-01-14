@@ -156,8 +156,8 @@
     "tsup": "^8",
     "typescript": "^5",
     "typescript-eslint": "^8",
-    "vite": "^7",
-    "vite-plugin-mkcert": "^1",
+    "vite": "7.2.6",
+    "vite-plugin-mkcert": "^1.17.9",
     "watchpack": "^2.4.4",
     "why-is-node-running": "^3"
   },
