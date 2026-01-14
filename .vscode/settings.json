@@ -210,5 +210,9 @@
     "json",
     "jsonc"
   ],
-  "prettier.endOfLine": "lf"
+  "prettier.endOfLine": "lf",
+  "terminal.integrated.autoReplies": {
+    "Terminate batch job (Y/N)": "Y\r"
+  },
+  "terminal.integrated.gpuAcceleration": "auto"
 }
