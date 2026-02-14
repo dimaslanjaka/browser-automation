@@ -45,6 +45,13 @@
   "[twig]": {
     "editor.defaultFormatter": "vscode.html-language-features"
   },
+  "[javascript]": {
+    "editor.maxTokenizationLineLength": 2500,
+    "editor.formatOnSave": false
+  },
+  "[typescript]": {
+    "editor.formatOnSave": false
+  },
   "autopep8.args": ["--ignore", "E401,E402,E211,E501"],
   "code-runner.clearPreviousOutput": true,
   "code-runner.executorMapByGlob": {
@@ -72,8 +79,9 @@
   "code-runner.saveFileBeforeRun": true,
   "debug.terminal.clearBeforeReusing": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "never"
+    "source.fixAll": "never",
+    "source.organizeImports": "never",
+    "source.fixAll.eslint": "always"
   },
   "editor.formatOnPaste": false,
   "editor.formatOnSave": false,
@@ -214,5 +222,6 @@
   "terminal.integrated.autoReplies": {
     "Terminate batch job (Y/N)": "Y\r"
   },
-  "terminal.integrated.gpuAcceleration": "auto"
+  "terminal.integrated.gpuAcceleration": "auto",
+  "editor.formatOnType": false
 }
