@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { getAge } from '../date.js';
 
 /**
  * Automatically detects and parses date format from a string
@@ -69,4 +70,38 @@ export function parseDate(dateStr) {
 
   // If no format matches, return original
   return dateStr;
+}
+
+export { parseDate as dateStringToDDMMYYYY };
+
+/**
+ * Parse an age-or-date string and return age in whole years.
+ *
+ * Behavior:
+ * - Accepts age phrases like "5 tahun, 3 bulan, 12 hari" and returns the years (e.g. 5).
+ * - Accepts birthdate strings (various formats handled by `parseDate`) and delegates to `getAge` with a moment birth date.
+ * - Returns `undefined` when the input cannot be interpreted as an age or valid birth date.
+ *
+ * @param {string} dateStr - Age text (e.g. "5 tahun...") or a birthdate string.
+ * @returns {number|undefined} Age in whole years, or `undefined` if not parsable.
+ *
+ * @example
+ * getAgeFromDateString('5 tahun, 3 bulan'); // 5
+ * getAgeFromDateString('24/05/1990'); // 35 (depending on current date)
+ */
+export function getAgeFromDateString(dateStr) {
+  // 5 tahun, 3 bulan, 12 hari
+  const ageRegex = /(\d+)\s*tahun/i;
+  const match = dateStr.match(ageRegex);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  // Try to parse as date and calculate age
+  const parsedDate = parseDate(dateStr);
+  if (parsedDate !== dateStr) {
+    const birthDate = moment(parsedDate, 'DD/MM/YYYY');
+    if (birthDate.isValid()) {
+      return getAge(birthDate);
+    }
+  }
 }
