@@ -13,9 +13,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env from parent directory
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const csvFilePath = path.join(__dirname, 'data.csv');
+const csvFilePath = path.join(process.cwd(), 'data/data.csv');
 
 if (!fs.existsSync(csvFilePath)) {
   fs.writeFileSync(csvFilePath, '');
@@ -113,7 +113,7 @@ export async function loadCsvData(customCsvPath) {
           return row;
         });
 
-        const outputDir = path.join(__dirname, '../public/assets/data');
+        const outputDir = path.join(process.cwd(), 'public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
         fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
 
