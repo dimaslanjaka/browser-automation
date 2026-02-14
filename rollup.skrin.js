@@ -1,7 +1,6 @@
-import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { babel } from '@rollup/plugin-babel';
 import json from '@rollup/plugin-json';
+import resolve from '@rollup/plugin-node-resolve';
 import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
@@ -24,8 +23,8 @@ export default {
   },
   plugins: [
     json(),
-    resolve({ preferBuiltins: true }),
-    commonjs(),
-    babel({ babelHelpers: 'bundled', extensions: ['.js', '.mjs', '.cjs', '.ts'], exclude: 'node_modules/**' })
+    resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs'] }),
+    commonjs({ extensions: ['.js', '.mjs', '.cjs'] })
+    // babel({ babelHelpers: 'bundled', extensions: ['.js', '.mjs', '.cjs', '.ts'], exclude: 'node_modules/**' })
   ]
 };
