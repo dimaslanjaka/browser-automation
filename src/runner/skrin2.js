@@ -19,9 +19,11 @@ import {
 } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
-import { ucwords } from '../utils/string.js';
+import { removeWhitespaces, ucwords } from '../utils/string.js';
 import fixData from '../utils/xlsx/fixData.js';
 import { parseBabyName } from './skrin-utils.js';
+import { getAge } from '../utils/date.js';
+import { getAgeFromDateString } from '../utils/date.js';
 
 console.clear();
 
@@ -72,14 +74,17 @@ async function processData(page, data) {
   await page.waitForSelector(iframeSelector, { visible: true, timeout: 30000 });
   await waitForDomStable(page, 3000, 30000);
 
-  // Request a screen wake lock
-  await page.evaluate(async () => {
-    try {
-      await navigator.wakeLock.request('screen');
-      console.log('Screen Wake Lock is active!');
-    } catch (err) {
-      console.error(`${err.name}, ${err.message}`);
-    }
+  // Request a screen wake lock (use Promise chain to avoid transpiler helpers inside evaluate)
+  await page.evaluate(() => {
+    if (!navigator.wakeLock || !navigator.wakeLock.request) return Promise.resolve();
+    return navigator.wakeLock
+      .request('screen')
+      .then(() => {
+        console.log('Screen Wake Lock is active!');
+      })
+      .catch((err) => {
+        console.error(err && err.name ? err.name + ', ' + err.message : String(err));
+      });
   });
 
   // Wait for the iframe to load and the datepicker element to be ready
@@ -460,12 +465,43 @@ async function processData(page, data) {
     '#field_item_risiko_7_id input[type="text"]',
     '#field_item_riwayat_kontak_tb_id input[type="text"]'
   ];
-  if (fixedData.age < 18) {
+
+  // If age in page is less than 18, also input tidak for gejala_1_1_id, gejala_1_3_id, gejala_1_4_id, and gejala_1_5_id
+  // Parse age from page string "5 tahun 3 bulan" or "5 tahun" or "3 bulan"
+  const ageInPage = getAgeFromDateString(await iframe.$eval('span[id="umur_label"]', (el) => el.textContent));
+  const extractedAgeFromFixedData = fixedData.age;
+  const extractedBirthDateFromNik =
+    fixedData.parsed_nik && fixedData.parsed_nik.status === 'success'
+      ? removeWhitespaces(fixedData.parsed_nik.data.lahir)
+      : null;
+  const calculatedAgeFromNik = extractedBirthDateFromNik
+    ? getAge(moment(extractedBirthDateFromNik, 'DD/MM/YYYY'))
+    : null;
+  logLine(
+    `Age in page: ${ageInPage}, extracted age from fixedData: ${extractedAgeFromFixedData}, extracted birth date from NIK: ${extractedBirthDateFromNik}, calculated age from NIK: ${calculatedAgeFromNik}`
+  );
+  // Skip process when age in displayed page is different with fixed data age
+  if (extractedAgeFromFixedData && ageInPage !== extractedAgeFromFixedData) {
+    addLog({
+      id: NIK,
+      data: { ...fixedData, status: 'invalid' },
+      message: `Age in page (${ageInPage}) is different with extracted age from fixedData (${extractedAgeFromFixedData}) and calculated age from NIK (${calculatedAgeFromNik}). Please check the data and fix the age in page for NIK: ${NIK}.`
+    });
+    logLine(
+      `Age in page (${ageInPage}) is different with extracted age from fixedData (${extractedAgeFromFixedData}) and calculated age from NIK (${calculatedAgeFromNik}). Please check the data and fix the age in page for NIK: ${NIK}.`
+    );
+    return;
+  }
+  if (ageInPage < 18) {
     tidakFields.push(
       '#field_item_gejala_1_1_id input[type="text"]',
       '#field_item_gejala_1_3_id input[type="text"]',
       '#form_item_gejala_1_4_id input[type="text"]',
       '#field_item_gejala_1_5_id input[type="text"]'
+      // 'input[name="gejala_1_1_id_input"]',
+      // 'input[name="gejala_1_3_id_input"]',
+      // 'input[name="gejala_1_4_id_input"]',
+      // 'input[name="gejala_1_5_id_input"]'
     );
   }
 
@@ -703,8 +739,12 @@ async function re_evaluate(page) {
 
 async function _testSkriningData() {
   const dataKunto = await loadCsvData();
-  console.log(dataKunto[0]);
+  console.log('original', dataKunto[0]);
+  console.log('fixed', await fixData(dataKunto[0], { autofillTanggalEntry: true }));
   console.log('total data:', dataKunto.length);
+
+  const find = dataKunto.find((item) => item.nik === '3578104408190001');
+  console.log('find', find);
 }
 
 const _main = async () => {
