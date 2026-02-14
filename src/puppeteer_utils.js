@@ -612,8 +612,24 @@ export async function clickIframeElement(page, iframeSelector, elementSelector, 
 /**
  * Extracts attribute values and common properties from input and textarea elements.
  *
- * @param {(HTMLInputElement | HTMLTextAreaElement)[]} elements - Array of input or textarea elements.
- * @returns {Array<Record<string, string>>} Array of flattened objects containing all attributes plus name, value, id, disabled, and isVisible.
+ * NOTE: This function is executed inside the browser context (for example via `$$eval`).
+ * It returns plain JSON-serializable objects and must not rely on external variables or
+ * runtime helpers.
+ *
+ * @param {HTMLInputElement[]|HTMLTextAreaElement[]} elements - Array of input or textarea elements from the DOM.
+ * @returns {Array<{[attrName: string]: string, name: string, value: string, id: string, disabled: string, isVisible: string, label: string}>} Array of plain objects. Each object contains:
+ *  - all original element attributes as string keys (e.g. `type`, `maxlength`, ...)
+ *  - `name` {string} - element name or empty string
+ *  - `value` {string} - current element value
+ *  - `id` {string} - element id or empty string
+ *  - `disabled` {string} - `'true'` or `'false'`
+ *  - `isVisible` {string} - `'true'` or `'false'` based on layout visibility checks
+ *  - `label` {string} - nearest `.form-item-label` text found by walking up to 6 parent levels
+ *
+ * Example return item:
+ * ```js
+ * { type: 'text', name: 'first_name', value: 'Alice', id: 'f1', disabled: 'false', isVisible: 'true', label: 'First name' }
+ * ```
  */
 function extractFormValues(elements) {
   return elements.map((el) => {
@@ -635,15 +651,17 @@ function extractFormValues(elements) {
       currentEl = currentEl.parentElement; // Move one level up
     }
 
-    return {
-      ...attrs,
-      name: el.name || '',
-      value: el.value,
-      id: el.id || '',
-      disabled: String(el.disabled),
-      isVisible: String(isVisible),
-      label: textLabel
-    };
+    const result = {};
+    for (const k in attrs) {
+      if (Object.prototype.hasOwnProperty.call(attrs, k)) result[k] = attrs[k];
+    }
+    result.name = el.name || '';
+    result.value = el.value;
+    result.id = el.id || '';
+    result.disabled = String(el.disabled);
+    result.isVisible = String(isVisible);
+    result.label = textLabel;
+    return result;
   });
 }
 
