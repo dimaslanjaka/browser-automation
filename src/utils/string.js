@@ -20,3 +20,20 @@ export function ucwords(str) {
     return word.charAt(0).toUpperCase() + word.slice(1);
   });
 }
+
+/**
+ * Remove all whitespace characters from a string.
+ *
+ * This collapses and removes spaces, tabs, newlines, and other Unicode
+ * whitespace characters from the input. If the input is an empty string,
+ * the function returns an empty string.
+ *
+ * @param {string} str - The input string to process.
+ * @returns {string} The input string with all whitespace removed.
+ * @example
+ * // returns 'helloWorld'
+ * removeWhitespaces('hello World')
+ */
+export function removeWhitespaces(str) {
+  return str.replace(/\s+/g, '');
+}
