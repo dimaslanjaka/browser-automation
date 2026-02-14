@@ -1,0 +1,31 @@
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import { babel } from '@rollup/plugin-babel';
+import json from '@rollup/plugin-json';
+import { readFileSync } from 'fs';
+import path from 'path';
+import url from 'url';
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const pkg = JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+
+/** All dependencies including dev */
+const external = Object.keys(pkg.dependencies || {}).concat(Object.keys(pkg.devDependencies || {}));
+
+/** @type {import('rollup').RollupOptions} */
+export default {
+  input: 'src/runner/skrin2.js',
+  external,
+  output: {
+    file: 'dist/skrin2.bundle.cjs',
+    format: 'cjs',
+    sourcemap: true
+  },
+  plugins: [
+    json(),
+    resolve({ preferBuiltins: true }),
+    commonjs(),
+    babel({ babelHelpers: 'bundled', extensions: ['.js', '.mjs', '.cjs', '.ts'], exclude: 'node_modules/**' })
+  ]
+};

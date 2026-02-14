@@ -105,6 +105,10 @@
     "@eslint/eslintrc": "^3",
     "@eslint/js": "^9",
     "@jest/globals": "^30",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@testing-library/dom": "^10",
     "@testing-library/jest-dom": "^6",
     "@testing-library/react": "^16",
@@ -149,6 +153,7 @@
     "prettier-plugin-embed": "^0",
     "react": "^19",
     "react-dom": "^19",
+    "rollup": "^4.57.1",
     "sass": "^1",
     "terser": "^5",
     "ts-jest": "^29.4.1",
@@ -156,7 +161,7 @@
     "tsup": "^8",
     "typescript": "^5",
     "typescript-eslint": "^8",
-    "vite": "7.2.6",
+    "vite": "^7.3.1",
     "vite-plugin-mkcert": "^1.17.9",
     "watchpack": "^2.4.4",
     "why-is-node-running": "^3"
@@ -170,7 +175,7 @@
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/3f36c7384fa414d0207460e00c0d7d362dba995f/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/f6b7a1941004a1e780043858739c964490cf3e48/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/c97c2e1242bb8f4ce02abe1db38a45802581e814/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
