@@ -1,6 +1,6 @@
 import ansiColors from 'ansi-colors';
 import moment from 'moment';
-import { getAge } from '../../../date.js';
+import { getAge } from '../../../utils/date.js';
 import { logLine } from '../../../utils.js';
 
 /**

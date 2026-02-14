@@ -7,7 +7,7 @@ import { array_random } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import { SharedPrefs } from './SharedPrefs.js';
-import { containsMonth, extractMonthName, getDatesWithoutSundays } from './date.js';
+import { containsMonth, extractMonthName, getDatesWithoutSundays } from './utils/date.js';
 import { getCacheKey, getCachedData, getFileHash, saveCachedData } from './xlsx-helper.js';
 
 // Get the absolute path of the current script for ES modules

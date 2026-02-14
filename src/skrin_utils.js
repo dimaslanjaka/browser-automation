@@ -1,4 +1,4 @@
-import { getAge } from '../src/date.js';
+import { getAge } from './utils/date.js';
 import { typeAndTrigger } from './puppeteer_utils.js';
 
 /**

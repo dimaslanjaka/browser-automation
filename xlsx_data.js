@@ -8,7 +8,7 @@ import { array_random } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import * as XLSX from 'xlsx';
 import { SharedPrefs } from './src/SharedPrefs.js';
-import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/date.js';
+import { containsMonth, extractMonthName, getDatesWithoutSundays } from './src/utils/date.js';
 import { fetchXlsxData3 } from './src/fetchXlsxData3.js';
 import { matchFirstAndLastData } from './src/xlsx-helper.js';
 

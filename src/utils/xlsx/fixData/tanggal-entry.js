@@ -1,7 +1,7 @@
 import ansiColors from 'ansi-colors';
 import moment from 'moment';
 import { array_random } from 'sbg-utility';
-import { extractMonthName, getDatesWithoutSundays } from '../../../date.js';
+import { extractMonthName, getDatesWithoutSundays } from '../../../utils/date.js';
 import { logLine } from '../../../utils.js';
 
 /**
