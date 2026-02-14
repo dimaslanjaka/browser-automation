@@ -77,17 +77,23 @@ export { parseDate as dateStringToDDMMYYYY };
 /**
  * Parse an age-or-date string and return age in whole years.
  *
- * Behavior:
- * - Accepts age phrases like "5 tahun, 3 bulan, 12 hari" and returns the years (e.g. 5).
- * - Accepts birthdate strings (various formats handled by `parseDate`) and delegates to `getAge` with a moment birth date.
- * - Returns `undefined` when the input cannot be interpreted as an age or valid birth date.
+ * Supported inputs:
+ * - Age phrases like "5 tahun", "5 tahun, 3 bulan", "5 tahun 3 bulan 12 hari" (returns the years portion).
+ * - Partial ages such as "3 bulan" or "12 hari" (treated as 0 years).
+ * - Birthdate strings in multiple formats (delegates parsing to `parseDate` and age calculation to `getAge`).
  *
- * @param {string} dateStr - Age text (e.g. "5 tahun...") or a birthdate string.
+ * Return values:
+ * - {number} Whole years (e.g. 5).
+ * - {0} When input expresses months/days only.
+ * - {undefined} When the input cannot be parsed as an age or valid birth date.
+ *
+ * @param {string} dateStr - Age text (e.g. "5 tahun, 3 bulan") or a birthdate string.
  * @returns {number|undefined} Age in whole years, or `undefined` if not parsable.
  *
  * @example
  * getAgeFromDateString('5 tahun, 3 bulan'); // 5
- * getAgeFromDateString('24/05/1990'); // 35 (depending on current date)
+ * getAgeFromDateString('3 bulan, 12 hari'); // 0
+ * getAgeFromDateString('24/05/1990'); // age in years (delegates to `getAge`)
  */
 export function getAgeFromDateString(dateStr) {
   // 5 tahun, 3 bulan, 12 hari
@@ -95,6 +101,16 @@ export function getAgeFromDateString(dateStr) {
   const match = dateStr.match(ageRegex);
   if (match) {
     return parseInt(match[1], 10);
+  }
+  // 3 bulan, 12 hari (treat as 0 years)
+  const monthDayRegex = /(\d+)\s*bulan/i;
+  if (monthDayRegex.test(dateStr)) {
+    return 0;
+  }
+  // 12 hari (treat as 0 years)
+  const dayOnlyRegex = /(\d+)\s*hari/i;
+  if (dayOnlyRegex.test(dateStr)) {
+    return 0;
   }
   // Try to parse as date and calculate age
   const parsedDate = parseDate(dateStr);
