@@ -159,6 +159,7 @@
     "react": "^19",
     "react-dom": "^19",
     "rollup": "^4.57.1",
+    "rollup-plugin-dts": "^6.3.0",
     "sass": "^1",
     "terser": "^5",
     "ts-jest": "^29.4.1",

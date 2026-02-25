@@ -21,6 +21,12 @@ export function getDatabaseFilePath(name) {
  * Class representing a log database using SQLite.
  */
 export class SQLiteLogDatabase {
+  /** @type {string} */
+  dbPath;
+
+  /** @type {import('better-sqlite3').Database | undefined} */
+  db;
+
   /**
    * Create a new LogDatabase instance.
    * @param {string} [dbFileName] - Optional database filename without extension. Defaults to environment variable DATABASE_FILENAME or 'default'.

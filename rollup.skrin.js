@@ -2,6 +2,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
@@ -65,4 +66,30 @@ const databaseConfig = {
   ]
 };
 
-export default [databaseConfig, skrinConfig];
+/** @type {import('rollup').RollupOptions} */
+const databaseDtsCtsConfig = {
+  input: 'src/database/index.ts',
+  output: {
+    dir: 'dist/database',
+    format: 'es',
+    preserveModules: true,
+    preserveModulesRoot: 'src/database',
+    entryFileNames: '[name].d.cts'
+  },
+  plugins: [dts()]
+};
+
+/** @type {import('rollup').RollupOptions} */
+const databaseDtsMtsConfig = {
+  input: 'src/database/index.ts',
+  output: {
+    dir: 'dist/database',
+    format: 'es',
+    preserveModules: true,
+    preserveModulesRoot: 'src/database',
+    entryFileNames: '[name].d.mts'
+  },
+  plugins: [dts()]
+};
+
+export default [databaseConfig, databaseDtsCtsConfig, databaseDtsMtsConfig, skrinConfig];
