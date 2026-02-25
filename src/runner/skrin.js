@@ -17,7 +17,7 @@ import {
   isElementVisible,
   typeAndTrigger
 } from '../puppeteer_utils.js';
-import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
+import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
   getPersonInfo,
@@ -69,7 +69,7 @@ export async function processData(page, data) {
   await page.setDefaultTimeout(0);
   await page.setDefaultNavigationTimeout(0);
 
-  await page.waitForSelector('#nik', { visible: true });
+  await page.waitForSelector('#nik', { visible: true, timeout: 60000 });
   await sleep(3000);
 
   if (!data) {
@@ -601,8 +601,6 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   const page = puppeteer.page;
   const browser = puppeteer.browser;
 
-  await skrinLogin(page);
-
   while (datas.length > 0) {
     /**
      * @type {import('../../globals.js').ExcelRowData}
@@ -620,7 +618,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
     const processPage = array_random(await browser.pages());
     try {
-      await enterSkriningPage(page);
+      await autoLoginAndEnterSkriningPage(processPage);
     } catch (e) {
       await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
       throw e;

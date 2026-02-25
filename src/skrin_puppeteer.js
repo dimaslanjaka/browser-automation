@@ -45,3 +45,25 @@ export async function enterSkriningPage(page, replacePage = true) {
 
   await waitForDomStable(page, 3000, 30000);
 }
+
+/**
+ * Automatically logs in and navigates to the skrining page, ensuring that the page is fully loaded and stable before proceeding.
+ * @param {import('puppeteer').Page} page
+ */
+export async function autoLoginAndEnterSkriningPage(page) {
+  await page.goto('https://sumatera.sitb.id/sitb2024/skrining#', { waitUntil: 'networkidle2', timeout: 120000 });
+  await waitForDomStable(page, 3000, 30000);
+
+  const sessionExpiredSelector = '.navbar-template.text-left p';
+  const sessionExpiredMessagePattern = /maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali/i;
+
+  const sessionExpiredText = await page
+    .$eval(sessionExpiredSelector, (element) => element.textContent?.trim() ?? '')
+    .catch(() => null);
+
+  if (sessionExpiredText && sessionExpiredMessagePattern.test(sessionExpiredText)) {
+    console.log('Session expired detected. Re-login required.');
+    await skrinLogin(page);
+    await enterSkriningPage(page);
+  }
+}

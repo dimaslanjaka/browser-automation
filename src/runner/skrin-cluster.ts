@@ -1,17 +1,19 @@
-import dotenv from 'dotenv';
 import Bluebird from 'bluebird';
+import dotenv from 'dotenv';
 import minimist from 'minimist';
 import moment from 'moment';
-import * as nikUtils from 'nik-parser-jurusid/index';
 import type { NikParseResult } from 'nik-parser-jurusid';
+import * as nikUtils from 'nik-parser-jurusid/index';
 import path from 'path';
 import type { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
 import { isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
-import type { ExcelRowData, fixDataResult } from '../../globals.js';
 import { loadCsvData } from '../../data/index.js';
+import type { ExcelRowData, fixDataResult } from '../../globals.js';
 import { geocodeWithNominatim } from '../address/nominatim.js';
+import { LogDatabase } from '../database/LogDatabase.js';
+import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import {
   closeOtherTabs,
   getFormValues,
@@ -20,7 +22,7 @@ import {
   isElementVisible,
   typeAndTrigger
 } from '../puppeteer_utils.js';
-import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
+import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
   getPersonInfo,
@@ -33,8 +35,6 @@ import {
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
 import { fixData } from '../xlsx-helper.js';
-import { LogDatabase } from '../database/LogDatabase.js';
-import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
@@ -641,8 +641,7 @@ async function main() {
           await cluster.execute(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
             try {
               await closeOtherTabs(page);
-              await skrinLogin(page);
-              await enterSkriningPage(page);
+              await autoLoginAndEnterSkriningPage(page);
               const result = await processData(page, data);
               if (result.status === 'error') {
                 console.error('Error processing data:', {
