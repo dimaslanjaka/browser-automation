@@ -6,9 +6,10 @@ import path from 'path';
 import { array_random, isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
+import * as databaseModule from '../../dist/database/index.mjs';
 import { geocodeWithNominatim } from '../address/nominatim.js';
 import { playMp3FromUrl } from '../beep.js';
-import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
+import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import {
   closeOtherTabs,
   getFormValues,
@@ -36,6 +37,17 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
+const database = new databaseModule.LogDatabase('skrin_' + toValidMySQLDatabaseName(process.env.DATABASE_FILENAME), {
+  connectTimeout: 60000,
+  connectionLimit: 10,
+  host: MYSQL_HOST || 'localhost',
+  user: MYSQL_USER || 'root',
+  password: MYSQL_PASS || '',
+  port: Number(MYSQL_PORT) || 3306,
+  type: MYSQL_HOST ? 'mysql' : 'sqlite'
+});
 
 /**
  * Re-evaluates the form by re-typing the "metode_id_input" field to trigger any dynamic changes on the page.
@@ -78,7 +90,7 @@ export async function processData(page, data) {
 
   const NIK = data.nik;
   if (!nikUtils.isValidNIK(NIK)) {
-    addLog({
+    database.addLog({
       id: getNumbersOnly(NIK),
       data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
@@ -546,7 +558,7 @@ export async function processData(page, data) {
     await waitEnter('Press Enter to continue...');
   }
 
-  addLog({
+  database.addLog({
     id: getNumbersOnly(NIK),
     data: { ...fixedData, status: 'success' },
     message: `Data for NIK: ${NIK} submitted successfully.`
@@ -606,7 +618,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
      * @type {import('../../globals.js').ExcelRowData}
      */
     const data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    const existing = getLogById(getNumbersOnly(data.nik));
+    const existing = database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) {
       const status = existing.data.status || 'unknown';
       const message = existing.message || '';

@@ -18,7 +18,7 @@ const outputFile = process.env.SKRIN_OUTPUT || 'dist/skrin2.bundle.cjs';
 const isTypeScriptInput = path.extname(inputFile).toLowerCase() === '.ts';
 
 /** @type {import('rollup').RollupOptions} */
-export default {
+const skrinConfig = {
   input: inputFile,
   external,
   output: {
@@ -34,3 +34,35 @@ export default {
     // babel({ babelHelpers: 'bundled', extensions: ['.js', '.mjs', '.cjs', '.ts'], exclude: 'node_modules/**' })
   ]
 };
+
+/** @type {import('rollup').RollupOptions} */
+const databaseConfig = {
+  input: 'src/database/index.ts',
+  external,
+  output: [
+    {
+      dir: 'dist/database',
+      format: 'cjs',
+      preserveModules: true,
+      preserveModulesRoot: 'src/database',
+      entryFileNames: '[name].cjs',
+      sourcemap: true
+    },
+    {
+      dir: 'dist/database',
+      format: 'esm',
+      preserveModules: true,
+      preserveModulesRoot: 'src/database',
+      entryFileNames: '[name].mjs',
+      sourcemap: true
+    }
+  ],
+  plugins: [
+    json(),
+    resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] }),
+    typescript({ compilerOptions: { outDir: 'dist/database' } }),
+    commonjs({ extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] })
+  ]
+};
+
+export default [databaseConfig, skrinConfig];
