@@ -1,11 +1,9 @@
 import axios from 'axios';
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
-import { mkdirSync } from 'fs';
 import { spawn } from 'child_process';
 import { pipeline } from 'stream/promises';
-import { createWriteStream } from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import node7z from 'node-7z';
@@ -16,20 +14,88 @@ const execAsync = promisify(exec);
 const isWindows = os.platform() === 'win32';
 
 const cacheDir = path.join(process.cwd(), '.cache');
-mkdirSync(cacheDir, { recursive: true });
+fs.mkdirSync(cacheDir, { recursive: true });
 
 const extractDir = path.join(cacheDir, 'ffmpeg');
-const archivePath = path.join(cacheDir, isWindows ? 'ffmpeg.7z' : 'ffmpeg.tar.xz');
+let ffplayPreparationPromise;
+
+/**
+ * @typedef {object} FfmpegUrlOptions
+ * @property {string} [customUrl] - Custom FFmpeg archive URL. When set, this is used directly.
+ * @property {'legacy' | 'btbn'} [source] - URL source preset. Defaults to 'legacy'.
+ * @property {'gpl' | 'lgpl'} [linuxLicense] - Linux build license variant for BtbN source. Defaults to 'gpl'.
+ */
+
+/**
+ * Create an archive path based on URL extension.
+ *
+ * @param {string} url - FFmpeg archive URL.
+ * @returns {string} - Local archive path in cache directory.
+ */
+function getArchivePathFromUrl(url) {
+  const parsedUrl = new URL(url);
+  const lowerPath = parsedUrl.pathname.toLowerCase();
+
+  if (lowerPath.endsWith('.tar.xz')) {
+    return path.join(cacheDir, 'ffmpeg.tar.xz');
+  }
+
+  if (lowerPath.endsWith('.zip')) {
+    return path.join(cacheDir, 'ffmpeg.zip');
+  }
+
+  if (lowerPath.endsWith('.7z')) {
+    return path.join(cacheDir, 'ffmpeg.7z');
+  }
+
+  const fallbackExt = isWindows ? '.7z' : '.tar.xz';
+  return path.join(cacheDir, `ffmpeg${fallbackExt}`);
+}
 
 /**
  * Get the appropriate FFmpeg download URL based on the current platform and architecture.
  *
+ * @param {FfmpegUrlOptions} [options] - FFmpeg URL selection options.
  * @returns {string} - The URL to download the FFmpeg archive.
  * @throws {Error} - Throws an error if an unsupported platform or architecture is detected.
  */
-function getFfmpegUrl() {
-  const platform = os.platform();
+function getFfmpegUrl(options = {}) {
+  if (options.customUrl) {
+    return options.customUrl;
+  }
+
+  const source = options.source ?? 'btbn';
+  const linuxLicense = options.linuxLicense ?? 'gpl';
+  const platform = os.platform(); // 'win32', 'linux', 'darwin', etc.
   const arch = os.arch(); // 'x64', 'arm64', etc.
+
+  if (source === 'btbn') {
+    if (platform === 'win32') {
+      return 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip';
+    }
+
+    if (platform === 'linux') {
+      if (arch === 'arm64') {
+        return linuxLicense === 'lgpl'
+          ? 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linuxarm64-lgpl-shared.tar.xz'
+          : 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linuxarm64-gpl-shared.tar.xz';
+      }
+
+      if (arch === 'x64') {
+        return linuxLicense === 'lgpl'
+          ? 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-lgpl-shared.tar.xz'
+          : 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl-shared.tar.xz';
+      }
+
+      throw new Error(`Unsupported Linux architecture for BtbN source: ${arch}`);
+    }
+
+    if (platform === 'darwin') {
+      throw new Error('macOS: Please install FFmpeg using Homebrew or download a universal binary.');
+    }
+
+    throw new Error(`Unsupported platform or architecture: ${platform} ${arch}`);
+  }
 
   if (platform === 'win32') {
     return 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z';
@@ -77,8 +143,46 @@ function getFfmpegUrl() {
  * @returns {Promise<void>} - A promise that resolves when the download is complete.
  */
 async function downloadFile(url, outputPath) {
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+  if (fs.existsSync(outputPath)) {
+    try {
+      const localStats = fs.statSync(outputPath);
+      const headRes = await axios({
+        url,
+        method: 'HEAD',
+        maxRedirects: 5,
+        validateStatus: (status) => status >= 200 && status < 400
+      });
+
+      const contentLength = headRes.headers['content-length'];
+      const remoteSize = Number.parseInt(contentLength, 10);
+      const lastModifiedHeader = headRes.headers['last-modified'];
+      const remoteModifiedAt = lastModifiedHeader ? new Date(lastModifiedHeader) : undefined;
+
+      const hasValidRemoteSize = Number.isFinite(remoteSize);
+      const isSizeEqual = hasValidRemoteSize ? remoteSize === localStats.size : true;
+      const hasValidRemoteModifiedAt = remoteModifiedAt instanceof Date && !Number.isNaN(remoteModifiedAt.getTime());
+      const isRemoteNotNewer = hasValidRemoteModifiedAt ? localStats.mtimeMs >= remoteModifiedAt.getTime() : true;
+
+      if (isSizeEqual && isRemoteNotNewer) {
+        return;
+      }
+    } catch {
+      // Continue with download when metadata cannot be checked.
+    }
+  }
+
   const res = await axios({ url, method: 'GET', responseType: 'stream' });
-  await pipeline(res.data, createWriteStream(outputPath));
+  await pipeline(res.data, fs.createWriteStream(outputPath));
+
+  const downloadedLastModifiedHeader = res.headers['last-modified'];
+  if (downloadedLastModifiedHeader) {
+    const downloadedLastModifiedAt = new Date(downloadedLastModifiedHeader);
+    if (!Number.isNaN(downloadedLastModifiedAt.getTime())) {
+      await fs.promises.utimes(outputPath, downloadedLastModifiedAt, downloadedLastModifiedAt).catch(() => undefined);
+    }
+  }
 }
 
 /**
@@ -90,6 +194,7 @@ async function downloadFile(url, outputPath) {
  */
 async function extractArchive(archive, destination) {
   if (isWindows) {
+    fs.mkdirSync(destination, { recursive: true });
     return new Promise((resolve, reject) => {
       // Ensure you are importing 'node-7z' and '7zip-bin' correctly
       const stream = node7z.extractFull(archive, destination, { $bin: path7za });
@@ -97,7 +202,7 @@ async function extractArchive(archive, destination) {
       stream.on('error', reject);
     });
   } else {
-    mkdirSync(destination, { recursive: true });
+    fs.mkdirSync(destination, { recursive: true });
     await execAsync(`tar -xf "${archive}" -C "${destination}"`);
   }
 }
@@ -145,33 +250,65 @@ function findFfplayPath(root) {
 /**
  * Prepare the FFmpeg binaries by downloading, extracting, and setting the PATH for `ffplay`.
  *
+ * @param {FfmpegUrlOptions} [options] - FFmpeg URL selection options.
  * @returns {Promise<string>} - A promise that resolves to the directory where `ffplay` is located.
  */
-async function prepareFfplay() {
-  const ffmpegUrl = getFfmpegUrl();
-
-  if (!fs.existsSync(archivePath)) {
-    console.log('Downloading FFmpeg...');
-    await downloadFile(ffmpegUrl, archivePath);
+async function prepareFfplay(options = {}) {
+  if (ffplayPreparationPromise) {
+    return ffplayPreparationPromise;
   }
 
-  if (!fs.existsSync(extractDir)) {
-    console.log('Extracting FFmpeg...');
-    await extractArchive(archivePath, extractDir);
-  }
+  ffplayPreparationPromise = (async () => {
+    const ffmpegUrl = getFfmpegUrl(options);
+    const archivePath = getArchivePathFromUrl(ffmpegUrl);
 
-  const ffplayDir = findFfplayPath(extractDir);
-  process.env.PATH = `${ffplayDir}${path.delimiter}${process.env.PATH}`;
-  return ffplayDir;
+    if (!fs.existsSync(archivePath)) {
+      console.log('Downloading FFmpeg...');
+      await downloadFile(ffmpegUrl, archivePath);
+    }
+
+    try {
+      const ffplayDir = findFfplayPath(extractDir);
+      process.env.PATH = `${ffplayDir}${path.delimiter}${process.env.PATH}`;
+      return ffplayDir;
+    } catch {
+      // Continue to extraction when ffplay is not found in cache.
+    }
+
+    if (fs.existsSync(archivePath)) {
+      console.log('Extracting FFmpeg...');
+      try {
+        await extractArchive(archivePath, extractDir);
+      } catch (e) {
+        console.log('Error extracting FFmpeg:', e);
+
+        console.log('Re-downloading FFmpeg archive...');
+        await downloadFile(ffmpegUrl, archivePath);
+
+        console.log('Extracting FFmpeg...');
+        await extractArchive(archivePath, extractDir);
+      }
+    }
+
+    const ffplayDir = findFfplayPath(extractDir);
+    process.env.PATH = `${ffplayDir}${path.delimiter}${process.env.PATH}`;
+    return ffplayDir;
+  })().catch((error) => {
+    ffplayPreparationPromise = undefined;
+    throw error;
+  });
+
+  return ffplayPreparationPromise;
 }
 
 /**
  * Play an MP3 file from a URL using `ffplay`.
  *
  * @param {string} mp3Url - The URL of the MP3 file to play.
+ * @param {FfmpegUrlOptions} [ffmpegOptions] - FFmpeg URL selection options.
  * @returns {Promise<void>} - A promise that resolves when the file is playing.
  */
-export async function playMp3FromUrl(mp3Url) {
+export async function playMp3FromUrl(mp3Url, ffmpegOptions) {
   const filename = path.basename(mp3Url.split('?')[0]);
   const filePath = path.join(cacheDir, 'audio', filename);
 
@@ -180,7 +317,7 @@ export async function playMp3FromUrl(mp3Url) {
     await downloadFile(mp3Url, filePath);
   }
 
-  const ffplayDir = await prepareFfplay();
+  const ffplayDir = await prepareFfplay(ffmpegOptions);
   const ffplayBin = isWindows ? 'ffplay.exe' : 'ffplay';
 
   const ffplayProcess = spawn(`${ffplayDir}/${ffplayBin}`, [filePath, '-nodisp', '-autoexit'], {
