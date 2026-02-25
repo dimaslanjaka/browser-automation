@@ -102,13 +102,8 @@ export async function processData(browser, data) {
 
   // Fix and normalize data before processing
   const fixedData = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
-  if (
-    !fixedData.parsed_nik ||
-    (typeof fixedData.parsed_nik === 'object' && Object.keys(fixedData.parsed_nik).length === 0)
-  ) {
-    console.log(`Parsed NIK is empty for NIK: ${fixedData.nik}, reparsing...`);
-    fixedData.parsed_nik = (await nikUtils.nikParse(fixedData.nik)).data;
-  }
+  /** @type {import('nik-parser-jurusid').NikParseResult} */
+  const parsedNik = fixedData.parsed_nik || (await nikUtils.nikParse(fixedData.nik));
 
   console.log('Processing:', fixedData);
 
@@ -206,12 +201,11 @@ export async function processData(browser, data) {
       }
       await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
 
-      if (!fixedData.parsed_nik) {
-        throw new Error('❌ Failed to parse NIK data');
+      if (!fixedData.genderInitial) {
+        throw new Error("❌ Failed to determine patient's gender from NIK");
       }
-      const parsed_nik_gender = fixedData.parsed_nik.kelamin.toLowerCase() == 'laki-laki' ? 'Laki-laki' : 'Perempuan';
-      console.log(`Gender ${parsed_nik_gender} detected from NIK`);
-      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', parsed_nik_gender);
+
+      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', fixedData.gender);
 
       // Validate final birth date format to ensure it's in DD/MM/YYYY
       // If invalid, throw an error with context for easier debugging
@@ -230,7 +224,7 @@ export async function processData(browser, data) {
       const address = await geocodeWithNominatim(keywordAddr);
       fixedData._address = address;
 
-      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = fixedData.parsed_nik;
+      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = parsedNik;
 
       if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
         console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
