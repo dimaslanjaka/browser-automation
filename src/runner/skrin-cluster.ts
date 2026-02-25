@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import Bluebird from 'bluebird';
+import minimist from 'minimist';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import type { NikParseResult } from 'nik-parser-jurusid';
@@ -40,6 +41,16 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const cliArgs = minimist(process.argv.slice(2), {
+  boolean: ['single', 'shuffle'],
+  string: ['concurrent'],
+  alias: {
+    s: 'single',
+    sh: 'shuffle',
+    c: 'concurrent'
+  }
+});
 
 type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -576,7 +587,17 @@ export async function processData(page: Page, data: ExcelRowData): Promise<Proce
 }
 
 async function main() {
-  const maxConcurrency = 2; // ⬅ cuma 2 tab maksimal
+  const defaultMaxConcurrency = 2;
+  const parsedConcurrency = Number(cliArgs.concurrent);
+  const hasValidConcurrentArg = Number.isInteger(parsedConcurrency) && parsedConcurrency > 0;
+  const maxConcurrency = hasValidConcurrentArg ? parsedConcurrency : defaultMaxConcurrency;
+
+  if (cliArgs.concurrent !== undefined && !hasValidConcurrentArg) {
+    console.warn(
+      `Invalid --concurrent value: ${String(cliArgs.concurrent)}. Falling back to ${defaultMaxConcurrency}.`
+    );
+  }
+
   const { cluster, puppeteer: _ } = await getPuppeteerCluster({
     concurrency: Cluster.CONCURRENCY_CONTEXT, // 1 tab per worker
     maxConcurrency, // ⬅ cuma [n] tab maksimal
@@ -596,10 +617,20 @@ async function main() {
         break;
       }
 
-      console.log(`Processing ${dataKunto.length} item(s) with max concurrency ${maxConcurrency}...`);
+      if (cliArgs.shuffle) {
+        for (let i = dataKunto.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [dataKunto[i], dataKunto[j]] = [dataKunto[j], dataKunto[i]];
+        }
+        console.log('Data shuffled');
+      }
+
+      const dataToProcess = cliArgs.single ? dataKunto.slice(0, 1) : dataKunto;
+
+      console.log(`Processing ${dataToProcess.length} item(s) with max concurrency ${maxConcurrency}...`);
 
       await Bluebird.map(
-        dataKunto,
+        dataToProcess,
         async (data) => {
           const existing = await database.getLogById(getNumbersOnly(data.nik));
           if (existing && existing.data) {
@@ -633,6 +664,12 @@ async function main() {
       );
 
       await cluster.idle();
+
+      if (cliArgs.single) {
+        console.log('Single mode enabled. Processed one item and exiting.');
+        break;
+      }
+
       console.log('Cycle finished. Refreshing unprocessed data...');
     }
   } finally {
