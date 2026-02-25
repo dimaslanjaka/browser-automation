@@ -522,4 +522,10 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
   await browser.close();
 }
 
-if (process.argv[1] === __filename) runEntrySkrining().catch(console.error);
+if (process.argv[1] === __filename) {
+  runEntrySkrining().catch((err) => {
+    console.error('Unhandled error in runEntrySkrining:', err && err.stack ? err.stack : err);
+    // give some time for stdout/stderr to flush, then exit with failure
+    setTimeout(() => process.exit(1), 100);
+  });
+}
