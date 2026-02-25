@@ -548,50 +548,52 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   // Completed run - database logging used instead of HTML log builds
 }
 
-if (process.argv[1] === __filename) {
-  (async function mainLoop() {
-    let puppeteerInstance;
+async function mainLoop() {
+  let puppeteerInstance;
+  try {
+    puppeteerInstance = await getPuppeteer();
+  } catch (e) {
+    console.error('Failed to launch puppeteer:', e && e.stack ? e.stack : e);
+    setTimeout(() => process.exit(1), 100);
+    return;
+  }
+
+  while (true) {
     try {
-      puppeteerInstance = await getPuppeteer();
-    } catch (e) {
-      console.error('Failed to launch puppeteer:', e && e.stack ? e.stack : e);
-      setTimeout(() => process.exit(1), 100);
-      return;
-    }
-
-    while (true) {
-      try {
-        await runEntrySkrining(puppeteerInstance);
-        break; // finished successfully
-      } catch (err) {
-        const msg =
-          err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
-        console.error('Unhandled error in runEntrySkrining:', msg);
-        const lowerMsg = String(msg).toLowerCase();
-        if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
-          console.warn('Detected connection/navigation timeout — restarting in 1s...');
-          await sleep(1000);
-          continue; // restart loop, reuse puppeteerInstance
-        }
-
-        // non-recoverable error: close browser then exit
-        try {
-          await puppeteerInstance.browser.close();
-        } catch (e) {
-          console.error('Failed to close browser after error:', e && e.stack ? e.stack : e);
-        }
-
-        // give some time for stdout/stderr to flush, then exit with failure
-        setTimeout(() => process.exit(1), 100);
-        break;
+      await runEntrySkrining(puppeteerInstance);
+      break; // finished successfully
+    } catch (err) {
+      const msg =
+        err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
+      console.error('Unhandled error in runEntrySkrining:', msg);
+      const lowerMsg = String(msg).toLowerCase();
+      if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
+        console.warn('Detected connection/navigation timeout — restarting in 1s...');
+        await sleep(1000);
+        continue; // restart loop, reuse puppeteerInstance
       }
-    }
 
-    // finished successfully, close browser
-    try {
-      await puppeteerInstance.browser.close();
-    } catch (e) {
-      console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
+      // non-recoverable error: close browser then exit
+      try {
+        await puppeteerInstance.browser.close();
+      } catch (e) {
+        console.error('Failed to close browser after error:', e && e.stack ? e.stack : e);
+      }
+
+      // give some time for stdout/stderr to flush, then exit with failure
+      setTimeout(() => process.exit(1), 100);
+      break;
     }
-  })();
+  }
+
+  // finished successfully, close browser
+  try {
+    await puppeteerInstance.browser.close();
+  } catch (e) {
+    console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
+  }
+}
+
+if (process.argv[1] === __filename) {
+  mainLoop();
 }
