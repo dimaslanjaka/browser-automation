@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writefile } from 'sbg-utility';
-import { newLogPath } from './skrin.log-restart.js';
+import { newLogPath } from './src/runner/skrin.log-restart.js';
 import { defaultLogFilePath } from './src/utils.js';
 
 // Define __filename and __dirname
