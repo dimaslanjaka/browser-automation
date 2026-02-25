@@ -76,7 +76,7 @@ export async function processData(browser, data) {
     data.parsed_nik = nikUtils.nikParse(data.nik).data;
   }
 
-  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: true, verbose: true }); // <-- fix the data if needed
+  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true }); // <-- fix the data if needed
   if (!nikUtils.isValidNIK(data.nik)) {
     addLog({
       id: getNumbersOnly(data.nik),
