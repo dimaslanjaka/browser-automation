@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import moment from 'moment';
 import nikParse from 'nik-parser-jurusid';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from '../address/nominatim.js';
 import { playMp3FromUrl } from '../beep.js';
 import { fetchXlsxData3 } from '../fetchXlsxData3.js';
@@ -23,6 +24,11 @@ import { ucwords } from '../utils/string.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+console.log({ __dirname, __filename });
 
 /**
  * Executes scripts to build and analyze the HTML log.
@@ -533,4 +539,4 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
   await browser.close();
 }
 
-// if (process.argv[1] === __filename) runEntrySkrining().catch(console.error);
+if (process.argv[1] === __filename) runEntrySkrining().catch(console.error);
