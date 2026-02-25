@@ -59,17 +59,6 @@ async function reEvaluate(page) {
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
 export async function processData(page, data) {
-  try {
-    await enterSkriningPage(page);
-  } catch (e) {
-    await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
-    console.error('Error navigating to skrining page:', e.message);
-    // Repeat using a new page
-    await page.close().catch(() => {});
-    const retryPage = await page.browser().newPage();
-    return processData(retryPage, data);
-  }
-
   await page.waitForSelector('#nik', { visible: true });
   await sleep(3000);
 
@@ -580,6 +569,13 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     }
 
     const processPage = await browser.newPage();
+    try {
+      await enterSkriningPage(page);
+    } catch (e) {
+      await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
+      throw e;
+    }
+
     const result = await processData(processPage, data);
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
