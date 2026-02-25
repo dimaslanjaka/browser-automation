@@ -556,8 +556,9 @@ if (process.argv[1] === __filename) {
         const msg =
           err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
         console.error('Unhandled error in runEntrySkrining:', msg);
-        if (String(msg).includes('net::ERR_CONNECTION_TIMED_OUT')) {
-          console.warn('Detected net::ERR_CONNECTION_TIMED_OUT — restarting in 1s...');
+        const lowerMsg = String(msg).toLowerCase();
+        if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
+          console.warn('Detected connection/navigation timeout — restarting in 1s...');
           await sleep(1000);
           continue; // restart loop
         }
