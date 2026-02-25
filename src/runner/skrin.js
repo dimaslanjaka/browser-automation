@@ -494,16 +494,21 @@ export async function processData(browser, data) {
  * Logs into the web application, iterates through the data entries, and processes each one using `processData`.
  * Optionally allows transformation of each row of data through a callback before processing.
  *
+ * @param {{browser: import('puppeteer').Browser, page: import('puppeteer').Page}} puppeteerInstance
+ *   Puppeteer instance created by `getPuppeteer()` (an object with `browser` and `page`).
+ *   When provided, `runEntrySkrining` will use this instance and will not create/close the browser itself —
+ *   this allows the caller (for example a supervisor main loop) to reuse the browser across restarts.
  * @param {(data: import('../../globals.js').ExcelRowData) => import('../../globals.js').ExcelRowData | Promise<import('../../globals.js').ExcelRowData>} [dataCallback]
  *   A callback to optionally transform each Excel data row before processing. Can be synchronous or asynchronous.
  *   Defaults to an identity function if not provided.
- * @returns {Promise<void>} A promise that resolves when all data entries are processed and the browser is closed.
+ * @returns {Promise<void>} A promise that resolves when all data entries are processed. The browser is not closed by this
+ *   function when a `puppeteerInstance` is supplied; the caller is responsible for closing it.
  */
-export async function runEntrySkrining(dataCallback = (data) => data) {
+export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) => data) {
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
   // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
   const datas = await loadCsvData();
-  const puppeteer = await getPuppeteer();
+  const puppeteer = puppeteerInstance;
   let page = puppeteer.page;
   const browser = puppeteer.browser;
 
@@ -541,16 +546,22 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
   console.log('All data processed.');
 
   // Completed run - database logging used instead of HTML log builds
-
-  // Close browser
-  await browser.close();
 }
 
 if (process.argv[1] === __filename) {
   (async function mainLoop() {
+    let puppeteerInstance;
+    try {
+      puppeteerInstance = await getPuppeteer();
+    } catch (e) {
+      console.error('Failed to launch puppeteer:', e && e.stack ? e.stack : e);
+      setTimeout(() => process.exit(1), 100);
+      return;
+    }
+
     while (true) {
       try {
-        await runEntrySkrining();
+        await runEntrySkrining(puppeteerInstance);
         break; // finished successfully
       } catch (err) {
         const msg =
@@ -560,12 +571,27 @@ if (process.argv[1] === __filename) {
         if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
           console.warn('Detected connection/navigation timeout — restarting in 1s...');
           await sleep(1000);
-          continue; // restart loop
+          continue; // restart loop, reuse puppeteerInstance
         }
+
+        // non-recoverable error: close browser then exit
+        try {
+          await puppeteerInstance.browser.close();
+        } catch (e) {
+          console.error('Failed to close browser after error:', e && e.stack ? e.stack : e);
+        }
+
         // give some time for stdout/stderr to flush, then exit with failure
         setTimeout(() => process.exit(1), 100);
         break;
       }
+    }
+
+    // finished successfully, close browser
+    try {
+      await puppeteerInstance.browser.close();
+    } catch (e) {
+      console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
     }
   })();
 }
