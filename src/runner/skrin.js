@@ -48,8 +48,6 @@ async function reEvaluate(page) {
  * Steps include navigating pages, inputting data, checking for various modals and alerts,
  * correcting job/location fields, and submitting the form.
  *
- * @async
- * @function processData
  * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with web pages.
  * @param {import('../../globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
  * @returns {Promise<{
@@ -62,12 +60,6 @@ async function reEvaluate(page) {
  */
 export async function processData(browser, data) {
   const page = await browser.newPage(); // Open new tab
-
-  // Close the first tab when there are more than 2 open tabs
-  const pages = await browser.pages(); // Get all open pages (tabs)
-  if (pages.length > 3) {
-    await pages[0].close(); // Close the first tab
-  }
 
   try {
     await enterSkriningPage(page);
@@ -583,6 +575,13 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       console.log(`Data for NIK ${data.nik} already processed. Skipping. Status: ${status}. Message: ${message}`);
       continue;
     }
+
+    // Close the first tab when there are more than 2 open tabs
+    const pages = await browser.pages(); // Get all open pages (tabs)
+    if (pages.length > 3) {
+      await pages[0].close(); // Close the first tab
+    }
+
     const result = await processData(browser, data);
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
