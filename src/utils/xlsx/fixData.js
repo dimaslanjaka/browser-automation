@@ -8,7 +8,7 @@ import { fixAlamat } from './fixData/alamat.js';
 import { fixBirth } from './fixData/birth.js';
 import { fixTanggalEntry } from './fixData/tanggal-entry.js';
 import { fixTbBb } from './fixData/tb-bb.js';
-import { FixDataCache } from './fixData-cache.js';
+import { FixDataCache } from './FixDataCache.js';
 
 /**
  * Normalize, validate and augment a row of Excel data.
