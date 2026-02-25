@@ -71,12 +71,7 @@ export async function processData(browser, data) {
   if (!data) {
     throw new Error('No more data to process.');
   }
-  if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
-    console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
-    data.parsed_nik = nikUtils.nikParse(data.nik).data;
-  }
 
-  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true }); // <-- fix the data if needed
   if (!nikUtils.isValidNIK(data.nik)) {
     addLog({
       id: getNumbersOnly(data.nik),
@@ -89,6 +84,13 @@ export async function processData(browser, data) {
       reason: 'invalid_nik_format',
       description: `Skipping due to invalid NIK format: ${data.nik}`
     };
+  }
+
+  // Fix and normalize data before processing
+  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
+  if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
+    console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
+    data.parsed_nik = nikUtils.nikParse(data.nik).data;
   }
 
   console.log('Processing:', data);
