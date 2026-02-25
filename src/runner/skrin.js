@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
+import minimist from 'minimist';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import path from 'path';
+import { isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
 import { geocodeWithNominatim } from '../address/nominatim.js';
@@ -11,7 +13,6 @@ import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
-  fixTbAndBb,
   getPersonInfo,
   isIdentityModalVisible,
   isInvalidAlertVisible,
@@ -72,47 +73,53 @@ export async function processData(browser, data) {
     throw new Error('No more data to process.');
   }
 
-  if (!nikUtils.isValidNIK(data.nik)) {
+  const NIK = data.nik;
+  if (!nikUtils.isValidNIK(NIK)) {
     addLog({
-      id: getNumbersOnly(data.nik),
+      id: getNumbersOnly(NIK),
       data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
     });
-    console.error(`Skipping due to invalid NIK format: ${data.nik}`);
+    console.error(`Skipping due to invalid NIK format: ${NIK}`);
     return {
       status: 'error',
       reason: 'invalid_nik_format',
-      description: `Skipping due to invalid NIK format: ${data.nik}`
+      description: `Skipping due to invalid NIK format: ${NIK}`
     };
   }
 
   // Fix and normalize data before processing
-  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
-  if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
-    console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
-    data.parsed_nik = (await nikUtils.nikParse(data.nik)).data;
+  const fixedData = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
+  if (
+    !fixedData.parsed_nik ||
+    (typeof fixedData.parsed_nik === 'object' && Object.keys(fixedData.parsed_nik).length === 0)
+  ) {
+    console.log(`Parsed NIK is empty for NIK: ${fixedData.nik}, reparsing...`);
+    fixedData.parsed_nik = (await nikUtils.nikParse(fixedData.nik)).data;
   }
 
-  console.log('Processing:', data);
+  console.log('Processing:', fixedData);
 
-  if (!`${data.tanggal}`.includes('/') || !data.tanggal || data.tanggal.length < 8) {
+  const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
+
+  if (!`${tanggalEntry}`.includes('/') || !tanggalEntry || tanggalEntry.length < 8) {
     await browser.close();
     throw new Error(
-      `INVALID DATE: tanggal=${String(data.tanggal)} (type=${typeof data.tanggal}) - data=${JSON.stringify(
-        data,
+      `INVALID DATE: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+        fixedData,
         null,
         2
       )}`
     );
   }
 
-  const parseTanggal = moment(data.tanggal, 'DD/MM/YYYY', true); // strict parsing
+  const parseTanggal = moment(tanggalEntry, 'DD/MM/YYYY', true); // strict parsing
 
   if (!parseTanggal.isValid()) {
     await browser.close();
     throw new Error(
-      `INVALID DATE (parse failed): tanggal=${String(data.tanggal)} (type=${typeof data.tanggal}) - data=${JSON.stringify(
-        data,
+      `INVALID DATE (parse failed): tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+        fixedData,
         null,
         2
       )}`
@@ -122,30 +129,15 @@ export async function processData(browser, data) {
   if (parseTanggal.day() === 0) {
     // Sunday
     await browser.close();
-    throw new Error(`SUNDAY DATE NOT ALLOWED: ${data.tanggal}`);
+    throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
   }
 
   await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
-  await typeAndTrigger(page, '#dt_tgl_skrining', data.tanggal);
+  await typeAndTrigger(page, '#dt_tgl_skrining', tanggalEntry);
   await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
   await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
   await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
-
-  if (data.nik.length < 16) {
-    console.error('Skipping due NIK length invalid, should be 16 digits.');
-    addLog({
-      id: getNumbersOnly(data.nik),
-      data: { ...data, status: 'invalid' },
-      message: 'Invalid NIK length'
-    });
-    return {
-      status: 'error',
-      reason: 'invalid_nik_length',
-      description: 'Skipping due NIK length invalid, should be 16 digits.'
-    };
-  }
-
-  await typeAndTrigger(page, '#nik', getNumbersOnly(data.nik));
+  await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
 
   await sleep(5000);
 
@@ -196,36 +188,37 @@ export async function processData(browser, data) {
     if (shouldClickYes) {
       await page.click('#yesButton');
 
-      if (!data.nama || data.nama.length === 0) {
+      const NAMA = fixedData.nama || fixedData.NAMA || '';
+      if (!NAMA || NAMA.length === 0) {
         throw new Error("❌ Failed to take the patient's name");
       }
-      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', data.nama);
+      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
 
-      if (!data.parsed_nik) {
+      if (!fixedData.parsed_nik) {
         throw new Error('❌ Failed to parse NIK data');
       }
-      const parsed_nik_gender = data.parsed_nik.kelamin.toLowerCase() == 'laki-laki' ? 'Laki-laki' : 'Perempuan';
+      const parsed_nik_gender = fixedData.parsed_nik.kelamin.toLowerCase() == 'laki-laki' ? 'Laki-laki' : 'Perempuan';
       console.log(`Gender ${parsed_nik_gender} detected from NIK`);
       await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', parsed_nik_gender);
 
       // Validate final birth date format to ensure it's in DD/MM/YYYY
       // If invalid, throw an error with context for easier debugging
-      const parsedLahir = moment(data.tgl_lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
+      const parsedLahir = moment(fixedData.tgl_lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
       if (!parsedLahir.isValid()) {
-        throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${data.tgl_lahir}`);
+        throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${fixedData.tgl_lahir}`);
       }
 
       await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
 
-      if (!data.alamat || data.alamat.length === 0) {
+      if (!fixedData.alamat || fixedData.alamat.length === 0) {
         throw new Error("❌ Failed to take the patient's address");
       }
 
-      const keywordAddr = `${data.alamat} Surabaya, Jawa Timur`.trim();
+      const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
       const address = await geocodeWithNominatim(keywordAddr);
-      data._address = address;
+      fixedData._address = address;
 
-      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = data.parsed_nik;
+      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = fixedData.parsed_nik;
 
       if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
         console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
@@ -252,7 +245,7 @@ export async function processData(browser, data) {
       await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
       await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
       await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
-      await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', data.alamat);
+      await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
       return {
@@ -263,18 +256,19 @@ export async function processData(browser, data) {
     }
   }
 
+  // Get the patient's name from the form after confirming identity (or if no modal appeared)
   const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
-  data.nama = `${nama}`.trim();
+  fixedData.nama_from_page = `${nama}`.trim();
   // re-check
-  if (`${data.nama}`.trim().length === 0) {
+  if (isEmpty(`${fixedData.nama_from_page}`)) {
     throw new Error("❌ Failed to take the patient's name");
   }
 
   const { gender, age, birthDate, location } = await getPersonInfo(page);
   const { province, city } = location;
-  data.gender = gender;
-  data.tgl_lahir = birthDate;
-  data.umur = age;
+  fixedData.gender_from_page = gender;
+  fixedData.tgl_lahir_from_page = birthDate;
+  fixedData.umur_from_page = age;
   console.log('Jenis kelamin:', gender, 'Umur:', age, 'tahun');
   if (!gender || isNaN(age)) {
     throw new Error('Invalid input: Gender or age is missing/invalid.');
@@ -292,85 +286,48 @@ export async function processData(browser, data) {
   }
 
   // Fix job
-  data.pekerjaan_original = data.pekerjaan;
+  fixedData.pekerjaan_original = data.pekerjaan;
+  console.log(`Pekerjaan: ${fixedData.pekerjaan}`);
 
-  const job = data.pekerjaan.trim().toLowerCase();
+  await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
-  const jobMappings = [
-    { pattern: /rumah\s*tangga|irt/, value: 'IRT' },
-    { pattern: /swasta|pedagang/, value: 'Wiraswasta' },
-    { pattern: /tukang|buruh/, value: 'Buruh ' },
-    { pattern: /tidak\s*bekerja|belum\s*bekerja|pensiun/, value: 'Tidak Bekerja' },
-    { pattern: /pegawai\s*negeri(\s*sipil)?|pegawai\s*negri/, value: 'PNS ' },
-    { pattern: /guru|dosen/, value: 'Guru/ Dosen' },
-    { pattern: /perawat|dokter/, value: 'Tenaga Profesional Medis ' },
-    { pattern: /pengacara|wartawan/, value: 'Tenaga Profesional Non Medis ' },
-    { pattern: /pelajar|siswa|siswi|sekolah/, value: 'Pelajar/ Mahasiswa' },
-    { pattern: /s[o,u]pir/, value: 'Sopir ' }
+  // Input tinggi dan berat badan
+  const bb = fixedData.bb || fixedData.BB || null;
+  const tb = fixedData.tb || fixedData.TB || null;
+  console.log(`Inputting berat badan (${bb}) dan tinggi badan (${tb}) untuk NIK: ${NIK}`);
+
+  await page.focus('#field_item_berat_badan input[type="text"]');
+  await page.type('#field_item_berat_badan input[type="text"]', extractNumericWithComma(bb), { delay: 100 });
+  await page.focus('#field_item_tinggi_badan input[type="text"]');
+  await page.type('#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(tb), { delay: 100 });
+
+  // Batch fill common "Tidak" selections to reduce repeated awaits
+  const defaultNoSelectors = [
+    '#field_item_riwayat_kontak_tb_id input[type="text"]',
+    '#field_item_risiko_1_id input[type="text"]',
+    '#field_item_risiko_4_id input[type="text"]',
+    '#field_item_risiko_5_id input[type="text"]',
+    '#field_item_risiko_7_id input[type="text"]',
+    '#field_item_risiko_10_id input[type="text"]',
+    '#field_item_risiko_11_id input[type="text"]',
+    '#field_item_gejala_2_3_id input[type="text"]',
+    '#field_item_gejala_2_4_id input[type="text"]',
+    '#field_item_gejala_2_5_id input[type="text"]',
+    '#field_item_gejala_6_id input[type="text"]',
+    '#field_item_cxr_pemeriksaan_id input[type="text"]'
   ];
 
-  let jobMatched = false;
-
-  for (const { pattern, value } of jobMappings) {
-    if (pattern.test(job)) {
-      data.pekerjaan = value;
-      jobMatched = true;
-      break;
-    }
-  }
-
-  if (!jobMatched) {
-    if (job === 'unspecified' || job === 'lainnya' || job.length === 0) {
-      if (age > 55 || age <= 20) {
-        data.pekerjaan = 'Tidak Bekerja';
-      } else {
-        data.pekerjaan = gender.toLowerCase() === 'perempuan' ? 'IRT' : 'Wiraswasta';
-      }
-    } else {
-      await waitEnter(
-        `Undefined Job for data: ${JSON.stringify(data)}. Please fix and press enter to continue auto fill.`
-      );
-    }
-  }
-
-  console.log(`Pekerjaan: ${data.pekerjaan}`);
-
-  await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', data.pekerjaan);
-
-  // Fix tinggi dan berat badan
-  if (!data.bb || !data.tb) {
-    await fixTbAndBb(page, age, gender);
-  } else {
-    await page.focus('#field_item_berat_badan input[type="text"]');
-    await page.type('#field_item_berat_badan input[type="text"]', extractNumericWithComma(data.bb), { delay: 100 });
-    await page.focus('#field_item_tinggi_badan input[type="text"]');
-    await page.type('#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(data.tb), { delay: 100 });
-  }
-
-  await typeAndTrigger(page, '#field_item_riwayat_kontak_tb_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_risiko_1_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_risiko_4_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_risiko_5_id input[type="text"]', 'Tidak');
-
-  if (data.diabetes) {
-    await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', 'Ya');
-  } else {
-    await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', 'Tidak');
-  }
-
-  await typeAndTrigger(page, '#field_item_risiko_7_id input[type="text"]', 'Tidak');
-
+  // Add gender-specific selector
   if (gender.toLowerCase().trim() == 'perempuan') {
-    await typeAndTrigger(page, '#field_item_risiko_9_id input[type="text"]', 'Tidak');
+    defaultNoSelectors.push('#field_item_risiko_9_id input[type="text"]');
   }
 
-  await typeAndTrigger(page, '#field_item_risiko_10_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_risiko_11_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_gejala_2_3_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_gejala_2_4_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_gejala_2_5_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_gejala_6_id input[type="text"]', 'Tidak');
-  await typeAndTrigger(page, '#field_item_cxr_pemeriksaan_id input[type="text"]', 'Tidak');
+  for (const sel of defaultNoSelectors) {
+    await typeAndTrigger(page, sel, 'Tidak');
+  }
+
+  // Handle diabetes separately (Yes/No)
+  await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', fixedData.diabetes ? 'Ya' : 'Tidak');
 
   if (age < 18) {
     const gejalaBalitaSelectors = [
@@ -381,12 +338,11 @@ export async function processData(browser, data) {
     ];
 
     for (const gejalaBalitaSelector of gejalaBalitaSelectors) {
-      if (isElementExist(page, gejalaBalitaSelector)) {
-        console.log(
-          `Gejala balita ${gejalaBalitaSelector} is visible ${await isElementVisible(page, gejalaBalitaSelector)}`
-        );
+      if (await isElementExist(page, gejalaBalitaSelector)) {
+        const visible = await isElementVisible(page, gejalaBalitaSelector);
+        console.log(`Gejala balita ${gejalaBalitaSelector} is visible ${visible}`);
 
-        if (await isElementVisible(page, gejalaBalitaSelector)) {
+        if (visible) {
           await typeAndTrigger(page, gejalaBalitaSelector, 'Tidak');
           await sleep(200);
         }
@@ -396,10 +352,10 @@ export async function processData(browser, data) {
 
   await page.keyboard.press('Tab');
 
-  if (!data.batuk) {
+  if (!fixedData.batuk) {
     await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
   } else {
-    let keteranganBatuk = data.batuk.replace(/ya,/, 'batuk');
+    let keteranganBatuk = fixedData.batuk.replace(/ya,/, 'batuk');
     if (/\d/m.test(keteranganBatuk)) {
       await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
       await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
@@ -424,12 +380,12 @@ export async function processData(browser, data) {
     // Solve common problems
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
-    await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', data.pekerjaan);
+    await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
     // Re-check
     if (await isInvalidAlertVisible(page)) {
       console.warn('⚠️ Invalid alert detected for the following data:');
-      console.dir(data, { depth: null });
+      console.dir(fixedData, { depth: null });
       await waitEnter('Please review the alert and press Enter to continue...');
     }
   }
@@ -493,15 +449,15 @@ export async function processData(browser, data) {
   }
 
   if (hasSubmitted) {
-    console.log('✅\tData submitted successfully:', data);
+    console.log('✅\tData submitted successfully:', fixedData);
   } else {
-    console.warn('⚠️\tData processed but not submitted:', data);
+    console.warn('⚠️\tData processed but not submitted:', fixedData);
     await waitEnter('Press Enter to continue...');
   }
 
   return {
     status: 'success',
-    data
+    data: fixedData
   };
 }
 
@@ -524,7 +480,26 @@ export async function processData(browser, data) {
 export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) => data) {
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
   // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
-  const datas = await loadCsvData();
+  let datas = await loadCsvData();
+  // Parse CLI flags using minimist: support --single and --shuffle
+  const args = minimist(process.argv.slice(2));
+  const flagSingle = Boolean(args.single);
+  const flagShuffle = Boolean(args.shuffle);
+
+  if (flagShuffle && Array.isArray(datas) && datas.length > 1) {
+    // Fisher-Yates shuffle
+    for (let i = datas.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [datas[i], datas[j]] = [datas[j], datas[i]];
+    }
+    console.log('Shuffled data ordering due to --shuffle flag');
+  }
+
+  if (flagSingle && Array.isArray(datas) && datas.length > 0) {
+    datas = [datas[0]];
+    console.log('Processing single entry due to --single flag');
+  }
+
   const puppeteer = puppeteerInstance;
   let page = puppeteer.page;
   const browser = puppeteer.browser;
