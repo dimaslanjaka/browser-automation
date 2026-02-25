@@ -583,12 +583,14 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
       break; // stop processing further on error, to allow investigation and fixes
-    } else {
+    } else if (result.status == 'success') {
       addLog({
         id: getNumbersOnly(data.nik),
         data: { ...data, status: 'success' },
         message: `Data for NIK: ${data.nik} submitted successfully.`
       });
+    } else {
+      console.warn('Unexpected result status:', result.status, result);
     }
   }
 
