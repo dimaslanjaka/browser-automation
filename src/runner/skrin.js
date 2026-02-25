@@ -1,4 +1,3 @@
-import { spawnAsync } from 'cross-spawn';
 import dotenv from 'dotenv';
 import moment from 'moment';
 import nikParse from 'nik-parser-jurusid';
@@ -6,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from '../address/nominatim.js';
 import { playMp3FromUrl } from '../beep.js';
+import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import { fetchXlsxData3 } from '../fetchXlsxData3.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
@@ -19,7 +19,7 @@ import {
   isNIKNotFoundModalVisible,
   isSuccessNotificationVisible
 } from '../skrin_utils.js';
-import { appendLog, extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
 
 // Load environment variables
@@ -27,26 +27,6 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-console.log({ __dirname, __filename });
-
-/**
- * Executes scripts to build and analyze the HTML log.
- *
- * Used to generate reports from the processing results by running `log-builder.js` and `log-analyzer.js`.
- *
- * @returns {Promise<void>} A promise that resolves when the log building process is complete.
- */
-async function buildHtmlLog() {
-  await spawnAsync('node', [path.resolve(process.cwd(), 'log-builder.js')], {
-    cwd: process.cwd(),
-    stdio: 'inherit'
-  });
-  await spawnAsync('node', [path.resolve(process.cwd(), 'log-analyzer.js')], {
-    cwd: process.cwd(),
-    stdio: 'inherit'
-  });
-}
 
 /**
  * Processes a single row of Excel data by automating the form-filling process on the skrining site.
@@ -123,9 +103,11 @@ export async function processData(browser, data) {
 
   if (data.nik.length < 16) {
     console.error('Skipping due NIK length invalid, should be 16 digits.');
-    appendLog(data, 'Invalid Data');
-    // Build HTML log
-    buildHtmlLog();
+    addLog({
+      id: getNumbersOnly(data.nik),
+      data: { ...data, status: 'invalid' },
+      message: 'Invalid NIK length'
+    });
     return {
       status: 'error',
       reason: 'invalid_nik_length',
@@ -518,22 +500,23 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
      * @type {import('../../globals.js').ExcelRowData}
      */
     let data = await dataCallback(datas.shift()); // <-- modify the data via callback
+    const existing = getLogById(getNumbersOnly(data.nik));
+    if (existing && existing.data && existing.data.status === 'success') {
+      console.log(`Data for NIK ${data.nik} already processed. Skipping.`);
+      continue;
+    }
     const result = await processData(browser, data);
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
       break;
     } else {
-      appendLog(data);
-
-      // Build HTML log
-      await buildHtmlLog();
+      addLog({ id: getNumbersOnly(data.nik), data: { ...data, status: 'success' }, message: 'Processed' });
     }
   }
 
   console.log('All data processed.');
 
-  // Build HTML log
-  buildHtmlLog();
+  // Completed run - database logging used instead of HTML log builds
 
   // Close browser
   await browser.close();
