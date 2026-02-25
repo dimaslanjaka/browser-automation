@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 import { geocodeWithNominatim } from '../address/nominatim.js';
 import { playMp3FromUrl } from '../beep.js';
 import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
-import { fetchXlsxData3 } from '../fetchXlsxData3.js';
 import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import {
@@ -21,6 +20,7 @@ import {
 } from '../skrin_utils.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
+import { loadCsvData } from '../../data/index.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
@@ -488,7 +488,8 @@ export async function processData(browser, data) {
  */
 export async function runEntrySkrining(dataCallback = (data) => data) {
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
-  const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+  // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+  const datas = await loadCsvData();
   const puppeteer = await getPuppeteer();
   let page = puppeteer.page;
   const browser = puppeteer.browser;
