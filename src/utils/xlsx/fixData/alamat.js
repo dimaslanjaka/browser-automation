@@ -30,13 +30,13 @@ export async function fixAlamat(alamat, parsedNik, nik, initialData, dataRef, op
         .join(', ');
       if (options.verbose) logLine(`${ansiColors.cyan('[fixAlamat]')} Alamat from parsed NIK: ${alamat}`);
 
-      const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
-      const address = await geocodeWithNominatim(keywordAddr);
-      dataRef._address = address;
-
       let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_data;
 
       if (kotakab.length === 0 || namaKec.length === 0 || provinsi.length === 0) {
+        const keywordAddr = `${parsed_data.kelurahan}, ${parsed_data.namaKec}, Surabaya, Jawa Timur`.trim();
+        const address = await geocodeWithNominatim(keywordAddr);
+        dataRef._address = address;
+
         if (options.verbose)
           logLine(`${ansiColors.cyan('[fixAlamat]')} Fetching address from Nominatim for: ${keywordAddr}`);
         if (options.verbose) logLine(`${ansiColors.cyan('[fixAlamat]')} Nominatim result:`, address);
