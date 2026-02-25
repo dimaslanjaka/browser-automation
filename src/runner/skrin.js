@@ -338,7 +338,7 @@ export async function processData(page, data) {
   }
 
   // Fix job
-  fixedData.pekerjaan_original = data.pekerjaan;
+  fixedData.pekerjaan_original = data.pekerjaan || '<empty>';
   console.log(`Pekerjaan: ${fixedData.pekerjaan}`);
 
   await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
