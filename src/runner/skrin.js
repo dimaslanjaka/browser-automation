@@ -537,14 +537,16 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
      */
     const data = await dataCallback(datas.shift()); // <-- modify the data via callback
     const existing = getLogById(getNumbersOnly(data.nik));
-    if (existing && existing.data && existing.data.status === 'success') {
-      console.log(`Data for NIK ${data.nik} already processed. Skipping.`);
+    if (existing && existing.data) {
+      const status = existing.data.status || 'unknown';
+      const message = existing.message || '';
+      console.log(`Data for NIK ${data.nik} already processed. Skipping. Status: ${status}. Message: ${message}`);
       continue;
     }
     const result = await processData(browser, data);
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
-      break;
+      break; // stop processing further on error, to allow investigation and fixes
     } else {
       addLog({
         id: getNumbersOnly(data.nik),
