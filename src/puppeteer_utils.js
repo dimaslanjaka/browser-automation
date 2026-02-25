@@ -1252,6 +1252,7 @@ export async function closeFirstTab(context) {
  */
 export async function closeOtherTabs(instance, keepCount = 2) {
   let pages;
+  const currentPage = instance && typeof instance.browser === 'function' ? instance : null;
   if (instance && typeof instance.browser === 'function') {
     const browser = instance.browser();
     pages = await browser.pages();
@@ -1265,9 +1266,25 @@ export async function closeOtherTabs(instance, keepCount = 2) {
     return; // Nothing to close
   }
 
-  // Keep the most recently active tabs open
-  const pagesToClose = pages.slice(0, -keepCount);
+  // Keep the most recently active tabs open and avoid closing the currently active page.
+  const closeCount = Math.max(0, pages.length - keepCount);
+  const pagesToClose = pages.filter((page) => page !== currentPage).slice(0, closeCount);
   for (const page of pagesToClose) {
-    await page.close();
+    try {
+      if (typeof page?.isClosed === 'function' && page.isClosed()) {
+        continue;
+      }
+      await page.close();
+    } catch (error) {
+      const errorMessage = String(error?.message || error || '').toLowerCase();
+      if (
+        errorMessage.includes('no target with given id found') ||
+        errorMessage.includes('target closed') ||
+        errorMessage.includes('session closed')
+      ) {
+        continue;
+      }
+      throw error;
+    }
   }
 }
