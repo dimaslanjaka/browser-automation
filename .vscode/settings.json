@@ -223,5 +223,6 @@
     "Terminate batch job (Y/N)": "Y\r"
   },
   "terminal.integrated.gpuAcceleration": "auto",
-  "editor.formatOnType": false
+  "editor.formatOnType": false,
+  "npm.packageManager": "yarn"
 }
