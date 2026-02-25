@@ -90,7 +90,7 @@ export async function processData(browser, data) {
   data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
   if (!data.parsed_nik || (typeof data.parsed_nik === 'object' && Object.keys(data.parsed_nik).length === 0)) {
     console.log(`Parsed NIK is empty for NIK: ${data.nik}, reparsing...`);
-    data.parsed_nik = nikUtils.nikParse(data.nik).data;
+    data.parsed_nik = (await nikUtils.nikParse(data.nik)).data;
   }
 
   console.log('Processing:', data);
