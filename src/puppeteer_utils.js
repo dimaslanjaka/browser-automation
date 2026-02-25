@@ -94,7 +94,7 @@ export async function getPuppeteerCluster(options = {}) {
   const defaultPuppeteerOptions = {
     headless: false,
     userDataDir: userDataDir,
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     args: [
       '--disable-features=HeavyAdIntervention',
       '--disable-features=AdInterestGroupAPI',
@@ -109,7 +109,7 @@ export async function getPuppeteerCluster(options = {}) {
   };
 
   const { reuse = true, puppeteerOptions: customPuppeteerOptions = {}, ...clusterLaunchOptions } = options;
-  const puppeteerOptions = { ...defaultPuppeteerOptions, ...customPuppeteerOptions };
+  let puppeteerOptions = { ...defaultPuppeteerOptions, ...customPuppeteerOptions };
 
   puppeteer.use(StealthPlugin());
 
@@ -119,12 +119,60 @@ export async function getPuppeteerCluster(options = {}) {
 
   try {
     const { Cluster } = await import('puppeteer-cluster');
+    const normalizedClusterLaunchOptions = { ...clusterLaunchOptions };
+
+    const createProfileDir = (index, useDefaultForFirst = true) => {
+      if (index === 0 && useDefaultForFirst) return userDataDir;
+      return path.resolve(process.cwd(), `.cache/profiles/profile${index + 1}`);
+    };
+
+    if (Array.isArray(normalizedClusterLaunchOptions.perBrowserOptions)) {
+      let targetConcurrency = Number(normalizedClusterLaunchOptions.maxConcurrency);
+      if (!Number.isInteger(targetConcurrency) || targetConcurrency < 1) {
+        targetConcurrency = normalizedClusterLaunchOptions.perBrowserOptions.length || 1;
+        normalizedClusterLaunchOptions.maxConcurrency = targetConcurrency;
+      }
+
+      const normalizedPerBrowserOptions = normalizedClusterLaunchOptions.perBrowserOptions
+        .slice(0, targetConcurrency)
+        .map((browserOption, index) => ({
+          ...(browserOption || {}),
+          userDataDir: browserOption?.userDataDir || createProfileDir(index)
+        }));
+
+      while (normalizedPerBrowserOptions.length < targetConcurrency) {
+        const nextIndex = normalizedPerBrowserOptions.length;
+        normalizedPerBrowserOptions.push({
+          ...(normalizedPerBrowserOptions.at(-1) || {}),
+          userDataDir: createProfileDir(nextIndex)
+        });
+      }
+
+      normalizedClusterLaunchOptions.perBrowserOptions = normalizedPerBrowserOptions;
+    } else {
+      const targetConcurrency = Number(normalizedClusterLaunchOptions.maxConcurrency);
+      const isMultiBrowser = Number.isInteger(targetConcurrency) && targetConcurrency > 1;
+
+      if (isMultiBrowser) {
+        normalizedClusterLaunchOptions.perBrowserOptions = Array.from({ length: targetConcurrency }, (_, index) => ({
+          ...puppeteerOptions,
+          userDataDir: createProfileDir(index, false)
+        }));
+
+        const { userDataDir: _ignoredUserDataDir, ...sharedPuppeteerOptions } = puppeteerOptions;
+        puppeteerOptions = sharedPuppeteerOptions;
+      }
+    }
 
     if (!puppeteer_cluster || !reuse) {
       puppeteer_cluster = await Cluster.launch({
-        ...clusterLaunchOptions,
+        ...normalizedClusterLaunchOptions,
         puppeteer,
         puppeteerOptions
+      });
+      // Event handler to be called in case of problems
+      puppeteer_cluster.on('taskerror', (err, data) => {
+        console.log(`Error on cluster task: ${err.message}`, { cluster_data: data });
       });
     }
 
