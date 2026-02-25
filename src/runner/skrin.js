@@ -90,7 +90,7 @@ export async function processData(page, data) {
 
   const NIK = data.nik;
   if (!nikUtils.isValidNIK(NIK)) {
-    database.addLog({
+    await database.addLog({
       id: getNumbersOnly(NIK),
       data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
@@ -231,11 +231,14 @@ export async function processData(page, data) {
         fixedData._address = geocodedAddress;
 
         // Avoid destructuring: explicitly read values from parsedNik.data (if present)
-        const _parsedNikData = parsedNik && parsedNik.data ? parsedNik.data : {};
+        const _parsedNikData = parsedNik && parsedNik.status === 'success' ? parsedNik.data : {};
         kotakab = _parsedNikData.kotakab || '';
-        kecamatan = _parsedNikData.kecamatan || '';
+        kecamatan = _parsedNikData.kecamatan || _parsedNikData.namaKec || '';
         provinsi = _parsedNikData.provinsi || '';
-        kelurahan = _parsedNikData.kelurahan || '';
+        const parsedKelurahan = _parsedNikData.kelurahan != null ? _parsedNikData.kelurahan : null;
+        const selectedKelurahan =
+          Array.isArray(parsedKelurahan) && parsedKelurahan.length > 0 ? parsedKelurahan[0] : parsedKelurahan || null;
+        kelurahan = selectedKelurahan ? selectedKelurahan.name || selectedKelurahan : '';
 
         if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
           console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
@@ -419,7 +422,7 @@ export async function processData(page, data) {
   if (!fixedData.batuk) {
     await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
   } else {
-    let keteranganBatuk = fixedData.batuk.replace(/ya,/, 'batuk');
+    const keteranganBatuk = fixedData.batuk.replace(/ya,/, 'batuk');
     if (/\d/m.test(keteranganBatuk)) {
       await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
       await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
@@ -456,7 +459,7 @@ export async function processData(page, data) {
   }
 
   // Auto submit
-  let hasSubmitted;
+  let hasSubmitted = false;
   const identityModalVisible = await isIdentityModalVisible(page);
   const invalidAlertVisible = await isInvalidAlertVisible(page);
   const nikErrorVisible = await isNikErrorVisible(page);
@@ -558,7 +561,7 @@ export async function processData(page, data) {
     await waitEnter('Press Enter to continue...');
   }
 
-  database.addLog({
+  await database.addLog({
     id: getNumbersOnly(NIK),
     data: { ...fixedData, status: 'success' },
     message: `Data for NIK: ${NIK} submitted successfully.`
@@ -618,7 +621,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
      * @type {import('../../globals.js').ExcelRowData}
      */
     const data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    const existing = database.getLogById(getNumbersOnly(data.nik));
+    const existing = await database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) {
       const status = existing.data.status || 'unknown';
       const message = existing.message || '';
