@@ -1,3 +1,4 @@
+import Bluebird from 'bluebird';
 import dotenv from 'dotenv';
 import minimist from 'minimist';
 import path from 'path';
@@ -48,23 +49,31 @@ const database = new databaseModule.LogDatabase('skrin_' + toValidMySQLDatabaseN
 export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) => data) {
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
   // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
-  let datas = await loadCsvData();
+  const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
+    const existing = await database.getLogById(getNumbersOnly(data.nik));
+    if (existing && existing.data) return false;
+    return true;
+  });
+
+  // Print remaining count before processing
+  console.log(`Total entries to process: ${dataKunto.length}`);
+
   // Parse CLI flags using minimist: support --single and --shuffle
   const args = minimist(process.argv.slice(2));
   const flagSingle = Boolean(args.single);
   const flagShuffle = Boolean(args.shuffle);
 
-  if (flagShuffle && Array.isArray(datas) && datas.length > 1) {
+  if (flagShuffle && Array.isArray(dataKunto) && dataKunto.length > 1) {
     // Fisher-Yates shuffle
-    for (let i = datas.length - 1; i > 0; i--) {
+    for (let i = dataKunto.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [datas[i], datas[j]] = [datas[j], datas[i]];
+      [dataKunto[i], dataKunto[j]] = [dataKunto[j], dataKunto[i]];
     }
     console.log('Shuffled data ordering due to --shuffle flag');
   }
 
-  if (flagSingle && Array.isArray(datas) && datas.length > 0) {
-    datas = [datas[0]];
+  if (flagSingle && Array.isArray(dataKunto) && dataKunto.length > 0) {
+    dataKunto.splice(1); // keep only first element
     console.log('Processing single entry due to --single flag');
   }
 
@@ -72,19 +81,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   const page = puppeteer.page;
   const browser = puppeteer.browser;
 
-  while (datas.length > 0) {
+  while (dataKunto.length > 0) {
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
-    const data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    const existing = await database.getLogById(getNumbersOnly(data.nik));
-    if (existing && existing.data) {
-      const status = existing.data.status || 'unknown';
-      const message = existing.message || '';
-      console.log(`Data for NIK ${data.nik} already processed. Skipping. Status: ${status}. Message: ${message}`);
-      continue;
-    }
-
+    const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
     await closeOtherTabs(page);
 
     const processPage = array_random(await browser.pages());
@@ -95,9 +96,9 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       throw e;
     }
 
-    const result = await processData(processPage, data);
+    const result = await processData(processPage, data, database);
     if (result.status === 'error') {
-      console.error(Object.assign(result, { data }));
+      console.error('fail processing data', Object.assign(result, { data }));
       break; // stop processing further on error, to allow investigation and fixes
     } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
@@ -107,7 +108,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
   console.log('All data processed.');
 
-  // Completed run - database logging used instead of HTML log builds
+  await database.close();
 }
 
 export async function executeSkriningProcess() {
@@ -135,13 +136,6 @@ export async function executeSkriningProcess() {
         continue; // restart loop, reuse puppeteerInstance
       }
 
-      // non-recoverable error: close browser then exit
-      try {
-        await puppeteerInstance.browser.close();
-      } catch (e) {
-        console.error('Failed to close browser after error:', e && e.stack ? e.stack : e);
-      }
-
       // give some time for stdout/stderr to flush, then exit with failure
       setTimeout(() => process.exit(1), 100);
       break;
@@ -150,12 +144,12 @@ export async function executeSkriningProcess() {
 
   // finished successfully, close browser
   try {
-    await puppeteerInstance.browser.close();
+    // await puppeteerInstance.browser.close();
   } catch (e) {
     console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
   }
 }
 
-// if ('skrin' === path.basename(__filename, '.js')) {
+// if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 //   executeSkriningProcess();
 // }
