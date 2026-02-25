@@ -155,12 +155,17 @@ export async function processData(page: Page, data: ExcelRowData, database: LogD
       const dialog = document.querySelector('#dialogconfirm');
       if (!dialog) return false;
 
-      const text = ((dialog as any).innerText || dialog.textContent || '').toLowerCase();
-      return (
-        text.includes('access to resources is temporary closed'.toLowerCase()) &&
-        text.includes('Apakah Anda akan melanjutkan penginputan manual?'.toLowerCase())
-      );
+      const text = ((dialog as any).innerText || dialog.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const clickYesTriggers = [
+        'access to resources is temporary closed',
+        'the daily quota has reached the maximum limit',
+        'data tidak ditemukan'
+      ];
+
+      return clickYesTriggers.some((trigger) => text.includes(trigger));
     });
+
+    console.log('Should click Yes on NIK not found modal:', shouldClickYes);
 
     if (shouldClickYes) {
       await page.click('#yesButton');
