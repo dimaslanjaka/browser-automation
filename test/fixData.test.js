@@ -46,11 +46,31 @@ describe('fixData - Basic Tests', () => {
       NAMA: 'John Doe',
       'TANGGAL ENTRY': '15/01/2025'
     };
-    const result = await fixData(data);
+    const result = await fixData(data, { useCache: false });
     expect(result.NIK).toBe(realNIKs[0]);
     expect(result.NAMA).toBe('John Doe');
     expect(result['TANGGAL ENTRY']).toBe('15/01/2025');
   });
+
+  test('accepts tanggal string with autofillTanggalEntry=true', async () => {
+    let data = {
+      NIK: realNIKs[0],
+      NAMA: 'John Doe',
+      'TANGGAL ENTRY': 'FEBRUARI'
+    };
+    let result = await fixData(data, { autofillTanggalEntry: true, useCache: false });
+    expect(result.NIK).toBe(realNIKs[0]);
+    expect(result.NAMA).toBe('John Doe');
+    expect(result['TANGGAL ENTRY']).toMatch(/^\d{2}\/02\/\d{4}$/);
+
+    // change tanggal and remove previous property `TANGGAL ENTRY`
+    data.tanggal = 'Maret';
+    delete data['TANGGAL ENTRY'];
+    result = await fixData(data, { autofillTanggalEntry: true, useCache: false });
+    expect(result.NIK).toBe(realNIKs[0]);
+    expect(result.NAMA).toBe('John Doe');
+    expect(result['TANGGAL ENTRY']).toMatch(/^\d{2}\/03\/\d{4}$/);
+  }, 60000);
 
   test('accepts valid data with mixed case fields', async () => {
     const data = {
@@ -58,7 +78,7 @@ describe('fixData - Basic Tests', () => {
       nama: 'Jane Doe',
       tanggal: '16/01/2025'
     };
-    const result = await fixData(data);
+    const result = await fixData(data, { useCache: false });
     expect(result.NIK).toBe(realNIKs[1]);
     expect(result.nama).toBe('Jane Doe');
     expect(result.tanggal).toBe('16/01/2025');
