@@ -647,6 +647,6 @@ async function _mainLoop() {
   }
 }
 
-if (process.argv[1] === __filename) {
+if ('skrin' === path.basename(__filename, '.js')) {
   _mainLoop();
 }
