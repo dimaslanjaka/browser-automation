@@ -76,6 +76,21 @@ export async function processData(browser, data) {
     data.parsed_nik = nikUtils.nikParse(data.nik).data;
   }
 
+  data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: true, verbose: true }); // <-- fix the data if needed
+  if (!nikUtils.isValidNIK(data.nik)) {
+    addLog({
+      id: getNumbersOnly(data.nik),
+      data: { ...data, status: 'invalid' },
+      message: 'Invalid NIK format'
+    });
+    console.error(`Skipping due to invalid NIK format: ${data.nik}`);
+    return {
+      status: 'error',
+      reason: 'invalid_nik_format',
+      description: `Skipping due to invalid NIK format: ${data.nik}`
+    };
+  }
+
   console.log('Processing:', data);
 
   if (!`${data.tanggal}`.includes('/') || !data.tanggal || data.tanggal.length < 8) {
@@ -518,17 +533,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
-    let data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: true, verbose: true }); // <-- fix the data if needed
-    if (!nikUtils.isValidNIK(data.nik)) {
-      addLog({
-        id: getNumbersOnly(data.nik),
-        data: { ...data, status: 'invalid' },
-        message: 'Invalid NIK format'
-      });
-      console.error(`Skipping due to invalid NIK format: ${data.nik}`);
-      continue;
-    }
+    const data = await dataCallback(datas.shift()); // <-- modify the data via callback
     const existing = getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data && existing.data.status === 'success') {
       console.log(`Data for NIK ${data.nik} already processed. Skipping.`);
@@ -539,7 +544,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       console.error(Object.assign(result, { data }));
       break;
     } else {
-      addLog({ id: getNumbersOnly(data.nik), data: { ...data, status: 'success' }, message: 'Processed' });
+      addLog({
+        id: getNumbersOnly(data.nik),
+        data: { ...data, status: 'success' },
+        message: `Data for NIK: ${data.nik} submitted successfully.`
+      });
     }
   }
 
@@ -548,7 +557,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   // Completed run - database logging used instead of HTML log builds
 }
 
-async function mainLoop() {
+async function _mainLoop() {
   let puppeteerInstance;
   try {
     puppeteerInstance = await getPuppeteer();
@@ -595,5 +604,5 @@ async function mainLoop() {
 }
 
 if (process.argv[1] === __filename) {
-  mainLoop();
+  _mainLoop();
 }
