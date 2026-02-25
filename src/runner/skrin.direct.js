@@ -13,4 +13,4 @@ import { executeSkriningProcess } from './skrin.js';
 // });
 
 // Normal runs
-executeSkriningProcess();
+executeSkriningProcess().catch(console.error);
