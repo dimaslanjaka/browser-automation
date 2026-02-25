@@ -1240,3 +1240,35 @@ export async function closeFirstTab(context) {
     }
   }
 }
+
+/**
+ * Closes all tabs (pages) in the browser context except for a specified number of them to keep open.
+ *
+ * @param {import('puppeteer').Page|import('puppeteer').Browser} instance - The Puppeteer Page or Browser instance.
+ * If a Page is provided, its browser will be used to get all pages.
+ * If a Browser is provided, its pages will be used directly.
+ * @param {number} keepCount - The number of tabs to keep open. The most recently active tabs will be kept.
+ * All other tabs will be closed. If keepCount is greater than or equal to the total number of tabs, no tabs will be closed.
+ * @returns {Promise<void>}
+ */
+export async function closeOtherTabs(instance, keepCount = 2) {
+  let pages;
+  if (instance instanceof Page) {
+    const browser = instance.browser();
+    pages = await browser.pages();
+  } else if (instance instanceof Browser) {
+    pages = await instance.pages();
+  } else {
+    throw new Error('Instance must be a Puppeteer Page or Browser');
+  }
+
+  if (pages.length <= keepCount) {
+    return; // Nothing to close
+  }
+
+  // Keep the most recently active tabs open
+  const pagesToClose = pages.slice(0, -keepCount);
+  for (const page of pagesToClose) {
+    await page.close();
+  }
+}
