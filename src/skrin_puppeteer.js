@@ -57,11 +57,24 @@ export async function autoLoginAndEnterSkriningPage(page) {
   const sessionExpiredSelector = '.navbar-template.text-left p';
   const sessionExpiredMessagePattern = /maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali/i;
 
-  const sessionExpiredText = await page
-    .$eval(sessionExpiredSelector, (element) => element.textContent?.trim() ?? '')
-    .catch(() => null);
+  const sessionExpiredElement = await page.$(sessionExpiredSelector);
+  const sessionExpiredState = sessionExpiredElement
+    ? await page.evaluate((element) => {
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        const text = element.textContent?.trim() ?? '';
+        const isVisible =
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          style.opacity !== '0' &&
+          rect.width > 0 &&
+          rect.height > 0;
 
-  if (sessionExpiredText && sessionExpiredMessagePattern.test(sessionExpiredText)) {
+        return { isVisible, text };
+      }, sessionExpiredElement)
+    : { isVisible: false, text: '' };
+
+  if (sessionExpiredState.isVisible && sessionExpiredMessagePattern.test(sessionExpiredState.text)) {
     console.log('Session expired detected. Re-login required.');
     await skrinLogin(page);
     await enterSkriningPage(page);
