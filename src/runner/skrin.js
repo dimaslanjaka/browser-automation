@@ -224,7 +224,7 @@ export async function processData(browser, data) {
       const address = await geocodeWithNominatim(keywordAddr);
       fixedData._address = address;
 
-      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = parsedNik;
+      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = parsedNik.data;
 
       if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
         console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
