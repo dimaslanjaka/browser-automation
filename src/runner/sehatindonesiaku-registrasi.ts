@@ -4,10 +4,9 @@ import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
+import { LogDatabase } from '../database/LogDatabase.js';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { GetPuppeteerSingleReturn } from '../../types/puppeteer-utils.js';
 import { fixKemkesDataItem, getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
-import { DataItem } from './types.js';
 import {
   DataTidakSesuaiKTPError,
   KuotaHabisError,
@@ -37,7 +36,7 @@ import {
   enterSehatIndonesiaKu,
   selectDayFromCalendar
 } from './sehatindonesiaku-utils.js';
-import { LogDatabase } from '../database/LogDatabase.js';
+import { DataItem } from './types.js';
 
 // Address defaults moved to processData options
 const cliArgs = minimist(process.argv.slice(2), {
@@ -68,7 +67,7 @@ function parseNikArg(arg: unknown): string[] | undefined {
 async function main() {
   let needLogin = false;
   const db = await getSehatIndonesiaKuDb();
-  const { browser } = (await getPuppeteer()) as GetPuppeteerSingleReturn;
+  const { browser } = await getPuppeteer();
 
   // Parse --nik from CLI args and pass to getData
   const nikList = parseNikArg(cliArgs.nik);

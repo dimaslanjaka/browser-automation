@@ -39,10 +39,8 @@ let puppeteer_cluster = null;
  *
  * @async
  * @function getPuppeteer
- * @param {import('../types/puppeteer-utils.js').getPuppeteerOptions} [options] - Configuration options for launching Puppeteer.
- * @returns {Promise<import('../types/puppeteer-utils.js').GetPuppeteerReturn>} Resolves with either:
- *   - an object with `page`, `browser` and `puppeteer` (single-browser mode), or
- *   - an object with `cluster` and `puppeteer` (when `clusterOptions` provided).
+ * @param {import('./puppeteer_utils-d.d.ts').getPuppeteerOptions} [options] - Configuration options for launching Puppeteer.
+ * @returns {Promise<import('./puppeteer_utils-d.d.ts').GetPuppeteerSingleReturn>} Resolves with `page`, `browser`, and `puppeteer`.
  *
  * @example
  * const { page, browser } = await getPuppeteer({ headless: true });
@@ -73,28 +71,6 @@ export async function getPuppeteer(options = {}) {
   // Always use stealth plugin
   puppeteer.use(StealthPlugin());
 
-  // If cluster options provided, create/return a puppeteer-cluster instance
-  if (merged.clusterOptions) {
-    try {
-      const { Cluster } = await import('puppeteer-cluster');
-      const clonePuppeterOptions = merged;
-      delete clonePuppeterOptions.clusterOptions;
-
-      if (!puppeteer_cluster || !merged.reuse) {
-        // Ensure the cluster uses our puppeteer-extra instance so stealth plugin is active
-        puppeteer_cluster = await Cluster.launch({
-          ...merged.clusterOptions,
-          puppeteer,
-          puppeteerOptions: { ...clonePuppeterOptions }
-        });
-      }
-
-      return { cluster: puppeteer_cluster, puppeteer };
-    } catch (err) {
-      throw new Error(`puppeteer-cluster is required when using clusterOptions: ${err.message}`);
-    }
-  }
-
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
     if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
       merged.executablePath = undefined; // Use Puppeteer's default Chromium
@@ -104,6 +80,58 @@ export async function getPuppeteer(options = {}) {
 
   const page = await puppeteer_browser.newPage();
   return { page, browser: puppeteer_browser, puppeteer };
+}
+
+/**
+ * Launches or reuses a Puppeteer Cluster instance using `puppeteer-extra`.
+ *
+ * @async
+ * @function getPuppeteerCluster
+ * @param {import('./puppeteer_utils-d.d.ts').GetPuppeteerClusterOptions} [options] - Direct puppeteer-cluster launch options.
+ * @returns {Promise<import('./puppeteer_utils-d.d.ts').GetPuppeteerClusterReturn>} Resolves with `cluster` and `puppeteer`.
+ */
+export async function getPuppeteerCluster(options = {}) {
+  const defaultPuppeteerOptions = {
+    headless: false,
+    userDataDir: userDataDir,
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    args: [
+      '--disable-features=HeavyAdIntervention',
+      '--disable-features=AdInterestGroupAPI',
+      '--disable-popup-blocking',
+      '--no-default-browser-check',
+      '--no-first-run',
+      '--ignore-certificate-errors',
+      '--hide-crash-restore-bubble',
+      '--autoplay-policy=no-user-gesture-required'
+    ],
+    devtools: false
+  };
+
+  const { reuse = true, puppeteerOptions: customPuppeteerOptions = {}, ...clusterLaunchOptions } = options;
+  const puppeteerOptions = { ...defaultPuppeteerOptions, ...customPuppeteerOptions };
+
+  puppeteer.use(StealthPlugin());
+
+  if (puppeteerOptions.executablePath && !fs.existsSync(puppeteerOptions.executablePath)) {
+    puppeteerOptions.executablePath = undefined;
+  }
+
+  try {
+    const { Cluster } = await import('puppeteer-cluster');
+
+    if (!puppeteer_cluster || !reuse) {
+      puppeteer_cluster = await Cluster.launch({
+        ...clusterLaunchOptions,
+        puppeteer,
+        puppeteerOptions
+      });
+    }
+
+    return { cluster: puppeteer_cluster, puppeteer };
+  } catch (err) {
+    throw new Error(`puppeteer-cluster is required when using getPuppeteerCluster: ${err.message}`);
+  }
 }
 
 /**
