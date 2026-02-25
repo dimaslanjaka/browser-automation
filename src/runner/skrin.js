@@ -80,14 +80,26 @@ export async function processData(browser, data) {
 
   if (!`${data.tanggal}`.includes('/') || !data.tanggal || data.tanggal.length < 8) {
     await browser.close();
-    throw new Error(`INVALID DATE ${JSON.stringify(data, null, 2)}`);
+    throw new Error(
+      `INVALID DATE: tanggal=${String(data.tanggal)} (type=${typeof data.tanggal}) - data=${JSON.stringify(
+        data,
+        null,
+        2
+      )}`
+    );
   }
 
   const parseTanggal = moment(data.tanggal, 'DD/MM/YYYY', true); // strict parsing
 
   if (!parseTanggal.isValid()) {
     await browser.close();
-    throw new Error(`INVALID DATE ${JSON.stringify(data, null, 2)}`);
+    throw new Error(
+      `INVALID DATE (parse failed): tanggal=${String(data.tanggal)} (type=${typeof data.tanggal}) - data=${JSON.stringify(
+        data,
+        null,
+        2
+      )}`
+    );
   }
 
   if (parseTanggal.day() === 0) {
@@ -502,7 +514,7 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
      * @type {import('../../globals.js').ExcelRowData}
      */
     let data = await dataCallback(datas.shift()); // <-- modify the data via callback
-    data = await fixData(data); // <-- fix the data if needed
+    data = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: true, verbose: true }); // <-- fix the data if needed
     if (!nikUtils.isValidNIK(data.nik)) {
       addLog({
         id: getNumbersOnly(data.nik),
