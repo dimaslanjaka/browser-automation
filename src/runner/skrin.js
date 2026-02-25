@@ -152,7 +152,7 @@ export async function processData(page, data) {
 
   console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
   if (await isNikErrorVisible(page)) {
-    waitEnter('Please check NIK error notification. Press Enter to continue...');
+    await waitEnter('Please check NIK error notification. Press Enter to continue...');
     throw new Error('NIK error notification visible, please re-check. Aborting...');
   }
 
@@ -515,7 +515,7 @@ export async function processData(page, data) {
       await page.click('#yesButton');
     } catch (_) {
       // Fail sending data, press manually
-      waitEnter(
+      await waitEnter(
         'Failed to click #yesButton for confirmation modal. Please click the button manually, then press Enter to continue...'
       );
     }
