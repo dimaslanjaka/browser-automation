@@ -21,6 +21,7 @@ import {
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../utils.js';
 import { ucwords } from '../utils/string.js';
 import { loadCsvData } from '../../data/index.js';
+import { fixData } from '../xlsx-helper.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });
@@ -500,7 +501,7 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
-    let data = await dataCallback(datas.shift()); // <-- modify the data via callback
+    let data = await dataCallback(await fixData(datas.shift())); // <-- modify the data via callback
     const existing = getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data && existing.data.status === 'success') {
       console.log(`Data for NIK ${data.nik} already processed. Skipping.`);
@@ -524,9 +525,24 @@ export async function runEntrySkrining(dataCallback = (data) => data) {
 }
 
 if (process.argv[1] === __filename) {
-  runEntrySkrining().catch((err) => {
-    console.error('Unhandled error in runEntrySkrining:', err && err.stack ? err.stack : err);
-    // give some time for stdout/stderr to flush, then exit with failure
-    setTimeout(() => process.exit(1), 100);
-  });
+  (async function mainLoop() {
+    while (true) {
+      try {
+        await runEntrySkrining();
+        break; // finished successfully
+      } catch (err) {
+        const msg =
+          err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
+        console.error('Unhandled error in runEntrySkrining:', msg);
+        if (String(msg).includes('net::ERR_CONNECTION_TIMED_OUT')) {
+          console.warn('Detected net::ERR_CONNECTION_TIMED_OUT — restarting in 5s...');
+          await sleep(5000);
+          continue; // restart loop
+        }
+        // give some time for stdout/stderr to flush, then exit with failure
+        setTimeout(() => process.exit(1), 100);
+        break;
+      }
+    }
+  })();
 }
