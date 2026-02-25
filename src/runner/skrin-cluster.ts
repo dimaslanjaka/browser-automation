@@ -584,23 +584,44 @@ async function main() {
   });
 
   try {
-    const dataKunto = await Bluebird.filter((await loadCsvData()) as ExcelRowData[], async (data) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      if (existing && existing.data) return false;
-      return true;
-    });
+    while (true) {
+      const dataKunto = await Bluebird.filter((await loadCsvData()) as ExcelRowData[], async (data) => {
+        const existing = await database.getLogById(getNumbersOnly(data.nik));
+        if (existing && existing.data) return false;
+        return true;
+      });
 
-    // Loop based on maxConcurrency to ensure we don't overload the cluster
-    for (let i = 0; i < maxConcurrency; i++) {
-      const data = array_random(dataKunto);
-      // Skip if already processed
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      if (existing && existing.data) {
-        console.log(`Skipping already processed NIK: ${data.nik}`);
-        continue;
+      if (dataKunto.length === 0) {
+        console.log('No unprocessed data found. Stopping worker loop.');
+        break;
       }
 
-      if (data) {
+      const batchSize = Math.min(maxConcurrency, dataKunto.length);
+      const batchQueue: ExcelRowData[] = [];
+
+      for (let i = 0; i < batchSize; i++) {
+        const picked = array_random(dataKunto);
+        if (!picked) {
+          break;
+        }
+        batchQueue.push(picked);
+
+        const pickedNik = getNumbersOnly(picked.nik);
+        const pickedIndex = dataKunto.findIndex((item) => getNumbersOnly(item.nik) === pickedNik);
+        if (pickedIndex !== -1) {
+          dataKunto.splice(pickedIndex, 1);
+        }
+      }
+
+      console.log(`Queueing ${batchQueue.length} item(s) for this batch...`);
+
+      for (const data of batchQueue) {
+        const existing = await database.getLogById(getNumbersOnly(data.nik));
+        if (existing && existing.data) {
+          console.log(`Skipping already processed NIK: ${data.nik}`);
+          continue;
+        }
+
         cluster.queue(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
           try {
             await closeOtherTabs(page);
@@ -623,9 +644,10 @@ async function main() {
           }
         });
       }
-    }
 
-    await cluster.idle();
+      await cluster.idle();
+      console.log('Batch finished. Refreshing unprocessed data...');
+    }
   } finally {
     await cluster.close();
     await database.close();
