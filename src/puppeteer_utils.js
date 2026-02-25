@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
  * The absolute path for the user data directory.
  * @constant {string} userDataDir - The path to store browser profile data.
  */
-const userDataDir = path.resolve(process.cwd(), '.cache/profile1');
+const userDataDir = path.resolve(process.cwd(), '.cache/profiles/default');
 
 /**
  * @type {import('puppeteer').Browser | null}
