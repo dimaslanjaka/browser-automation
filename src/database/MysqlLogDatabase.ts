@@ -39,6 +39,7 @@ export interface AddLogOptions {
 export class MysqlLogDatabase implements BaseLogDatabase {
   private helper: MySQLHelper;
   private config: MySQLConfig;
+  private readyPromise?: Promise<void>;
 
   /**
    * Create a new MysqlLogDatabase instance.
@@ -71,6 +72,16 @@ export class MysqlLogDatabase implements BaseLogDatabase {
     )`);
   }
 
+  private async ensureReady() {
+    if (!this.readyPromise) {
+      this.readyPromise = this.waitReady().catch((error) => {
+        this.readyPromise = undefined;
+        throw error;
+      });
+    }
+    await this.readyPromise;
+  }
+
   /**
    * Execute a raw SQL query on the underlying MySQL pool.
    *
@@ -79,6 +90,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise resolving to the query result.
    */
   public async query<T>(sql: string, params?: any[]): Promise<T[]> {
+    await this.ensureReady();
     return this.helper.query<T>(sql, params);
   }
 
@@ -90,6 +102,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves when the log is added or updated.
    */
   async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: AddLogOptions = {}) {
+    await this.ensureReady();
     if (!timestamp) timestamp = getJakartaTimestamp();
     const defaultOptions = {
       timeout: 60000, // default 60s if not provided
@@ -122,6 +135,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves to true if a log was removed, false otherwise.
    */
   async removeLog(id: LogEntry<any>['id']): Promise<boolean> {
+    await this.ensureReady();
     const result = await this.helper.execute('DELETE FROM logs WHERE id = ?', [id]);
     return result.affectedRows > 0;
   }
@@ -133,6 +147,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    * @returns Promise that resolves to the log object or undefined if not found.
    */
   async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
+    await this.ensureReady();
     const rows: any = await this.helper.query('SELECT * FROM logs WHERE id = ?', [id]);
     if (!rows[0]) return undefined;
     return {
@@ -154,6 +169,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
   ) {
+    await this.ensureReady();
     let query = 'SELECT * FROM logs';
     const params: any[] = [];
     if (options?.limit) {

@@ -13,38 +13,57 @@ export interface MySQLConfig {
 }
 
 export class MySQLHelper {
-  private pool: Pool;
+  private pool?: Pool;
   private config: MySQLConfig;
   public ready = false;
+  private initializing?: Promise<void>;
 
   constructor(config: MySQLConfig) {
     this.config = config;
   }
 
   async initialize() {
-    if (this.ready) return;
-
-    // Ensure database exists
-    const _schemaIndicatorFile = path.join(process.cwd(), 'tmp/database/', `${this.config.database}.schema`);
-    if (!fs.existsSync(_schemaIndicatorFile)) {
-      await this._ensureDatabase();
-      await fs.ensureDir(path.dirname(_schemaIndicatorFile));
-      await fs.writeFile(_schemaIndicatorFile, `Initialized at ${new Date().toISOString()}\n`, 'utf-8');
+    if (this.ready && this.pool) return;
+    if (this.initializing) {
+      await this.initializing;
+      return;
     }
 
-    // Create connection pool
-    this.pool = mariadb.createPool({
-      host: this.config.host,
-      user: this.config.user,
-      password: this.config.password,
-      database: this.config.database,
-      port: parseInt(String(this.config.port || 3306), 10),
-      connectionLimit: this.config.connectionLimit || 5,
-      connectTimeout: this.config.connectTimeout || 60000,
-      allowPublicKeyRetrieval: true
-    });
+    this.initializing = (async () => {
+      // Ensure database exists
+      const _schemaIndicatorFile = path.join(process.cwd(), 'tmp/database/', `${this.config.database}.schema`);
+      if (!fs.existsSync(_schemaIndicatorFile)) {
+        await this._ensureDatabase();
+        await fs.ensureDir(path.dirname(_schemaIndicatorFile));
+        await fs.writeFile(_schemaIndicatorFile, `Initialized at ${new Date().toISOString()}\n`, 'utf-8');
+      }
 
-    this.ready = true;
+      // Create connection pool
+      this.pool = mariadb.createPool({
+        host: this.config.host,
+        user: this.config.user,
+        password: this.config.password,
+        database: this.config.database,
+        port: parseInt(String(this.config.port || 3306), 10),
+        connectionLimit: this.config.connectionLimit || 5,
+        connectTimeout: this.config.connectTimeout || 60000,
+        allowPublicKeyRetrieval: true
+      });
+
+      this.ready = true;
+    })();
+
+    try {
+      await this.initializing;
+    } finally {
+      this.initializing = undefined;
+    }
+  }
+
+  private async ensureInitialized() {
+    if (!this.ready || !this.pool) {
+      await this.initialize();
+    }
   }
 
   private async _ensureDatabase() {
@@ -64,9 +83,10 @@ export class MySQLHelper {
    * Execute a simple query
    */
   async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+    await this.ensureInitialized();
     let conn: PoolConnection | undefined;
     try {
-      conn = await this.pool.getConnection();
+      conn = await this.pool!.getConnection();
       const rows = await conn.query<T>(sql, params);
       // Remove metadata property if present
       return Array.isArray(rows) ? (rows as T[]) : [];
@@ -79,9 +99,10 @@ export class MySQLHelper {
    * Execute insert/update/delete
    */
   async execute(sql: string, params: any[] = []): Promise<{ affectedRows: number; insertId?: number }> {
+    await this.ensureInitialized();
     let conn: PoolConnection | undefined;
     try {
-      conn = await this.pool.getConnection();
+      conn = await this.pool!.getConnection();
       const result = await conn.query(sql, params);
       return {
         affectedRows: result.affectedRows || 0,
@@ -96,9 +117,10 @@ export class MySQLHelper {
    * Transaction wrapper
    */
   async transaction<T>(fn: (conn: PoolConnection) => Promise<T>): Promise<T> {
+    await this.ensureInitialized();
     let conn: PoolConnection | undefined;
     try {
-      conn = await this.pool.getConnection();
+      conn = await this.pool!.getConnection();
       await conn.beginTransaction();
       const result = await fn(conn);
       await conn.commit();
@@ -115,8 +137,9 @@ export class MySQLHelper {
    * Close the pool
    */
   async close(): Promise<void> {
-    if (!this.ready) return;
+    if (!this.ready || !this.pool) return;
     await this.pool.end();
+    this.pool = undefined;
     this.ready = false;
   }
 }
