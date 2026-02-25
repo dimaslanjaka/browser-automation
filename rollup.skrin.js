@@ -32,7 +32,7 @@ const skrinConfig = {
     alias({
       entries: [
         { find: '../data', replacement: path.resolve(__dirname, 'data') },
-        { find: './globals.js', replacement: path.resolve(__dirname, 'src/globals.d.ts') }
+        { find: './globals.js', replacement: path.resolve(__dirname, 'globals.d.ts') }
       ]
     }),
     json(),
@@ -128,6 +128,10 @@ const directProcessDataConfig = {
 /** @type {import('rollup').RollupOptions} */
 const directProcessDataDtsConfig = {
   input: 'src/runner/skrin/direct-process-data.ts',
+  external: (id) => {
+    if (/globals\.(d\.)?ts$/.test(id) || /globals\.js$/.test(id)) return true;
+    return external.includes(id);
+  },
   output: [
     {
       dir: 'dist/runner/skrin',
