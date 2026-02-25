@@ -77,10 +77,16 @@ export async function getPuppeteer(options = {}) {
   if (merged.clusterOptions) {
     try {
       const { Cluster } = await import('puppeteer-cluster');
+      const clonePuppeterOptions = merged;
+      delete clonePuppeterOptions.clusterOptions;
 
       if (!puppeteer_cluster || !merged.reuse) {
         // Ensure the cluster uses our puppeteer-extra instance so stealth plugin is active
-        puppeteer_cluster = await Cluster.launch({ ...merged.clusterOptions, puppeteer, puppeteerOptions: { merged } });
+        puppeteer_cluster = await Cluster.launch({
+          ...merged.clusterOptions,
+          puppeteer,
+          puppeteerOptions: { ...clonePuppeterOptions }
+        });
       }
 
       return { cluster: puppeteer_cluster, puppeteer };
