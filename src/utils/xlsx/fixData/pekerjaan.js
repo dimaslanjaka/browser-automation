@@ -12,7 +12,7 @@ import { logLine } from '../../../utils.js';
  * @param {import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData | null} initialData - The full data object being processed
  * @param {object} [options={}] - Configuration options
  * @param {boolean} [options.verbose=false] - When true, logs progress messages during normalization
- * @returns {{pekerjaan: string, initialData: import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData}} Object containing normalized pekerjaan and updated initialData
+ * @returns {{pekerjaan: string, initialData: import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData, pekerjaan_original: string}} Object containing normalized pekerjaan and updated initialData
  * @throws {Error} When pekerjaan cannot be determined or mapped to a valid category
  */
 export function fixPekerjaan(initialData, options = { verbose: false }) {
@@ -63,5 +63,5 @@ export function fixPekerjaan(initialData, options = { verbose: false }) {
   initialData.pekerjaan = pekerjaan;
   initialData.PEKERJAAN = pekerjaan;
 
-  return { pekerjaan, initialData };
+  return { pekerjaan, initialData, pekerjaan_original: initialData.pekerjaan };
 }

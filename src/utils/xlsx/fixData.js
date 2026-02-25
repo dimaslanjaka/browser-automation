@@ -170,6 +170,7 @@ export default async function fixData(
   const pekerjaanResult = fixPekerjaan(initialData, { verbose: options.verbose });
   initialData.pekerjaan = pekerjaanResult.pekerjaan;
   initialData.PEKERJAAN = pekerjaanResult.pekerjaan;
+  initialData.pekerjaan_original = pekerjaanResult.pekerjaan_original; // preserve original pekerjaan value
 
   // Fix alamat
   let alamat = initialData.alamat || initialData.ALAMAT || null;
