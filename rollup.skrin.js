@@ -140,4 +140,39 @@ const directProcessDataDtsConfig = {
   plugins: [dts()]
 };
 
-export default [databaseConfig, databaseDtsConfig, directProcessDataConfig, directProcessDataDtsConfig, skrinConfig];
+let configurations = [skrinConfig];
+
+const buildTargets = (process.env.BUILD_TARGET || '')
+  .split(',')
+  .map((target) => target.trim())
+  .filter(Boolean);
+
+if (buildTargets.includes('all')) {
+  configurations = [
+    databaseConfig,
+    databaseDtsConfig,
+    directProcessDataConfig,
+    directProcessDataDtsConfig,
+    skrinConfig
+  ];
+} else if (buildTargets.length > 0) {
+  const selectedConfigurations = [];
+
+  if (buildTargets.includes('database')) {
+    selectedConfigurations.push(databaseConfig, databaseDtsConfig);
+  }
+
+  if (buildTargets.includes('direct-process-data')) {
+    selectedConfigurations.push(directProcessDataConfig, directProcessDataDtsConfig);
+  }
+
+  if (buildTargets.includes('skrin')) {
+    selectedConfigurations.push(skrinConfig);
+  }
+
+  if (selectedConfigurations.length > 0) {
+    configurations = selectedConfigurations;
+  }
+}
+
+export default configurations;
