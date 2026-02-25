@@ -31,6 +31,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * Re-evaluates the form by re-typing the "metode_id_input" field to trigger any dynamic changes on the page.
+ *
+ * This function is used to ensure that any dependent fields or validations that rely on the "metode_id_input" value are properly updated after changes to the form.
+ *
+ * @async
+ * @param {import('puppeteer').Page} page
+ */
+async function reEvaluate(page) {
+  await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+}
+
+/**
  * Processes a single row of Excel data by automating the form-filling process on the skrining site.
  *
  * Steps include navigating pages, inputting data, checking for various modals and alerts,
@@ -383,6 +395,7 @@ export async function processData(browser, data) {
     await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
     // Re-check
+    if (await isInvalidAlertVisible(page)) await reEvaluate(page);
     if (await isInvalidAlertVisible(page)) {
       console.warn('⚠️ Invalid alert detected for the following data:');
       console.dir(fixedData, { depth: null });
