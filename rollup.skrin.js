@@ -6,6 +6,7 @@ import dts from 'rollup-plugin-dts';
 import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
+import alias from '@rollup/plugin-alias';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,12 @@ const skrinConfig = {
     sourcemap: true
   },
   plugins: [
+    alias({
+      entries: [
+        { find: '../data', replacement: path.resolve(__dirname, 'data') },
+        { find: './globals.js', replacement: path.resolve(__dirname, 'src/globals.d.ts') }
+      ]
+    }),
     json(),
     resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] }),
     ...(isTypeScriptInput ? [typescript()] : []),
