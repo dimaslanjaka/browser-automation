@@ -62,6 +62,7 @@ describe('fixData - Basic Tests', () => {
     expect(result.NIK).toBe(realNIKs[0]);
     expect(result.NAMA).toBe('John Doe');
     expect(result['TANGGAL ENTRY']).toMatch(/^\d{2}\/02\/\d{4}$/);
+    expect(result.tanggal).toBe(result['TANGGAL ENTRY']);
 
     // change tanggal and remove previous property `TANGGAL ENTRY`
     data.tanggal = 'Maret';
@@ -70,6 +71,7 @@ describe('fixData - Basic Tests', () => {
     expect(result.NIK).toBe(realNIKs[0]);
     expect(result.NAMA).toBe('John Doe');
     expect(result['TANGGAL ENTRY']).toMatch(/^\d{2}\/03\/\d{4}$/);
+    expect(result.tanggal).toBe(result['TANGGAL ENTRY']);
   }, 60000);
 
   test('accepts valid data with mixed case fields', async () => {

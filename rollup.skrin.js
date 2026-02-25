@@ -67,29 +67,77 @@ const databaseConfig = {
 };
 
 /** @type {import('rollup').RollupOptions} */
-const databaseDtsCtsConfig = {
+const databaseDtsConfig = {
   input: 'src/database/index.ts',
-  output: {
-    dir: 'dist/database',
-    format: 'es',
-    preserveModules: true,
-    preserveModulesRoot: 'src/database',
-    entryFileNames: '[name].d.cts'
-  },
+  output: [
+    {
+      dir: 'dist/database',
+      format: 'es',
+      preserveModules: true,
+      preserveModulesRoot: 'src/database',
+      entryFileNames: '[name].d.cts'
+    },
+    {
+      dir: 'dist/database',
+      format: 'es',
+      preserveModules: true,
+      preserveModulesRoot: 'src/database',
+      entryFileNames: '[name].d.mts'
+    }
+  ],
   plugins: [dts()]
 };
 
 /** @type {import('rollup').RollupOptions} */
-const databaseDtsMtsConfig = {
-  input: 'src/database/index.ts',
-  output: {
-    dir: 'dist/database',
-    format: 'es',
-    preserveModules: true,
-    preserveModulesRoot: 'src/database',
-    entryFileNames: '[name].d.mts'
-  },
+const directProcessDataConfig = {
+  input: 'src/runner/skrin/direct-process-data.ts',
+  external,
+  output: [
+    {
+      dir: 'dist/runner/skrin',
+      format: 'cjs',
+      preserveModules: true,
+      preserveModulesRoot: 'src/runner/skrin',
+      entryFileNames: '[name].cjs',
+      sourcemap: true
+    },
+    {
+      dir: 'dist/runner/skrin',
+      format: 'esm',
+      preserveModules: true,
+      preserveModulesRoot: 'src/runner/skrin',
+      entryFileNames: '[name].mjs',
+      sourcemap: true
+    }
+  ],
+  plugins: [
+    json(),
+    resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] }),
+    typescript({ compilerOptions: { outDir: 'dist/runner/skrin' } }),
+    commonjs({ extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] })
+  ]
+};
+
+/** @type {import('rollup').RollupOptions} */
+const directProcessDataDtsConfig = {
+  input: 'src/runner/skrin/direct-process-data.ts',
+  output: [
+    {
+      dir: 'dist/runner/skrin',
+      format: 'es',
+      preserveModules: true,
+      preserveModulesRoot: 'src/runner/skrin',
+      entryFileNames: '[name].d.cts'
+    },
+    {
+      dir: 'dist/runner/skrin',
+      format: 'es',
+      preserveModules: true,
+      preserveModulesRoot: 'src/runner/skrin',
+      entryFileNames: '[name].d.mts'
+    }
+  ],
   plugins: [dts()]
 };
 
-export default [databaseConfig, databaseDtsCtsConfig, databaseDtsMtsConfig, skrinConfig];
+export default [databaseConfig, databaseDtsConfig, directProcessDataConfig, directProcessDataDtsConfig, skrinConfig];
