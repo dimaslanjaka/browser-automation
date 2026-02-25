@@ -169,7 +169,7 @@ export default async function fixData(
   }
   // fixData gender result
   initialData.gender = gender;
-  initialData.gender_initial = genderInitial;
+  initialData.genderInitial = genderInitial;
 
   // Pekerjaan normalization
   const pekerjaanResult = fixPekerjaan(initialData, { verbose: options.verbose });
