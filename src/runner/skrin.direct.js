@@ -1,5 +1,4 @@
-import { runEntrySkrining } from './skrin.js';
-import { multiBeep } from '../utils.js';
+import { executeSkriningProcess } from './skrin.js';
 
 // Override dates
 // runEntrySkrining(function (data) {
@@ -14,7 +13,4 @@ import { multiBeep } from '../utils.js';
 // });
 
 // Normal runs
-runEntrySkrining().catch((e) => {
-  multiBeep();
-  console.error(e);
-});
+executeSkriningProcess();

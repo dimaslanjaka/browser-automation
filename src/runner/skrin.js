@@ -598,7 +598,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   // Completed run - database logging used instead of HTML log builds
 }
 
-async function _mainLoop() {
+export async function executeSkriningProcess() {
   let puppeteerInstance;
   try {
     puppeteerInstance = await getPuppeteer();
@@ -644,6 +644,6 @@ async function _mainLoop() {
   }
 }
 
-if ('skrin' === path.basename(__filename, '.js')) {
-  _mainLoop();
-}
+// if ('skrin' === path.basename(__filename, '.js')) {
+//   executeSkriningProcess();
+// }
