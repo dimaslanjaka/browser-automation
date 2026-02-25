@@ -6,7 +6,7 @@ import type { NikParseResult } from 'nik-parser-jurusid';
 import path from 'path';
 import type { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
-import { array_random, isEmpty } from 'sbg-utility';
+import { isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import type { ExcelRowData, fixDataResult } from '../../globals.js';
 import { loadCsvData } from '../../data/index.js';
@@ -596,57 +596,44 @@ async function main() {
         break;
       }
 
-      const batchSize = Math.min(maxConcurrency, dataKunto.length);
-      const batchQueue: ExcelRowData[] = [];
+      console.log(`Processing ${dataKunto.length} item(s) with max concurrency ${maxConcurrency}...`);
 
-      for (let i = 0; i < batchSize; i++) {
-        const picked = array_random(dataKunto);
-        if (!picked) {
-          break;
-        }
-        batchQueue.push(picked);
-
-        const pickedNik = getNumbersOnly(picked.nik);
-        const pickedIndex = dataKunto.findIndex((item) => getNumbersOnly(item.nik) === pickedNik);
-        if (pickedIndex !== -1) {
-          dataKunto.splice(pickedIndex, 1);
-        }
-      }
-
-      console.log(`Queueing ${batchQueue.length} item(s) for this batch...`);
-
-      for (const data of batchQueue) {
-        const existing = await database.getLogById(getNumbersOnly(data.nik));
-        if (existing && existing.data) {
-          console.log(`Skipping already processed NIK: ${data.nik}`);
-          continue;
-        }
-
-        cluster.queue(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
-          try {
-            await closeOtherTabs(page);
-            await skrinLogin(page);
-            await enterSkriningPage(page);
-            const result = await processData(page, data);
-            if (result.status === 'error') {
-              console.error('Error processing data:', {
-                error: result.reason || 'Unknown error',
-                data,
-                result
-              });
-            } else if (result.status === 'success') {
-              console.log('Data processed successfully:', result.data);
-            } else {
-              console.warn('Unexpected result status:', (result as any).status, result);
-            }
-          } catch (error) {
-            console.error('Exception while processing data:', { error, data });
+      await Bluebird.map(
+        dataKunto,
+        async (data) => {
+          const existing = await database.getLogById(getNumbersOnly(data.nik));
+          if (existing && existing.data) {
+            console.log(`Skipping already processed NIK: ${data.nik}`);
+            return;
           }
-        });
-      }
+
+          await cluster.execute(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
+            try {
+              await closeOtherTabs(page);
+              await skrinLogin(page);
+              await enterSkriningPage(page);
+              const result = await processData(page, data);
+              if (result.status === 'error') {
+                console.error('Error processing data:', {
+                  error: result.reason || 'Unknown error',
+                  data,
+                  result
+                });
+              } else if (result.status === 'success') {
+                console.log('Data processed successfully:', result.data);
+              } else {
+                console.warn('Unexpected result status:', (result as any).status, result);
+              }
+            } catch (error) {
+              console.error('Exception while processing data:', { error, data });
+            }
+          });
+        },
+        { concurrency: maxConcurrency }
+      );
 
       await cluster.idle();
-      console.log('Batch finished. Refreshing unprocessed data...');
+      console.log('Cycle finished. Refreshing unprocessed data...');
     }
   } finally {
     await cluster.close();
