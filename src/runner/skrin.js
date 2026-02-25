@@ -80,7 +80,7 @@ export async function processData(page, data) {
   if (!nikUtils.isValidNIK(NIK)) {
     addLog({
       id: getNumbersOnly(NIK),
-      data: { ...fixedData, status: 'invalid' },
+      data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
     });
     console.error(`Skipping due to invalid NIK format: ${NIK}`);
