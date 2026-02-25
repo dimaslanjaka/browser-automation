@@ -28,7 +28,8 @@ async function createSession() {
  * Resolves with the result of processing, or throws an error if an exception occurs.
  */
 async function processSkippedData(data, browser) {
-  const result = await processData(browser, data);
+  const page = await browser.newPage();
+  const result = await processData(page, data);
   if (result.status === 'error') {
     console.error('Error processing data:', {
       error: result.error || result.message || 'Unknown error',

@@ -48,7 +48,7 @@ async function reEvaluate(page) {
  * Steps include navigating pages, inputting data, checking for various modals and alerts,
  * correcting job/location fields, and submitting the form.
  *
- * @param {import('puppeteer').Browser} browser - The Puppeteer browser instance used to open and interact with web pages.
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance used to interact with the skrining form.
  * @param {import('../../globals.js').ExcelRowData} data - A single row of Excel data to be submitted through the form.
  * @returns {Promise<{
  *   status: 'success' | 'error',
@@ -58,16 +58,16 @@ async function reEvaluate(page) {
  * }>} Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
-export async function processData(browser, data) {
-  const page = await browser.newPage(); // Open new tab
-
+export async function processData(page, data) {
   try {
     await enterSkriningPage(page);
   } catch (e) {
     await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
     console.error('Error navigating to skrining page:', e.message);
-    // Repeat
-    return processData(browser, data);
+    // Repeat using a new page
+    await page.close().catch(() => {});
+    const retryPage = await page.browser().newPage();
+    return processData(retryPage, data);
   }
 
   await page.waitForSelector('#nik', { visible: true });
@@ -102,7 +102,6 @@ export async function processData(browser, data) {
   const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
 
   if (!`${tanggalEntry}`.includes('/') || !tanggalEntry || tanggalEntry.length < 8) {
-    await browser.close();
     throw new Error(
       `INVALID DATE: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
         fixedData,
@@ -115,7 +114,6 @@ export async function processData(browser, data) {
   const parseTanggal = moment(tanggalEntry, 'DD/MM/YYYY', true); // strict parsing
 
   if (!parseTanggal.isValid()) {
-    await browser.close();
     throw new Error(
       `INVALID DATE (parse failed): tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
         fixedData,
@@ -127,7 +125,6 @@ export async function processData(browser, data) {
 
   if (parseTanggal.day() === 0) {
     // Sunday
-    await browser.close();
     throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
   }
 
@@ -558,7 +555,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   }
 
   const puppeteer = puppeteerInstance;
-  let page = puppeteer.page;
+  const page = puppeteer.page;
   const browser = puppeteer.browser;
 
   await skrinLogin(page);
@@ -582,7 +579,8 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       await pages[0].close(); // Close the first tab
     }
 
-    const result = await processData(browser, data);
+    const processPage = await browser.newPage();
+    const result = await processData(processPage, data);
     if (result.status == 'error') {
       console.error(Object.assign(result, { data }));
       break; // stop processing further on error, to allow investigation and fixes
