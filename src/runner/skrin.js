@@ -220,30 +220,69 @@ export async function processData(browser, data) {
         throw new Error("❌ Failed to take the patient's address");
       }
 
+      let kotakab = '',
+        kecamatan = '',
+        provinsi = '',
+        kelurahan = '';
+
       const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
-      const address = await geocodeWithNominatim(keywordAddr);
-      fixedData._address = address;
+      const geocodedAddress = await geocodeWithNominatim(keywordAddr);
+      if (geocodedAddress) {
+        fixedData._address = geocodedAddress;
 
-      let { kotakab = '', kecamatan = '', provinsi = '', kelurahan = '' } = parsedNik.data;
+        // Avoid destructuring: explicitly read values from parsedNik.data (if present)
+        const _parsedNikData = parsedNik && parsedNik.data ? parsedNik.data : {};
+        kotakab = _parsedNikData.kotakab || '';
+        kecamatan = _parsedNikData.kecamatan || '';
+        provinsi = _parsedNikData.provinsi || '';
+        kelurahan = _parsedNikData.kelurahan || '';
 
-      if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
-        console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
-        console.log('Nominatim result:', address);
+        if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
+          console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
+          console.log('Nominatim result:', geocodedAddress);
 
-        const addr = address.address || {};
+          const addr = geocodedAddress.address || {};
 
-        if (kelurahan.length === 0) kelurahan = addr.village || addr.hamlet || '';
-        if (kecamatan.length === 0) kecamatan = addr.suburb || addr.city_district || '';
-        if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
-        if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
+          if (kelurahan.length === 0) kelurahan = addr.village || addr.hamlet || '';
+          if (kecamatan.length === 0) kecamatan = addr.suburb || addr.city_district || '';
+          if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
+          if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
 
-        if (kotakab.toLowerCase().includes('surabaya')) {
-          kotakab = 'Kota Surabaya';
+          if (kotakab.toLowerCase().includes('surabaya')) {
+            kotakab = 'Kota Surabaya';
+          }
+
+          if (kotakab.length === 0 || kecamatan.length === 0) {
+            throw new Error("❌ Failed to take the patient's city or town");
+          }
         }
-
-        if (kotakab.length === 0 || kecamatan.length === 0) {
-          throw new Error("❌ Failed to take the patient's city or town");
+      } else if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
+        const parsed_nik = fixedData.parsed_nik.data;
+        let parsedKelurahan;
+        // Explicit assignments instead of destructuring. Note: `namaKec` maps to `kecamatan`.
+        if (parsed_nik) {
+          kotakab = parsed_nik.kotakab || '';
+          kecamatan = parsed_nik.namaKec || '';
+          provinsi = parsed_nik.provinsi || '';
+          parsedKelurahan = parsed_nik.kelurahan != null ? parsed_nik.kelurahan : null;
+        } else {
+          kotakab = '';
+          kecamatan = '';
+          provinsi = '';
+          parsedKelurahan = null;
         }
+        const selectedKelurahan =
+          Array.isArray(parsedKelurahan) && parsedKelurahan.length > 0 ? parsedKelurahan[0] : parsedKelurahan || null;
+        kelurahan = selectedKelurahan ? selectedKelurahan.name || selectedKelurahan : '';
+        console.log(
+          `Using parsed NIK data for address: ${selectedKelurahan && selectedKelurahan.name ? selectedKelurahan.name : '<unknown kelurahan>'}, ${
+            kecamatan || '<unknown kec>'
+          }, ${kotakab || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
+        );
+      } else {
+        throw new Error(
+          `❌ Failed to determine address: no Nominatim result and no parsed NIK data available (nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+        );
       }
 
       // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
