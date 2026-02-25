@@ -29,18 +29,20 @@ let puppeteer_browser = null;
  * @type {import('playwright').Browser | null}
  */
 let playwright_browser = null;
+/**
+ * @type {import('puppeteer-cluster').Cluster | null}
+ */
+let puppeteer_cluster = null;
 
 /**
  * Launches or reuses a Puppeteer browser instance using `puppeteer-extra` with optional stealth plugin.
  *
  * @async
  * @function getPuppeteer
- * @param {import('puppeteer').LaunchOptions} [options] - Configuration options for launching Puppeteer.
- * @returns {Promise<{page: import('puppeteer').Page, browser: import('puppeteer').Browser, puppeteer: typeof import('puppeteer-extra')}>}
- * Resolves with an object containing:
- *   - `page`: A new Puppeteer `Page` instance.
- *   - `browser`: The launched or reused Puppeteer `Browser` instance.
- *   - `puppeteer`: The `puppeteer-extra` module reference.
+ * @param {import('../types/puppeteer-utils.js').getPuppeteerOptions} [options] - Configuration options for launching Puppeteer.
+ * @returns {Promise<import('../types/puppeteer-utils.js').GetPuppeteerReturn>} Resolves with either:
+ *   - an object with `page`, `browser` and `puppeteer` (single-browser mode), or
+ *   - an object with `cluster` and `puppeteer` (when `clusterOptions` provided).
  *
  * @example
  * const { page, browser } = await getPuppeteer({ headless: true });
@@ -70,6 +72,22 @@ export async function getPuppeteer(options = {}) {
 
   // Always use stealth plugin
   puppeteer.use(StealthPlugin());
+
+  // If cluster options provided, create/return a puppeteer-cluster instance
+  if (merged.clusterOptions) {
+    try {
+      const { Cluster } = await import('puppeteer-cluster');
+
+      if (!puppeteer_cluster || !merged.reuse) {
+        // Ensure the cluster uses our puppeteer-extra instance so stealth plugin is active
+        puppeteer_cluster = await Cluster.launch({ ...merged.clusterOptions, puppeteer, puppeteerOptions: { merged } });
+      }
+
+      return { cluster: puppeteer_cluster, puppeteer };
+    } catch (err) {
+      throw new Error(`puppeteer-cluster is required when using clusterOptions: ${err.message}`);
+    }
+  }
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
     if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
@@ -140,6 +158,15 @@ export async function getPlaywright(options = {}) {
  * @function closePuppeteer
  */
 export async function closePuppeteer() {
+  if (puppeteer_cluster) {
+    try {
+      await puppeteer_cluster.close();
+    } catch (e) {
+      console.warn('Error closing puppeteer-cluster:', e.message || e);
+    }
+    puppeteer_cluster = null;
+  }
+
   if (puppeteer_browser) {
     await puppeteer_browser.close();
     puppeteer_browser = null;
