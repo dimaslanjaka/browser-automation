@@ -158,12 +158,16 @@ if (buildTargets.includes('all')) {
 } else if (buildTargets.length > 0) {
   const selectedConfigurations = [];
 
+  if (buildTargets.includes('dts')) {
+    selectedConfigurations.push(directProcessDataDtsConfig, databaseDtsConfig);
+  }
+
   if (buildTargets.includes('database')) {
     selectedConfigurations.push(databaseConfig, databaseDtsConfig);
   }
 
-  if (buildTargets.includes('direct-process-data')) {
-    selectedConfigurations.push(directProcessDataConfig, directProcessDataDtsConfig);
+  if (buildTargets.includes('process')) {
+    selectedConfigurations.push(directProcessDataConfig);
   }
 
   if (buildTargets.includes('skrin')) {
