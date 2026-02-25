@@ -59,6 +59,9 @@ async function reEvaluate(page) {
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
 export async function processData(page, data) {
+  await page.setDefaultTimeout(0);
+  await page.setDefaultNavigationTimeout(0);
+
   await page.waitForSelector('#nik', { visible: true });
   await sleep(3000);
 
