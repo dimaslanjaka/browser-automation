@@ -159,12 +159,17 @@ export default async function fixData(
 
   // Gender
   let gender = parsed_nik.status === 'success' ? parsed_nik?.data.kelamin : 'Tidak Diketahui';
+  let genderInitial = null;
   if (gender.toLowerCase() === 'l' || gender.toLowerCase() === 'laki-laki') {
     gender = 'Laki-laki';
+    genderInitial = 'L';
   } else if (gender.toLowerCase() === 'p' || gender.toLowerCase() === 'perempuan') {
     gender = 'Perempuan';
+    genderInitial = 'P';
   }
-  initialData.gender = gender; // fixData gender result
+  // fixData gender result
+  initialData.gender = gender;
+  initialData.gender_initial = genderInitial;
 
   // Pekerjaan normalization
   const pekerjaanResult = fixPekerjaan(initialData, { verbose: options.verbose });

@@ -36,6 +36,7 @@ export interface fixDataResult extends ExcelRowData, ExcelRowData4 {
   [key: string]: any; // Allow additional properties
   parsed_nik: NikParseResult | null | undefined;
   gender: 'Laki-laki' | 'Perempuan' | 'Tidak Diketahui';
+  genderInitial: 'L' | 'P' | null;
   age: number;
 }
 
