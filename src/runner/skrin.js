@@ -492,7 +492,10 @@ export async function processData(page, data) {
       .filter((item) => item !== null);
     fixedData.formValues = formValues;
 
-    console.log(`Form values for NIK: ${NIK}:`, formValues);
+    console.log(`Form values for NIK: ${NIK} (${formValues.length} items)`);
+    for (const [index, formValue] of formValues.entries()) {
+      console.log(`Form value #${index + 1} for NIK ${NIK}:`, formValue);
+    }
 
     // Clck the save button
     console.log('Clicking the save button...');
