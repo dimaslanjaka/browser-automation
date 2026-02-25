@@ -1,7 +1,7 @@
 @echo off
 
-@REM set "SCRIPT=%CD%\src\runner\skrin2.js"
-
+@REM set "SKRIN_INPUT=%CD%\src\runner\skrin2.js"
+set "SKRIN_INPUT=%CD%\src\runner\skrin.js"
 call rollup -c rollup.skrin.js
 
 set "SCRIPT=%CD%\dist\skrin2.bundle.cjs"
