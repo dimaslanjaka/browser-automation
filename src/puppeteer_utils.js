@@ -5,7 +5,6 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
 import { chromium } from 'playwright-extra';
-import { Browser, Page } from 'puppeteer';
 
 /**
  * Get the absolute path of the current script.
@@ -1227,13 +1226,13 @@ export async function clickElementByText(page, selector, text) {
  * @returns {Promise<void>}
  */
 export async function closeFirstTab(context) {
-  if (context instanceof Page) {
+  if (context && typeof context.browser === 'function') {
     const browser = context.browser();
     const pages = await browser.pages();
     if (pages.length > 1) {
       await pages[0].close();
     }
-  } else if (context instanceof Browser) {
+  } else if (context && typeof context.pages === 'function') {
     const pages = await context.pages();
     if (pages.length > 1) {
       await pages[0].close();
@@ -1253,10 +1252,10 @@ export async function closeFirstTab(context) {
  */
 export async function closeOtherTabs(instance, keepCount = 2) {
   let pages;
-  if (instance instanceof Page) {
+  if (instance && typeof instance.browser === 'function') {
     const browser = instance.browser();
     pages = await browser.pages();
-  } else if (instance instanceof Browser) {
+  } else if (instance && typeof instance.pages === 'function') {
     pages = await instance.pages();
   } else {
     throw new Error('Instance must be a Puppeteer Page or Browser');
