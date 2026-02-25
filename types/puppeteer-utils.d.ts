@@ -9,18 +9,20 @@ export interface getPuppeteerOptions extends LaunchOptions {
   clusterOptions?: Partial<ClusterOptions> | Record<string, any>;
 }
 
+export interface GetPuppeteerSingleReturn {
+  page: import('puppeteer').Page;
+  browser: import('puppeteer').Browser;
+  puppeteer: typeof import('puppeteer-extra');
+}
+
+export interface GetPuppeteerClusterReturn {
+  cluster: import('puppeteer-cluster').Cluster;
+  puppeteer: typeof import('puppeteer-extra');
+}
+
 /**
  * Return shape for `getPuppeteer()`.
  * - Single browser mode returns `{ page, browser, puppeteer }`.
  * - Cluster mode returns `{ cluster, puppeteer }` when `clusterOptions` provided.
  */
-export type GetPuppeteerReturn =
-  | {
-      page: import('puppeteer').Page;
-      browser: import('puppeteer').Browser;
-      puppeteer: typeof import('puppeteer-extra');
-    }
-  | {
-      cluster: import('puppeteer-cluster').Cluster;
-      puppeteer: typeof import('puppeteer-extra');
-    };
+export type GetPuppeteerReturn = GetPuppeteerSingleReturn | GetPuppeteerClusterReturn;

@@ -5,6 +5,7 @@ import moment from 'moment';
 import { Browser, Page } from 'puppeteer';
 import { array_shuffle, array_unique, normalizePathUnix } from 'sbg-utility';
 import { anyElementWithTextExists, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { GetPuppeteerSingleReturn } from '../../types/puppeteer-utils.js';
 import { fixKemkesDataItem, getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import {
@@ -67,7 +68,7 @@ function parseNikArg(arg: unknown): string[] | undefined {
 async function main() {
   let needLogin = false;
   const db = await getSehatIndonesiaKuDb();
-  const { browser } = await getPuppeteer();
+  const { browser } = (await getPuppeteer()) as GetPuppeteerSingleReturn;
 
   // Parse --nik from CLI args and pass to getData
   const nikList = parseNikArg(cliArgs.nik);

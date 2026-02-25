@@ -10,6 +10,7 @@ import {
   isElementExist,
   waitForDomStable
 } from '../puppeteer_utils.js';
+import { GetPuppeteerSingleReturn } from '../../types/puppeteer-utils.js';
 import { sleep } from '../utils-browser.js';
 import { getSehatIndonesiaKuDb, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
@@ -50,7 +51,7 @@ if (process.argv.some((arg) => /sehatindonesiaku-kehadiran\.(cjs|js|mjs|ts)$/i.t
 }
 
 async function main(db: LogDatabase) {
-  const puppeteer = await getPuppeteer();
+  const puppeteer = (await getPuppeteer()) as GetPuppeteerSingleReturn;
   // Prepare data to process
   let allData = await getData(db);
   // Shuffle data if --shuffle is passed

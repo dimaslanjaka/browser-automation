@@ -6,6 +6,7 @@ import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { closeFirstTab, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
+import { GetPuppeteerSingleReturn } from '../../types/puppeteer-utils.js';
 import { noop, sleep } from '../utils-browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
@@ -33,7 +34,7 @@ async function main() {
   const db = await getSehatIndonesiaKuDb();
 
   let needLogin = false;
-  const { browser } = await getPuppeteer();
+  const { browser } = (await getPuppeteer()) as GetPuppeteerSingleReturn;
   // Handle browser closed event to exit process
   browser.on('disconnected', () => {
     process.exit(0);
