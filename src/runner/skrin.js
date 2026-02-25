@@ -545,8 +545,8 @@ if (process.argv[1] === __filename) {
           err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
         console.error('Unhandled error in runEntrySkrining:', msg);
         if (String(msg).includes('net::ERR_CONNECTION_TIMED_OUT')) {
-          console.warn('Detected net::ERR_CONNECTION_TIMED_OUT — restarting in 5s...');
-          await sleep(5000);
+          console.warn('Detected net::ERR_CONNECTION_TIMED_OUT — restarting in 1s...');
+          await sleep(1000);
           continue; // restart loop
         }
         // give some time for stdout/stderr to flush, then exit with failure
