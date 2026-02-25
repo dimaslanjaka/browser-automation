@@ -3,13 +3,20 @@ import minimist from 'minimist';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import path from 'path';
-import { isEmpty } from 'sbg-utility';
+import { array_random, isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
 import { geocodeWithNominatim } from '../address/nominatim.js';
 import { playMp3FromUrl } from '../beep.js';
 import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
-import { getPuppeteer, isElementExist, isElementVisible, typeAndTrigger } from '../puppeteer_utils.js';
+import {
+  closeOtherTabs,
+  getFormValues,
+  getPuppeteer,
+  isElementExist,
+  isElementVisible,
+  typeAndTrigger
+} from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
@@ -73,7 +80,7 @@ export async function processData(page, data) {
   if (!nikUtils.isValidNIK(NIK)) {
     addLog({
       id: getNumbersOnly(NIK),
-      data: { ...data, status: 'invalid' },
+      data: { ...fixedData, status: 'invalid' },
       message: 'Invalid NIK format'
     });
     console.error(`Skipping due to invalid NIK format: ${NIK}`);
@@ -452,6 +459,41 @@ export async function processData(page, data) {
     !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
   console.log('isAllowedToSubmit:', isAllowedToSubmit);
   if (isAllowedToSubmit) {
+    // get form values before submission
+    console.log(`Getting form values for NIK: ${NIK} before submission...`);
+    const formValues = (await getFormValues(page, '#main-container'))
+      .map((item) => {
+        if (!item.name || item.name.trim().length === 0) {
+          return null; // Skip items without a name
+        }
+        if (item.isVisible.toLowerCase() === 'false') {
+          return null; // Skip invisible elements
+        }
+        let valueLabel = item.value || '';
+        if (valueLabel.trim().length === 0) {
+          valueLabel = '<empty>';
+        }
+        let keyLabel = '';
+        if (item.name && item.name.trim().length > 0) {
+          keyLabel = `[name="${item.name}"]`;
+        } else if (item.id && item.id.trim().length > 0) {
+          keyLabel = `#${item.id}`;
+        } else {
+          keyLabel = '<empty-key>';
+        }
+        const isDisabled = item.disabled?.toLowerCase() === 'true';
+        return {
+          selector: keyLabel,
+          value: valueLabel,
+          disabled: isDisabled,
+          label: item.label
+        };
+      })
+      .filter((item) => item !== null);
+    fixedData.formValues = formValues;
+
+    console.log(`Form values for NIK: ${NIK}:`, formValues);
+
     // Clck the save button
     console.log('Clicking the save button...');
     await page.$eval('#save', (el) => el.scrollIntoView());
@@ -500,6 +542,12 @@ export async function processData(page, data) {
     console.warn('⚠️\tData processed but not submitted:', fixedData);
     await waitEnter('Press Enter to continue...');
   }
+
+  addLog({
+    id: getNumbersOnly(NIK),
+    data: { ...fixedData, status: 'success' },
+    message: `Data for NIK: ${NIK} submitted successfully.`
+  });
 
   return {
     status: 'success',
@@ -565,13 +613,9 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       continue;
     }
 
-    // Close the first tab when there are more than 2 open tabs
-    const pages = await browser.pages(); // Get all open pages (tabs)
-    if (pages.length > 3) {
-      await pages[0].close(); // Close the first tab
-    }
+    await closeOtherTabs(page);
 
-    const processPage = await browser.newPage();
+    const processPage = array_random(await browser.pages());
     try {
       await enterSkriningPage(page);
     } catch (e) {
@@ -580,17 +624,12 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     }
 
     const result = await processData(processPage, data);
-    if (result.status == 'error') {
+    if (result.status === 'error') {
       console.error(Object.assign(result, { data }));
       break; // stop processing further on error, to allow investigation and fixes
-    } else if (result.status == 'success') {
-      addLog({
-        id: getNumbersOnly(data.nik),
-        data: { ...data, status: 'success' },
-        message: `Data for NIK: ${data.nik} submitted successfully.`
-      });
-    } else {
+    } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
+      process.exit(1); // exit on unexpected status to avoid silent failures
     }
   }
 
