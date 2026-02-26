@@ -1,5 +1,4 @@
 import Bluebird from 'bluebird';
-import dotenv from 'dotenv';
 import minimist from 'minimist';
 import path from 'path';
 import { array_random } from 'sbg-utility';
@@ -11,9 +10,6 @@ import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../utils.js';
-
-// Load environment variables
-dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

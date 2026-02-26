@@ -1,24 +1,15 @@
 import Bluebird from 'bluebird';
-import dotenv from 'dotenv';
 import minimist from 'minimist';
-import path from 'path';
 import type { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
-import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
 import type { ExcelRowData } from '../../globals.js';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteerCluster } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
-import { processData } from './skrin/direct-process-data.js';
 import { getNumbersOnly } from '../utils.js';
-
-// Load environment variables
-dotenv.config({ path: path.join(process.cwd(), '.env') });
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { processData } from './skrin/direct-process-data.js';
 
 const cliArgs = minimist(process.argv.slice(2), {
   boolean: ['single', 'shuffle'],
