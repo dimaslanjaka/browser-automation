@@ -152,7 +152,6 @@
     "jest-environment-jsdom": "^30",
     "lint-staged": "^16",
     "nodemon": "^3",
-    "npm-check-updates": "^18",
     "postcss": "^8",
     "postcss-nesting": "^13",
     "prettier": "^3",
