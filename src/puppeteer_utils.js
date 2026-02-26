@@ -126,27 +126,43 @@ export async function getPuppeteer(options = {}) {
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
       launchOptions.executablePath = undefined; // Use Puppeteer's default Chromium
     }
-    try {
-      puppeteer_browser = await puppeteer.launch(launchOptions);
-    } catch (error) {
-      const errorMessage = String(error?.message || error || '').toLowerCase();
-      const isProfileInUseError =
-        errorMessage.includes('already running for') ||
-        errorMessage.includes('userdatadir') ||
-        errorMessage.includes('user data dir');
 
-      if (autoSwitchProfileDir && isProfileInUseError) {
-        if (launchOptions.userDataDir) {
-          excludedUserDataDirs.add(path.resolve(launchOptions.userDataDir));
+    const maxFallbackLaunchAttempts = 10;
+    let launchAttempt = 0;
+    let currentLaunchOptions = { ...launchOptions };
+
+    while (true) {
+      try {
+        puppeteer_browser = await puppeteer.launch(currentLaunchOptions);
+        break;
+      } catch (error) {
+        const errorMessage = String(error?.message || error || '').toLowerCase();
+        const isProfileInUseError =
+          errorMessage.includes('already running for') ||
+          errorMessage.includes('userdatadir') ||
+          errorMessage.includes('user data dir');
+
+        if (!autoSwitchProfileDir || !isProfileInUseError || launchAttempt >= maxFallbackLaunchAttempts) {
+          throw error;
         }
+
+        if (currentLaunchOptions.userDataDir) {
+          excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
+        }
+
         const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
         fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+        excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
+        launchAttempt += 1;
+
         console.warn(
           `Puppeteer launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
         );
-        puppeteer_browser = await puppeteer.launch({ ...launchOptions, userDataDir: fallbackUserDataDir });
-      } else {
-        throw error;
+
+        currentLaunchOptions = {
+          ...currentLaunchOptions,
+          userDataDir: fallbackUserDataDir
+        };
       }
     }
   }
@@ -445,27 +461,42 @@ export async function getPlaywright(options = {}) {
       launchOptions.executablePath = undefined; // Use Playwright's default Chromium
     }
 
-    try {
-      playwright_browser = await chromium.launch(launchOptions);
-    } catch (error) {
-      const errorMessage = String(error?.message || error || '').toLowerCase();
-      const isProfileInUseError =
-        errorMessage.includes('already running for') ||
-        errorMessage.includes('userdatadir') ||
-        errorMessage.includes('user data dir');
+    const maxFallbackLaunchAttempts = 10;
+    let launchAttempt = 0;
+    let currentLaunchOptions = { ...launchOptions };
 
-      if (autoSwitchProfileDir && isProfileInUseError) {
-        if (launchOptions.userDataDir) {
-          excludedUserDataDirs.add(path.resolve(launchOptions.userDataDir));
+    while (true) {
+      try {
+        playwright_browser = await chromium.launch(currentLaunchOptions);
+        break;
+      } catch (error) {
+        const errorMessage = String(error?.message || error || '').toLowerCase();
+        const isProfileInUseError =
+          errorMessage.includes('already running for') ||
+          errorMessage.includes('userdatadir') ||
+          errorMessage.includes('user data dir');
+
+        if (!autoSwitchProfileDir || !isProfileInUseError || launchAttempt >= maxFallbackLaunchAttempts) {
+          throw error;
         }
+
+        if (currentLaunchOptions.userDataDir) {
+          excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
+        }
+
         const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
         fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+        excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
+        launchAttempt += 1;
+
         console.warn(
           `Playwright launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
         );
-        playwright_browser = await chromium.launch({ ...launchOptions, userDataDir: fallbackUserDataDir });
-      } else {
-        throw error;
+
+        currentLaunchOptions = {
+          ...currentLaunchOptions,
+          userDataDir: fallbackUserDataDir
+        };
       }
     }
   }
