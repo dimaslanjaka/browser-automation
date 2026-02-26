@@ -19,6 +19,8 @@ import {
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
+import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
+import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -48,7 +50,11 @@ async function reEvaluate(page: Page): Promise<void> {
  * @returns Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
-export async function processData(page: Page, data: ExcelRowData, database: LogDatabase): Promise<ProcessDataResult> {
+export async function processData(
+  page: Page,
+  data: ExcelRowData,
+  database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase
+): Promise<ProcessDataResult> {
   page.setDefaultTimeout(0);
   page.setDefaultNavigationTimeout(0);
 
@@ -402,6 +408,9 @@ export async function processData(page: Page, data: ExcelRowData, database: LogD
     if (/\d/m.test(keteranganBatuk)) {
       await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
       await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
+    } else {
+      // clear keterangan if no numeric info is present to avoid invalid alert
+      await typeAndTrigger(page, '#field_item_keterangan textarea', '');
     }
   }
 
