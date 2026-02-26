@@ -1,4 +1,4 @@
-import { array_random, delay, jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
+import { delay, jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
 import path from 'upath';
 import cp from 'child_process';
 import fs from 'fs-extra';
@@ -8,7 +8,13 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const puppeteerTempPath = path.join(process.cwd(), 'tmp/puppeteer');
 const launcherLogPath = path.join(puppeteerTempPath, 'launcher.log');
+const endpointLocksPath = path.join(puppeteerTempPath, 'endpoint-locks');
 const launchTimeoutMs = 60_000;
+
+type EndpointLock = {
+  ownerPid: number;
+  claimedAt: string;
+};
 
 function isProcessRunning(pid: number): boolean {
   try {
@@ -27,6 +33,99 @@ function parseEndpoints(content: string): string[] {
   return jsonParseWithCircularRefs<string[]>(content);
 }
 
+function getEndpointLockPath(endpoint: string) {
+  return path.join(endpointLocksPath, `${encodeURIComponent(endpoint)}.json`);
+}
+
+function readEndpointLock(endpoint: string): EndpointLock | undefined {
+  const lockPath = getEndpointLockPath(endpoint);
+
+  try {
+    const content = fs.readFileSync(lockPath, 'utf8').trim();
+    if (!content) {
+      return undefined;
+    }
+
+    return jsonParseWithCircularRefs<EndpointLock>(content);
+  } catch {
+    return undefined;
+  }
+}
+
+function getActiveEndpointLock(endpoint: string): EndpointLock | undefined {
+  const lockPath = getEndpointLockPath(endpoint);
+  const lock = readEndpointLock(endpoint);
+  if (!lock?.ownerPid) {
+    fs.removeSync(lockPath);
+    return undefined;
+  }
+
+  if (!isProcessRunning(lock.ownerPid)) {
+    fs.removeSync(lockPath);
+    return undefined;
+  }
+
+  return lock;
+}
+
+function isEndpointLocked(endpoint: string): boolean {
+  return Boolean(getActiveEndpointLock(endpoint));
+}
+
+function tryClaimEndpoint(endpoint: string, ownerPid: number): boolean {
+  fs.ensureDirSync(endpointLocksPath);
+  const lockPath = getEndpointLockPath(endpoint);
+
+  const existingLock = getActiveEndpointLock(endpoint);
+  if (existingLock?.ownerPid && existingLock.ownerPid !== ownerPid) {
+    return false;
+  }
+
+  const payload: EndpointLock = {
+    ownerPid,
+    claimedAt: new Date().toISOString()
+  };
+
+  try {
+    const fd = fs.openSync(lockPath, 'wx');
+    fs.writeFileSync(fd, jsonStringifyWithCircularRefs(payload));
+    fs.closeSync(fd);
+    return true;
+  } catch (error: any) {
+    if (error?.code === 'EEXIST') {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+function releaseEndpointClaim(endpoint: string, ownerPid: number) {
+  const lockPath = getEndpointLockPath(endpoint);
+  const lock = readEndpointLock(endpoint);
+  if (!lock?.ownerPid) {
+    fs.removeSync(lockPath);
+    return;
+  }
+
+  if (lock.ownerPid !== ownerPid && isProcessRunning(lock.ownerPid)) {
+    return;
+  }
+
+  fs.removeSync(lockPath);
+}
+
+export function readEndpointStatus() {
+  return readEndpoints().map((endpoint) => {
+    const lock = getActiveEndpointLock(endpoint);
+    return {
+      endpoint,
+      inUse: Boolean(lock),
+      ownerPid: lock?.ownerPid
+    };
+  });
+}
+
 const endpointFilePath = path.join(puppeteerTempPath, 'endpoint.json');
 export function writeEndpoint(endpoint: string) {
   const endpoints = readEndpoints();
@@ -37,6 +136,7 @@ export function writeEndpoint(endpoint: string) {
 export function removeEndpoint(endpoint: string) {
   const endpoints = readEndpoints().filter((item) => item !== endpoint);
   writefile(endpointFilePath, jsonStringifyWithCircularRefs(endpoints));
+  releaseEndpointClaim(endpoint, process.pid);
 }
 
 export function readEndpoints(): string[] {
@@ -110,18 +210,34 @@ export async function launch() {
 export async function connect(): Promise<Browser> {
   await launch();
   let endpoints = readEndpoints();
+  const ownerPid = process.pid;
 
   while (endpoints.length > 0) {
-    const endpoint = array_random(endpoints);
+    const freeEndpoints = endpoints.filter((item) => !isEndpointLocked(item));
+    if (!freeEndpoints.length) {
+      throw new Error('All browser endpoints are currently in use.');
+    }
+
+    const endpoint = freeEndpoints[0];
     if (!endpoint) {
       break;
     }
 
+    const claimed = tryClaimEndpoint(endpoint, ownerPid);
+    if (!claimed) {
+      endpoints = endpoints.filter((item) => item !== endpoint);
+      continue;
+    }
+
     try {
       const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+      browser.once('disconnected', () => {
+        releaseEndpointClaim(endpoint, ownerPid);
+      });
       console.log('Successfully connected to browser with endpoint:', browser.wsEndpoint());
       return browser;
     } catch (error: any) {
+      releaseEndpointClaim(endpoint, ownerPid);
       const err = error?.error || error;
       if (err?.code === 'ECONNREFUSED') {
         removeEndpoint(endpoint);

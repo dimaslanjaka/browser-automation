@@ -1,12 +1,9 @@
-import { Page } from 'puppeteer';
+import { Browser, Page } from 'puppeteer';
 import { connect } from './utils.js';
 import { delay } from 'sbg-utility';
+import Bluebird from 'bluebird';
 
-async function main() {
-  const browser = await connect();
-  const wsEndpoint = browser.wsEndpoint();
-  console.log('Connected to browser with WebSocket Endpoint:', wsEndpoint);
-
+async function action(browser: Browser) {
   const visit = async (page: Page, url: string) => {
     const maxAttempts = 2;
     const timeoutMs = 30_000;
@@ -28,28 +25,47 @@ async function main() {
     }
   };
 
+  // Example: visit a pages
+  const initialPages = await browser.pages();
+  const initialPage = initialPages[0] ?? (await browser.newPage());
+  await visit(initialPage, 'http://bing.com');
+  const page = await browser.newPage();
+  await visit(page, 'http://example.com');
+  const page2 = await browser.newPage();
+  await visit(page2, 'http://google.com');
+
+  // Example: List all open pages
+  const pages = await browser.pages();
+  console.log(`Number of open pages: ${pages.length}`);
+  pages.forEach((page, index) => {
+    console.log(`Page ${index + 1}: ${page.url()}`);
+  });
+
+  await delay(5000); // Keep the browser open for a while to observe
+
+  return browser;
+}
+
+async function main() {
+  const browsers: Browser[] = [];
+  const parallelRuns = 2;
+
   try {
-    // Example: visit a pages
-    const initialPages = await browser.pages();
-    const initialPage = initialPages[0] ?? (await browser.newPage());
-    await visit(initialPage, 'http://bing.com');
-    const page = await browser.newPage();
-    await visit(page, 'http://example.com');
-    const page2 = await browser.newPage();
-    await visit(page2, 'http://google.com');
-
-    // Example: List all open pages
-    const pages = await browser.pages();
-    console.log(`Number of open pages: ${pages.length}`);
-    pages.forEach((page, index) => {
-      console.log(`Page ${index + 1}: ${page.url()}`);
-    });
-
-    await delay(5000); // Keep the browser open for a while to observe
+    await Bluebird.map(
+      Array.from({ length: parallelRuns }),
+      async () => {
+        const browser = await connect();
+        browsers.push(browser);
+        await action(browser);
+      },
+      { concurrency: parallelRuns }
+    );
   } catch (e) {
     console.error('Error during page operations:', e);
   } finally {
-    await browser.close();
+    for (const browser of browsers) {
+      await browser.close();
+    }
   }
 }
 
