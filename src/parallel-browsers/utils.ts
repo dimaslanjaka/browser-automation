@@ -129,8 +129,8 @@ export function readEndpointStatus() {
 const endpointFilePath = path.join(puppeteerTempPath, 'endpoint.json');
 export function writeEndpoint(endpoint: string) {
   const endpoints = readEndpoints();
-  endpoints.push(endpoint);
-  writefile(endpointFilePath, jsonStringifyWithCircularRefs(endpoints));
+  const uniqueEndpoints = Array.from(new Set([...endpoints, endpoint]));
+  writefile(endpointFilePath, jsonStringifyWithCircularRefs(uniqueEndpoints));
 }
 
 export function removeEndpoint(endpoint: string) {
@@ -208,14 +208,28 @@ export async function launch() {
 }
 
 export async function connect(): Promise<Browser> {
-  await launch();
   let endpoints = readEndpoints();
   const ownerPid = process.pid;
 
-  while (endpoints.length > 0) {
+  if (!endpoints.length) {
+    await launch();
+    endpoints = readEndpoints();
+  }
+
+  while (true) {
+    if (!endpoints.length) {
+      await launch();
+      endpoints = readEndpoints();
+      if (!endpoints.length) {
+        throw new Error('No browser endpoint is available to connect.');
+      }
+    }
+
     const freeEndpoints = endpoints.filter((item) => !isEndpointLocked(item));
     if (!freeEndpoints.length) {
-      throw new Error('All browser endpoints are currently in use.');
+      await launch();
+      endpoints = readEndpoints();
+      continue;
     }
 
     const endpoint = freeEndpoints[0];
