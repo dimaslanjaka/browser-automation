@@ -31,7 +31,7 @@ const cliArgs = minimist(process.argv.slice(2), {
 });
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
-const database = new LogDatabase('skrin_' + toValidMySQLDatabaseName(process.env.DATABASE_FILENAME), {
+const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
   connectTimeout: 60000,
   connectionLimit: 10,
   host: MYSQL_HOST || 'localhost',

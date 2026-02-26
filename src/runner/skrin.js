@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
 import * as databaseModule from '../../dist/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
-import { playMp3FromUrl } from '../beep.js';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
@@ -20,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
-const database = new databaseModule.LogDatabase('skrin_' + toValidMySQLDatabaseName(process.env.DATABASE_FILENAME), {
+const database = new databaseModule.LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
   connectTimeout: 60000,
   connectionLimit: 10,
   host: MYSQL_HOST || 'localhost',
@@ -89,12 +88,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     await closeOtherTabs(page);
 
     const processPage = array_random(await browser.pages());
-    try {
-      await autoLoginAndEnterSkriningPage(processPage);
-    } catch (e) {
-      await playMp3FromUrl('https://assets.mixkit.co/active_storage/sfx/1084/1084.wav').catch(console.error);
-      throw e;
-    }
+    await autoLoginAndEnterSkriningPage(processPage);
 
     const result = await processData(processPage, data, database);
     if (result.status === 'error') {
