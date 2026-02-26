@@ -26,6 +26,7 @@ export interface GetPuppeteerClusterReturn {
 
 export interface GetPuppeteerClusterOptions extends Partial<ClusterOptions> {
   reuse?: boolean;
+  autoSwitchProfileDir?: boolean;
   puppeteerOptions?: LaunchOptions;
 }
 
