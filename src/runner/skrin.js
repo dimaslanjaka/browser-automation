@@ -77,17 +77,16 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   }
 
   const puppeteer = puppeteerInstance;
-  const page = puppeteer.page;
-  const browser = puppeteer.browser;
+  const browser = puppeteer.browser || puppeteer.page.browser();
 
   while (dataKunto.length > 0) {
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
     const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
-    await closeOtherTabs(page);
 
     const processPage = array_random(await browser.pages());
+    await closeOtherTabs(processPage);
     await autoLoginAndEnterSkriningPage(processPage);
 
     const result = await processData(processPage, data, database);
@@ -97,6 +96,8 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
       process.exit(1); // exit on unexpected status to avoid silent failures
+    } else {
+      console.log('Successfully processed data for NIK:', data.nik);
     }
   }
 
