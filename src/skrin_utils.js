@@ -1,5 +1,73 @@
 import { getAge } from './utils/date.js';
-import { typeAndTrigger } from './puppeteer_utils.js';
+import { getFormValues, typeAndTrigger } from './puppeteer_utils.js';
+
+/**
+ * Gets normalized form values from page/frame context.
+ *
+ * @param {import('puppeteer').Page|import('puppeteer').Frame} context
+ * @param {string} [containerSelector='#main-container']
+ * @returns {Promise<Array<{selector: string, value: string, disabled: boolean, label: string}>>}
+ */
+export async function getNormalizedFormValues(context, containerSelector = '#main-container') {
+  /**
+   * Normalize raw form items into compact values.
+   * @param {Array<{name?: string, id?: string, value?: string, isVisible?: string, disabled?: string, label?: string}>} formItems
+   * @returns {Array<{selector: string, value: string, disabled: boolean, label: string}>}
+   */
+  const normalize = (formItems) =>
+    formItems
+      .map((item) => {
+        if (!item.name || item.name.trim().length === 0) {
+          return null;
+        }
+        if (`${item.isVisible || ''}`.toLowerCase() === 'false') {
+          return null;
+        }
+
+        let valueLabel = item.value || '';
+        if (valueLabel.trim().length === 0) {
+          valueLabel = '<empty>';
+        }
+
+        let keyLabel = '';
+        if (item.name && item.name.trim().length > 0) {
+          keyLabel = `[name="${item.name}"]`;
+        } else if (item.id && item.id.trim().length > 0) {
+          keyLabel = `#${item.id}`;
+        } else {
+          keyLabel = '<empty-key>';
+        }
+
+        const isDisabled = `${item.disabled || ''}`.toLowerCase() === 'true';
+        return {
+          selector: keyLabel,
+          value: valueLabel,
+          disabled: isDisabled,
+          label: item.label || ''
+        };
+      })
+      .filter((item) => item !== null);
+
+  return normalize(await getFormValues(context, containerSelector));
+}
+
+/**
+ * Gets normalized form values from an iframe container.
+ *
+ * @param {import('puppeteer').Page} page
+ * @param {string} iframeSelector
+ * @param {string} [containerSelector='#main-container']
+ * @returns {Promise<Array<{selector: string, value: string, disabled: boolean, label: string}>>}
+ */
+export async function getNormalizedFormValuesFromFrame(page, iframeSelector, containerSelector = '#main-container') {
+  const iframeElement = await page.$(iframeSelector);
+  if (!iframeElement) throw new Error(`Iframe not found: ${iframeSelector}`);
+
+  const frame = await iframeElement.contentFrame();
+  if (!frame) throw new Error('Failed to get frame from iframe element');
+
+  return await getNormalizedFormValues(frame, containerSelector);
+}
 
 /**
  * Checks if an invalid alert is visible on the page.

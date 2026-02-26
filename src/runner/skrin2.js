@@ -8,7 +8,6 @@ import { addLog, getLogById } from '../database/SQLiteLogDatabase.js';
 import {
   clickIframeElement,
   findIframeElementByText,
-  getFormValuesFromFrame,
   getPuppeteer,
   isElementVisible,
   isIframeElementVisible,
@@ -25,6 +24,7 @@ import { parseBabyName } from './skrin-utils.js';
 import { getAge } from '../utils/date.js';
 import { getAgeFromDateString } from '../utils/date.js';
 import { getStreetAddressInformation } from '../address/index.js';
+import { getNormalizedFormValuesFromFrame } from '../skrin_utils.js';
 
 console.clear();
 
@@ -572,7 +572,11 @@ async function processData(page, data) {
 
   // Re-evaluate the form to ensure all fields are filled correctly
   if (!(await isAllowedToSubmit())) {
-    await re_evaluate(page);
+    const reEvaluatedFormValues = await re_evaluate(page);
+    if (Array.isArray(reEvaluatedFormValues) && reEvaluatedFormValues.length > 0) {
+      fixedData.formValues = reEvaluatedFormValues;
+      logLine(`Re-fetched form values after re_evaluate for NIK: ${NIK} (${reEvaluatedFormValues.length} items)`);
+    }
   }
 
   while (!(await isAllowedToSubmit())) {
@@ -616,39 +620,16 @@ async function processData(page, data) {
 
     // get form values before submission
     logLine(`Getting form values for NIK: ${NIK} before submission...`);
-    const formValues = (await getFormValuesFromFrame(page, iframeSelector, '#main-container'))
-      .map((item) => {
-        if (!item.name || item.name.trim().length === 0) {
-          return null; // Skip items without a name
-        }
-        if (item.isVisible.toLowerCase() === 'false') {
-          return null; // Skip invisible elements
-        }
-        let valueLabel = item.value || '';
-        if (valueLabel.trim().length === 0) {
-          valueLabel = '<empty>';
-        }
-        let keyLabel = '';
-        if (item.name && item.name.trim().length > 0) {
-          keyLabel = `[name="${item.name}"]`;
-        } else if (item.id && item.id.trim().length > 0) {
-          keyLabel = `#${item.id}`;
-        } else {
-          keyLabel = '<empty-key>';
-        }
-        const isDisabled = item.disabled?.toLowerCase() === 'true';
-        return {
-          selector: keyLabel,
-          value: valueLabel,
-          disabled: isDisabled,
-          label: item.label
-        };
-      })
-      .filter((item) => item !== null);
+    const formValues = await getNormalizedFormValuesFromFrame(page, iframeSelector, '#main-container');
     fixedData.formValues = formValues;
 
     // Click the Yes button to confirm submission
     await clickIframeElement(page, iframeSelector, '#yesButton');
+
+    if (await isElementVisible(page, iframeSelector)) {
+      const afterSubmitFormValues = await getNormalizedFormValuesFromFrame(page, iframeSelector, '#main-container');
+      fixedData.formValues = afterSubmitFormValues;
+    }
   }
 
   await sleep(2000); // Wait for the submission to process
@@ -772,6 +753,8 @@ async function re_evaluate(page) {
     await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
   if (await isInputEmpty('input[name="tempat_skrining_id_input"]'))
     await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
+
+  return await getNormalizedFormValuesFromFrame(page, iframeSelector, '#main-container');
 }
 
 async function _testSkriningData() {

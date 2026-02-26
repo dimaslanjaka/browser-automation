@@ -6,7 +6,7 @@ import { isEmpty } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
 import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
-import { getFormValues, isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
+import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
 import {
   confirmIdentityModal,
   getPersonInfo,
@@ -14,7 +14,8 @@ import {
   isInvalidAlertVisible,
   isNikErrorVisible,
   isNIKNotFoundModalVisible,
-  isSuccessNotificationVisible
+  isSuccessNotificationVisible,
+  getNormalizedFormValues
 } from '../../skrin_utils.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import { ucwords } from '../../utils/string.js';
@@ -25,6 +26,8 @@ import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
   | { status: 'error'; reason?: 'invalid_nik_length' | 'data_not_found' | string; description?: string };
+
+type NormalizedFormValue = Awaited<ReturnType<typeof getNormalizedFormValues>>[number];
 
 /**
  * Re-evaluates the form by re-typing the "metode_id_input" field to trigger any dynamic changes on the page.
@@ -453,35 +456,7 @@ export async function processData(
   if (isAllowedToSubmit) {
     // get form values before submission
     console.log(`Getting form values for NIK: ${NIK} before submission...`);
-    const formValues = (await getFormValues(page, '#main-container'))
-      .map((item) => {
-        if (!item.name || item.name.trim().length === 0) {
-          return null; // Skip items without a name
-        }
-        if (item.isVisible.toLowerCase() === 'false') {
-          return null; // Skip invisible elements
-        }
-        let valueLabel = item.value || '';
-        if (valueLabel.trim().length === 0) {
-          valueLabel = '<empty>';
-        }
-        let keyLabel = '';
-        if (item.name && item.name.trim().length > 0) {
-          keyLabel = `[name="${item.name}"]`;
-        } else if (item.id && item.id.trim().length > 0) {
-          keyLabel = `#${item.id}`;
-        } else {
-          keyLabel = '<empty-key>';
-        }
-        const isDisabled = item.disabled?.toLowerCase() === 'true';
-        return {
-          selector: keyLabel,
-          value: valueLabel,
-          disabled: isDisabled,
-          label: item.label
-        };
-      })
-      .filter((item) => item !== null);
+    const formValues: NormalizedFormValue[] = await getNormalizedFormValues(page);
     fixedData.formValues = formValues;
 
     console.log(`Form values for NIK: ${NIK} (${formValues.length} items)`);
@@ -537,6 +512,11 @@ export async function processData(
     console.warn('⚠️\tData processed but not submitted:', fixedData);
     await waitEnter('Press Enter to continue...');
   }
+
+  // Get form values after submission (to capture any changes triggered by submission)
+  console.log(`Getting form values for NIK: ${NIK} after submission...`);
+  const afterSubmitFormValues = await getNormalizedFormValues(page);
+  fixedData.formValues = afterSubmitFormValues;
 
   await database.addLog({
     id: getNumbersOnly(NIK),

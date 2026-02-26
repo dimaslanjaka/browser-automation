@@ -842,7 +842,7 @@ export async function clickIframeElement(page, iframeSelector, elementSelector, 
  * { type: 'text', name: 'first_name', value: 'Alice', id: 'f1', disabled: 'false', isVisible: 'true', label: 'First name' }
  * ```
  */
-function extractFormValues(elements) {
+export function extractFormValues(elements) {
   return elements.map((el) => {
     const attrs = Array.from(el.attributes).reduce((acc, attr) => {
       acc[attr.name] = String(attr.value);
