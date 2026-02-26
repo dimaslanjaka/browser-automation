@@ -1,7 +1,7 @@
 import moment from 'moment';
 import type { NikParseResult } from 'nik-parser-jurusid';
 import * as nikUtils from 'nik-parser-jurusid/index';
-import type { Page } from 'puppeteer';
+import type { Browser, Page } from 'puppeteer';
 import { isEmpty } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
 import { getStreetAddressInformation } from '../../address/index.js';
@@ -47,17 +47,22 @@ async function reEvaluate(page: Page): Promise<void> {
  * Steps include navigating pages, inputting data, checking for various modals and alerts,
  * correcting job/location fields, and submitting the form.
  *
- * @param page The Puppeteer page instance used to interact with the skrining form.
+ * @param page Puppeteer page or browser instance used to interact with the skrining form.
+ *   When a browser instance is provided, the first available page is used, or a new page is created.
  * @param data A single row of Excel data to be submitted through the form.
  * @param database Database instance used for reading/writing logs.
  * @returns Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
  * @throws {Error} If required fields are missing or an unexpected state is encountered.
  */
 export async function processData(
-  page: Page,
+  page: Page | Browser,
   data: ExcelRowData,
   database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase
 ): Promise<ProcessDataResult> {
+  if ('pages' in page) {
+    const pages = await page.pages();
+    page = pages[0] || (await page.newPage());
+  }
   page.setDefaultTimeout(0);
   page.setDefaultNavigationTimeout(0);
 
