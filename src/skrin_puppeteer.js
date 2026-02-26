@@ -77,6 +77,6 @@ export async function autoLoginAndEnterSkriningPage(page) {
   if (sessionExpiredState.isVisible && sessionExpiredMessagePattern.test(sessionExpiredState.text)) {
     console.log('Session expired detected. Re-login required.');
     await skrinLogin(page);
-    await enterSkriningPage(page);
   }
+  await enterSkriningPage(page);
 }
