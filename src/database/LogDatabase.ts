@@ -12,7 +12,7 @@ export interface LogDatabaseOptions extends MySQL2Options {
   type?: 'sqlite' | 'mysql';
 }
 
-export class LogDatabase implements BaseLogDatabase {
+export class LogDatabase<TDefault = any> implements BaseLogDatabase {
   options: LogDatabaseOptions;
   dbName: string;
   store: MysqlLogDatabase | SQLiteLogDatabase;
@@ -32,22 +32,22 @@ export class LogDatabase implements BaseLogDatabase {
     return { optionsType, classType: this.store instanceof MysqlLogDatabase ? 'mysql' : 'sqlite' };
   }
 
-  async addLog<T = any>(log: LogEntry<T>, options?: { timeout?: number }) {
+  async addLog<T = TDefault>(log: LogEntry<T>, options?: { timeout?: number }) {
     if (!this.store) await this.initialize();
     return await this.store.addLog(log, options);
   }
 
-  async removeLog(id: LogEntry<any>['id']) {
+  async removeLog(id: LogEntry<TDefault>['id']) {
     if (!this.store) await this.initialize();
     return await this.store.removeLog(id);
   }
 
-  async getLogById<T = any>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
+  async getLogById<T = TDefault>(id: LogEntry<T>['id']): Promise<LogEntry<T> | undefined> {
     if (!this.store) await this.initialize();
     return await this.store.getLogById<T>(id);
   }
 
-  async getLogs<T>(
+  async getLogs<T = TDefault>(
     filterFn?: (log: LogEntry<T>) => boolean | Promise<boolean>,
     options?: { limit?: number; offset?: number }
   ) {
