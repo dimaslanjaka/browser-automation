@@ -110,32 +110,35 @@ export async function executeSkriningProcess() {
     return;
   }
 
-  while (true) {
-    try {
-      await runEntrySkrining(puppeteerInstance);
-      break; // finished successfully
-    } catch (err) {
-      const msg =
-        err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
-      console.error('Unhandled error in runEntrySkrining:', msg);
-      const lowerMsg = String(msg).toLowerCase();
-      if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
-        console.warn('Detected connection/navigation timeout — restarting in 1s...');
-        await sleep(1000);
-        continue; // restart loop, reuse puppeteerInstance
-      }
-
-      // give some time for stdout/stderr to flush, then exit with failure
-      setTimeout(() => process.exit(1), 100);
-      break;
-    }
-  }
-
-  // finished successfully, close browser
   try {
-    // await puppeteerInstance.browser.close();
-  } catch (e) {
-    console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
+    while (true) {
+      try {
+        await runEntrySkrining(puppeteerInstance);
+        break; // finished successfully
+      } catch (err) {
+        const msg =
+          err && (err.stack || err.message || String(err)) ? err.stack || err.message || String(err) : String(err);
+        console.error('Unhandled error in runEntrySkrining:', msg);
+        const lowerMsg = String(msg).toLowerCase();
+        if (lowerMsg.includes('net::err_connection_timed_out') || lowerMsg.includes('navigation timeout')) {
+          console.warn('Detected connection/navigation timeout — restarting in 1s...');
+          await sleep(1000);
+          continue; // restart loop, reuse puppeteerInstance
+        }
+
+        // give some time for stdout/stderr to flush, then exit with failure
+        setTimeout(() => process.exit(1), 100);
+        break;
+      }
+    }
+  } finally {
+    try {
+      if (puppeteerInstance?.browser?.connected) {
+        await puppeteerInstance.browser.close();
+      }
+    } catch (e) {
+      console.error('Failed to close browser on exit:', e && e.stack ? e.stack : e);
+    }
   }
 }
 
