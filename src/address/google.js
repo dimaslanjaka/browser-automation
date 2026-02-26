@@ -44,12 +44,16 @@ export async function geocodeWithGoogle(keyword, apiKey) {
   }
 }
 
-if (process.argv[1].includes('address/google')) {
+if (process.argv[1].includes('google.js')) {
   (async () => {
     // Example usage for testing
     const keyword = '1600 Amphitheatre Parkway, Mountain View, CA';
     const apiKey = 'YOUR_API_KEY_HERE';
     const result = await geocodeWithGoogle(keyword, apiKey);
-    console.log(result);
+    if (result) {
+      console.log('Geocoding result:', result);
+    } else {
+      console.log('No geocoding result found for keyword:', keyword);
+    }
   })();
 }

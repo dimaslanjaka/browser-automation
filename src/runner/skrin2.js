@@ -24,6 +24,7 @@ import fixData from '../utils/xlsx/fixData.js';
 import { parseBabyName } from './skrin-utils.js';
 import { getAge } from '../utils/date.js';
 import { getAgeFromDateString } from '../utils/date.js';
+import { getStreetAddressInformation } from '../address/index.js';
 
 console.clear();
 
@@ -347,57 +348,93 @@ async function processData(page, data) {
     logLine('Resolved tglLahir: ' + tglLahir);
 
     // input address: provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
-    if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
-      const parsed_nik = fixedData.parsed_nik.data;
-      let { kotakab = '', namaKec = '', provinsi = '', kelurahan = [] } = parsed_nik || {};
-      const selectedKelurahan = Array.isArray(kelurahan) && kelurahan.length > 0 ? kelurahan[0] : null;
+    let kabupatenOrKota = '';
+    let namaKec = '';
+    let provinsi = '';
+    let kelurahanName = '';
+
+    const keywordAddr = `${fixedData.alamat || ''} Surabaya, Jawa Timur`.trim();
+    const geocodedAddress = keywordAddr.length > 0 ? await getStreetAddressInformation(keywordAddr) : null;
+
+    if (geocodedAddress) {
+      fixedData._address = geocodedAddress.raw || geocodedAddress;
+
+      kelurahanName = geocodedAddress.kelurahan || '';
+      namaKec = geocodedAddress.kecamatan || '';
+      kabupatenOrKota = geocodedAddress.kabupaten || geocodedAddress.kota || '';
+      provinsi = geocodedAddress.provinsi || '';
+
+      if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
+        kabupatenOrKota = 'Kota Surabaya';
+      }
+
       logLine(
-        `Using parsed NIK data for address: ${selectedKelurahan && selectedKelurahan.name ? selectedKelurahan.name : '<unknown kelurahan>'}, ${
-          namaKec || '<unknown kec>'
-        }, ${kotakab || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
+        `Using geocoder data for address: ${kelurahanName || '<unknown kelurahan>'}, ${namaKec || '<unknown kec>'}, ${kabupatenOrKota || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
       );
+    }
 
-      if (provinsi.length > 0) {
-        logLine(`Inputting provinsi: ${provinsi} for NIK: ${NIK}`);
-        await typeAndTriggerIframe(
-          page,
-          iframeSelector,
-          '#field_item_provinsi_ktp_id input[type="text"]',
-          ucwords(provinsi)
-        );
-      }
+    if (
+      (!kabupatenOrKota || !namaKec || !provinsi || !kelurahanName) &&
+      fixedData.parsed_nik &&
+      fixedData.parsed_nik.status === 'success'
+    ) {
+      const parsed_nik = fixedData.parsed_nik.data;
+      const parsedKotakab = parsed_nik?.kotakab || '';
+      const parsedNamaKec = parsed_nik?.namaKec || '';
+      const parsedProvinsi = parsed_nik?.provinsi || '';
+      const parsedKelurahan = parsed_nik?.kelurahan || [];
+      const selectedKelurahan =
+        Array.isArray(parsedKelurahan) && parsedKelurahan.length > 0 ? parsedKelurahan[0] : null;
+      const parsedKelurahanName = selectedKelurahan && selectedKelurahan.name ? selectedKelurahan.name : '';
 
-      if (kotakab.length > 0) {
-        logLine(`Inputting kotakab: ${kotakab} for NIK: ${NIK}`);
-        await typeAndTriggerIframe(
-          page,
-          iframeSelector,
-          '#field_item_kabupaten_ktp_id input[type="text"]',
-          ucwords(kotakab)
-        );
-      }
+      if (!kabupatenOrKota) kabupatenOrKota = parsedKotakab;
+      if (!namaKec) namaKec = parsedNamaKec;
+      if (!provinsi) provinsi = parsedProvinsi;
+      if (!kelurahanName) kelurahanName = parsedKelurahanName;
 
-      if (namaKec.length > 0) {
-        logLine(`Inputting namaKec: ${namaKec} for NIK: ${NIK}`);
-        await typeAndTriggerIframe(
-          page,
-          iframeSelector,
-          '#field_item_kecamatan_ktp_id input[type="text"]',
-          ucwords(namaKec)
-        );
-      }
+      logLine(
+        `Using parsed NIK fallback for address: ${parsedKelurahanName || '<unknown kelurahan>'}, ${parsedNamaKec || '<unknown kec>'}, ${parsedKotakab || '<unknown kota>'}, ${parsedProvinsi || '<unknown provinsi>'}`
+      );
+    }
 
-      if (kelurahan.length > 0) {
-        if (selectedKelurahan && selectedKelurahan.name) {
-          logLine(`Inputting kelurahan: ${selectedKelurahan.name} for NIK: ${NIK}`);
-          await typeAndTriggerIframe(
-            page,
-            iframeSelector,
-            '#field_item_kelurahan_ktp_id input[type="text"]',
-            ucwords(selectedKelurahan.name)
-          );
-        }
-      }
+    if (provinsi.length > 0) {
+      logLine(`Inputting provinsi: ${provinsi} for NIK: ${NIK}`);
+      await typeAndTriggerIframe(
+        page,
+        iframeSelector,
+        '#field_item_provinsi_ktp_id input[type="text"]',
+        ucwords(provinsi)
+      );
+    }
+
+    if (kabupatenOrKota.length > 0) {
+      logLine(`Inputting kotakab: ${kabupatenOrKota} for NIK: ${NIK}`);
+      await typeAndTriggerIframe(
+        page,
+        iframeSelector,
+        '#field_item_kabupaten_ktp_id input[type="text"]',
+        ucwords(kabupatenOrKota)
+      );
+    }
+
+    if (namaKec.length > 0) {
+      logLine(`Inputting namaKec: ${namaKec} for NIK: ${NIK}`);
+      await typeAndTriggerIframe(
+        page,
+        iframeSelector,
+        '#field_item_kecamatan_ktp_id input[type="text"]',
+        ucwords(namaKec)
+      );
+    }
+
+    if (kelurahanName.length > 0) {
+      logLine(`Inputting kelurahan: ${kelurahanName} for NIK: ${NIK}`);
+      await typeAndTriggerIframe(
+        page,
+        iframeSelector,
+        '#field_item_kelurahan_ktp_id input[type="text"]',
+        ucwords(kelurahanName)
+      );
     }
   }
 

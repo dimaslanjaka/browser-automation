@@ -56,3 +56,18 @@ export interface GeocodeOptions {
    */
   proxy?: string;
 }
+
+export interface StreetAddressInfo {
+  keyword: string | null;
+  provider: 'nominatim' | 'geoapify';
+  fullAddress: string;
+  kelurahan: string | null;
+  kecamatan: string | null;
+  kota: string | null;
+  kabupaten: string | null;
+  provinsi: string | null;
+  country: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  raw: GeocodeResult | null;
+}

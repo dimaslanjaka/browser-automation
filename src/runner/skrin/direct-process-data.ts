@@ -4,7 +4,7 @@ import * as nikUtils from 'nik-parser-jurusid/index';
 import type { Page } from 'puppeteer';
 import { isEmpty } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
-import { geocodeWithNominatim } from '../../address/nominatim.js';
+import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { getFormValues, isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
 import {
@@ -201,95 +201,87 @@ export async function processData(
         throw new Error("❌ Failed to take the patient's address");
       }
 
-      let kotakab = '',
+      let kabupatenOrKota = '',
         kecamatan = '',
         provinsi = '',
         kelurahan = '';
 
       const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
-      const geocodedAddress = await geocodeWithNominatim(keywordAddr);
-      if (geocodedAddress) {
-        fixedData._address = geocodedAddress;
+      const geocodedAddress = await getStreetAddressInformation(keywordAddr);
 
-        // Avoid destructuring: explicitly read values from parsedNik.data (if present)
+      if (geocodedAddress) {
+        fixedData._address = geocodedAddress.raw || geocodedAddress;
+        console.log(`Fetching address from geocoder for: ${keywordAddr}`);
+        console.log('Geocoder result:', geocodedAddress);
+
+        kelurahan = geocodedAddress.kelurahan || '';
+        kecamatan = geocodedAddress.kecamatan || '';
+        kabupatenOrKota = geocodedAddress.kabupaten || geocodedAddress.kota || '';
+        provinsi = geocodedAddress.provinsi || '';
+
+        if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
+          kabupatenOrKota = 'Kota Surabaya';
+        }
+      }
+
+      // Fallback to parsed NIK only for missing fields
+      if ((isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(provinsi) || isEmpty(kelurahan)) && parsedNik) {
         const _parsedNikData =
           parsedNik && parsedNik.status === 'success' ? parsedNik.data : ({} as nikUtils.NikParseSuccess['data']);
-        kotakab = _parsedNikData.kotakab || '';
-        kecamatan = (_parsedNikData as any).kecamatan || _parsedNikData.namaKec || '';
-        provinsi = _parsedNikData.provinsi || '';
-        const selectedKelurahan = Array.isArray(kelurahan) && kelurahan.length > 0 ? kelurahan[0] : null;
-        kelurahan = selectedKelurahan || '';
-
-        if (kotakab.length === 0 || kecamatan.length === 0 || provinsi.length === 0) {
-          console.log(`Fetching address from Nominatim for: ${keywordAddr}`);
-          console.log('Nominatim result:', geocodedAddress);
-
-          const addr = geocodedAddress.address || {};
-
-          if (kelurahan.length === 0) kelurahan = addr.village || addr.hamlet || '';
-          if (kecamatan.length === 0) kecamatan = addr.suburb || addr.city_district || '';
-          if (kotakab.length === 0) kotakab = addr.city || addr.town || addr.village || 'Kota Surabaya';
-          if (provinsi.length === 0) provinsi = addr.state || addr.province || 'Jawa Timur';
-
-          if (kotakab.toLowerCase().includes('surabaya')) {
-            kotakab = 'Kota Surabaya';
-          }
-
-          if (kotakab.length === 0 || kecamatan.length === 0) {
-            throw new Error("❌ Failed to take the patient's city or town");
-          }
+        if (isEmpty(kabupatenOrKota)) {
+          kabupatenOrKota = _parsedNikData.kotakab || '';
         }
+        if (isEmpty(kecamatan)) {
+          kecamatan = (_parsedNikData as any).kecamatan || _parsedNikData.namaKec || '';
+        }
+        if (isEmpty(provinsi)) {
+          provinsi = _parsedNikData.provinsi || '';
+        }
+
+        if (isEmpty(kelurahan)) {
+          const parsedKelurahan = _parsedNikData.kelurahan != null ? _parsedNikData.kelurahan : null;
+          const selectedKelurahan = Array.isArray(parsedKelurahan)
+            ? parsedKelurahan.length > 0
+              ? parsedKelurahan[0]
+              : null
+            : parsedKelurahan || null;
+          kelurahan = selectedKelurahan
+            ? typeof selectedKelurahan === 'object' && 'name' in selectedKelurahan
+              ? String(selectedKelurahan.name || '')
+              : String(selectedKelurahan)
+            : '';
+        }
+
+        console.log(
+          `Using parsed NIK fallback for address: ${kelurahan || '<unknown kelurahan>'}, ${
+            kecamatan || '<unknown kec>'
+          }, ${kabupatenOrKota || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
+        );
+      }
+
+      if (!geocodedAddress && (!parsedNik || parsedNik.status !== 'success')) {
+        throw new Error(
+          `❌ Failed to determine address: no geocoder result and no parsed NIK data available (nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+        );
       }
 
       if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {
-        if (fixedData.parsed_nik && fixedData.parsed_nik.status === 'success') {
-          const parsed_nik = fixedData.parsed_nik.data;
-          let parsedKelurahan;
-          // Explicit assignments instead of destructuring. Note: `namaKec` maps to `kecamatan`.
-          if (parsed_nik) {
-            kotakab = parsed_nik.kotakab || '';
-            kecamatan = parsed_nik.namaKec || '';
-            provinsi = parsed_nik.provinsi || '';
-            parsedKelurahan = parsed_nik.kelurahan != null ? parsed_nik.kelurahan : null;
-          } else {
-            kotakab = '';
-            kecamatan = '';
-            provinsi = '';
-            parsedKelurahan = null;
-          }
-          const selectedKelurahan =
-            Array.isArray(parsedKelurahan) && parsedKelurahan.length > 0 ? parsedKelurahan[0] : parsedKelurahan || null;
-          kelurahan = selectedKelurahan ? selectedKelurahan.name || selectedKelurahan : '';
-          console.log(
-            `Using parsed NIK data for address: ${selectedKelurahan && selectedKelurahan.name ? selectedKelurahan.name : '<unknown kelurahan>'}, ${
-              kecamatan || '<unknown kec>'
-            }, ${kotakab || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
-          );
-        } else {
-          throw new Error(
-            `❌ Failed to determine address: no Nominatim result and no parsed NIK data available (nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
-          );
-        }
-      }
-
-      // ensure kelurahan string
-      if (typeof kelurahan != 'string') {
-        console.log({ provinsi, kotakab, kecamatan, kelurahan });
+        console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
         throw new Error('kelurahan should be string');
       }
 
       // Ensure provinsi, kotakab, kecamatan, kelurahan not empty — throw descriptive error
-      if (isEmpty(provinsi) || isEmpty(kotakab) || isEmpty(kecamatan) || isEmpty(kelurahan)) {
+      if (isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) {
         throw new Error(
-          `Missing required address fields: provinsi='${provinsi || ''}', kotakab='${kotakab || ''}', kecamatan='${kecamatan || ''}', kelurahan='${kelurahan || ''}'`
+          `Missing required address fields: provinsi='${provinsi || ''}', kotakab='${kabupatenOrKota || ''}', kecamatan='${kecamatan || ''}', kelurahan='${kelurahan || ''}'`
         );
       } else {
-        console.log(`Inputting address ${provinsi} -> ${kotakab} -> ${kecamatan} -> ${kelurahan}`);
+        console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
       }
 
       // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
       await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
-      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kotakab));
+      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota));
       await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
       await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
       await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
