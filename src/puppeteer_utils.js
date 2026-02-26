@@ -34,6 +34,40 @@ let playwright_browser = null;
 let puppeteer_cluster = null;
 
 /**
+ * Checks whether a Chromium user data directory appears to be in use.
+ *
+ * @param {string} targetUserDataDir - User data directory path to check.
+ * @returns {boolean}
+ */
+function isUserDataDirInUse(targetUserDataDir) {
+  if (!targetUserDataDir) return false;
+
+  const resolvedUserDataDir = path.resolve(targetUserDataDir);
+  const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'LOCK'];
+
+  return lockFiles.some((fileName) => fs.existsSync(path.join(resolvedUserDataDir, fileName)));
+}
+
+/**
+ * Returns the first available fallback profile directory path.
+ *
+ * @param {number} [startIndex=1] - First profile index to probe.
+ * @returns {string}
+ */
+function getFallbackProfileDir(startIndex = 1) {
+  const profilesRootDir = path.resolve(process.cwd(), '.cache/profiles');
+  let index = Math.max(1, Number(startIndex) || 1);
+
+  while (true) {
+    const profileDir = path.join(profilesRootDir, `profile${index}`);
+    if (!isUserDataDirInUse(profileDir)) {
+      return profileDir;
+    }
+    index += 1;
+  }
+}
+
+/**
  * Launches or reuses a Puppeteer browser instance using `puppeteer-extra` with optional stealth plugin.
  *
  * @async
@@ -63,18 +97,52 @@ export async function getPuppeteer(options = {}) {
       '--autoplay-policy=no-user-gesture-required'
     ],
     reuse: true,
+    autoSwitchProfileDir: true,
     devtools: false
   };
   const merged = { ...defaultOptions, ...options };
+  const { autoSwitchProfileDir, ...launchOptions } = merged;
 
   // Always use stealth plugin
   puppeteer.use(StealthPlugin());
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
-    if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
-      merged.executablePath = undefined; // Use Puppeteer's default Chromium
+    const defaultUserDataDirPath = path.resolve(defaultOptions.userDataDir);
+    const mergedUserDataDirPath = merged.userDataDir ? path.resolve(merged.userDataDir) : '';
+    const usesDefaultUserDataDir = mergedUserDataDirPath === defaultUserDataDirPath;
+
+    if (autoSwitchProfileDir && usesDefaultUserDataDir && isUserDataDirInUse(mergedUserDataDirPath)) {
+      const fallbackUserDataDir = getFallbackProfileDir();
+      fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+      console.warn(
+        `Default userDataDir is currently in use by another process, switching to temporary profile: ${fallbackUserDataDir}`
+      );
+      launchOptions.userDataDir = fallbackUserDataDir;
     }
-    puppeteer_browser = await puppeteer.launch(merged);
+
+    if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
+      launchOptions.executablePath = undefined; // Use Puppeteer's default Chromium
+    }
+    try {
+      puppeteer_browser = await puppeteer.launch(launchOptions);
+    } catch (error) {
+      const errorMessage = String(error?.message || error || '').toLowerCase();
+      const isProfileInUseError =
+        errorMessage.includes('already running for') ||
+        errorMessage.includes('userdatadir') ||
+        errorMessage.includes('user data dir');
+
+      if (autoSwitchProfileDir && usesDefaultUserDataDir && isProfileInUseError) {
+        const fallbackUserDataDir = getFallbackProfileDir();
+        fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+        console.warn(
+          `Puppeteer launch failed because default userDataDir is busy, retrying with temporary profile: ${fallbackUserDataDir}`
+        );
+        puppeteer_browser = await puppeteer.launch({ ...launchOptions, userDataDir: fallbackUserDataDir });
+      } else {
+        throw error;
+      }
+    }
   }
 
   const page = await puppeteer_browser.newPage();
@@ -186,7 +254,7 @@ export async function getPuppeteerCluster(options = {}) {
  *
  * @async
  * @function getPlaywright
- * @param {import('playwright').LaunchOptions} [options] - Optional configuration for launching Playwright
+ * @param {import('./puppeteer_utils-d.d.ts').getPlaywrightOptions} [options] - Optional configuration for launching Playwright
  * @returns {Promise<{
  *   page: import('playwright').Page,
  *   browser: import('playwright').Browser,
@@ -214,18 +282,53 @@ export async function getPlaywright(options = {}) {
       '--hide-crash-restore-bubble',
       '--autoplay-policy=no-user-gesture-required'
     ],
-    reuse: true
+    reuse: true,
+    autoSwitchProfileDir: true
   };
   const merged = { ...defaultOptions, ...options };
+  const { autoSwitchProfileDir, ...launchOptions } = merged;
 
   // Always use stealth plugin
   chromium.use(StealthPlugin());
 
   if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
-    if (merged.executablePath && !fs.existsSync(merged.executablePath)) {
-      merged.executablePath = undefined; // Use Playwright's default Chromium
+    const defaultUserDataDirPath = path.resolve(defaultOptions.userDataDir);
+    const mergedUserDataDirPath = merged.userDataDir ? path.resolve(merged.userDataDir) : '';
+    const usesDefaultUserDataDir = mergedUserDataDirPath === defaultUserDataDirPath;
+
+    if (autoSwitchProfileDir && usesDefaultUserDataDir && isUserDataDirInUse(mergedUserDataDirPath)) {
+      const fallbackUserDataDir = getFallbackProfileDir();
+      fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+      console.warn(
+        `Default userDataDir is currently in use by another process, switching to temporary profile: ${fallbackUserDataDir}`
+      );
+      launchOptions.userDataDir = fallbackUserDataDir;
     }
-    playwright_browser = await chromium.launch(merged);
+
+    if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
+      launchOptions.executablePath = undefined; // Use Playwright's default Chromium
+    }
+
+    try {
+      playwright_browser = await chromium.launch(launchOptions);
+    } catch (error) {
+      const errorMessage = String(error?.message || error || '').toLowerCase();
+      const isProfileInUseError =
+        errorMessage.includes('already running for') ||
+        errorMessage.includes('userdatadir') ||
+        errorMessage.includes('user data dir');
+
+      if (autoSwitchProfileDir && usesDefaultUserDataDir && isProfileInUseError) {
+        const fallbackUserDataDir = getFallbackProfileDir();
+        fs.mkdirSync(fallbackUserDataDir, { recursive: true });
+        console.warn(
+          `Playwright launch failed because default userDataDir is busy, retrying with temporary profile: ${fallbackUserDataDir}`
+        );
+        playwright_browser = await chromium.launch({ ...launchOptions, userDataDir: fallbackUserDataDir });
+      } else {
+        throw error;
+      }
+    }
   }
 
   const page = await playwright_browser.newPage();
