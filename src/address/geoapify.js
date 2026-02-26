@@ -15,6 +15,12 @@ export async function geoCodeWithGeoapify(keyword, apiKey, options = {}) {
   if (!keyword || typeof keyword !== 'string') {
     throw new TypeError('Keyword must be a non-empty string');
   }
+  const resolvedApiKey = isEmpty(apiKey, { allowWhitespace: true }) ? getGeoapifyKeys()[0] : apiKey;
+  if (isEmpty(resolvedApiKey, { allowWhitespace: true })) {
+    console.error('Geoapify error: API key is required (pass apiKey or set GEOAPIFY_KEYS)');
+    return null;
+  }
+
   const cacheFile = getCacheFilePath(keyword);
   const verbose = options.verbose || false;
 
@@ -38,7 +44,7 @@ export async function geoCodeWithGeoapify(keyword, apiKey, options = {}) {
   const baseUrl = 'https://api.geoapify.com/v1/geocode/search';
   const url = new URL(baseUrl);
   url.searchParams.append('text', keyword);
-  url.searchParams.append('apiKey', apiKey);
+  url.searchParams.append('apiKey', resolvedApiKey);
 
   try {
     const response = await axios.get(url.toString(), { ...(await axiosConfigBuilder(options)) });
@@ -106,6 +112,10 @@ if (process.argv[1].includes('geoapify.js')) {
     const apiKey = getGeoapifyKeys()[0];
     const keyword = 'LEBAK REJO UTARA 1/8 SURABAYA';
     const result = await geoCodeWithGeoapify(keyword, apiKey, { verbose: true, noCache: true });
-    console.log(result);
+    if (result) {
+      console.log('Geocoding result:', result);
+    } else {
+      console.log('No geocoding result found for keyword:', keyword);
+    }
   })();
 }
