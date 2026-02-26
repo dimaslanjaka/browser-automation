@@ -1,18 +1,24 @@
 const path = require('path');
+const fs = require('fs');
 
 /**
  * @type {import("puppeteer").Configuration}
  */
-
-const cacheDir = path.join(__dirname, '.cache', 'puppeteer');
-const fs = require('fs');
-if (!fs.existsSync(cacheDir)) {
-  fs.mkdirSync(cacheDir, { recursive: true });
-}
-
 const config = {
   // Cache location for Puppeteer.
-  cacheDirectory: cacheDir
+  cacheDirectory: path.join(__dirname, '.cache', 'puppeteer'),
+  // Download Chrome (default `skipDownload: false`).
+  chrome: {
+    skipDownload: false
+  },
+  // Download Firefox (default `skipDownload: true`).
+  firefox: {
+    skipDownload: false
+  },
+  temporaryDirectory: path.join(__dirname, 'tmp/puppeteer')
 };
+
+fs.mkdirSync(config.cacheDirectory, { recursive: true });
+fs.mkdirSync(config.temporaryDirectory, { recursive: true });
 
 module.exports = config;
