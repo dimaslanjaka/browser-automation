@@ -95,7 +95,7 @@ export async function processData(
     console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);
     return {
       status: 'error',
-      reason: 'duplicate',
+      reason: 'duplicate_entry',
       description: `Data with NIK ${NIK} has already been processed.`
     };
   }

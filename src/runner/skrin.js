@@ -86,7 +86,19 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     const result = await processData(processPage, data, database);
     if (result.status === 'error') {
       console.error('fail processing data', Object.assign(result, { data }));
-      break; // stop processing further on error, to allow investigation and fixes
+      // skip reason: duplicate entry (already exists in database)
+      if (result.reason === 'duplicate_entry') {
+        console.warn('Skipping due to duplicate entry in database, moving to next data');
+        continue;
+      }
+      // wait until browser manually closed, then exit with failure
+      while (true) {
+        await sleep(1000);
+        if (!browser || !browser.connected) {
+          console.warn('Browser closed, exiting with failure due to previous error');
+          process.exit(1);
+        }
+      }
     } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
       process.exit(1); // exit on unexpected status to avoid silent failures
