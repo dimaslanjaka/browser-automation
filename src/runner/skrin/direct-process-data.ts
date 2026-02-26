@@ -83,6 +83,16 @@ export async function processData(
     };
   }
 
+  const existing = await database.getLogById(getNumbersOnly(NIK));
+  if (existing && existing.data) {
+    console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);
+    return {
+      status: 'error',
+      reason: 'duplicate',
+      description: `Data with NIK ${NIK} has already been processed.`
+    };
+  }
+
   // Fix and normalize data before processing
   const fixedData = await fixData(data, { autofillTanggalEntry: true, fixNamaBayi: true });
   const parsedNik: NikParseResult = fixedData.parsed_nik || (await nikUtils.nikParse(fixedData.nik));
