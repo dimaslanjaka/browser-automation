@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
  * The absolute path for the user data directory.
  * @constant {string} userDataDir - The path to store browser profile data.
  */
-const userDataDir = path.resolve(process.cwd(), '.cache/profiles/default');
+export const userDataDir = path.resolve(process.cwd(), '.cache/profiles/default');
 
 /**
  * @type {import('puppeteer').Browser | null}
@@ -39,7 +39,7 @@ let puppeteer_cluster = null;
  * @param {string} targetUserDataDir - User data directory path to check.
  * @returns {boolean}
  */
-function isUserDataDirInUse(targetUserDataDir) {
+export function isUserDataDirInUse(targetUserDataDir) {
   if (!targetUserDataDir) return false;
 
   const resolvedUserDataDir = path.resolve(targetUserDataDir);
@@ -54,7 +54,7 @@ function isUserDataDirInUse(targetUserDataDir) {
  * @param {number} [startIndex=1] - First profile index to probe.
  * @returns {string}
  */
-function getFallbackProfileDir(startIndex = 1) {
+export function getFallbackProfileDir(startIndex = 1) {
   const profilesRootDir = path.resolve(process.cwd(), '.cache/profiles');
   let index = Math.max(1, Number(startIndex) || 1);
 
