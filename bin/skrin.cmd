@@ -44,6 +44,7 @@ call rollup -c rollup.skrin.js
 exit /b %ERRORLEVEL%
 
 :run_cluster
+shift
 call node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin-cluster.ts" %*
 exit /b %ERRORLEVEL%
 
@@ -59,14 +60,8 @@ call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%SKRIN_OUT
 exit /b %ERRORLEVEL%
 
 :run_direct
-echo building direct runner...
-set "SKRIN_INPUT=%CD%\src\runner\skrin.direct.js"
-set "SKRIN_OUTPUT=%CD%\dist\skrin.bundle.cjs"
-set "BUILD_TARGET=skrin"
-call rollup -c rollup.skrin.js
-echo running direct runner...
 shift
-call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%SKRIN_OUTPUT%" %*
+call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin.direct.js" %*
 exit /b %ERRORLEVEL%
 
 :run_skrin2

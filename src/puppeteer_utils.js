@@ -52,15 +52,17 @@ export function isUserDataDirInUse(targetUserDataDir) {
  * Returns the first available fallback profile directory path.
  *
  * @param {number} [startIndex=1] - First profile index to probe.
+ * @param {string[]} [excludedDirs=[]] - Directories to skip when selecting fallback profile.
  * @returns {string}
  */
-export function getFallbackProfileDir(startIndex = 1) {
+export function getFallbackProfileDir(startIndex = 1, excludedDirs = []) {
   const profilesRootDir = path.resolve(process.cwd(), '.cache/profiles');
   let index = Math.max(1, Number(startIndex) || 1);
+  const excludedDirSet = new Set(excludedDirs.map((dir) => path.resolve(dir)));
 
   while (true) {
     const profileDir = path.join(profilesRootDir, `profile${index}`);
-    if (!isUserDataDirInUse(profileDir)) {
+    if (!excludedDirSet.has(profileDir) && !isUserDataDirInUse(profileDir)) {
       return profileDir;
     }
     index += 1;
@@ -108,12 +110,17 @@ export async function getPuppeteer(options = {}) {
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
     const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
+    const excludedUserDataDirs = new Set();
+    if (launchUserDataDirPath) {
+      excludedUserDataDirs.add(launchUserDataDirPath);
+    }
 
     if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
-      const fallbackUserDataDir = getFallbackProfileDir();
+      const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
       fs.mkdirSync(fallbackUserDataDir, { recursive: true });
       console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
       launchOptions.userDataDir = fallbackUserDataDir;
+      excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
     }
 
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
@@ -129,7 +136,10 @@ export async function getPuppeteer(options = {}) {
         errorMessage.includes('user data dir');
 
       if (autoSwitchProfileDir && isProfileInUseError) {
-        const fallbackUserDataDir = getFallbackProfileDir();
+        if (launchOptions.userDataDir) {
+          excludedUserDataDirs.add(path.resolve(launchOptions.userDataDir));
+        }
+        const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
         fs.mkdirSync(fallbackUserDataDir, { recursive: true });
         console.warn(
           `Puppeteer launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
@@ -418,12 +428,17 @@ export async function getPlaywright(options = {}) {
 
   if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
     const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
+    const excludedUserDataDirs = new Set();
+    if (launchUserDataDirPath) {
+      excludedUserDataDirs.add(launchUserDataDirPath);
+    }
 
     if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
-      const fallbackUserDataDir = getFallbackProfileDir();
+      const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
       fs.mkdirSync(fallbackUserDataDir, { recursive: true });
       console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
       launchOptions.userDataDir = fallbackUserDataDir;
+      excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
     }
 
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
@@ -440,7 +455,10 @@ export async function getPlaywright(options = {}) {
         errorMessage.includes('user data dir');
 
       if (autoSwitchProfileDir && isProfileInUseError) {
-        const fallbackUserDataDir = getFallbackProfileDir();
+        if (launchOptions.userDataDir) {
+          excludedUserDataDirs.add(path.resolve(launchOptions.userDataDir));
+        }
+        const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
         fs.mkdirSync(fallbackUserDataDir, { recursive: true });
         console.warn(
           `Playwright launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
