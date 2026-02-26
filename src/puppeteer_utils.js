@@ -70,6 +70,143 @@ export function getFallbackProfileDir(startIndex = 1, excludedDirs = []) {
 }
 
 /**
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+function isProfileInUseLaunchError(error) {
+  const errorMessage = String(error?.message || error || '').toLowerCase();
+  return (
+    errorMessage.includes('already running for') ||
+    errorMessage.includes('userdatadir') ||
+    errorMessage.includes('user data dir')
+  );
+}
+
+/**
+ * @param {Set<string>} excludedUserDataDirs
+ * @param {number} [startIndex=1]
+ * @returns {string}
+ */
+function reserveNextFallbackProfileDir(excludedUserDataDirs, startIndex = 1) {
+  const fallbackUserDataDir = getFallbackProfileDir(startIndex, [...excludedUserDataDirs]);
+  const resolvedFallbackUserDataDir = path.resolve(fallbackUserDataDir);
+  fs.mkdirSync(resolvedFallbackUserDataDir, { recursive: true });
+  excludedUserDataDirs.add(resolvedFallbackUserDataDir);
+  return resolvedFallbackUserDataDir;
+}
+
+/**
+ * @param {Object} params
+ * @param {Object} params.launchOptions
+ * @param {boolean} params.autoSwitchProfileDir
+ * @returns {{ currentLaunchOptions: Object, excludedUserDataDirs: Set<string> }}
+ */
+function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProfileDir }) {
+  const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
+  const excludedUserDataDirs = new Set();
+
+  if (launchUserDataDirPath) {
+    excludedUserDataDirs.add(launchUserDataDirPath);
+  }
+
+  const currentLaunchOptions = { ...launchOptions };
+  if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
+    const fallbackUserDataDir = reserveNextFallbackProfileDir(excludedUserDataDirs, 1);
+    console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
+    currentLaunchOptions.userDataDir = fallbackUserDataDir;
+  }
+
+  return { currentLaunchOptions, excludedUserDataDirs };
+}
+
+/**
+ * @param {Object} params
+ * @param {(launchOptions: Object) => Promise<any>} params.launchFn
+ * @param {Object} params.launchOptions
+ * @param {boolean} params.autoSwitchProfileDir
+ * @param {string} params.launcherName
+ * @param {number} [params.maxFallbackLaunchAttempts=10]
+ * @returns {Promise<any>}
+ */
+async function launchWithProfileFallback({
+  launchFn,
+  launchOptions,
+  autoSwitchProfileDir,
+  launcherName,
+  maxFallbackLaunchAttempts = 10
+}) {
+  const { currentLaunchOptions: initialLaunchOptions, excludedUserDataDirs } = prepareLaunchOptionsWithProfileFallback({
+    launchOptions,
+    autoSwitchProfileDir
+  });
+
+  let launchAttempt = 0;
+  let currentLaunchOptions = { ...initialLaunchOptions };
+
+  while (true) {
+    try {
+      return await launchFn(currentLaunchOptions);
+    } catch (error) {
+      if (!autoSwitchProfileDir || !isProfileInUseLaunchError(error) || launchAttempt >= maxFallbackLaunchAttempts) {
+        throw error;
+      }
+
+      if (currentLaunchOptions.userDataDir) {
+        excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
+      }
+
+      const fallbackUserDataDir = reserveNextFallbackProfileDir(excludedUserDataDirs, 1);
+      launchAttempt += 1;
+
+      console.warn(
+        `${launcherName} launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
+      );
+
+      currentLaunchOptions = {
+        ...currentLaunchOptions,
+        userDataDir: fallbackUserDataDir
+      };
+    }
+  }
+}
+
+/**
+ * @param {Object} params
+ * @param {string} params.preferredUserDataDir
+ * @param {Set<string>} params.reservedUserDataDirs
+ * @param {boolean} params.autoSwitchProfileDir
+ * @param {number} [params.fallbackProfileStartIndex=1]
+ * @returns {string}
+ */
+function reserveClusterUserDataDir({
+  preferredUserDataDir,
+  reservedUserDataDirs,
+  autoSwitchProfileDir,
+  fallbackProfileStartIndex = 1
+}) {
+  const resolvedPreferredPath = preferredUserDataDir ? path.resolve(preferredUserDataDir) : '';
+
+  if (!autoSwitchProfileDir) {
+    if (resolvedPreferredPath) {
+      reservedUserDataDirs.add(resolvedPreferredPath);
+      return resolvedPreferredPath;
+    }
+    return resolvedPreferredPath;
+  }
+
+  if (
+    resolvedPreferredPath &&
+    !reservedUserDataDirs.has(resolvedPreferredPath) &&
+    !isUserDataDirInUse(resolvedPreferredPath)
+  ) {
+    reservedUserDataDirs.add(resolvedPreferredPath);
+    return resolvedPreferredPath;
+  }
+
+  return reserveNextFallbackProfileDir(reservedUserDataDirs, fallbackProfileStartIndex);
+}
+
+/**
  * Launches or reuses a Puppeteer browser instance using `puppeteer-extra` with optional stealth plugin.
  *
  * @async
@@ -109,62 +246,16 @@ export async function getPuppeteer(options = {}) {
   puppeteer.use(StealthPlugin());
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
-    const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
-    const excludedUserDataDirs = new Set();
-    if (launchUserDataDirPath) {
-      excludedUserDataDirs.add(launchUserDataDirPath);
-    }
-
-    if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
-      const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
-      fs.mkdirSync(fallbackUserDataDir, { recursive: true });
-      console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
-      launchOptions.userDataDir = fallbackUserDataDir;
-      excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
-    }
-
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
       launchOptions.executablePath = undefined; // Use Puppeteer's default Chromium
     }
 
-    const maxFallbackLaunchAttempts = 10;
-    let launchAttempt = 0;
-    let currentLaunchOptions = { ...launchOptions };
-
-    while (true) {
-      try {
-        puppeteer_browser = await puppeteer.launch(currentLaunchOptions);
-        break;
-      } catch (error) {
-        const errorMessage = String(error?.message || error || '').toLowerCase();
-        const isProfileInUseError =
-          errorMessage.includes('already running for') ||
-          errorMessage.includes('userdatadir') ||
-          errorMessage.includes('user data dir');
-
-        if (!autoSwitchProfileDir || !isProfileInUseError || launchAttempt >= maxFallbackLaunchAttempts) {
-          throw error;
-        }
-
-        if (currentLaunchOptions.userDataDir) {
-          excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
-        }
-
-        const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
-        fs.mkdirSync(fallbackUserDataDir, { recursive: true });
-        excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
-        launchAttempt += 1;
-
-        console.warn(
-          `Puppeteer launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
-        );
-
-        currentLaunchOptions = {
-          ...currentLaunchOptions,
-          userDataDir: fallbackUserDataDir
-        };
-      }
-    }
+    puppeteer_browser = await launchWithProfileFallback({
+      launchFn: async (currentLaunchOptions) => await puppeteer.launch(currentLaunchOptions),
+      launchOptions,
+      autoSwitchProfileDir,
+      launcherName: 'Puppeteer'
+    });
   }
 
   const page = await puppeteer_browser.newPage();
@@ -219,39 +310,13 @@ export async function getPuppeteerCluster(options = {}) {
 
     const createProfileDir = (index) => path.resolve(process.cwd(), `.cache/profiles/profile${index + 1}`);
 
-    const allocateUserDataDir = (preferredUserDataDir, fallbackProfileStartIndex = 1) => {
-      const tryReserve = (candidatePath) => {
-        if (!candidatePath) return null;
-        const resolvedCandidatePath = path.resolve(candidatePath);
-        if (reservedUserDataDirs.has(resolvedCandidatePath)) return null;
-        if (isUserDataDirInUse(resolvedCandidatePath)) return null;
-        reservedUserDataDirs.add(resolvedCandidatePath);
-        return resolvedCandidatePath;
-      };
-
-      const resolvedPreferredPath = preferredUserDataDir ? path.resolve(preferredUserDataDir) : '';
-
-      if (!autoSwitchProfileDir) {
-        if (resolvedPreferredPath) {
-          reservedUserDataDirs.add(resolvedPreferredPath);
-          return resolvedPreferredPath;
-        }
-        return resolvedPreferredPath;
-      }
-
-      const preferredReserved = tryReserve(resolvedPreferredPath);
-      if (preferredReserved) return preferredReserved;
-
-      let profileIndex = Math.max(1, Number(fallbackProfileStartIndex) || 1);
-      while (true) {
-        const fallbackUserDataDir = tryReserve(path.resolve(process.cwd(), `.cache/profiles/profile${profileIndex}`));
-        if (fallbackUserDataDir) return fallbackUserDataDir;
-        profileIndex += 1;
-      }
-    };
-
     const resolvedInitialUserDataDir = puppeteerOptions.userDataDir ? path.resolve(puppeteerOptions.userDataDir) : '';
-    puppeteerOptions.userDataDir = allocateUserDataDir(resolvedInitialUserDataDir || userDataDir, 1);
+    puppeteerOptions.userDataDir = reserveClusterUserDataDir({
+      preferredUserDataDir: resolvedInitialUserDataDir || userDataDir,
+      reservedUserDataDirs,
+      autoSwitchProfileDir,
+      fallbackProfileStartIndex: 1
+    });
     if (puppeteerOptions.userDataDir) {
       fs.mkdirSync(puppeteerOptions.userDataDir, { recursive: true });
     }
@@ -272,10 +337,12 @@ export async function getPuppeteerCluster(options = {}) {
           };
 
           const defaultForIndex = createProfileDir(index);
-          const assignedUserDataDir = allocateUserDataDir(
-            mergedBrowserOption.userDataDir || defaultForIndex,
-            index + 1
-          );
+          const assignedUserDataDir = reserveClusterUserDataDir({
+            preferredUserDataDir: mergedBrowserOption.userDataDir || defaultForIndex,
+            reservedUserDataDirs,
+            autoSwitchProfileDir,
+            fallbackProfileStartIndex: index + 1
+          });
 
           if (assignedUserDataDir) {
             fs.mkdirSync(assignedUserDataDir, { recursive: true });
@@ -290,7 +357,12 @@ export async function getPuppeteerCluster(options = {}) {
       while (normalizedPerBrowserOptions.length < targetConcurrency) {
         const nextIndex = normalizedPerBrowserOptions.length;
         const defaultForIndex = createProfileDir(nextIndex);
-        const assignedUserDataDir = allocateUserDataDir(defaultForIndex, nextIndex + 1);
+        const assignedUserDataDir = reserveClusterUserDataDir({
+          preferredUserDataDir: defaultForIndex,
+          reservedUserDataDirs,
+          autoSwitchProfileDir,
+          fallbackProfileStartIndex: nextIndex + 1
+        });
         if (assignedUserDataDir) {
           fs.mkdirSync(assignedUserDataDir, { recursive: true });
         }
@@ -308,7 +380,12 @@ export async function getPuppeteerCluster(options = {}) {
       if (isMultiBrowser && usesBrowserConcurrency) {
         normalizedClusterLaunchOptions.perBrowserOptions = Array.from({ length: targetConcurrency }, (_, index) => {
           const defaultForIndex = createProfileDir(index);
-          const assignedUserDataDir = allocateUserDataDir(defaultForIndex, index + 1);
+          const assignedUserDataDir = reserveClusterUserDataDir({
+            preferredUserDataDir: defaultForIndex,
+            reservedUserDataDirs,
+            autoSwitchProfileDir,
+            fallbackProfileStartIndex: index + 1
+          });
           if (assignedUserDataDir) {
             fs.mkdirSync(assignedUserDataDir, { recursive: true });
           }
@@ -323,19 +400,6 @@ export async function getPuppeteerCluster(options = {}) {
         puppeteerOptions = sharedPuppeteerOptions;
       }
     }
-
-    const getRetryProfileDir = (startIndex = 1, usedDirs = new Set()) => {
-      let profileIndex = Math.max(1, Number(startIndex) || 1);
-      while (true) {
-        const candidateDir = path.resolve(process.cwd(), `.cache/profiles/profile${profileIndex}`);
-        if (!usedDirs.has(candidateDir) && !isUserDataDirInUse(candidateDir)) {
-          usedDirs.add(candidateDir);
-          fs.mkdirSync(candidateDir, { recursive: true });
-          return candidateDir;
-        }
-        profileIndex += 1;
-      }
-    };
 
     if (!puppeteer_cluster || !reuse) {
       try {
@@ -370,11 +434,11 @@ export async function getPuppeteerCluster(options = {}) {
             normalizedClusterLaunchOptions.perBrowserOptions = normalizedClusterLaunchOptions.perBrowserOptions.map(
               (browserOption, index) => ({
                 ...(browserOption || {}),
-                userDataDir: getRetryProfileDir(index + 1, retryUsedDirs)
+                userDataDir: reserveNextFallbackProfileDir(retryUsedDirs, index + 1)
               })
             );
           } else {
-            puppeteerOptions.userDataDir = getRetryProfileDir(1, retryUsedDirs);
+            puppeteerOptions.userDataDir = reserveNextFallbackProfileDir(retryUsedDirs, 1);
           }
 
           console.warn('Cluster launch failed because userDataDir is busy, retrying with next profileN directory.');
@@ -443,62 +507,16 @@ export async function getPlaywright(options = {}) {
   chromium.use(StealthPlugin());
 
   if (!playwright_browser || !playwright_browser.isConnected() || !merged.reuse) {
-    const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
-    const excludedUserDataDirs = new Set();
-    if (launchUserDataDirPath) {
-      excludedUserDataDirs.add(launchUserDataDirPath);
-    }
-
-    if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
-      const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
-      fs.mkdirSync(fallbackUserDataDir, { recursive: true });
-      console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
-      launchOptions.userDataDir = fallbackUserDataDir;
-      excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
-    }
-
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
       launchOptions.executablePath = undefined; // Use Playwright's default Chromium
     }
 
-    const maxFallbackLaunchAttempts = 10;
-    let launchAttempt = 0;
-    let currentLaunchOptions = { ...launchOptions };
-
-    while (true) {
-      try {
-        playwright_browser = await chromium.launch(currentLaunchOptions);
-        break;
-      } catch (error) {
-        const errorMessage = String(error?.message || error || '').toLowerCase();
-        const isProfileInUseError =
-          errorMessage.includes('already running for') ||
-          errorMessage.includes('userdatadir') ||
-          errorMessage.includes('user data dir');
-
-        if (!autoSwitchProfileDir || !isProfileInUseError || launchAttempt >= maxFallbackLaunchAttempts) {
-          throw error;
-        }
-
-        if (currentLaunchOptions.userDataDir) {
-          excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
-        }
-
-        const fallbackUserDataDir = getFallbackProfileDir(1, [...excludedUserDataDirs]);
-        fs.mkdirSync(fallbackUserDataDir, { recursive: true });
-        excludedUserDataDirs.add(path.resolve(fallbackUserDataDir));
-        launchAttempt += 1;
-
-        console.warn(
-          `Playwright launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
-        );
-
-        currentLaunchOptions = {
-          ...currentLaunchOptions,
-          userDataDir: fallbackUserDataDir
-        };
-      }
-    }
+    playwright_browser = await launchWithProfileFallback({
+      launchFn: async (currentLaunchOptions) => await chromium.launch(currentLaunchOptions),
+      launchOptions,
+      autoSwitchProfileDir,
+      launcherName: 'Playwright'
+    });
   }
 
   const page = await playwright_browser.newPage();
