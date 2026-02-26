@@ -7,7 +7,6 @@ import type { ExcelRowData } from '../../globals.js';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteerCluster } from '../puppeteer_utils.js';
-import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import { getNumbersOnly } from '../utils.js';
 import { processData } from './skrin/direct-process-data.js';
 
@@ -87,7 +86,6 @@ async function main() {
           await cluster.execute(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
             try {
               await closeOtherTabs(page);
-              await autoLoginAndEnterSkriningPage(page);
               const result = await processData(page, data, database);
               if (result.status === 'error') {
                 console.error('Error processing data:', {

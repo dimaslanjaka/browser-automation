@@ -8,7 +8,6 @@ import * as databaseModule from '../../dist/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
-import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -83,7 +82,6 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
     const processPage = array_random(await browser.pages());
     await closeOtherTabs(processPage);
-    await autoLoginAndEnterSkriningPage(processPage);
 
     const result = await processData(processPage, data, database);
     if (result.status === 'error') {

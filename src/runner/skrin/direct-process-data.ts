@@ -6,22 +6,23 @@ import { isEmpty } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
 import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
+import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
+import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
+import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import {
   confirmIdentityModal,
+  getNormalizedFormValues,
   getPersonInfo,
   isIdentityModalVisible,
   isInvalidAlertVisible,
   isNikErrorVisible,
   isNIKNotFoundModalVisible,
-  isSuccessNotificationVisible,
-  getNormalizedFormValues
+  isSuccessNotificationVisible
 } from '../../skrin_utils.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
-import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
-import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -66,6 +67,7 @@ export async function processData(
   page.setDefaultTimeout(0);
   page.setDefaultNavigationTimeout(0);
 
+  await autoLoginAndEnterSkriningPage(page);
   await page.waitForSelector('#nik', { visible: true });
   await sleep(3000);
 
