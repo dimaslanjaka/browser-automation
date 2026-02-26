@@ -56,7 +56,7 @@
   "code-runner.clearPreviousOutput": true,
   "code-runner.executorMapByGlob": {
     "electron-*.ts": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
-    "*.py": "py2 -u",
+    "*.py": "py -u",
     "*.electron.js": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
     "*.mjs": "node --no-warnings=ExperimentalWarning",
     "*Test.php": "phpunit --verbose --debug --testdox --colors=always",
