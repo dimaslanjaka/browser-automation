@@ -51,6 +51,11 @@ export async function enterSkriningPage(page, replacePage = true) {
  * @param {import('puppeteer').Page} page
  */
 export async function autoLoginAndEnterSkriningPage(page) {
+  if (typeof page?.isClosed === 'function' && page.isClosed()) {
+    throw new Error('Cannot focus selected tab because the page is already closed.');
+  }
+
+  await page.bringToFront();
   await page.goto('https://sumatera.sitb.id/sitb2024/skrining#', { waitUntil: 'networkidle2', timeout: 120000 });
   await waitForDomStable(page, 3000, 30000);
 
