@@ -8,6 +8,7 @@ if /I "%~1"=="2" goto :run_skrin2
 if /I "%~1"=="skrin2" goto :run_skrin2
 if /I "%~1"=="cluster" goto :run_cluster
 if /I "%~1"=="clusterdist" goto :run_cluster_dist
+if /I "%~1"=="parallel" goto :run_parallel
 
 set "SKRIN_INPUT=%CD%\src\runner\skrin.direct.js"
 set "SKRIN_OUTPUT=%CD%\dist\skrin.bundle.cjs"
@@ -46,6 +47,11 @@ exit /b %ERRORLEVEL%
 :run_cluster
 shift
 call node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin-cluster.ts" %*
+exit /b %ERRORLEVEL%
+
+:run_parallel
+shift
+call node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin.parallel.ts" %*
 exit /b %ERRORLEVEL%
 
 :run_cluster_dist
