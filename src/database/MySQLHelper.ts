@@ -31,10 +31,12 @@ export class MySQLHelper {
     }
 
     this.initializing = (async () => {
-      // Ensure database exists
+      // Always ensure the database exists.
+      // A local schema marker file can become stale if the DB is dropped externally.
+      await this._ensureDatabase();
+
       const _schemaIndicatorFile = path.join(process.cwd(), 'tmp/database/', `${this.config.database}.schema`);
       if (!fs.existsSync(_schemaIndicatorFile)) {
-        await this._ensureDatabase();
         await fs.ensureDir(path.dirname(_schemaIndicatorFile));
         await fs.writeFile(_schemaIndicatorFile, `Initialized at ${new Date().toISOString()}\n`, 'utf-8');
       }

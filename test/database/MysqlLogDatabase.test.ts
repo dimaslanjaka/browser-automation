@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import 'dotenv/config.js';
 import { MysqlLogDatabase } from '../../src/database/MysqlLogDatabase.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
@@ -9,10 +9,12 @@ describe('MysqlLogDatabase', () => {
 
   beforeAll(async () => {
     db = new MysqlLogDatabase(dbName, {
-      user: MYSQL_USER,
-      password: MYSQL_PASS,
-      host: MYSQL_HOST,
-      port: MYSQL_PORT ? parseInt(MYSQL_PORT, 10) : undefined
+      host: MYSQL_HOST || 'localhost',
+      user: MYSQL_USER || 'root',
+      password: MYSQL_PASS || '',
+      port: Number(MYSQL_PORT) || 3306,
+      connectTimeout: 60000,
+      connectionLimit: 10
     });
     await db.waitReady();
   }, 60000);
