@@ -75,10 +75,12 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   const browser = puppeteer.browser || puppeteer.page.browser();
 
   while (dataKunto.length > 0) {
+    const remainingBefore = dataKunto.length;
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
     const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
+    console.log(`Remaining entries before processing current data: ${remainingBefore}`);
 
     const processPage = array_random(await browser.pages());
     await closeOtherTabs(processPage);
@@ -89,13 +91,16 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       // skip reason: duplicate entry (already exists in database)
       if (result.reason === 'duplicate_entry') {
         console.warn('Skipping due to duplicate entry in database, moving to next data');
+        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
         continue;
       }
       // skip reason: invalid NIK format (not 16 digits)
       if (result.reason === 'invalid_nik_format') {
         console.warn('Skipping due to invalid NIK format, moving to next data');
+        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
         continue;
       }
+      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
       // wait until browser manually closed, then exit with failure
       while (true) {
         await sleep(1000);
@@ -106,9 +111,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       }
     } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
+      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
       process.exit(1); // exit on unexpected status to avoid silent failures
     } else {
       console.log('Successfully processed data for NIK:', data.nik);
+      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
     }
   }
 
