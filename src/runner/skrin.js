@@ -9,6 +9,7 @@ import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
 import { getNumbersOnly, sleep } from '../utils.js';
+import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,9 +104,17 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       // skip reason: timedout while waiting for success notification (possible transient issue, retrying next data)
       if (result.reason === 'success_notification_timeout') {
         console.warn('Skipping due to timeout while waiting for success notification, moving to next data');
-        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
         dataKunto.push(data); // re-add current data to the end of the queue for retry later, as timeout might be transient
+        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
         continue;
+      }
+      // skip reason: session expired, run auto login and retry next data (session expiration can happen randomly, retrying next data with new session might succeed)
+      if (result.reason === 'session_expired') {
+        console.warn('Session expired, attempting to re-login and retry next data');
+        await autoLoginAndEnterSkriningPage(processPage);
+        dataKunto.push(data); // re-add current data to the end of the queue for retry later, as session expiration can be transient and might succeed with new session
+        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        continue; // retry next data, hopefully with a new session
       }
       console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
       // wait until browser manually closed, then exit with failure

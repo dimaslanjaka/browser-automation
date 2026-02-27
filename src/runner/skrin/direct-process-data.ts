@@ -18,6 +18,7 @@ import {
   isInvalidAlertVisible,
   isNikErrorVisible,
   isNIKNotFoundModalVisible,
+  isSessionExpiredAlertVisible,
   isSuccessNotificationVisible
 } from '../../skrin_utils.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
@@ -461,11 +462,30 @@ export async function processData(
   const invalidAlertVisible = await isInvalidAlertVisible(page);
   const nikErrorVisible = await isNikErrorVisible(page);
   const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
+  const sessionExpiredAlertVisible = await isSessionExpiredAlertVisible(page);
   const isAllowedToSubmit =
-    !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
+    !identityModalVisible &&
+    !invalidAlertVisible &&
+    !nikErrorVisible &&
+    !nikNotFoundModalVisible &&
+    !sessionExpiredAlertVisible;
   console.log(
-    `Submission eligibility check: identityModalVisible=${identityModalVisible}, invalidAlertVisible=${invalidAlertVisible}, nikErrorVisible=${nikErrorVisible}, nikNotFoundModalVisible=${nikNotFoundModalVisible}, isAllowedToSubmit=${isAllowedToSubmit}`
+    `Submission eligibility check: identityModalVisible=${identityModalVisible}, invalidAlertVisible=${invalidAlertVisible}, nikErrorVisible=${nikErrorVisible}, nikNotFoundModalVisible=${nikNotFoundModalVisible}, sessionExpiredAlertVisible=${sessionExpiredAlertVisible}, isAllowedToSubmit=${isAllowedToSubmit}`
   );
+
+  // Re-login if session expired
+  if (sessionExpiredAlertVisible) {
+    console.warn('⚠️ Session expired alert detected. Attempting to re-login...');
+    await waitEnter('Session expired. Please log in again, then press Enter to continue...');
+    await autoLoginAndEnterSkriningPage(page);
+    // After re-login, we should ideally re-fill the form with the same data before submitting
+    // For simplicity, we will just return an error here and let the user re-run the process for this entry
+    return {
+      status: 'error',
+      reason: 'session_expired',
+      description: 'Session expired during processing. Please re-run the process for this entry after logging in again.'
+    };
+  }
 
   if (isAllowedToSubmit) {
     // get form values before submission
