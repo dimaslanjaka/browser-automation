@@ -1,4 +1,5 @@
 import Bluebird from 'bluebird';
+import minimist from 'minimist';
 import { connect } from '../parallel-browsers/utils.js';
 import type { Browser } from 'puppeteer';
 import { loadCsvData } from '../../data/index.js';
@@ -29,13 +30,30 @@ const parallelRunsFromEnv = Number(process.env.SKRIN_PARALLEL_RUNS);
 const retryAttemptsFromEnv = Number(process.env.SKRIN_RETRY_ATTEMPTS);
 const retryDelayMsFromEnv = Number(process.env.SKRIN_RETRY_DELAY_MS);
 
-const parallelRuns =
-  Number.isFinite(parallelRunsFromEnv) && parallelRunsFromEnv > 0 ? Math.floor(parallelRunsFromEnv) : 2;
+const cliArgs = minimist(process.argv.slice(2), {
+  string: ['concurrent'],
+  alias: {
+    c: 'concurrent'
+  }
+});
+
+const parallelRunsFromCli = Number(cliArgs.concurrent);
+const hasValidParallelRunsFromCli = Number.isInteger(parallelRunsFromCli) && parallelRunsFromCli > 0;
+
+const parallelRuns = hasValidParallelRunsFromCli
+  ? parallelRunsFromCli
+  : Number.isFinite(parallelRunsFromEnv) && parallelRunsFromEnv > 0
+    ? Math.floor(parallelRunsFromEnv)
+    : 2;
 const retryAttempts =
   Number.isFinite(retryAttemptsFromEnv) && retryAttemptsFromEnv > 0 ? Math.floor(retryAttemptsFromEnv) : 2;
 const retryDelayMs = Number.isFinite(retryDelayMsFromEnv) && retryDelayMsFromEnv > 0 ? retryDelayMsFromEnv : 3000;
 const activeBrowsers = new Set<Browser>();
 let isShuttingDown = false;
+
+if (cliArgs.concurrent !== undefined && !hasValidParallelRunsFromCli) {
+  console.warn(`Invalid --concurrent value: ${String(cliArgs.concurrent)}. Falling back to configured default.`);
+}
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
