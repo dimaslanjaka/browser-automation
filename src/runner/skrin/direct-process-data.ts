@@ -461,15 +461,12 @@ export async function processData(
   const invalidAlertVisible = await isInvalidAlertVisible(page);
   const nikErrorVisible = await isNikErrorVisible(page);
   const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
-
-  console.log('identityModalVisible:', identityModalVisible);
-  console.log('invalidAlertVisible:', invalidAlertVisible);
-  console.log('nikErrorVisible:', nikErrorVisible);
-  console.log('nikNotFoundModalVisible:', nikNotFoundModalVisible);
-
   const isAllowedToSubmit =
     !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
-  console.log('isAllowedToSubmit:', isAllowedToSubmit);
+  console.log(
+    `Submission eligibility check: identityModalVisible=${identityModalVisible}, invalidAlertVisible=${invalidAlertVisible}, nikErrorVisible=${nikErrorVisible}, nikNotFoundModalVisible=${nikNotFoundModalVisible}, isAllowedToSubmit=${isAllowedToSubmit}`
+  );
+
   if (isAllowedToSubmit) {
     // get form values before submission
     console.log(`Getting form values for NIK: ${NIK} before submission...`);
