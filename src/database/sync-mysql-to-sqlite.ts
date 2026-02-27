@@ -20,6 +20,7 @@ export async function syncMySQLToSqlite({
   concurrency = 10,
   remove = false
 } = {}) {
+  const syncLabel = 'MySQL → SQLite';
   const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
   const sqliteDb = new SQLiteLogDatabase(sqliteName);
   const mysqlDb = new MysqlLogDatabase(mysqlDbName, {
@@ -32,11 +33,11 @@ export async function syncMySQLToSqlite({
   try {
     const logs = await mysqlDb.getLogs();
     if (!logs || logs.length === 0) {
-      console.log(`No logs found to migrate in MySQL database: ${mysqlDbName}.`);
+      console.log(`[${syncLabel}] No logs found to migrate in MySQL database: ${mysqlDbName}.`);
       return { migrated: 0 };
     }
 
-    console.log(`Found ${logs.length} logs. Starting migration (dryRun=${dryRun}).`);
+    console.log(`[${syncLabel}] Found ${logs.length} logs. Starting migration (dryRun=${dryRun}).`);
 
     let migrated = 0;
 
@@ -59,7 +60,7 @@ export async function syncMySQLToSqlite({
       await Promise.all(promises);
     }
 
-    console.log(`Migration complete. migrated=${migrated}`);
+    console.log(`[${syncLabel}] Migration complete. migrated=${migrated}`);
     return { migrated };
   } finally {
     try {
