@@ -233,8 +233,12 @@ export async function getPuppeteer(options = {}) {
       '--no-first-run',
       '--ignore-certificate-errors',
       '--hide-crash-restore-bubble',
-      '--autoplay-policy=no-user-gesture-required'
+      '--autoplay-policy=no-user-gesture-required',
+      '--disable-infobars',
+      '--disable-blink-features=AutomationControlled'
     ],
+    // Remove Puppeteer's automation switch to avoid the "controlled by automated software" infobar
+    ignoreDefaultArgs: ['--enable-automation'],
     reuse: true,
     autoSwitchProfileDir: true,
     devtools: false
@@ -283,8 +287,12 @@ export async function getPuppeteerCluster(options = {}) {
       '--no-first-run',
       '--ignore-certificate-errors',
       '--hide-crash-restore-bubble',
-      '--autoplay-policy=no-user-gesture-required'
+      '--autoplay-policy=no-user-gesture-required',
+      '--disable-infobars',
+      '--disable-blink-features=AutomationControlled'
     ],
+    // Remove Puppeteer's automation switch to avoid the "controlled by automated software" infobar
+    ignoreDefaultArgs: ['--enable-automation'],
     devtools: false
   };
 
@@ -495,7 +503,9 @@ export async function getPlaywright(options = {}) {
       '--no-first-run',
       '--ignore-certificate-errors',
       '--hide-crash-restore-bubble',
-      '--autoplay-policy=no-user-gesture-required'
+      '--autoplay-policy=no-user-gesture-required',
+      '--disable-infobars',
+      '--disable-blink-features=AutomationControlled'
     ],
     reuse: true,
     autoSwitchProfileDir: true
