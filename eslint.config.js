@@ -95,8 +95,12 @@ export default tseslint.config(
       ...prettierConfig.rules,
 
       // Example JS style relaxations
-      'arrow-body-style': 'off', // Allow any arrow fn body style
-      'prefer-arrow-callback': 'off', // Allow normal function callbacks
+      // Allow any arrow fn body style
+      'arrow-body-style': 'off',
+      // Allow normal function callbacks
+      'prefer-arrow-callback': 'off',
+      // Allow intentional infinite loops like while(true)
+      'no-constant-condition': ['error', { checkLoops: false }],
       // ⚙️ Allow unused variables starting with "_"
       'no-unused-vars': [
         'error',
