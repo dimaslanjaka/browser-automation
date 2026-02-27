@@ -1,5 +1,7 @@
 import { SQLiteLogDatabase } from './SQLiteLogDatabase.js';
-import { MySQLLogDatabase } from './MySQLLogDatabase.js';
+import { MysqlLogDatabase } from './MysqlLogDatabase.js';
+import { toValidMySQLDatabaseName } from './db_utils.js';
+import minimist from 'minimist';
 import _fs from 'fs-extra';
 
 /**
@@ -14,19 +16,24 @@ import _fs from 'fs-extra';
  */
 export async function syncSqliteToMySQL({
   sqliteName = process.env.DATABASE_FILENAME || 'default',
-  mysqlTable = process.env.MYSQL_TABLE || 'logs',
-  mysqlDbName = process.env.MYSQL_DBNAME || process.env.MYSQL_DATABASE,
-  dryRun = false,
+  mysqlDbName = toValidMySQLDatabaseName('skrin_' + (process.env.MYSQL_DBNAME || 'default')),
+  dryRun = true,
   concurrency = 10,
   remove = false
 } = {}) {
+  const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
   const sqliteDb = new SQLiteLogDatabase(sqliteName);
-  const mysqlDb = new MySQLLogDatabase(mysqlTable, mysqlDbName);
+  const mysqlDb = new MysqlLogDatabase(mysqlDbName, {
+    host: MYSQL_HOST || 'localhost',
+    user: MYSQL_USER || 'root',
+    password: MYSQL_PASS || '',
+    port: Number(MYSQL_PORT) || 3306
+  });
 
   try {
     const logs = sqliteDb.getLogs();
     if (!logs || logs.length === 0) {
-      console.log('No logs found to migrate.');
+      console.log(`No logs found to migrate from SQLite into MySQL database: ${mysqlDbName}.`);
       return { migrated: 0 };
     }
 
@@ -70,16 +77,19 @@ export async function syncSqliteToMySQL({
 }
 
 // CLI usability
-if (process.argv[1] && process.argv[1].endsWith('sync-sqlite-to-mysql.js')) {
+if (process.argv[1] && process.argv[1].includes('sync-sqlite-to-mysql')) {
   (async () => {
-    const [, , sqliteNameArg, mysqlTableArg, mysqlDbArg, ...rest] = process.argv;
+    await import('dotenv').then((dotenv) => dotenv.config());
+    const cliArgs = minimist(process.argv.slice(2), {
+      boolean: ['remove', 'force'],
+      string: ['concurrency']
+    });
     const opts = {
-      sqliteName: sqliteNameArg || undefined,
-      mysqlTable: mysqlTableArg || undefined,
-      mysqlDbName: mysqlDbArg || undefined,
-      dryRun: rest.includes('--dry-run'),
-      remove: rest.includes('--remove'),
-      concurrency: parseInt((rest.find((s) => s.startsWith('--concurrency=')) || '').split('=')[1], 10) || 10
+      sqliteName: process.env.DATABASE_FILENAME,
+      mysqlDbName: toValidMySQLDatabaseName('skrin_' + (process.env.MYSQL_DBNAME || 'default')),
+      dryRun: !cliArgs.force,
+      remove: Boolean(cliArgs.remove),
+      concurrency: Number.parseInt(String(cliArgs.concurrency || ''), 10) || 10
     };
     try {
       await syncSqliteToMySQL(opts);
