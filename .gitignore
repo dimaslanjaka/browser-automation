@@ -68,6 +68,7 @@ Thumbs.db
 public/**/*
 public/assets/data/**/*.json
 public/*log*.html
+/proxies.txt
 
 # TypeScript
 *.tsbuildinfo
