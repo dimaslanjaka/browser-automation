@@ -91,6 +91,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
         console.warn('Skipping due to duplicate entry in database, moving to next data');
         continue;
       }
+      // skip reason: invalid NIK format (not 16 digits)
+      if (result.reason === 'invalid_nik_format') {
+        console.warn('Skipping due to invalid NIK format, moving to next data');
+        continue;
+      }
       // wait until browser manually closed, then exit with failure
       while (true) {
         await sleep(1000);
