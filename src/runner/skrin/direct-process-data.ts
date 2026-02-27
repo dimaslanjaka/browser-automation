@@ -122,11 +122,6 @@ export async function processData(
   const lockFilePath = path.join(process.cwd(), 'tmp', 'locks', lockFileName);
   const locker = new FileLockHelper(lockFilePath);
   if (!locker.lock()) {
-    await database.addLog({
-      id: getNumbersOnly(NIK),
-      data: { ...fixedData, status: 'locked' },
-      message: 'Skipped: locked by another process'
-    });
     console.warn(`Skipping NIK ${NIK} — locked by another process (lock=${lockFilePath})`);
     return {
       status: 'error',
