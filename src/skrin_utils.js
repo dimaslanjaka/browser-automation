@@ -76,17 +76,22 @@ export async function getNormalizedFormValuesFromFrame(page, iframeSelector, con
  */
 export async function isInvalidAlertVisible(page) {
   return await page.evaluate(() => {
-    const elem = document.querySelector('.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');
-    if (!elem) return false;
+    const elements = document.querySelectorAll('.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');
 
-    const style = window.getComputedStyle(elem);
-    return (
-      style &&
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      elem.offsetWidth > 0 &&
-      elem.offsetHeight > 0
-    );
+    for (const elem of elements) {
+      const style = window.getComputedStyle(elem);
+      const rect = elem.getBoundingClientRect();
+      const isVisible =
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        parseFloat(style.opacity || '1') > 0 &&
+        rect.width > 0 &&
+        rect.height > 0;
+
+      if (isVisible) return true;
+    }
+
+    return false;
   });
 }
 
