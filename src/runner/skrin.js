@@ -100,6 +100,13 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
         console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
         continue;
       }
+      // skip reason: timedout while waiting for success notification (possible transient issue, retrying next data)
+      if (result.reason === 'success_notification_timeout') {
+        console.warn('Skipping due to timeout while waiting for success notification, moving to next data');
+        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        dataKunto.push(data); // re-add current data to the end of the queue for retry later, as timeout might be transient
+        continue;
+      }
       console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
       // wait until browser manually closed, then exit with failure
       while (true) {

@@ -509,9 +509,18 @@ export async function processData(
         console.log('✅ Success notification is visible');
         break;
       }
+      const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
+      if (elapsedSeconds >= 300) {
+        process.stdout.write('\n');
+        process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
+        return {
+          status: 'error',
+          reason: 'success_notification_timeout',
+          description: 'Timed out waiting for success notification after 5 minutes.'
+        };
+      }
       // Optional: wait a bit to avoid tight loop
       await new Promise((r) => setTimeout(r, 1000));
-      const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
       process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
     }
 
