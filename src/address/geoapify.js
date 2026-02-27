@@ -54,10 +54,7 @@ export async function geoCodeWithGeoapify(keyword, apiKey, options = {}) {
       return null;
     }
     const props = data.features[0]?.properties || {};
-    if (response.status === 200) {
-      writefile(cacheFile, response.data);
-      if (verbose) console.log('Geoapify response cached:', cacheFile);
-    }
+    // (cache write moved below after `result` is constructed)
 
     // Build full address from components
     const addressParts = [];
@@ -88,6 +85,14 @@ export async function geoCodeWithGeoapify(keyword, apiKey, options = {}) {
       googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`,
       address: props
     };
+
+    if (response.status === 200) {
+      // Use the project's `writefile` helper to persist the normalized result
+      // (keeps previous behaviour of using `writefile` while storing the
+      // normalized shape so other providers can read the cache)
+      writefile(cacheFile, result);
+      if (verbose) console.log('Geoapify response cached:', cacheFile);
+    }
 
     // Delay 1s between requests to respect rate limits
     await new Promise((resolve) => setTimeout(resolve, 1000));

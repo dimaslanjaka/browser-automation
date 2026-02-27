@@ -91,7 +91,7 @@ export async function getStreetAddressInformation(keyword, options = {}) {
 const fileArgv = path.resolve(process.argv[1]);
 if (fileArgv.endsWith('src/address/index.js')) {
   (async () => {
-    const keyword = 'Jl. Lebak Arum Barat 82-84 Kota Surabaya, Jawa Timur';
+    const keyword = 'DUKUH SETRO 12 NO 5 A Surabaya, Jawa Timur';
     const result = await getStreetAddressInformation(keyword, { verbose: true, noCache: true });
     if (result) {
       console.log('Street address information:');
