@@ -505,6 +505,7 @@ export async function processData(
     }
 
     await sleep(1000);
+    const waitStart = Date.now();
     while (true) {
       const isSuccessVisible = await isSuccessNotificationVisible(page);
       if (isSuccessVisible) {
@@ -513,9 +514,8 @@ export async function processData(
       }
       // Optional: wait a bit to avoid tight loop
       await new Promise((r) => setTimeout(r, 1000));
-      if (Date.now() % 5000 < 1000) {
-        console.log('Waiting for success notification modal to be visible...');
-      }
+      const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
+      process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
     }
 
     hasSubmitted = true;
