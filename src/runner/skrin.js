@@ -117,6 +117,14 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
         logRemainingEntries();
         continue; // retry next data, hopefully with a new session
       }
+      // skip reason: in progress (lock is held by another worker, retrying next data)
+      if (result.reason === 'in_progress') {
+        console.warn('Skipping due to in-progress lock, moving to next data');
+        dataKunto.push(data);
+        logRemainingEntries();
+        continue;
+      }
+
       logRemainingEntries();
       // wait until browser manually closed, then exit with failure
       while (true) {

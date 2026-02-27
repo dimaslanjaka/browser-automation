@@ -24,12 +24,15 @@ import {
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
+import path from 'upath';
+import FileLockHelper from '../../utils/FileLockHelper.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
   | { status: 'error'; reason?: 'invalid_nik_length' | 'data_not_found' | string; description?: string };
 
 type NormalizedFormValue = Awaited<ReturnType<typeof getNormalizedFormValues>>[number];
+const lockDir = path.join(process.cwd(), 'tmp/locks');
 
 /**
  * Re-evaluates the form by re-typing the "metode_id_input" field to trigger any dynamic changes on the page.
@@ -91,9 +94,32 @@ export async function processData(
     };
   }
 
+  // skip in progress
+  const lockFile = path.join(lockDir, `${NIK}.lock`);
+  const locker = new FileLockHelper(lockFile);
+
+  if (locker.isLocked()) {
+    console.log(`Data with NIK ${NIK} is currently being processed. Skipping...`);
+    return {
+      status: 'error',
+      reason: 'in_progress',
+      description: `Data with NIK ${NIK} is currently being processed by another worker.`
+    };
+  }
+
+  if (!locker.lock('exclusive')) {
+    console.log(`Failed to acquire lock for NIK ${NIK}. Skipping...`);
+    return {
+      status: 'error',
+      reason: 'in_progress',
+      description: `Failed to acquire lock for NIK ${NIK}.`
+    };
+  }
+
   const existing = await database.getLogById(getNumbersOnly(NIK));
   if (existing && existing.data) {
     console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);
+    locker.unlock();
     return {
       status: 'error',
       reason: 'duplicate_entry',
@@ -308,6 +334,7 @@ export async function processData(
       await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
     } else {
       // If the modal does not contain the expected text, we assume it's a different issue
+      locker.unlock();
       return {
         status: 'error',
         reason: 'data_not_found',
@@ -480,6 +507,7 @@ export async function processData(
     await autoLoginAndEnterSkriningPage(page);
     // After re-login, we should ideally re-fill the form with the same data before submitting
     // For simplicity, we will just return an error here and let the user re-run the process for this entry
+    locker.unlock();
     return {
       status: 'error',
       reason: 'session_expired',
@@ -533,6 +561,7 @@ export async function processData(
       if (elapsedSeconds >= 300) {
         process.stdout.write('\n');
         process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
+        locker.unlock();
         return {
           status: 'error',
           reason: 'success_notification_timeout',
@@ -567,6 +596,7 @@ export async function processData(
     message: `Data for NIK: ${NIK} submitted successfully.`
   });
 
+  locker.unlock();
   return {
     status: 'success',
     data: fixedData
