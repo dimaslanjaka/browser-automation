@@ -74,14 +74,15 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
   const puppeteer = puppeteerInstance;
   const browser = puppeteer.browser || puppeteer.page.browser();
+  const logRemainingEntries = () => {
+    console.log(`Remaining entries: ${dataKunto.length}`);
+  };
 
   while (dataKunto.length > 0) {
-    const remainingBefore = dataKunto.length;
     /**
      * @type {import('../../globals.js').ExcelRowData}
      */
     const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
-    console.log(`Remaining entries before processing current data: ${remainingBefore}`);
 
     const processPage = array_random(await browser.pages());
     await closeOtherTabs(processPage);
@@ -92,20 +93,20 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       // skip reason: duplicate entry (already exists in database)
       if (result.reason === 'duplicate_entry') {
         console.warn('Skipping due to duplicate entry in database, moving to next data');
-        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        logRemainingEntries();
         continue;
       }
       // skip reason: invalid NIK format (not 16 digits)
       if (result.reason === 'invalid_nik_format') {
         console.warn('Skipping due to invalid NIK format, moving to next data');
-        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        logRemainingEntries();
         continue;
       }
       // skip reason: timedout while waiting for success notification (possible transient issue, retrying next data)
       if (result.reason === 'success_notification_timeout') {
         console.warn('Skipping due to timeout while waiting for success notification, moving to next data');
         dataKunto.push(data); // re-add current data to the end of the queue for retry later, as timeout might be transient
-        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        logRemainingEntries();
         continue;
       }
       // skip reason: session expired, run auto login and retry next data (session expiration can happen randomly, retrying next data with new session might succeed)
@@ -113,10 +114,10 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
         console.warn('Session expired, attempting to re-login and retry next data');
         await autoLoginAndEnterSkriningPage(processPage);
         dataKunto.push(data); // re-add current data to the end of the queue for retry later, as session expiration can be transient and might succeed with new session
-        console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+        logRemainingEntries();
         continue; // retry next data, hopefully with a new session
       }
-      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+      logRemainingEntries();
       // wait until browser manually closed, then exit with failure
       while (true) {
         await sleep(1000);
@@ -127,11 +128,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       }
     } else if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
-      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+      logRemainingEntries();
       process.exit(1); // exit on unexpected status to avoid silent failures
     } else {
       console.log('Successfully processed data for NIK:', data.nik);
-      console.log(`Remaining entries after processing current data: ${dataKunto.length}`);
+      logRemainingEntries();
     }
   }
 
