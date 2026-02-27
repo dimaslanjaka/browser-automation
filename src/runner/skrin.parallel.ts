@@ -9,6 +9,7 @@ import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { processData } from './skrin/direct-process-data.js';
 import { closeOtherTabs } from '../puppeteer_utils.js';
+import { array_shuffle } from 'sbg-utility';
 
 type DatabaseData = {
   id: string;
@@ -122,16 +123,12 @@ async function processRowWithRetry(row: ExcelRowData, browser: Browser, workerIn
 
 async function main() {
   try {
-    const dataKunto = await Bluebird.filter((await loadCsvData()) as ExcelRowData[], async (data) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      if (existing && existing.data) return false;
-      return true;
-    });
-    // Shuffle dataKunto array
-    for (let i = dataKunto.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [dataKunto[i], dataKunto[j]] = [dataKunto[j], dataKunto[i]];
-    }
+    const dataKunto = await Bluebird.resolve((await loadCsvData()) as ExcelRowData[])
+      .filter(async (data) => {
+        const existing = await database.getLogById(getNumbersOnly(data.nik));
+        return !(existing && existing.data);
+      })
+      .then(array_shuffle);
 
     await Bluebird.map(
       Array.from({ length: parallelRuns }),
