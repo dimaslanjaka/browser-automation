@@ -66,8 +66,12 @@ async function closeAllBrowsers() {
 
   await Promise.allSettled(
     browsers.map(async (browser) => {
-      await browser.close();
-      activeBrowsers.delete(browser);
+      await browser
+        .close()
+        .then(() => activeBrowsers.delete(browser))
+        .catch((error) => {
+          console.error('Failed to close browser during shutdown:', error);
+        });
     })
   );
 }
@@ -130,6 +134,9 @@ async function main() {
       })
       .then(array_shuffle);
 
+    const totalRows = dataKunto.length;
+    let processedRows = 0;
+
     await Bluebird.map(
       Array.from({ length: parallelRuns }),
       async (_, workerIndex) => {
@@ -143,13 +150,24 @@ async function main() {
               continue;
             }
 
+            const beforeRemaining = Math.max(totalRows - processedRows, 0);
+            console.log(
+              `[worker ${workerIndex}] Before processing NIK ${row.nik}: ${beforeRemaining} data left (including current).`
+            );
+
             await processRowWithRetry(row, browser, workerIndex);
+
+            processedRows += 1;
+            const afterRemaining = Math.max(totalRows - processedRows, 0);
+            console.log(`[worker ${workerIndex}] After processing NIK ${row.nik}: ${afterRemaining} data left.`);
           }
         } finally {
-          await browser.close().catch((error) => {
-            console.error(`Failed to close browser for worker ${workerIndex}:`, error);
-          });
-          activeBrowsers.delete(browser);
+          await browser
+            .close()
+            .then(() => activeBrowsers.delete(browser))
+            .catch((error) => {
+              console.error(`Failed to close browser for worker ${workerIndex}:`, error);
+            });
         }
       },
       { concurrency: parallelRuns }
