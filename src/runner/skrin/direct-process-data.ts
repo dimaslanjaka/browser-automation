@@ -61,7 +61,8 @@ async function reEvaluate(page: Page): Promise<void> {
 export async function processData(
   page: Page | Browser,
   data: ExcelRowData,
-  database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase
+  database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase,
+  options: { validateDb?: boolean } = { validateDb: true }
 ): Promise<ProcessDataResult> {
   if ('pages' in page) {
     const pages = await page.pages();
@@ -94,16 +95,16 @@ export async function processData(
     };
   }
 
-  // skip logic removed: locking handled externally
-
-  const existing = await database.getLogById(getNumbersOnly(NIK));
-  if (existing && existing.data) {
-    console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);
-    return {
-      status: 'error',
-      reason: 'duplicate_entry',
-      description: `Data with NIK ${NIK} has already been processed.`
-    };
+  if (options?.validateDb) {
+    const existing = await database.getLogById(getNumbersOnly(NIK));
+    if (existing && existing.data) {
+      console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);
+      return {
+        status: 'error',
+        reason: 'duplicate_entry',
+        description: `Data with NIK ${NIK} has already been processed.`
+      };
+    }
   }
 
   // Fix and normalize data before processing

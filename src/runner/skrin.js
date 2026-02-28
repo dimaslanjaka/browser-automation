@@ -8,8 +8,8 @@ import * as databaseModule from '../../dist/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
-import { getNumbersOnly, sleep } from '../utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
+import { getNumbersOnly, sleep } from '../utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,7 +87,10 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     const processPage = array_random(await browser.pages());
     await closeOtherTabs(processPage);
 
-    const result = await processData(processPage, data, database);
+    const result = await processData(processPage, data, database, {
+      // turn off this to disable validation of database entry after processing, which can speed up the process but might cause silent failures if the entry is not properly saved in database
+      validateDb: true
+    });
     if (result.status === 'error') {
       console.error('fail processing data', Object.assign(result, { data }));
       // skip reason: duplicate entry (already exists in database)
