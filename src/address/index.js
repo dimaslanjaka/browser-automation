@@ -25,7 +25,51 @@ function normalizeStreetAddressInfo(result, provider) {
   );
   const kota = pickValue(address.city, address.town);
   const kabupaten = pickValue(address.regency, address.county, address.state_district);
-  const provinsi = pickValue(address.state, address.province, address.region);
+  let provinsi = pickValue(address.state, address.province, address.region);
+
+  // Normalize common English/alternate province names to Indonesian names
+  function normalizeProvince(name) {
+    if (!name) return name;
+    const n = String(name).toLowerCase().trim();
+    const map = new Map([
+      ['east java', 'Jawa Timur'],
+      ['jawa timur', 'Jawa Timur'],
+      ['jawa tim.', 'Jawa Timur'],
+      ['belitung', 'Kepulauan Bangka Belitung'],
+      ['bangka belitung', 'Kepulauan Bangka Belitung'],
+      ['kepulauan bangka belitung', 'Kepulauan Bangka Belitung'],
+      ['central java', 'Jawa Tengah'],
+      ['middle java', 'Jawa Tengah'],
+      ['jawa tengah', 'Jawa Tengah'],
+      ['west java', 'Jawa Barat'],
+      ['jawa barat', 'Jawa Barat'],
+      ['special region of yogyakarta', 'DI Yogyakarta'],
+      ['yogyakarta', 'DI Yogyakarta'],
+      ['dki jakarta', 'DKI Jakarta'],
+      ['jakarta', 'DKI Jakarta']
+    ]);
+
+    // Try exact known mappings first
+    if (map.has(n)) return map.get(n);
+
+    // Try to match keywords (e.g., "east java", "central java")
+    if (n.includes('east java') || n.includes('jawa timur')) return 'Jawa Timur';
+    if (n.includes('central java') || n.includes('middle java') || n.includes('jawa tengah')) return 'Jawa Tengah';
+    if (n.includes('west java') || n.includes('jawa barat')) return 'Jawa Barat';
+    if (n.includes('bangka') || n.includes('belitung') || n.includes('kepulauan bangka'))
+      return 'Kepulauan Bangka Belitung';
+    if (n.includes('yogyakarta')) return 'DI Yogyakarta';
+    if (n.includes('jakarta')) return 'DKI Jakarta';
+
+    // Fallback: title-case the original value
+    return String(name)
+      .toLowerCase()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  provinsi = normalizeProvince(provinsi);
   const country = pickValue(address.country);
 
   return {
