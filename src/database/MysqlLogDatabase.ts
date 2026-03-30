@@ -1,14 +1,6 @@
 import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 import { MySQLConfig, MySQLHelper } from './MySQLHelper.js';
-import moment from 'moment-timezone';
-
-/**
- * Utility to get current timestamp in Asia/Jakarta in ISO8601 format.
- */
-function getJakartaTimestamp() {
-  // Use moment-timezone to produce ISO8601 timestamp in Asia/Jakarta (with offset)
-  return moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-}
+import * as LogDatabaseHelper from './LogDatabaseHelper.cjs';
 
 export const defaultOptions: Partial<MySQLConfig> = {
   connectTimeout: 60000 // default 60s
@@ -101,7 +93,7 @@ export class MysqlLogDatabase implements BaseLogDatabase {
    */
   async addLog<T = any>({ id, data, message, timestamp = undefined }: LogEntry<T>, options: AddLogOptions = {}) {
     await this.ensureReady();
-    if (!timestamp) timestamp = getJakartaTimestamp();
+    if (!timestamp) timestamp = LogDatabaseHelper.getJakartaTimestamp();
     const defaultOptions = {
       timeout: 60000, // default 60s if not provided
       update: true // always update by default

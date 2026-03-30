@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import cp from 'cross-spawn';
 import fs from 'fs-extra';
-import moment from 'moment-timezone';
+import * as LogDatabaseHelper from './LogDatabaseHelper.cjs';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
 import path from 'upath';
 
@@ -48,7 +48,7 @@ export class SQLiteLogDatabase {
     process.on('exit', () => {
       const backupPath = path.join(
         backupDirectoryPath,
-        `${name}-backup-${moment().tz('Asia/Jakarta').format('YYYYMMDD-HHmmss')}.sql`
+        `${name}-backup-${LogDatabaseHelper.getJakartaTimestamp('YYYYMMDD-HHmmss')}.sql`
       );
       this.backup(backupPath).catch((err) => {
         console.error('Failed to backup database on exit:', err);
@@ -153,7 +153,7 @@ export class SQLiteLogDatabase {
    * @param {import('./BaseLogDatabase').LogEntry} log - Log entry object.
    */
   addLog(log) {
-    const timestamp = log.timestamp || moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ssZ');
+    const timestamp = log.timestamp || LogDatabaseHelper.getJakartaTimestamp('YYYY-MM-DDTHH:mm:ssZ');
     this.db
       .prepare(`INSERT OR REPLACE INTO logs (id, data, message, timestamp) VALUES (?, ?, ?, ?)`)
       .run(log.id, jsonStringifyWithCircularRefs(log.data), log.message, timestamp);
