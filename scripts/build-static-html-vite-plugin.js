@@ -100,3 +100,7 @@ export default function dbLogHtmlStatic() {
     }
   };
 }
+
+if (process.argv.some((arg) => arg.includes('build-static-html'))) {
+  buildStaticHtml();
+}
