@@ -8,6 +8,7 @@ import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import { useTheme } from './components/ThemeContext.jsx';
 import { getViteUrl } from '../utils-browser-esm.js';
+import { useSnackbar } from './components/SnackbarProvider.jsx';
 
 function LogAccordionItem({ log, idx }) {
   let indicatorCLass = '';
@@ -280,6 +281,8 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeKeys, setActiveKeys] = useState([]); // [] means all collapsed
   const [filterOpen, setFilterOpen] = useState(false); // Collapsible filter state
+  const [buildLoading, setBuildLoading] = useState(false);
+  const { showSnackbar } = useSnackbar();
   const batch = 20;
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -424,6 +427,32 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     setActiveKeys([]); // Reset expanded accordions on page change
   }, [currentPage]);
 
+  async function triggerBuild() {
+    setBuildLoading(true);
+    try {
+      const res = await fetch('/vite/build');
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (err) {
+        // Non-JSON response
+      }
+      if (res.ok && data && data.success) {
+        showSnackbar(data.message || 'Static HTML build triggered', { variant: 'success' });
+      } else if (res.ok && data && !data.success) {
+        showSnackbar(data.error || data.message || 'Build failed', { variant: 'error' });
+      } else if (!res.ok) {
+        showSnackbar(`Build request failed: ${res.status} ${res.statusText}`, { variant: 'error' });
+      } else {
+        showSnackbar('Build triggered (no details returned)', { variant: 'info' });
+      }
+    } catch (err) {
+      showSnackbar('Request failed: ' + err.message, { variant: 'error' });
+    } finally {
+      setBuildLoading(false);
+    }
+  }
+
   if (loading) {
     return <div className="text-center my-5">Loading logs...</div>;
   }
@@ -442,6 +471,19 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             onClick={() => navigate('/')}>
             <i className="fa fa-arrow-left me-2" /> Back
           </button>
+          {import.meta.env.DEV && (
+            <>
+              <button
+                type="button"
+                className={`btn btn-sm ms-2 ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-3`}
+                onClick={triggerBuild}
+                disabled={buildLoading}
+                title="Build static HTML from DB (dev only)">
+                <i className={`fa ${buildLoading ? 'fa-spinner fa-spin' : 'fa-hammer'} me-2`} />
+                {buildLoading ? 'Building...' : 'Build Static'}
+              </button>
+            </>
+          )}
           {/* Theme toggle UI omitted for brevity */}
           <h1 className="my-4 text-body text-center">{pageTitle}</h1>
           <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
