@@ -605,3 +605,5 @@ export async function processData(
     }
   }
 }
+
+export const skrinProcessData = processData;
