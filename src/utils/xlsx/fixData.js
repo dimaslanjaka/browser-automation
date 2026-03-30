@@ -10,6 +10,16 @@ import { fixTanggalEntry } from './fixData/tanggal-entry.js';
 import { fixTbBb } from './fixData/tb-bb.js';
 import { FixDataCache } from './FixDataCache.js';
 
+export function normalizeNik(rawNik) {
+  if (!rawNik) return null;
+  const digits = getNumbersOnly(rawNik);
+  return digits && digits.length === 16 ? digits : null;
+}
+
+export function isValidNik(rawNik) {
+  return normalizeNik(rawNik) !== null;
+}
+
 /**
  * Normalize, validate and augment a row of Excel data.
  *
@@ -104,10 +114,14 @@ export default async function fixData(
   if (!nik || !nama)
     throw new Error(`Invalid data format: NIK and NAMA are required\n\n${JSON.stringify(initialData, null, 2)}`);
 
-  nik = getNumbersOnly(nik);
-  if (nik.length !== 16) {
-    throw new Error(`Invalid NIK length: ${nik} (expected 16 characters)\n\n${JSON.stringify(initialData, null, 2)}`);
+  // Use exported normalizer so callers can reuse the same validation logic
+  const normalizedNik = normalizeNik(nik);
+  if (!normalizedNik) {
+    throw new Error(
+      `Invalid NIK length: ${getNumbersOnly(nik)} (expected 16 characters)\n\n${JSON.stringify(initialData, null, 2)}`
+    );
   }
+  nik = normalizedNik;
 
   // Initialize cache with custom directory if provided
   const cache = new FixDataCache(options.cacheDir);

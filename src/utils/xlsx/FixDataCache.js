@@ -1,7 +1,12 @@
 import fs from 'fs-extra';
 import path from 'upath';
+import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
 
-export const DEFAULT_CACHE_DIR = path.join(process.cwd(), 'tmp/fixdata-cache');
+export const DEFAULT_CACHE_DIR = path.join(
+  process.cwd(),
+  'tmp/fixdata-cache',
+  toValidMySQLDatabaseName(process.env.MYSQL_DBNAME || process.env.DATABASE_FILENAME || 'default')
+);
 
 /**
  * Cache manager for fixData results.

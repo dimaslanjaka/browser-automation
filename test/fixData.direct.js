@@ -1,12 +1,12 @@
 // MAIN SCRIPT
 import moment from 'moment';
+import { loadCsvData } from '../data/index.js';
 import { fetchXlsxData4 } from '../src/fetchXlsxData4.js';
-import fixData from '../src/utils/xlsx/fixData.js';
+import fixData, { isValidNik } from '../src/utils/xlsx/fixData.js';
+import Bluebird from 'bluebird';
 
-(async () => {
+export async function runFixDataDirect() {
   const rows = await fetchXlsxData4();
-  // const _result = await fixData(rows[0]);
-  // console.log('Result:', _result);
   for (const row of rows) {
     const excludedNIKs = ['3578100000000001', '4360000000000658'];
     if (!row.NIK || excludedNIKs.includes(row.NIK)) {
@@ -52,4 +52,52 @@ import fixData from '../src/utils/xlsx/fixData.js';
       throw new Error(`Berat badan or tinggi badan not found for NIK: ${_result.nik}`);
     }
   }
-})();
+}
+
+export async function findDataTanggalEntryNonCurrentMonth() {
+  const loaded = await loadCsvData();
+  // Preserve original TANGGAL ENTRY value for comparison after processing
+  loaded.forEach((r) => {
+    r.__origTanggal = (r['TANGGAL ENTRY'] || r.tanggal || '').toString().trim().toUpperCase();
+  });
+
+  // Immediately filter to rows that are valid NIK
+  // This ensures non-MARET rows are removed before calling `fixData`.
+  const rows = loaded.filter((row) => {
+    const raw = row.NIK || row.nik;
+    if (!isValidNik(raw)) return false;
+    return true;
+  });
+
+  const data = await Bluebird.map(
+    rows,
+    (row) => fixData(row, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: true }),
+    {
+      concurrency: 10
+    }
+  );
+
+  // After processing, print rows whose original TANGGAL ENTRY was 'MARET'
+  // but the resolved date is not in March (or is invalid)
+  const mismatches = data.filter((item) => {
+    if (!item) return false;
+    const orig = (item.__origTanggal || '').toString().trim().toUpperCase();
+    if (orig !== 'MARET') return false;
+    const finalTanggal = (item['TANGGAL ENTRY'] || item.tanggal || '').toString().trim();
+    const m = moment(finalTanggal, 'DD/MM/YYYY', true);
+    if (!m.isValid()) return true;
+    return m.month() !== 2; // month() is 0-indexed: 2 => March
+  });
+  if (mismatches.length) {
+    const r = mismatches[0];
+    console.log('First mismatch found:', {
+      rowIndex: r.rowIndex,
+      nik: r.NIK || r.nik,
+      nama: r.NAMA || r.nama,
+      orig: r.__origTanggal,
+      final: r['TANGGAL ENTRY'] || r.tanggal
+    });
+  }
+}
+
+findDataTanggalEntryNonCurrentMonth().catch(console.error);
