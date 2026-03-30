@@ -1,15 +1,13 @@
 import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 import { MySQLConfig, MySQLHelper } from './MySQLHelper.js';
+import moment from 'moment-timezone';
 
 /**
  * Utility to get current timestamp in Asia/Jakarta in ISO8601 format.
  */
 function getJakartaTimestamp() {
-  // Asia/Jakarta is UTC+7
-  const date = new Date();
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  const jakarta = new Date(utc + 7 * 60 * 60000);
-  return jakarta.toISOString().replace('Z', '+07:00');
+  // Use moment-timezone to produce ISO8601 timestamp in Asia/Jakarta (with offset)
+  return moment().tz('Asia/Jakarta').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
 }
 
 export const defaultOptions: Partial<MySQLConfig> = {
