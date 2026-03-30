@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from './src/react-website/components/ThemeContext.jsx'; // IMPORTANT: Do NOT lazy load ThemeProvider. It must wrap the app at the top level for context to work.
+import { SnackbarProvider } from './src/react-website/components/SnackbarProvider.jsx';
 const Home = React.lazy(() => import('./src/react-website/Home.jsx'));
 const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-website.jsx'));
 const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));
@@ -45,20 +46,22 @@ window.addEventListener('keydown', function (e) {
 
 root.render(
   <ThemeProvider>
-    <BrowserRouter basename="/browser-automation">
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/nik-parser" element={<NikParserApp />} />
-          <Route path="/logs" element={<LogsViewer />} />
-          {/* <Route path="*" element={<div>Page not found</div>} /> */}
-          <Route path="/moment/snippet" element={<DateSnippet />} />
-          <Route path="/moment/timezones" element={<FullTimezoneListPage />} />
-          <Route path="/moment" element={<DateFormatWeb />} />
-          <Route path="/outbound" element={<Outbound />} />
-          <Route path="/sehatindonesiaku-logs" element={<KemkesIndonesiaKuLogs />} />
-        </Routes>
-      </React.Suspense>
-    </BrowserRouter>
+    <SnackbarProvider>
+      <BrowserRouter basename="/browser-automation">
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/nik-parser" element={<NikParserApp />} />
+            <Route path="/logs" element={<LogsViewer />} />
+            {/* <Route path="*" element={<div>Page not found</div>} /> */}
+            <Route path="/moment/snippet" element={<DateSnippet />} />
+            <Route path="/moment/timezones" element={<FullTimezoneListPage />} />
+            <Route path="/moment" element={<DateFormatWeb />} />
+            <Route path="/outbound" element={<Outbound />} />
+            <Route path="/sehatindonesiaku-logs" element={<KemkesIndonesiaKuLogs />} />
+          </Routes>
+        </React.Suspense>
+      </BrowserRouter>
+    </SnackbarProvider>
   </ThemeProvider>
 );
