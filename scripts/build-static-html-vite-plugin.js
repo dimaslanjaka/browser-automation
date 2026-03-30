@@ -2,7 +2,9 @@ import fs from 'fs-extra';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
-import { getLogs, getDatabaseFilePath } from '../src/database/SQLiteLogDatabase.js';
+import { getDatabaseFilePath } from '../src/database/SQLiteLogDatabase.js';
+import { toValidMySQLDatabaseName } from '../src/database/db_utils.js';
+import * as databaseModule from '../dist/database/index.mjs';
 import dotenv from 'dotenv';
 import { encryptJson } from '../src/utils/json-crypto.js';
 
@@ -28,7 +30,21 @@ fs.ensureDirSync(path.dirname(outLogsPath));
  */
 export async function buildStaticHtml(options) {
   const dataKunto = await loadCsvData();
-  let liveLogs = getLogs();
+  const envDbName = process.env.DATABASE_FILENAME || 'default';
+  const sanitizedName = toValidMySQLDatabaseName('skrin_' + envDbName);
+  console.log(`buildStaticHtml: DATABASE_FILENAME='${envDbName}'`);
+  const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
+  const database = new databaseModule.LogDatabase(sanitizedName, {
+    connectTimeout: 60000,
+    connectionLimit: 10,
+    host: MYSQL_HOST || 'localhost',
+    user: MYSQL_USER || 'root',
+    password: MYSQL_PASS || '',
+    port: Number(MYSQL_PORT) || 3306,
+    type: MYSQL_HOST ? 'mysql' : 'sqlite'
+  });
+  let liveLogs = await database.getLogs(() => true);
+  await database.close();
   // Sort liveLogs by item.data.nik order as in dataKunto
   if (Array.isArray(dataKunto) && Array.isArray(liveLogs)) {
     const nikOrder = dataKunto.map((item) => item.nik);
@@ -44,7 +60,7 @@ export async function buildStaticHtml(options) {
   const secret = process.env.VITE_JSON_SECRET;
   if (!secret) throw new Error('VITE_JSON_SECRET is not set in environment variables');
   fs.writeFileSync(outLogsPath, encryptJson(liveLogs, secret));
-  console.log(`Logs JSON written to ${outLogsPath}`);
+  console.log(`Logs JSON written to ${outLogsPath} (${Array.isArray(liveLogs) ? liveLogs.length : 0} logs)`);
   const canonicalUrl = `https://www.webmanajemen.com/browser-automation/${path.basename(outHtmlPath)}`;
   // Count success and fail logs (case-insensitive)
   const successCount = liveLogs.filter((log) => log.data && log.data.status === 'success').length;
