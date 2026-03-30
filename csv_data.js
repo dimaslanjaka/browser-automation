@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables
-dotenv.config({ path: path.join(process.cwd(), '.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
 
 // Log file path
 const logFile = path.join(__dirname, 'tmp', 'csv-data.log');
@@ -34,7 +34,9 @@ function initLogFile() {
  */
 function logToFileAndConsole(message, data = '') {
   const timestamp = new Date().toISOString();
-  const logMessage = data ? `[${timestamp}] ${message} ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}` : `[${timestamp}] ${message}`;
+  const logMessage = data
+    ? `[${timestamp}] ${message} ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}`
+    : `[${timestamp}] ${message}`;
 
   // Log to console
   if (data && typeof data === 'object') {
@@ -61,9 +63,9 @@ export async function searchByNik(nikValue) {
 
   // Handle both single string and array of strings
   if (Array.isArray(nikValue)) {
-    return allData.filter(row => nikValue.includes(row.NIK));
+    return allData.filter((row) => nikValue.includes(row.NIK));
   } else {
-    return allData.filter(row => row.NIK === nikValue);
+    return allData.filter((row) => row.NIK === nikValue);
   }
 }
 
@@ -117,7 +119,7 @@ if (process.argv[1] === __filename) {
 
     // Example: Search by NIK
     logToFileAndConsole('\n--- Search by NIK Example ---');
-    const nikToSearch = ['3578106311200003','3578101502250001'];
+    const nikToSearch = ['3578106311200003', '3578101502250001'];
     const searchResults = await searchByNik(nikToSearch);
     logToFileAndConsole(`Search results for NIKs "${nikToSearch.join(', ')}":`, `${searchResults.length} found`);
 
@@ -129,8 +131,8 @@ if (process.argv[1] === __filename) {
 
       // Show summary by NIK
       logToFileAndConsole('\n--- Summary by NIK ---');
-      nikToSearch.forEach(nik => {
-        const matches = searchResults.filter(result => result.NIK === nik);
+      nikToSearch.forEach((nik) => {
+        const matches = searchResults.filter((result) => result.NIK === nik);
         if (matches.length > 0) {
           logToFileAndConsole(`NIK ${nik}: ${matches.length} match(es) found`);
           matches.forEach((match, index) => {

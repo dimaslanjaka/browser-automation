@@ -5,7 +5,7 @@ import { TextDecoder, TextEncoder } from 'util';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '.env'), override: true, quiet: true });
 
 if (typeof global.TextEncoder === 'undefined') {
   global.TextEncoder = TextEncoder;

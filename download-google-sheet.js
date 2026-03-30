@@ -9,7 +9,7 @@ import xlsx from 'xlsx';
 import { authorize } from './src/utils/googleClient.js';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ quiet: true, override: true });
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'sheets');

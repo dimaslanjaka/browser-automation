@@ -22,7 +22,7 @@ if (process.platform === 'win32') {
 }
 
 // Load environment variables from .env file in project root
-dotenv.config({ path: path.join(process.cwd(), '.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
 
 // Enhanced error handling: exit on unhandled errors
 process.on('unhandledRejection', (reason, promise) => {

@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true, quiet: true });
 
 describe('downloadSheets', () => {
   const filesToDelete = [];

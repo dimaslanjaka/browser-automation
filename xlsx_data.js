@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables
-dotenv.config({ path: path.join(process.cwd(), '.env') });
+dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
 
 const shared_prefs = new SharedPrefs('sheets', '.cache/shared_prefs');
 const outputSheetJsonFile = path.join(process.cwd(), '.cache/sheets/debug_output.json');

@@ -79,7 +79,7 @@ export async function syncMySQLToSqlite({
 // CLI usability
 if (process.argv[1] && process.argv[1].includes('sync-mysql-to-sqlite')) {
   (async () => {
-    await import('dotenv').then((dotenv) => dotenv.config());
+    await import('dotenv').then((dotenv) => dotenv.config({ override: true, quiet: true }));
     const cliArgs = minimist(process.argv.slice(2), {
       boolean: ['remove', 'force'],
       string: ['concurrency']

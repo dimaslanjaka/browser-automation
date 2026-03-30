@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import { encryptJson } from '../src/utils/json-crypto.js';
 
 // Load .env from parent directory
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true, quiet: true });
 
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
