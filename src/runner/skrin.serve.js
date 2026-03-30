@@ -4,6 +4,7 @@ import * as databaseModule from '../../dist/database/index.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import cors from 'cors';
 import express from 'express';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +25,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// (SSE removed) — live reload now uses `/checksum` polling from clients
+
 function escapeHtml(str) {
   if (str == null) return '';
   return String(str)
@@ -34,21 +37,39 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return String(ts);
+  const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (sec < 5) return 'just now';
+  if (sec < 60) return sec + ' seconds ago';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return min + ' minutes ago';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + ' hours ago';
+  const days = Math.floor(hr / 24);
+  if (days < 30) return days + ' days ago';
+  return d.toLocaleString();
+}
+
 // Index: show all logs in simple HTML linking to /logs/:id
 app.get('/', async (req, res) => {
   try {
     const { limit } = req.query;
     const options = {};
     if (limit) options.limit = Number(limit);
-    const logs = await database.getLogs(() => true, options);
+    let logs = await database.getLogs(() => true, options);
+    // sort logs by latest timestamp first
+    logs = logs.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
 
     const rows = logs
-      .map(
-        (l) =>
-          `<tr><td><a href="/logs/${encodeURIComponent(l.id)}">${escapeHtml(l.id)}</a></td><td>${escapeHtml(
-            l.timestamp
-          )}</td><td>${escapeHtml(l.message)}</td></tr>`
-      )
+      .map((l) => {
+        const tdisplay = timeAgo(l.timestamp);
+        return `<tr><td><a href="/logs/${encodeURIComponent(l.id)}">${escapeHtml(l.id)}</a></td><td>${escapeHtml(
+          tdisplay
+        )}</td><td>${escapeHtml(l.message)}</td></tr>`;
+      })
       .join('\n');
 
     const html = `<!doctype html>
@@ -66,6 +87,25 @@ app.get('/', async (req, res) => {
       ${rows}
     </tbody>
   </table>
+    <script>
+      (function(){
+        try{
+          // Poll checksum endpoint and reload when it changes
+          var last = null;
+          var pollMs = Number(new URLSearchParams(location.search).get('poll')) || ${_pollIntervalMs};
+          function check(){
+            fetch('/checksum').then(function(r){ return r.json(); }).then(function(j){
+              if (j && j.ok && j.checksum){
+                if (last && last !== j.checksum){ try{ location.reload(true); } catch(e){ location.reload(); } }
+                last = j.checksum;
+              }
+            }).catch(function(){/* ignore */});
+          }
+          check();
+          setInterval(check, pollMs);
+        }catch(e){ /* ignore */ }
+      })();
+    </script>
 </body>
 </html>`;
 
@@ -144,10 +184,46 @@ app.get('/logs/:id', async (req, res) => {
   }
 });
 
+// Checksum endpoint: returns a checksum representing table state
+app.get('/checksum', async (req, res) => {
+  try {
+    // Try a cheap SQL-based checksum if supported
+    if (typeof database.query === 'function') {
+      try {
+        const rows = await database.query('SELECT COUNT(*) as c, MAX(timestamp) as m FROM logs');
+        // rows can be array or [[rows]] depending on DB driver; normalize
+        const row = Array.isArray(rows) && rows.length ? rows[0] : rows;
+        const count = row && (row.c ?? row.count ?? row['COUNT(*)']) ? (row.c ?? row.count ?? row['COUNT(*)']) : 0;
+        const maxTs =
+          row && (row.m ?? row.max ?? row['MAX(timestamp)']) ? (row.m ?? row.max ?? row['MAX(timestamp)']) : '';
+        const payload = String(count) + '|' + String(maxTs);
+        const checksum = crypto.createHash('sha1').update(payload).digest('hex');
+        return res.json({ ok: true, checksum });
+      } catch (e) {
+        // fall through to slower fallback below
+        /* ignore */
+      }
+    }
+
+    // Fallback: fetch minimal data via getLogs
+    const logs = await database.getLogs(() => true, { limit: 1 });
+    const latest = logs && logs.length ? logs[0] : null;
+    const payload = latest ? `${latest.id}:${latest.timestamp}` : 'empty';
+    const checksum = crypto.createHash('sha1').update(payload).digest('hex');
+    res.json({ ok: true, checksum });
+  } catch (err) {
+    console.error('Failed to compute checksum', err);
+    res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
 const PORT = Number(process.env.PORT) || 3000;
 const server = app.listen(PORT, () => {
   console.log(`Skrin log server listening at http://localhost:${PORT}`);
 });
+
+// Client-side poll interval (used in injected index script)
+const _pollIntervalMs = Number(process.env.SKRIN_POLL_MS) || 3000;
 
 // Graceful shutdown
 function shutdown() {
