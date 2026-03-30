@@ -9,6 +9,7 @@ if /I "%~1"=="skrin2" goto :run_skrin2
 if /I "%~1"=="cluster" goto :run_cluster
 if /I "%~1"=="clusterdist" goto :run_cluster_dist
 if /I "%~1"=="parallel" goto :run_parallel
+if /I "%~1"=="serve" goto :run_serve
 
 set "SKRIN_INPUT=%CD%\src\runner\skrin.direct.js"
 set "SKRIN_OUTPUT=%CD%\dist\skrin.bundle.cjs"
@@ -79,4 +80,9 @@ call rollup -c rollup.skrin.js
 echo running skrin2 runner...
 shift
 call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%SKRIN_OUTPUT%" %*
+exit /b %ERRORLEVEL%
+
+:run_serve
+shift
+call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin.serve.js" %*
 exit /b %ERRORLEVEL%
