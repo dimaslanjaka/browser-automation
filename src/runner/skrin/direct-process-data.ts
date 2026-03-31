@@ -43,6 +43,7 @@ type NormalizedFormValue = Awaited<ReturnType<typeof getNormalizedFormValues>>[n
  */
 async function reEvaluate(page: Page): Promise<void> {
   await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+  await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
 }
 
 /**
