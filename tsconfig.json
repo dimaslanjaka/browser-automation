@@ -39,6 +39,9 @@
     "**/build/**",
     "**/public/**",
     "**/.cache/**",
-    "**/packages/**"
+    "**/packages/**",
+    "data/engine",
+    "data/script",
+    "data/logs"
   ]
 }
