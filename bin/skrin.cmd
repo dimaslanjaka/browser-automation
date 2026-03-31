@@ -10,6 +10,7 @@ if /I "%~1"=="cluster" goto :run_cluster
 if /I "%~1"=="clusterdist" goto :run_cluster_dist
 if /I "%~1"=="parallel" goto :run_parallel
 if /I "%~1"=="serve" goto :run_serve
+if /I "%~1"=="fetch-fingerprint" goto :run_fetch_fingerprint
 
 set "SKRIN_INPUT=%CD%\src\runner\skrin.direct.js"
 set "SKRIN_OUTPUT=%CD%\dist\skrin.bundle.cjs"
@@ -85,4 +86,9 @@ exit /b %ERRORLEVEL%
 :run_serve
 shift
 call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%CD%\src\runner\skrin.serve.js" %*
+exit /b %ERRORLEVEL%
+
+:run_fetch_fingerprint
+shift
+call node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "%CD%\src\puppeteer\fingerprint_utils.direct.js" %*
 exit /b %ERRORLEVEL%

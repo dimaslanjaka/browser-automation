@@ -10,6 +10,14 @@ export interface getPuppeteerOptions extends LaunchOptions {
     mode?: 'default' | 'stealth' | 'fingerprint';
     fingerprintStrategy?: 'fetch' | 'random-cached' | 'latest-cached' | 'random-or-fetch';
     fingerprintTags?: string[];
+    screenSize?: {
+      width?: number;
+      height?: number;
+      minWidth?: number;
+      minHeight?: number;
+      maxWidth?: number;
+      maxHeight?: number;
+    };
   };
 }
 

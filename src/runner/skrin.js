@@ -155,7 +155,13 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 export async function executeSkriningProcess() {
   let puppeteerInstance;
   try {
-    puppeteerInstance = await getPuppeteer({ stealth: { mode: 'fingerprint', fingerprintStrategy: 'random-cached' } });
+    puppeteerInstance = await getPuppeteer({
+      stealth: {
+        mode: 'fingerprint',
+        fingerprintStrategy: 'random-cached',
+        screenSize: { maxHeight: 800, maxWidth: 1366 }
+      }
+    });
   } catch (e) {
     console.error('Failed to launch puppeteer:', e && e.stack ? e.stack : e);
     setTimeout(() => process.exit(1), 100);

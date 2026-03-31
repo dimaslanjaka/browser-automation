@@ -27,7 +27,19 @@ async function _cache() {
   }
 }
 
-_cache().catch((error) => {
-  console.error('Fingerprint fetch failed:', error?.stack || error);
-  process.exitCode = 1;
-});
+async function _getSpecificScreenSize() {
+  const fingerprint = await getRandomCachedFingerprint([], { maxHeight: 800, maxWidth: 1366 });
+  if (fingerprint) {
+    const screenData = parseScreenSize(JSON.parse(fingerprint));
+    console.log('Found matching fingerprint with screen size:', screenData.screen);
+  } else {
+    console.warn('No cached fingerprint found with the specified screen size.');
+  }
+}
+
+_getSpecificScreenSize()
+  .then(_fetch)
+  .catch((error) => {
+    console.error('Fingerprint fetch failed:', error?.stack || error);
+    process.exitCode = 1;
+  });

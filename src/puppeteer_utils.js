@@ -236,6 +236,7 @@ function reserveClusterUserDataDir({
  * });
  */
 export async function getPuppeteer(options = {}) {
+  /** @type {import('./puppeteer_utils-d.d.ts').getPuppeteerOptions} */
   const defaultOptions = {
     headless: false,
     userDataDir: userDataDir,
@@ -269,6 +270,7 @@ export async function getPuppeteer(options = {}) {
   const stealthMode = stealth?.mode ?? 'default';
   const fingerprintStrategy = stealth?.fingerprintStrategy ?? 'fetch';
   const fingerprintTags = stealth?.fingerprintTags ?? ['Microsoft Windows', 'Chrome'];
+  const fingerprintScreenSize = stealth?.screenSize ?? undefined;
 
   /** @type {import('puppeteer')} */
   let puppeteer_module = puppeteer;
@@ -287,21 +289,21 @@ export async function getPuppeteer(options = {}) {
 
     // Determine fingerprint strategy
     if (fingerprintStrategy === 'random-cached') {
-      fingerprint = await getRandomCachedFingerprint(fingerprintTags);
+      fingerprint = await getRandomCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
         const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
         fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'latest-cached') {
-      fingerprint = await getLatestCachedFingerprint(fingerprintTags);
+      fingerprint = await getLatestCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
         const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
         fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'random-or-fetch') {
-      fingerprint = await getRandomCachedFingerprint(fingerprintTags);
+      fingerprint = await getRandomCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.log('Cache empty, fetching new fingerprint');
         const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);

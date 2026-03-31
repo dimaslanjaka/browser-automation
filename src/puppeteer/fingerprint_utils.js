@@ -1,6 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import { md5, writefile } from 'sbg-utility';
+import { toNumber } from '../utils/number.js';
+
+/**
+ * Options for filtering fingerprints by screen size.
+ * @typedef {Object} FingerprintSizeOptions
+ * @property {number|string} [width] Exact width to match
+ * @property {number|string} [height] Exact height to match
+ * @property {number|string} [minWidth] Minimum width (inclusive)
+ * @property {number|string} [minHeight] Minimum height (inclusive)
+ * @property {number|string} [maxWidth] Maximum width (inclusive)
+ * @property {number|string} [maxHeight] Maximum height (inclusive)
+ */
 
 /**
  * Get the fingerprint cache directory based on tags.
@@ -17,12 +29,44 @@ export function getFingerprintCacheDir(tags = []) {
 }
 
 /**
+ * Extract numeric width/height from a parsed fingerprint object using parseScreenSize.
+ * @param {object} parsedObj - Parsed fingerprint object
+ * @returns {{width:number|null,height:number|null}}
+ */
+function getFingerprintDimensions(parsedObj) {
+  const screenData = parseScreenSize(parsedObj);
+  const w = toNumber(screenData?.screen?.width ?? screenData?.real?.width ?? screenData?.css?.deviceWidth);
+  const h = toNumber(screenData?.screen?.height ?? screenData?.real?.height ?? screenData?.css?.deviceHeight);
+  return { width: w ?? null, height: h ?? null };
+}
+
+/**
+ * Check whether a parsed fingerprint object matches provided size constraints.
+ * @param {object} parsedObj
+ * @param {object} sizeOptions
+ * @returns {boolean}
+ */
+function fingerprintMatchesSize(parsedObj, sizeOptions) {
+  const { width: w, height: h } = getFingerprintDimensions(parsedObj);
+  if (w == null || h == null) return false;
+  if (sizeOptions.width != null && w !== toNumber(sizeOptions.width)) return false;
+  if (sizeOptions.height != null && h !== toNumber(sizeOptions.height)) return false;
+  if (sizeOptions.minWidth != null && w < toNumber(sizeOptions.minWidth)) return false;
+  if (sizeOptions.minHeight != null && h < toNumber(sizeOptions.minHeight)) return false;
+  if (sizeOptions.maxWidth != null && w > toNumber(sizeOptions.maxWidth)) return false;
+  if (sizeOptions.maxHeight != null && h > toNumber(sizeOptions.maxHeight)) return false;
+  return true;
+}
+
+/**
  * Get all cached fingerprints from the cache directory based on tags.
+ * Optionally filter cached fingerprints by screen size constraints.
  *
  * @param {string[]} [tags] - Tags to determine cache directory
+ * @param {FingerprintSizeOptions} [sizeOptions] - Optional size constraints (see typedef above)
  * @returns {Promise<string[]>} Array of cached fingerprint file paths, sorted by modification time (newest first)
  */
-export async function listCachedFingerprintFiles(tags = []) {
+export async function listCachedFingerprintFiles(tags = [], sizeOptions = {}) {
   const cacheDir = getFingerprintCacheDir(tags);
   try {
     if (!fs.existsSync(cacheDir)) {
@@ -62,7 +106,32 @@ export async function listCachedFingerprintFiles(tags = []) {
 
     // Sort by modification time (newest first)
     collected.sort((a, b) => b.mtime - a.mtime);
-    return collected.map((f) => f.path);
+    const paths = collected.map((f) => f.path);
+
+    const isEmptyOptions = !sizeOptions || Object.keys(sizeOptions).length === 0;
+    if (isEmptyOptions) {
+      return paths;
+    }
+
+    const filtered = [];
+    for (const filePath of paths) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        let obj = null;
+        try {
+          obj = JSON.parse(content);
+        } catch (e) {
+          continue;
+        }
+        if (fingerprintMatchesSize(obj, sizeOptions)) {
+          filtered.push(filePath);
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return filtered;
   } catch (error) {
     console.warn(`Failed to list cached fingerprints: ${error.message}`);
     return [];
@@ -71,19 +140,21 @@ export async function listCachedFingerprintFiles(tags = []) {
 
 /**
  * Get a random cached fingerprint from the cache directory.
+ * Optionally filter cached fingerprints by screen size constraints.
  *
  * @param {string[]} [tags] - Tags to determine cache directory
- * @returns {Promise<string | null>} Random cached fingerprint content, or null if cache is empty
+ * @param {FingerprintSizeOptions} [sizeOptions] - Optional size constraints (see typedef above)
+ * @returns {Promise<string|null>} Random cached fingerprint content, or null if none found
  */
-export async function getRandomCachedFingerprint(tags = []) {
-  const cachedFiles = await listCachedFingerprintFiles(tags);
+export async function getRandomCachedFingerprint(tags = [], sizeOptions = {}) {
+  // Delegate file filtering to listCachedFingerprintFiles which supports sizeOptions.
+  const cachedFiles = await listCachedFingerprintFiles(tags, sizeOptions);
   if (cachedFiles.length === 0) {
     return null;
   }
-
+  // Choose a random file from the (already-filtered) list
   const randomIndex = Math.floor(Math.random() * cachedFiles.length);
   const randomFile = cachedFiles[randomIndex];
-
   try {
     return fs.readFileSync(randomFile, 'utf-8');
   } catch (error) {
@@ -94,12 +165,14 @@ export async function getRandomCachedFingerprint(tags = []) {
 
 /**
  * Get the most recently cached fingerprint from the cache directory.
+ * Optionally filter by screen size constraints.
  *
  * @param {string[]} [tags] - Tags to determine cache directory
- * @returns {Promise<string | null>} Most recent cached fingerprint content, or null if cache is empty
+ * @param {FingerprintSizeOptions} [sizeOptions] - Optional size constraints (see typedef above)
+ * @returns {Promise<string|null>} Most recent cached fingerprint content, or null if cache is empty
  */
-export async function getLatestCachedFingerprint(tags = []) {
-  const cachedFiles = await listCachedFingerprintFiles(tags);
+export async function getLatestCachedFingerprint(tags = [], sizeOptions = {}) {
+  const cachedFiles = await listCachedFingerprintFiles(tags, sizeOptions);
   if (cachedFiles.length === 0) {
     return null;
   }
