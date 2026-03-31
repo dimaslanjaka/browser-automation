@@ -22,7 +22,7 @@ export function getFingerprintCacheDir(tags = []) {
  * @param {string[]} [tags] - Tags to determine cache directory
  * @returns {Promise<string[]>} Array of cached fingerprint file paths, sorted by modification time (newest first)
  */
-export async function getCachedFingerprints(tags = []) {
+export async function listCachedFingerprintFiles(tags = []) {
   const cacheDir = getFingerprintCacheDir(tags);
   try {
     if (!fs.existsSync(cacheDir)) {
@@ -76,7 +76,7 @@ export async function getCachedFingerprints(tags = []) {
  * @returns {Promise<string | null>} Random cached fingerprint content, or null if cache is empty
  */
 export async function getRandomCachedFingerprint(tags = []) {
-  const cachedFiles = await getCachedFingerprints(tags);
+  const cachedFiles = await listCachedFingerprintFiles(tags);
   if (cachedFiles.length === 0) {
     return null;
   }
@@ -99,7 +99,7 @@ export async function getRandomCachedFingerprint(tags = []) {
  * @returns {Promise<string | null>} Most recent cached fingerprint content, or null if cache is empty
  */
 export async function getLatestCachedFingerprint(tags = []) {
-  const cachedFiles = await getCachedFingerprints(tags);
+  const cachedFiles = await listCachedFingerprintFiles(tags);
   if (cachedFiles.length === 0) {
     return null;
   }
