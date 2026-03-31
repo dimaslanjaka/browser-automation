@@ -31,7 +31,7 @@ async function _getSpecificScreenSize() {
   const fingerprint = await getRandomCachedFingerprint([], { maxHeight: 800, maxWidth: 1366 });
   if (fingerprint) {
     const screenData = parseScreenSize(JSON.parse(fingerprint));
-    console.log('Found matching fingerprint with screen size:', screenData.screen);
+    console.log('Found matching fingerprint with screen size:', screenData);
   } else {
     console.warn('No cached fingerprint found with the specified screen size.');
   }
