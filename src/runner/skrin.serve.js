@@ -77,12 +77,16 @@ app.get('/', async (req, res) => {
 <head>
   <meta charset="utf-8" />
   <title>Skrin logs</title>
-  <style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}</style>
+  <style>
+    /* shrink table to fit content and avoid empty space in cells */
+    table{border-collapse:collapse; width:auto; display:inline-table; table-layout:auto}
+    th,td{border:1px solid #ddd; padding:8px; white-space:nowrap}
+  </style>
 </head>
 <body>
   <h1>Skrin logs (${logs.length})</h1>
   <table>
-    <thead><tr><th>ID</th><th>Timestamp</th><th>Message</th></tr></thead>
+    <thead><tr><th>ID</th><th>Time</th><th>Message</th></tr></thead>
     <tbody>
       ${rows}
     </tbody>
