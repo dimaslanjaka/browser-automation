@@ -29,20 +29,40 @@ export async function getCachedFingerprints(tags = []) {
       return [];
     }
 
-    const files = fs.readdirSync(cacheDir);
-    if (files.length === 0) {
+    const collected = [];
+
+    const shouldRecurse = !Array.isArray(tags) || tags.length === 0;
+
+    const collectFiles = (dir) => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const ent of entries) {
+        const fullPath = path.join(dir, ent.name);
+        if (ent.isDirectory()) {
+          if (shouldRecurse) {
+            collectFiles(fullPath);
+          }
+          continue;
+        }
+        if (ent.isFile()) {
+          try {
+            const stats = fs.statSync(fullPath);
+            collected.push({ path: fullPath, mtime: stats.mtimeMs });
+          } catch (e) {
+            // ignore entries we can't stat
+          }
+        }
+      }
+    };
+
+    collectFiles(cacheDir);
+
+    if (collected.length === 0) {
       return [];
     }
 
-    const fingerprintFiles = files.map((file) => {
-      const filePath = path.join(cacheDir, file);
-      const stats = fs.statSync(filePath);
-      return { path: filePath, mtime: stats.mtimeMs };
-    });
-
     // Sort by modification time (newest first)
-    fingerprintFiles.sort((a, b) => b.mtime - a.mtime);
-    return fingerprintFiles.map((f) => f.path);
+    collected.sort((a, b) => b.mtime - a.mtime);
+    return collected.map((f) => f.path);
   } catch (error) {
     console.warn(`Failed to list cached fingerprints: ${error.message}`);
     return [];
@@ -148,4 +168,78 @@ export async function fetchAndSaveFingerprintToCache(tagsOrOption = []) {
     console.warn(`Failed to fetch and cache fingerprint: ${error.message}`);
     return null;
   }
+}
+
+/**
+ * Parse screen size information.
+ * Accepts either a data object, a file path to a JSON file, or a JSON string.
+ * If a file path is provided, the file will be read and parsed before processing.
+ *
+ * @param {object|string} data - Data object, JSON string, or filesystem path to JSON file
+ * @returns {object|null} Parsed screen size info or null on failure
+ */
+export function parseScreenSize(data) {
+  // If `data` is a string, treat it as either a path to a JSON file or a JSON string.
+  if (typeof data === 'string') {
+    try {
+      if (fs.existsSync(data)) {
+        const content = fs.readFileSync(data, 'utf8');
+        data = JSON.parse(content);
+      } else {
+        // Try parsing as raw JSON string
+        data = JSON.parse(data);
+      }
+    } catch (err) {
+      console.warn(`Failed to load/parse screen size data from "${data}": ${err.message}`);
+      return null;
+    }
+  }
+
+  const safe = (fn) => {
+    try {
+      return fn();
+    } catch {
+      return undefined;
+    }
+  };
+
+  const screenWidth = safe(() => data.attr['screen.width']);
+  const screenHeight = safe(() => data.attr['screen.height']);
+
+  const cssDeviceWidth = safe(() => data.css['device-width']);
+  const cssDeviceHeight = safe(() => data.css['device-height']);
+
+  return {
+    // ✅ Real device resolution (best effort)
+    real: {
+      width: screenWidth ?? cssDeviceWidth,
+      height: screenHeight ?? cssDeviceHeight
+    },
+
+    // Viewport (browser visible area)
+    viewport: {
+      width: data.width,
+      height: data.height
+    },
+
+    // Full screen resolution
+    screen: {
+      width: screenWidth,
+      height: screenHeight
+    },
+
+    // Available screen (minus taskbar, etc.)
+    available: {
+      width: safe(() => data.attr['screen.availWidth']),
+      height: safe(() => data.attr['screen.availHeight'])
+    },
+
+    // CSS / media query values
+    css: {
+      width: safe(() => data.css.width),
+      height: safe(() => data.css.height),
+      deviceWidth: cssDeviceWidth,
+      deviceHeight: cssDeviceHeight
+    }
+  };
 }
