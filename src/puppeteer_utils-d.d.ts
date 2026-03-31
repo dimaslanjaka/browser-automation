@@ -6,6 +6,11 @@ export interface getPuppeteerOptions extends LaunchOptions {
   reuse?: boolean;
   autoSwitchProfileDir?: boolean;
   devtools?: boolean;
+  stealth?: {
+    mode?: 'default' | 'stealth' | 'fingerprint';
+    fingerprintStrategy?: 'fetch' | 'random-cached' | 'latest-cached' | 'random-or-fetch';
+    fingerprintTags?: string[];
+  };
 }
 
 export interface getPlaywrightOptions extends PlaywrightLaunchOptions {

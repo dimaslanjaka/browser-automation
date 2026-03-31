@@ -5,6 +5,12 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
 import { chromium } from 'playwright-extra';
+import { md5, writefile } from 'sbg-utility';
+import {
+  getFingerprintCacheDir,
+  getRandomCachedFingerprint,
+  getLatestCachedFingerprint
+} from './puppeteer/fingerprint_utils.js';
 
 /**
  * Get the absolute path of the current script.
@@ -219,6 +225,15 @@ function reserveClusterUserDataDir({
  * await page.goto('https://example.com');
  * // ...
  * await browser.close();
+ *
+ * @example
+ * // Use random cached fingerprint or fetch new one if cache is empty
+ * const { page, browser } = await getPuppeteer({
+ *   stealth: {
+ *     mode: 'fingerprint',
+ *     fingerprintStrategy: 'random-or-fetch'
+ *   }
+ * });
  */
 export async function getPuppeteer(options = {}) {
   const defaultOptions = {
@@ -241,13 +256,63 @@ export async function getPuppeteer(options = {}) {
     ignoreDefaultArgs: ['--enable-automation'],
     reuse: true,
     autoSwitchProfileDir: true,
-    devtools: false
+    devtools: false,
+    stealth: {
+      mode: 'default',
+      fingerprintStrategy: 'fetch',
+      fingerprintTags: ['Microsoft Windows', 'Chrome']
+    }
   };
   const merged = { ...defaultOptions, ...options };
-  const { autoSwitchProfileDir, ...launchOptions } = merged;
+  const { autoSwitchProfileDir, stealth, ...launchOptions } = merged;
 
-  // Always use stealth plugin
-  puppeteer.use(StealthPlugin());
+  const stealthMode = stealth?.mode ?? 'default';
+  const fingerprintStrategy = stealth?.fingerprintStrategy ?? 'fetch';
+  const fingerprintTags = stealth?.fingerprintTags ?? ['Microsoft Windows', 'Chrome'];
+
+  // Prepare stealth plugin based on options
+  if (stealthMode === 'stealth' || stealthMode === 'default') {
+    puppeteer.use(StealthPlugin());
+  } else if (stealthMode === 'fingerprint') {
+    const fingerprintPlugin = await import('puppeteer-with-fingerprints').then((mod) => {
+      mod.plugin.setServiceKey('');
+      return mod.plugin;
+    });
+
+    let fingerprint = null;
+
+    // Determine fingerprint strategy
+    if (fingerprintStrategy === 'random-cached') {
+      fingerprint = await getRandomCachedFingerprint(fingerprintTags);
+      if (!fingerprint) {
+        console.warn('No cached fingerprints available, fetching new one');
+        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+      }
+    } else if (fingerprintStrategy === 'latest-cached') {
+      fingerprint = await getLatestCachedFingerprint(fingerprintTags);
+      if (!fingerprint) {
+        console.warn('No cached fingerprints available, fetching new one');
+        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+      }
+    } else if (fingerprintStrategy === 'random-or-fetch') {
+      fingerprint = await getRandomCachedFingerprint(fingerprintTags);
+      if (!fingerprint) {
+        console.log('Cache empty, fetching new fingerprint');
+        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+      }
+    } else {
+      // Default: 'fetch' - always fetch new fingerprint
+      fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+    }
+
+    // Cache the fingerprint
+    const filename = md5(fingerprint) + '.json';
+    const fingerprintCacheDir = getFingerprintCacheDir(fingerprintTags);
+    const fingerprintCacheFilePath = path.join(fingerprintCacheDir, filename);
+    writefile(fingerprintCacheFilePath, fingerprint);
+
+    fingerprintPlugin.useFingerprint(fingerprint);
+  }
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
