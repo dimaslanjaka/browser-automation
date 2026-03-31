@@ -292,25 +292,34 @@ export async function getPuppeteer(options = {}) {
       fingerprint = await getRandomCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
-        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        const fetched = await fetchAndSaveFingerprintToCache({
+          tags: fingerprintTags,
+          ...(fingerprintScreenSize || {})
+        });
         fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'latest-cached') {
       fingerprint = await getLatestCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
-        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        const fetched = await fetchAndSaveFingerprintToCache({
+          tags: fingerprintTags,
+          ...(fingerprintScreenSize || {})
+        });
         fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'random-or-fetch') {
       fingerprint = await getRandomCachedFingerprint(fingerprintTags, fingerprintScreenSize);
       if (!fingerprint) {
         console.log('Cache empty, fetching new fingerprint');
-        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        const fetched = await fetchAndSaveFingerprintToCache({
+          tags: fingerprintTags,
+          ...(fingerprintScreenSize || {})
+        });
         fingerprint = fetched?.fingerprint ?? null;
       }
     } else {
-      const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+      const fetched = await fetchAndSaveFingerprintToCache({ tags: fingerprintTags, ...(fingerprintScreenSize || {}) });
       fingerprint = fetched?.fingerprint ?? null;
     }
 

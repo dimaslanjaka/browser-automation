@@ -37,7 +37,19 @@ function getFingerprintDimensions(parsedObj) {
   const screenData = parseScreenSize(parsedObj);
   const w = toNumber(screenData?.screen?.width ?? screenData?.real?.width ?? screenData?.css?.deviceWidth);
   const h = toNumber(screenData?.screen?.height ?? screenData?.real?.height ?? screenData?.css?.deviceHeight);
-  return { width: w ?? null, height: h ?? null };
+  const viewportW = toNumber(screenData?.viewport?.width);
+  const viewportH = toNumber(screenData?.viewport?.height);
+  const availW = toNumber(screenData?.available?.width);
+  const availH = toNumber(screenData?.available?.height);
+
+  return {
+    width: w ?? null,
+    height: h ?? null,
+    viewportWidth: viewportW ?? null,
+    viewportHeight: viewportH ?? null,
+    availableWidth: availW ?? null,
+    availableHeight: availH ?? null
+  };
 }
 
 /**
@@ -47,14 +59,44 @@ function getFingerprintDimensions(parsedObj) {
  * @returns {boolean}
  */
 function fingerprintMatchesSize(parsedObj, sizeOptions) {
-  const { width: w, height: h } = getFingerprintDimensions(parsedObj);
-  if (w == null || h == null) return false;
-  if (sizeOptions.width != null && w !== toNumber(sizeOptions.width)) return false;
-  if (sizeOptions.height != null && h !== toNumber(sizeOptions.height)) return false;
-  if (sizeOptions.minWidth != null && w < toNumber(sizeOptions.minWidth)) return false;
-  if (sizeOptions.minHeight != null && h < toNumber(sizeOptions.minHeight)) return false;
-  if (sizeOptions.maxWidth != null && w > toNumber(sizeOptions.maxWidth)) return false;
-  if (sizeOptions.maxHeight != null && h > toNumber(sizeOptions.maxHeight)) return false;
+  const dims = getFingerprintDimensions(parsedObj);
+  const w = dims.width;
+  const h = dims.height;
+  const vpW = dims.viewportWidth;
+  const vpH = dims.viewportHeight;
+  const avW = dims.availableWidth;
+  const avH = dims.availableHeight;
+
+  // If we can't determine any useful dimensions, reject
+  if (w == null && h == null && vpW == null && vpH == null) return false;
+
+  if (sizeOptions.width != null) {
+    const target = toNumber(sizeOptions.width);
+    if ((w != null && w !== target) || (vpW != null && vpW !== target)) return false;
+  }
+  if (sizeOptions.height != null) {
+    const target = toNumber(sizeOptions.height);
+    if ((h != null && h !== target) || (vpH != null && vpH !== target)) return false;
+  }
+
+  if (sizeOptions.minWidth != null) {
+    const min = toNumber(sizeOptions.minWidth);
+    if ((w != null && w < min) || (vpW != null && vpW < min) || (avW != null && avW < min)) return false;
+  }
+  if (sizeOptions.minHeight != null) {
+    const min = toNumber(sizeOptions.minHeight);
+    if ((h != null && h < min) || (vpH != null && vpH < min) || (avH != null && avH < min)) return false;
+  }
+
+  if (sizeOptions.maxWidth != null) {
+    const max = toNumber(sizeOptions.maxWidth);
+    if ((w != null && w > max) || (vpW != null && vpW > max) || (avW != null && avW > max)) return false;
+  }
+  if (sizeOptions.maxHeight != null) {
+    const max = toNumber(sizeOptions.maxHeight);
+    if ((h != null && h > max) || (vpH != null && vpH > max) || (avH != null && avH > max)) return false;
+  }
+
   return true;
 }
 
