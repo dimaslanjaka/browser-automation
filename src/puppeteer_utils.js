@@ -1656,6 +1656,45 @@ export async function closeFirstTab(context) {
 }
 
 /**
+ * Return the currently active/focused Page in a Browser, if detectable.
+ *
+ * This attempts to evaluate `document.hasFocus()` in each open page and
+ * returns the first page that reports focus. If none report focus, it
+ * falls back to the last opened page or null if no pages exist.
+ *
+ * @param {import('puppeteer').Browser} browser
+ * @returns {Promise<import('puppeteer').Page|null>}
+ */
+export async function getActivePage(browser) {
+  if (!browser || typeof browser.pages !== 'function') return null;
+
+  let pages;
+  try {
+    pages = await browser.pages();
+  } catch (_e) {
+    return null;
+  }
+
+  for (const p of pages) {
+    try {
+      const hasFocus = await p.evaluate(() => {
+        try {
+          return document.hasFocus();
+        } catch (_e) {
+          return false;
+        }
+      });
+      if (hasFocus) return p;
+    } catch (_e) {
+      // ignore pages that cannot be evaluated
+    }
+  }
+
+  // Fallback: return the most recently opened page if any
+  return pages.length ? pages[pages.length - 1] : null;
+}
+
+/**
  * Closes all tabs (pages) in the browser context except for a specified number of them to keep open.
  *
  * @param {import('puppeteer').Page|import('puppeteer').Browser} instance - The Puppeteer Page or Browser instance.
@@ -1667,28 +1706,45 @@ export async function closeFirstTab(context) {
  */
 export async function closeOtherTabs(instance, keepCount = 2) {
   let pages;
-  const currentPage = instance && typeof instance.browser === 'function' ? instance : null;
+  let currentPage = null;
   if (instance && typeof instance.browser === 'function') {
+    currentPage = instance; // instance is a Page
     const browser = instance.browser();
     pages = await browser.pages();
   } else if (instance && typeof instance.pages === 'function') {
-    pages = await instance.pages();
+    pages = await instance.pages(); // instance is a Browser
   } else {
     throw new Error('Instance must be a Puppeteer Page or Browser');
   }
 
-  if (pages.length <= keepCount) {
-    return; // Nothing to close
+  // `keepCount` can be either a number (legacy behaviour) or an array/Set of pages to preserve.
+  // If an array/Set is provided, keep exactly those pages and close all others.
+  const arg = keepCount;
+  const protectedPages = new Set();
+
+  if (Array.isArray(arg) || arg instanceof Set) {
+    for (const p of arg) {
+      if (p) protectedPages.add(p);
+    }
+    if (currentPage) protectedPages.add(currentPage);
+  } else {
+    const keepNum = Math.max(0, Number(arg) || 2);
+    if (currentPage) protectedPages.add(currentPage);
+    if (pages.length <= keepNum) return; // nothing to close
+
+    // Keep the last `keepNum` pages (most recently created/active) in addition to currentPage
+    const recent = pages.slice(-keepNum);
+    for (const p of recent) protectedPages.add(p);
   }
 
-  // Keep the most recently active tabs open and avoid closing the currently active page.
-  const closeCount = Math.max(0, pages.length - keepCount);
-  const pagesToClose = pages.filter((page) => page !== currentPage).slice(0, closeCount);
+  if (pages.length <= protectedPages.size) {
+    return; // nothing to close
+  }
+
+  const pagesToClose = pages.filter((page) => !protectedPages.has(page));
   for (const page of pagesToClose) {
     try {
-      if (typeof page?.isClosed === 'function' && page.isClosed()) {
-        continue;
-      }
+      if (typeof page?.isClosed === 'function' && page.isClosed()) continue;
       await page.close();
     } catch (error) {
       const errorMessage = String(error?.message || error || '').toLowerCase();

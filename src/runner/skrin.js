@@ -1,13 +1,12 @@
 import Bluebird from 'bluebird';
 import minimist from 'minimist';
 import path from 'path';
-import { array_random } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
 import * as databaseModule from '../../dist/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
-import { closeOtherTabs, getPuppeteer } from '../puppeteer_utils.js';
+import { closeOtherTabs, getActivePage, getPuppeteer } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../utils.js';
 
@@ -84,8 +83,10 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
      */
     const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
 
-    const processPage = array_random(await browser.pages());
-    await closeOtherTabs(processPage);
+    const currentPage = await getActivePage(browser);
+    const processPage = await browser.newPage();
+    const protectedPages = [processPage, currentPage].filter(Boolean);
+    await closeOtherTabs(browser, protectedPages);
 
     const result = await processData(processPage, data, database, {
       // turn off this to disable validation of database entry after processing, which can speed up the process but might cause silent failures if the entry is not properly saved in database
