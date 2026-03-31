@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { md5, writefile } from 'sbg-utility';
 
 /**
  * Get the fingerprint cache directory based on tags.
@@ -87,6 +88,64 @@ export async function getLatestCachedFingerprint(tags = []) {
     return fs.readFileSync(cachedFiles[0], 'utf-8');
   } catch (error) {
     console.warn(`Failed to read cached fingerprint: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Save fingerprint content into the cache directory.
+ *
+ * @param {string} fingerprint - Raw fingerprint JSON string.
+ * @param {string[]} [tags] - Tags used to determine cache directory.
+ * @returns {string} Saved fingerprint file path.
+ */
+export function saveFingerprintToCache(fingerprint, tags = []) {
+  const filename = `${md5(fingerprint)}.json`;
+  const fingerprintCacheDir = getFingerprintCacheDir(tags);
+  const fingerprintCacheFilePath = path.join(fingerprintCacheDir, filename);
+  writefile(fingerprintCacheFilePath, fingerprint);
+  return fingerprintCacheFilePath;
+}
+
+/**
+ * Fetch a new fingerprint and save it into the cache directory.
+ *
+ * @param {string[]|import('puppeteer-with-fingerprints').FetchOptions} [tagsOrOption] - Tags used when fetching and storing fingerprint.
+ * @returns {Promise<{ fingerprint: string, filePath: string | null } | null>} Fetched fingerprint and cache path, or null on failure.
+ */
+export async function fetchAndSaveFingerprintToCache(tagsOrOption = []) {
+  const normalizedTags = Array.isArray(tagsOrOption)
+    ? tagsOrOption
+    : typeof tagsOrOption === 'object' && Array.isArray(tagsOrOption.tags)
+      ? tagsOrOption.tags
+      : [];
+
+  try {
+    const fingerprintPlugin = await import('puppeteer-with-fingerprints').then((mod) => {
+      mod.plugin.setServiceKey('');
+      return mod.plugin;
+    });
+
+    /** @type {import('puppeteer-with-fingerprints').FetchOptions} */
+    const optionsFp = typeof tagsOrOption === 'object' && !Array.isArray(tagsOrOption) ? tagsOrOption : {};
+    if (normalizedTags.length > 0) {
+      optionsFp.tags = normalizedTags;
+    }
+    const fingerprint = await fingerprintPlugin.fetch(optionsFp);
+    const fingerprintObj = JSON.parse(fingerprint);
+    // if (!fingerprintObj.valid) {
+    //   console.warn('Fetched fingerprint is invalid:', fingerprintObj);
+    // }
+
+    if (!fingerprint || typeof fingerprint !== 'string') {
+      console.warn('Failed to fetch a valid fingerprint');
+      return null;
+    }
+
+    const filePath = fingerprintObj.valid ? saveFingerprintToCache(fingerprint, normalizedTags) : null;
+    return { fingerprint, filePath };
+  } catch (error) {
+    console.warn(`Failed to fetch and cache fingerprint: ${error.message}`);
     return null;
   }
 }

@@ -5,11 +5,11 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
 import { chromium } from 'playwright-extra';
-import { array_unique, isEmpty, md5, writefile } from 'sbg-utility';
+import { array_unique, isEmpty } from 'sbg-utility';
 import {
-  getFingerprintCacheDir,
   getRandomCachedFingerprint,
-  getLatestCachedFingerprint
+  getLatestCachedFingerprint,
+  fetchAndSaveFingerprintToCache
 } from './puppeteer/fingerprint_utils.js';
 
 /**
@@ -290,33 +290,33 @@ export async function getPuppeteer(options = {}) {
       fingerprint = await getRandomCachedFingerprint(fingerprintTags);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
-        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'latest-cached') {
       fingerprint = await getLatestCachedFingerprint(fingerprintTags);
       if (!fingerprint) {
         console.warn('No cached fingerprints available, fetching new one');
-        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        fingerprint = fetched?.fingerprint ?? null;
       }
     } else if (fingerprintStrategy === 'random-or-fetch') {
       fingerprint = await getRandomCachedFingerprint(fingerprintTags);
       if (!fingerprint) {
         console.log('Cache empty, fetching new fingerprint');
-        fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+        const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+        fingerprint = fetched?.fingerprint ?? null;
       }
     } else {
-      fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+      const fetched = await fetchAndSaveFingerprintToCache(fingerprintTags);
+      fingerprint = fetched?.fingerprint ?? null;
     }
 
     if (isEmpty(fingerprint)) {
       throw new Error('Failed to obtain a valid fingerprint using strategy: ' + fingerprintStrategy);
     }
 
-    // Cache the fingerprint
-    const filename = md5(fingerprint) + '.json';
-    const fingerprintCacheDir = getFingerprintCacheDir(fingerprintTags);
-    const fingerprintCacheFilePath = path.join(fingerprintCacheDir, filename);
-    writefile(fingerprintCacheFilePath, fingerprint);
+    // When fingerprint was fetched via `fetchAndSaveFingerprintToCache` it is already cached.
 
     fingerprintPlugin.useFingerprint(fingerprint);
     puppeteer_module = fingerprintPlugin;
