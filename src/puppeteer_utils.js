@@ -363,7 +363,8 @@ export async function getPuppeteer(options = {}) {
           if (fingerprintObj.lang) args.push('--lang=' + fingerprintObj.lang);
           return await puppeteer_module.launch({
             args: array_unique(args),
-            headless: currentLaunchOptions.headless
+            headless: currentLaunchOptions.headless,
+            devtools: currentLaunchOptions.devtools
           });
         }
 
