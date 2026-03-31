@@ -93,17 +93,19 @@
     "**/.hg": true,
     "**/.idea/**": true,
     "**/.svn": true,
-    "**/Thumbs.db": true,
     "**/.venv": true,
     "**/.yarn": true,
     "**/node_modules": true,
+    "**/Thumbs.db": true,
     "**/vendor": true,
     "backups": true,
+    "bas/": true,
+    "data/engine": true,
+    "data/fingerprints": true,
+    "data/logs": true,
     "data/profiles": true,
     "data/run": true,
-    "data/fingerprints": true,
-    "data/engine": true,
-    "bas/": true
+    "data/script": true
   },
   "files.readonlyInclude": {
     "**/*.sqlite*": true
@@ -112,12 +114,15 @@
     "**/.cache/**": true,
     "**/.idea/**": true,
     "**/.venv/**": true,
-    "**/venv/**": true,
     "**/.yarn/**": true,
-    "**/profiles/**": true,
     "**/config/**": true,
     "**/databases/**": true,
     "**/node_modules/**": true,
+    "**/profiles/**": true,
+    "**/venv/**": true,
+    "data/engine": true,
+    "data/logs": true,
+    "data/script": true,
     "src/database.sqlite*": true
   },
   "git.autoStash": true,
@@ -226,5 +231,16 @@
   },
   "terminal.integrated.gpuAcceleration": "auto",
   "editor.formatOnType": false,
-  "npm.packageManager": "yarn"
+  "npm.packageManager": "yarn",
+  "explorer.autoRevealExclude": {
+    "data/engine": true,
+    "data/logs": true,
+    "data/script": true
+  },
+  "search.exclude": {
+    "data/engine": true,
+    "data/logs": true,
+    "data/script": true
+  },
+  "search.useGlobalIgnoreFiles": false
 }
