@@ -4,7 +4,7 @@ async function _fetch() {
   const tags = ['Microsoft Windows', 'Chrome'];
   const { fingerprint = null, filePath = null } = await fetchAndSaveFingerprintToCache({
     tags,
-    enablePrecomputedFingerprints: true
+    enablePrecomputedFingerprints: Math.random() < 0.5 // Randomly decide whether to use precomputed fingerprints or not
     // maxHeight: 800
     // maxWidth: 1366
   });

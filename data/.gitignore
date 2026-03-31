@@ -3,3 +3,4 @@
 /engine
 /*.json
 /logs
+/not_*
