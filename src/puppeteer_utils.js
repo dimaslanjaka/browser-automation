@@ -269,10 +269,12 @@ export async function getPuppeteer(options = {}) {
   const stealthMode = stealth?.mode ?? 'default';
   const fingerprintStrategy = stealth?.fingerprintStrategy ?? 'fetch';
   const fingerprintTags = stealth?.fingerprintTags ?? ['Microsoft Windows', 'Chrome'];
+  /** @type {import('puppeteer')} */
+  let puppeteer_module = puppeteer;
 
   // Prepare stealth plugin based on options
   if (stealthMode === 'stealth' || stealthMode === 'default') {
-    puppeteer.use(StealthPlugin());
+    puppeteer_module.use(StealthPlugin());
   } else if (stealthMode === 'fingerprint') {
     const fingerprintPlugin = await import('puppeteer-with-fingerprints').then((mod) => {
       mod.plugin.setServiceKey('');
@@ -312,6 +314,7 @@ export async function getPuppeteer(options = {}) {
     writefile(fingerprintCacheFilePath, fingerprint);
 
     fingerprintPlugin.useFingerprint(fingerprint);
+    puppeteer_module = fingerprintPlugin;
   }
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
@@ -320,7 +323,7 @@ export async function getPuppeteer(options = {}) {
     }
 
     puppeteer_browser = await launchWithProfileFallback({
-      launchFn: async (currentLaunchOptions) => await puppeteer.launch(currentLaunchOptions),
+      launchFn: async (currentLaunchOptions) => await puppeteer_module.launch(currentLaunchOptions),
       launchOptions,
       autoSwitchProfileDir,
       launcherName: 'Puppeteer'
@@ -328,7 +331,7 @@ export async function getPuppeteer(options = {}) {
   }
 
   const page = await puppeteer_browser.newPage();
-  return { page, browser: puppeteer_browser, puppeteer };
+  return { page, browser: puppeteer_browser, puppeteer: puppeteer_module };
 }
 
 /**
