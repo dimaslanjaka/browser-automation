@@ -68,8 +68,8 @@
     "mariadb": "^3.5.1",
     "minimatch": "^10",
     "minimist": "^1",
-    "moment": "^2",
-    "moment-timezone": "^0",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.6.1",
     "nik-parser-jurusid": "^3",
     "node-7z": "^3",
     "node-fetch": "^3",
@@ -82,8 +82,8 @@
     "proxies-grabber": "^1",
     "puppeteer": "^24.37.5",
     "puppeteer-cluster": "^0.25.0",
-    "puppeteer-extra": "^3",
-    "puppeteer-extra-plugin-stealth": "^2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-with-fingerprints": "^2.3.4",
     "react-bootstrap": "^2",
     "react-router-dom": "^7",
@@ -177,12 +177,12 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/9d2f7ebf4c37cf1d58487951c9e2ad3a20b917c1/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/e446a9fc447fa4c0dec52a1c1f5a2ab8fdfa98e0/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/80999ac7a7031a81e11ddb5fab0f8ba433041c98/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/3f36c7384fa414d0207460e00c0d7d362dba995f/packages/sbg-utility/release/sbg-utility.tgz",
     "synckit": "0.8.5",
     "@pkgr/core": "0.2.6",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/c97c2e1242bb8f4ce02abe1db38a45802581e814/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/0a8f8dd46ae7287acff7a0901f99cc9bf344fa7d/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.9.2"
 }
