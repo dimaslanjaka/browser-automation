@@ -12,9 +12,21 @@ async function _puppeterWithFingerpint() {
   await delay(5000);
 
   await pageScreenshoot(page, {
-    path: path.join(process.cwd(), 'tmp/puppeteer/screenshoots/puppeteer-fingerprint.png'),
+    path: path.join(process.cwd(), 'tmp/puppeteer/screenshoots/bot-sannysoft.png'),
     fullPage: true
   });
+
+  await page.goto('https://www.scrapingcourse.com/antibot-challenge', {
+    waitUntil: 'networkidle2'
+  });
+
+  await delay(5000);
+
+  await pageScreenshoot(page, {
+    path: path.join(process.cwd(), 'tmp/puppeteer/screenshoots/antibot-challenge.png'),
+    fullPage: true
+  });
+
   await browser.close();
 }
 
