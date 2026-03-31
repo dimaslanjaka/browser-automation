@@ -5,7 +5,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { fileURLToPath } from 'url';
 import { sleep } from './utils-browser.js';
 import { chromium } from 'playwright-extra';
-import { md5, writefile } from 'sbg-utility';
+import { array_unique, isEmpty, md5, writefile } from 'sbg-utility';
 import {
   getFingerprintCacheDir,
   getRandomCachedFingerprint,
@@ -269,8 +269,12 @@ export async function getPuppeteer(options = {}) {
   const stealthMode = stealth?.mode ?? 'default';
   const fingerprintStrategy = stealth?.fingerprintStrategy ?? 'fetch';
   const fingerprintTags = stealth?.fingerprintTags ?? ['Microsoft Windows', 'Chrome'];
+
   /** @type {import('puppeteer')} */
   let puppeteer_module = puppeteer;
+
+  /** @type {string | null} */
+  let fingerprint = null;
 
   // Prepare stealth plugin based on options
   if (stealthMode === 'stealth' || stealthMode === 'default') {
@@ -280,8 +284,6 @@ export async function getPuppeteer(options = {}) {
       mod.plugin.setServiceKey('');
       return mod.plugin;
     });
-
-    let fingerprint = null;
 
     // Determine fingerprint strategy
     if (fingerprintStrategy === 'random-cached') {
@@ -303,8 +305,11 @@ export async function getPuppeteer(options = {}) {
         fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
       }
     } else {
-      // Default: 'fetch' - always fetch new fingerprint
       fingerprint = await fingerprintPlugin.fetch({ tags: fingerprintTags });
+    }
+
+    if (isEmpty(fingerprint)) {
+      throw new Error('Failed to obtain a valid fingerprint using strategy: ' + fingerprintStrategy);
     }
 
     // Cache the fingerprint
@@ -323,7 +328,36 @@ export async function getPuppeteer(options = {}) {
     }
 
     puppeteer_browser = await launchWithProfileFallback({
-      launchFn: async (currentLaunchOptions) => await puppeteer_module.launch(currentLaunchOptions),
+      launchFn: async (currentLaunchOptions) => {
+        if (stealthMode === 'fingerprint') {
+          const clonedArgs = [...currentLaunchOptions.args];
+          // remove --user-data-dir from args to avoid conflicts with fingerprint profile management
+          const filteredArgs = clonedArgs.filter((arg) => !arg.startsWith('--user-data-dir='));
+          const args = [
+            ...filteredArgs,
+            '--disable-features=HeavyAdIntervention', // Disable Chrome's blocking of intrusive ads
+            '--disable-features=AdInterestGroupAPI', // Prevents blocking based on ad interest group
+            '--disable-popup-blocking', // Disable pop-up blocking
+            '--no-default-browser-check',
+            '--no-first-run',
+            '--ignore-certificate-errors',
+            '--hide-crash-restore-bubble',
+            '--autoplay-policy=no-user-gesture-required',
+            // Use a subdirectory for fingerprint profile to avoid conflicts
+            '--user-data-dir=' + path.join(currentLaunchOptions.userDataDir, 'browser-with-fingerprints')
+          ];
+
+          const fingerprintObj = JSON.parse(fingerprint);
+          if (fingerprintObj.ua) args.push('--user-agent=' + fingerprintObj.ua);
+          if (fingerprintObj.lang) args.push('--lang=' + fingerprintObj.lang);
+          return await puppeteer_module.launch({
+            args: array_unique(args),
+            headless: currentLaunchOptions.headless
+          });
+        }
+
+        return await puppeteer.launch(currentLaunchOptions);
+      },
       launchOptions,
       autoSwitchProfileDir,
       launcherName: 'Puppeteer'
