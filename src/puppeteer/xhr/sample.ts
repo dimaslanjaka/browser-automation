@@ -5,6 +5,7 @@ import { delay } from 'sbg-utility';
 import { getPuppeteer, pageScreenshoot } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { setupXhrCapture } from './capture-xhr.js';
+import { noop } from '../../utils-browser.js';
 
 puppeteer.use(StealthPlugin());
 
@@ -15,8 +16,9 @@ puppeteer.use(StealthPlugin());
   const baseDir = path.join(process.cwd(), 'tmp/puppeteer/xhr');
   const stopCapture = setupXhrCapture(page, { baseDir });
 
-  await autoLoginAndEnterSkriningPage(page);
-  await delay(5000);
+  await autoLoginAndEnterSkriningPage(page)
+    .then(() => delay(5000))
+    .catch(noop);
 
   await page.goto('https://bot.sannysoft.com');
   await delay(5000);

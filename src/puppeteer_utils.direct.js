@@ -12,7 +12,7 @@ async function _puppeterWithFingerpint() {
   await delay(5000);
 
   await pageScreenshoot(page, {
-    path: path.join(process.cwd(), 'tmp/puppeteer/screenshoots/bot-sannysoft.png'),
+    path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/bot-sannysoft.png'),
     fullPage: true
   });
 
@@ -23,7 +23,7 @@ async function _puppeterWithFingerpint() {
   await delay(5000);
 
   await pageScreenshoot(page, {
-    path: path.join(process.cwd(), 'tmp/puppeteer/screenshoots/antibot-challenge.png'),
+    path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/antibot-challenge.png'),
     fullPage: true
   });
 
