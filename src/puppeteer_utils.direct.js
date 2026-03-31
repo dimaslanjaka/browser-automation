@@ -18,6 +18,10 @@ async function _puppeterWithFingerpint() {
 
     await autoLoginAndEnterSkriningPage(page);
     await delay(5000);
+    await pageScreenshot(page, {
+      path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/skrining.png'),
+      fullPage: true
+    });
 
     await page.goto('https://bot.sannysoft.com/', {
       waitUntil: 'networkidle2'

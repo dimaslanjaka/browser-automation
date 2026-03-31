@@ -1727,5 +1727,56 @@ export async function pageScreenshot(page, options = {}) {
       await fs.promises.mkdir(dir, { recursive: true });
     }
   }
-  await page.screenshot({ path: screenshotPath, fullPage });
+  // Try to avoid CDP errors when the page or document reports 0 width/height
+  const getPageDimensions = async () => {
+    try {
+      return await page.evaluate(() => {
+        const doc = document.documentElement || {};
+        const body = document.body || {};
+        const width = Math.max(doc.clientWidth || 0, doc.scrollWidth || 0, body.scrollWidth || 0);
+        const height = Math.max(doc.clientHeight || 0, doc.scrollHeight || 0, body.scrollHeight || 0);
+        return { width, height, devicePixelRatio: window.devicePixelRatio || 1 };
+      });
+    } catch (_e) {
+      return { width: 0, height: 0, devicePixelRatio: 1 };
+    }
+  };
+
+  let dims = await getPageDimensions();
+
+  // If dimensions look invalid, attempt to set a sensible temporary viewport
+  if (!dims.width || !dims.height) {
+    try {
+      const vw = Math.max(800, dims.width || 800);
+      const vh = Math.max(600, dims.height || 600);
+      await page.setViewport({ width: vw, height: vh });
+      dims = await getPageDimensions();
+    } catch (_e) {
+      // ignore and rely on fallback below
+    }
+  }
+
+  try {
+    // If fullPage requested but dimensions are still zero, avoid fullPage to prevent ProtocolError
+    if (fullPage && dims.width > 0 && dims.height > 0) {
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+    } else {
+      await page.screenshot({ path: screenshotPath, fullPage: false });
+    }
+  } catch (err) {
+    const msg = String(err?.message || err || '').toLowerCase();
+    // If we received the "0 width" ProtocolError, retry with a fallback viewport and non-fullPage
+    if (msg.includes('cannot take screenshot with 0 width') || msg.includes('0 width')) {
+      try {
+        const vw = Math.max(800, dims.width || 800);
+        const vh = Math.max(600, dims.height || 600);
+        await page.setViewport({ width: vw, height: vh });
+        await page.screenshot({ path: screenshotPath, fullPage: false });
+      } catch (_e) {
+        throw err; // rethrow original if retry fails
+      }
+    } else {
+      throw err;
+    }
+  }
 }
