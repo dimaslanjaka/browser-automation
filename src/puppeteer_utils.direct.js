@@ -1,16 +1,9 @@
 import { delay } from 'sbg-utility';
-import { getPuppeteer, pageScreenshoot } from './puppeteer_utils.js';
 import path from 'upath';
-import { fetchAndSaveFingerprintToCache } from './puppeteer/fingerprint_utils.js';
-import { noop } from './utils-browser.js';
+import { getPuppeteer, pageScreenshot } from './puppeteer_utils.js';
+import { autoLoginAndEnterSkriningPage } from './skrin_puppeteer.js';
 
 async function _puppeterWithFingerpint() {
-  // fetch in background without awaiting, so it can populate cache for the main puppeteer flow
-  fetchAndSaveFingerprintToCache({
-    tags: ['Microsoft Windows', 'Chrome'],
-    enablePrecomputedFingerprints: Math.random() < 0.5
-  }).catch(noop);
-
   let browser;
   try {
     const launched = await getPuppeteer({
@@ -23,13 +16,18 @@ async function _puppeterWithFingerpint() {
     browser = launched.browser;
     const { page } = launched;
 
+    await autoLoginAndEnterSkriningPage(page);
+    await delay(5000);
+
     await page.goto('https://bot.sannysoft.com/', {
       waitUntil: 'networkidle2'
     });
 
-    await delay(5000);
+    await page.waitForFunction(() => /antibot/i.test(document.title || ''), {
+      timeout: 5 * 60 * 1000
+    });
 
-    await pageScreenshoot(page, {
+    await pageScreenshot(page, {
       path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/bot-sannysoft.png'),
       fullPage: true
     });
@@ -38,12 +36,11 @@ async function _puppeterWithFingerpint() {
       waitUntil: 'networkidle2'
     });
 
-    await delay(5000);
+    await page.waitForFunction(() => /antibot challenge/i.test(document.title || ''), {
+      timeout: 5 * 60 * 1000
+    });
 
-    // wait until page title changes includes string "Antibot Challenge"
-    await page.waitForFunction(() => document.title.includes('Antibot Challenge'), { timeout: 5 * 60 * 1000 });
-
-    await pageScreenshoot(page, {
+    await pageScreenshot(page, {
       path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/antibot-challenge.png'),
       fullPage: true
     });

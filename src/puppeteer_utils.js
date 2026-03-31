@@ -1717,7 +1717,7 @@ export async function closeOtherTabs(instance, keepCount = 2) {
  * @param {boolean} [options.fullPage=true] - Capture the full scrollable page.
  * @returns {Promise<void>} Resolves when the screenshot operation completes.
  */
-export async function pageScreenshoot(page, options = {}) {
+export async function pageScreenshot(page, options = {}) {
   const { path: screenshotPath, fullPage = true } = options;
   // auto create directory if not exists
   if (screenshotPath) {
