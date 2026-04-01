@@ -50,7 +50,7 @@ export function fixTanggalEntry(initialData, options = { verbose: false, autofil
         throw new Error(
           `Month name not found in tanggalEntry: ${tanggalEntry}\n\n${JSON.stringify(initialData, null, 2)}`
         );
-      tanggalEntry = array_random(getDatesWithoutSundays(monthName, 2025, 'DD/MM/YYYY', true));
+      tanggalEntry = array_random(getDatesWithoutSundays(monthName, moment().year(), 'DD/MM/YYYY', true));
       if (options.verbose)
         logLine(
           `${ansiColors.cyan('[fixTanggalEntry]')} Generated new date for "${tanggalEntry}" from month name in entry: ${tanggalEntry}`

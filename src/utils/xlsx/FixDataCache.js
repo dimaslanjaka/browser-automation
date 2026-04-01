@@ -121,12 +121,14 @@ export class FixDataCache {
    * @param {import('../../../globals').ExcelRowData4 | import('../../../globals').ExcelRowData} data - The original input data used as cache key.
    * @param {Object} result - The processed result to cache.
    * @param {Object} [options] - Cache options.
-   * @param {boolean} [options.useCache=true] - Enable/disable caching for this entry.
+   * @param {boolean} [options.useCache=true] - Enable/disable caching for this entry (controls reads).
+   * @param {boolean} [options.overwriteCache=false] - When true, will write the cache file even if `useCache` is false.
    * @param {boolean} [options.verbose=false] - Enable verbose logging during caching.
    * @returns {Promise<void>}
    */
   async set(data, result, options = {}) {
-    if (options.useCache === false) {
+    // If useCache explicitly disabled and overwriteCache not requested, skip writing
+    if (options.useCache === false && !options.overwriteCache) {
       return;
     }
     const file = this.getEntryFilePath(data);

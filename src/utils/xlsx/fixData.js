@@ -74,7 +74,7 @@ export function isValidNik(rawNik) {
  * @param {object} [options]
  * @param {boolean} [options.autofillTanggalEntry=true]
  *   When true, missing or month-name-only `tanggal` entries are auto-filled
- *   from the helper `getDatesWithoutSundays` (uses November 2025 by default
+ *   from the helper `getDatesWithoutSundays` (uses November current year by default
  *   in current implementation). When false, a missing `tanggal` will cause an
  *   error.
  * @param {boolean} [options.verbose=false]
@@ -86,7 +86,11 @@ export function isValidNik(rawNik) {
  * @param {boolean} [options.useCache=true]
  *   When true, results are cached by NIK to avoid reprocessing the same
  *   entries. The cache preserves the original generation timestamp. When
- *   false, caching is bypassed and fresh data is always generated.
+ *   false, caching is bypassed and fresh data is always generated (reads are skipped).
+ * @param {boolean} [options.overwriteCache=false]
+ *   When true, forces the cache writer to overwrite the cache file even when
+ *   `useCache` is false. This allows callers to generate fresh results while
+ *   replacing existing cache entries.
  * @param {string} [options.cacheDir]
  *   Optional custom cache directory path. Defaults to `./tmp/fixdata-cache`.
  * @returns {Promise<import('../../../globals').fixDataResult>}
@@ -101,7 +105,8 @@ export default async function fixData(
   options = {
     autofillTanggalEntry: false,
     verbose: false,
-    useCache: true
+    useCache: true,
+    overwriteCache: false
   }
 ) {
   /** @type {Partial<import('../../../globals').fixDataResult>} */

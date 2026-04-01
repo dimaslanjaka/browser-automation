@@ -4,8 +4,9 @@ import { loadCsvData } from '../data/index.js';
 import { fetchXlsxData4 } from '../src/fetchXlsxData4.js';
 import fixData, { isValidNik } from '../src/utils/xlsx/fixData.js';
 import Bluebird from 'bluebird';
+import { noop } from '../src/utils-browser.js';
 
-export async function runFixDataDirect() {
+async function _runFixDataDirect() {
   const rows = await fetchXlsxData4();
   for (const row of rows) {
     const excludedNIKs = ['3578100000000001', '4360000000000658'];
@@ -54,15 +55,14 @@ export async function runFixDataDirect() {
   }
 }
 
-export async function findDataTanggalEntryNonCurrentMonth() {
+async function _findDataTanggalEntryNonCurrentMonthYear() {
   const loaded = await loadCsvData();
   // Preserve original TANGGAL ENTRY value for comparison after processing
   loaded.forEach((r) => {
     r.__origTanggal = (r['TANGGAL ENTRY'] || r.tanggal || '').toString().trim().toUpperCase();
   });
 
-  // Immediately filter to rows that are valid NIK
-  // This ensures non-MARET rows are removed before calling `fixData`.
+  // Filter to rows that are valid NIK only
   const rows = loaded.filter((row) => {
     const raw = row.NIK || row.nik;
     if (!isValidNik(raw)) return false;
@@ -77,17 +77,47 @@ export async function findDataTanggalEntryNonCurrentMonth() {
     }
   );
 
-  // After processing, print rows whose original TANGGAL ENTRY was 'MARET'
-  // but the resolved date is not in March (or is invalid)
+  // After processing, find rows where the original TANGGAL ENTRY
+  // indicated a month (and optional year) but the resolved date
+  // is not in the same month and year.
+  const indMonths = {
+    JANUARI: 0,
+    FEBRUARI: 1,
+    MARET: 2,
+    APRIL: 3,
+    MEI: 4,
+    JUNI: 5,
+    JULI: 6,
+    AGUSTUS: 7,
+    SEPTEMBER: 8,
+    OKTOBER: 9,
+    NOVEMBER: 10,
+    DESEMBER: 11
+  };
+
   const mismatches = data.filter((item) => {
     if (!item) return false;
     const orig = (item.__origTanggal || '').toString().trim().toUpperCase();
-    if (orig !== 'MARET') return false;
+    // Try to extract an Indonesian month name and optional 4-digit year
+    const monthMatch = orig.match(
+      /(JANUARI|FEBRUARI|MARET|APRIL|MEI|JUNI|JULI|AGUSTUS|SEPTEMBER|OKTOBER|NOVEMBER|DESEMBER)(?:\s+(\d{4}))?/i
+    );
+    if (!monthMatch) return false; // nothing to compare
+
+    const origMonthName = monthMatch[1].toUpperCase();
+    const origMonthIndex = indMonths[origMonthName];
+    const origYear = monthMatch[2] ? parseInt(monthMatch[2], 10) : moment().year();
+
     const finalTanggal = (item['TANGGAL ENTRY'] || item.tanggal || '').toString().trim();
     const m = moment(finalTanggal, 'DD/MM/YYYY', true);
-    if (!m.isValid()) return true;
-    return m.month() !== 2; // month() is 0-indexed: 2 => March
+    if (!m.isValid()) return true; // resolved final date invalid -> mismatch
+
+    // mismatch if either month or year differs
+    if (m.month() !== origMonthIndex) return true;
+    if (m.year() !== origYear) return true;
+    return false;
   });
+
   if (mismatches.length) {
     const r = mismatches[0];
     console.log('First mismatch found:', {
@@ -100,4 +130,18 @@ export async function findDataTanggalEntryNonCurrentMonth() {
   }
 }
 
-findDataTanggalEntryNonCurrentMonth().catch(console.error);
+async function _rerunFixDataWithoutCache() {
+  const loaded = await Bluebird.map(
+    await loadCsvData(),
+    (row) =>
+      fixData(row, { autofillTanggalEntry: true, fixNamaBayi: true, useCache: false, overwriteCache: true }).catch(
+        noop
+      ),
+    {
+      concurrency: 10
+    }
+  );
+  console.log('Completed re-run of fixData without cache. Sample output:', loaded[0]);
+}
+
+_rerunFixDataWithoutCache().then(_findDataTanggalEntryNonCurrentMonthYear).catch(console.error);
