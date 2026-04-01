@@ -6,7 +6,7 @@ import { loadCsvData } from '../../data/index.js';
 import * as databaseModule from '../../dist/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
-import { closeOtherTabs, getActivePage, getPuppeteer } from '../puppeteer_utils.js';
+import { getPuppeteer } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../utils.js';
 
@@ -99,10 +99,11 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
      */
     const data = await dataCallback(dataKunto.shift()); // <-- modify the data via callback
 
-    const currentPage = await getActivePage(browser);
     const processPage = await browser.newPage();
-    const protectedPages = [processPage, currentPage].filter(Boolean);
-    await closeOtherTabs(browser, protectedPages);
+    // close first tab if more than 2 tabs are open (1 for main page, 1 for processing), to prevent memory leak from too many open tabs
+    while ((await browser.pages()).length > 2) {
+      await browser.pages()[0].close();
+    }
 
     const result = await processData(processPage, data, database, {
       validateDb: cliValidateDb,
