@@ -1,10 +1,13 @@
-import Bluebird from 'bluebird';
-import { getPuppeteer } from '../../puppeteer_utils.js';
+import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
-import { getNumbersOnly } from '../../utils-browser.js';
-import { processData } from './direct-process-data.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
+import { getPuppeteer } from '../../puppeteer_utils.js';
+import { processData } from './direct-process-data.js';
+import path from 'upath';
+import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
+import { getNumbersOnly } from '../../utils-browser.js';
+import Bluebird from 'bluebird';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
@@ -19,6 +22,8 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
 
 async function main() {
   const { page } = await getPuppeteer({ autoSwitchProfileDir: true });
+  const baseDir = path.join(process.cwd(), 'tmp/puppeteer/xhr');
+  const _stopCapture = setupXhrCapture(page, { baseDir });
 
   const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
@@ -26,10 +31,13 @@ async function main() {
     return true;
   });
 
-  const data = dataKunto.shift();
+  const data = array_shuffle(dataKunto).shift();
   const result = await processData(page, data, database, {
     // turn off this to disable validation of database entry after processing, which can speed up the process but might cause silent failures if the entry is not properly saved in database
-    validateDb: true
+    validateDb: false
+  }).catch((err) => {
+    console.error('Error processing data:', err);
+    return { status: 'error', error: err.message || String(err) };
   });
 
   if (result.status !== 'success') {

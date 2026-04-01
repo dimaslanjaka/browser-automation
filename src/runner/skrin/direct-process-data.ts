@@ -159,8 +159,20 @@ export async function processData(
       );
     }
 
+    // Check if date is same year and month as today to prevent accidental input of old/future dates, which can cause issues in the system and data integrity
+    const today = moment();
+    if (parseTanggal.year() !== today.year() || parseTanggal.month() !== today.month()) {
+      throw new Error(
+        `DATE NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+          fixedData,
+          null,
+          2
+        )}`
+      );
+    }
+
+    // Also check if the date is Sunday, which is not allowed for screening dates
     if (parseTanggal.day() === 0) {
-      // Sunday
       throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
     }
 
