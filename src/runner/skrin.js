@@ -52,10 +52,26 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   // Print remaining count before processing
   console.log(`Total entries to process: ${dataKunto.length}`);
 
-  // Parse CLI flags using minimist: support --single and --shuffle
-  const args = minimist(process.argv.slice(2));
+  // Parse CLI flags using minimist: support --single, --shuffle and processData options
+  const args = minimist(process.argv.slice(2), {
+    boolean: ['single', 'shuffle', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
+    alias: {
+      v: 'validate-db',
+      m: 'skip-current-month-validation',
+      y: 'skip-current-year-validation'
+    }
+  });
   const flagSingle = Boolean(args.single);
   const flagShuffle = Boolean(args.shuffle);
+
+  // CLI-driven processData options (defaults to previous behavior)
+  const cliValidateDb = typeof args['validate-db'] !== 'undefined' ? Boolean(args['validate-db']) : true;
+  const cliSkipMonth =
+    typeof args['skip-current-month-validation'] !== 'undefined'
+      ? Boolean(args['skip-current-month-validation'])
+      : false;
+  const cliSkipYear =
+    typeof args['skip-current-year-validation'] !== 'undefined' ? Boolean(args['skip-current-year-validation']) : false;
 
   if (flagShuffle && Array.isArray(dataKunto) && dataKunto.length > 1) {
     // Fisher-Yates shuffle
@@ -89,8 +105,9 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     await closeOtherTabs(browser, protectedPages);
 
     const result = await processData(processPage, data, database, {
-      // turn off this to disable validation of database entry after processing, which can speed up the process but might cause silent failures if the entry is not properly saved in database
-      validateDb: true
+      validateDb: cliValidateDb,
+      skipCurrentMonthValidation: cliSkipMonth,
+      skipCurrentYearValidation: cliSkipYear
     });
     if (result.status === 'error') {
       console.error('fail processing data', Object.assign(result, { data }));
