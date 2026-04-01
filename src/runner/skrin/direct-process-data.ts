@@ -179,7 +179,7 @@ export async function processData(
         );
       }
     } else {
-      console.warn('skipCurrentMonthYearValidation enabled — skipping date format and range checks for', tanggalEntry);
+      console.warn('skipCurrentMonthYearValidation enabled — skipping current month/year validation for', tanggalEntry);
     }
 
     await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
