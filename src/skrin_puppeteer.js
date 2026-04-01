@@ -60,7 +60,8 @@ export async function autoLoginAndEnterSkriningPage(page) {
   await waitForDomStable(page, 3000, 30000);
 
   const sessionExpiredSelector = '.navbar-template.text-left p';
-  const sessionExpiredMessagePattern = /maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali/i;
+  const sessionMessagePattern =
+    /(?:maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali|anda\s+tidak\s+mempunyai\s+kewenangan\s+untuk\s+mengakses\s+halaman\s+ini)/i;
 
   const sessionExpiredElement = await page.$(sessionExpiredSelector);
   const sessionExpiredState = sessionExpiredElement
@@ -79,7 +80,7 @@ export async function autoLoginAndEnterSkriningPage(page) {
       }, sessionExpiredElement)
     : { isVisible: false, text: '' };
 
-  if (sessionExpiredState.isVisible && sessionExpiredMessagePattern.test(sessionExpiredState.text)) {
+  if (sessionExpiredState.isVisible && sessionMessagePattern.test(sessionExpiredState.text)) {
     console.log('Session expired detected. Re-login required.');
     await skrinLogin(page);
   }
