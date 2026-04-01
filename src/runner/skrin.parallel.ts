@@ -33,8 +33,13 @@ const retryDelayMsFromEnv = Number(process.env.SKRIN_RETRY_DELAY_MS);
 
 const cliArgs = minimist(process.argv.slice(2), {
   string: ['concurrent'],
+  boolean: ['help', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
   alias: {
-    c: 'concurrent'
+    c: 'concurrent',
+    h: 'help',
+    v: 'validate-db',
+    m: 'skip-current-month-validation',
+    y: 'skip-current-year-validation'
   }
 });
 
@@ -51,6 +56,40 @@ const retryAttempts =
 const retryDelayMs = Number.isFinite(retryDelayMsFromEnv) && retryDelayMsFromEnv > 0 ? retryDelayMsFromEnv : 3000;
 const activeBrowsers = new Set<Browser>();
 let isShuttingDown = false;
+
+// Infer ProcessData options type from imported function and read CLI overrides
+type ProcessDataOptions = Parameters<typeof processData>[3];
+const cliValidateDb = typeof cliArgs['validate-db'] !== 'undefined' ? Boolean(cliArgs['validate-db']) : undefined;
+const cliSkipMonth =
+  typeof cliArgs['skip-current-month-validation'] !== 'undefined'
+    ? Boolean(cliArgs['skip-current-month-validation'])
+    : undefined;
+const cliSkipYear =
+  typeof cliArgs['skip-current-year-validation'] !== 'undefined'
+    ? Boolean(cliArgs['skip-current-year-validation'])
+    : undefined;
+
+// Defaults chosen to match interactive/loop mode behavior: validate DB by default in parallel runs
+const processDataOptions: ProcessDataOptions = {
+  validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : true,
+  skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
+  skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
+};
+
+if (cliArgs.help) {
+  const helpLines = [
+    'Usage: node skrin.parallel [options]',
+    '',
+    'Options:',
+    '  --concurrent, -c <n>   Number of parallel workers (default: 2)',
+    '  --validate-db, -v      Enable validation against DB (default: true)',
+    '  --skip-current-month-validation, -m  Skip current month validation',
+    '  --skip-current-year-validation, -y   Skip current year validation',
+    '  --help, -h             Show this help message'
+  ];
+  helpLines.forEach((l) => console.log(l));
+  process.exit(0);
+}
 
 if (cliArgs.concurrent !== undefined && !hasValidParallelRunsFromCli) {
   console.warn(`Invalid --concurrent value: ${String(cliArgs.concurrent)}. Falling back to configured default.`);
@@ -107,7 +146,7 @@ async function processRowWithRetry(row: ExcelRowData, browser: Browser, workerIn
     const page = await browser.newPage();
 
     try {
-      await processData(page, row, database);
+      await processData(page, row, database, processDataOptions);
       return;
     } catch (error) {
       const isLastAttempt = attempt === retryAttempts;

@@ -119,7 +119,13 @@ async function main(opts: { loop?: boolean; max?: number }) {
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
   boolean: ['loop', 'help', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
-  alias: { l: 'loop', h: 'help' },
+  alias: {
+    l: 'loop',
+    h: 'help',
+    v: 'validate-db',
+    m: 'skip-current-month-validation',
+    y: 'skip-current-year-validation'
+  },
   default: { loop: false }
 });
 
@@ -131,9 +137,9 @@ if (argv.help) {
     'Options:',
     '  --loop, -l         Loop over available inputs (default: single input)',
     '  --max <n>          Maximum items to process when looping',
-    '  --validate-db      Enable validation against DB (overrides default)',
-    '  --skip-current-month-validation  Skip current month validation (true/false)',
-    '  --skip-current-year-validation   Skip current year validation (true/false)',
+    '  --validate-db, -v  Enable validation against DB (overrides default)',
+    '  --skip-current-month-validation, -m  Skip current month validation (true/false)',
+    '  --skip-current-year-validation, -y   Skip current year validation (true/false)',
     '  --help, -h         Show this help message'
   ];
   helpLines.forEach((line) => console.log(line));
