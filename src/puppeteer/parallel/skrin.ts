@@ -4,10 +4,11 @@ import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
-import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
+import { getPuppeteer } from '../../puppeteer_utils.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
-import { getNumbersOnly } from '../../utils-browser.js';
-import { getAvailableEndpoint } from './utils.js';
+import { getNumbersOnly, noop } from '../../utils-browser.js';
+import EndpointManager from './EndpointManager.js';
+import { puppeteerTempPath } from './utils.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 
@@ -22,19 +23,71 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
 });
 
 async function main(opts: { loop?: boolean; max?: number }) {
-  const wsEndpoint = getAvailableEndpoint();
-  const { page, browser } = await getPuppeteer({
-    autoSwitchProfileDir: true,
-    browserWSEndpoint: wsEndpoint
-  });
+  // instantiate endpoint manager and try to claim a free endpoint before connecting
+  const endpointManager = new EndpointManager(puppeteerTempPath);
+  let claimedEndpoint: string | undefined;
+  let browser: import('puppeteer').Browser;
 
-  await closeOtherTabs(browser, 2);
-  await page.bringToFront();
+  const tried = new Set<string>();
+  while (true) {
+    const endpoint = endpointManager.getAvailableEndpoint();
+    if (!endpoint) {
+      console.error('No browser endpoint available to connect.');
+      process.exit(1);
+    }
+
+    if (tried.has(endpoint)) {
+      // All known endpoints exhausted
+      console.error('No free browser endpoint found after trying all endpoints.');
+      process.exit(1);
+    }
+
+    // Try to claim it
+    const claimed = endpointManager.tryClaimEndpoint(endpoint, process.pid);
+    if (!claimed) {
+      tried.add(endpoint);
+      continue;
+    }
+
+    try {
+      // connect using existing helper which will use puppeteer.connect when browserWSEndpoint is provided
+      const res = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
+      browser = res.browser;
+      claimedEndpoint = endpoint;
+      break;
+    } catch (err: any) {
+      // Release claim and remove dead endpoint if connection refused
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      tried.add(endpoint);
+      const errObj = err?.error || err;
+      if (errObj?.code === 'ECONNREFUSED') {
+        endpointManager.removeEndpoint(endpoint);
+      }
+      // try next endpoint
+      continue;
+    }
+  }
 
   browser.once('disconnected', () => {
+    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
     console.log('Browser disconnected, exiting.');
     process.exit(0);
   });
+
+  // close first tab if more than 2 tabs are open (sometimes puppeteer.connect opens an extra blank tab)
+  const pages = await browser.pages();
+  while (pages.length > 2) {
+    try {
+      await pages[0].close();
+    } catch {
+      console.warn('Failed to close extra page, it may have already been closed.');
+      break;
+    }
+  }
+  // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
+  const page = await browser.newPage();
+  page.goto('http://sh.webmanajemen.com').catch(noop);
+  await page.bringToFront();
 
   const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
@@ -44,7 +97,8 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   if (!Array.isArray(dataKunto) || dataKunto.length === 0) {
     console.warn('No data available to process.');
-    await browser.close();
+    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+    console.log('Leaving browser running. Exiting worker.');
     process.exit(0);
   }
 
@@ -119,14 +173,16 @@ async function main(opts: { loop?: boolean; max?: number }) {
       }
     }
 
-    await browser.close();
+    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+    console.log('Leaving browser running. Exiting worker.');
     process.exit(0);
   } else {
     const data = items.shift();
 
     if (!data) {
       console.warn('No item to process.');
-      await browser.close();
+      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+      console.log('Leaving browser running. Exiting worker.');
       process.exit(0);
     }
 
@@ -134,11 +190,13 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
     if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
-      await browser.close();
+      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+      console.log('Leaving browser running due to unexpected status. Exiting worker with error.');
       process.exit(1); // exit on unexpected status to avoid silent failures
     } else {
       console.log(result);
-      await browser.close();
+      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+      console.log('Leaving browser running. Exiting worker.');
       process.exit(0);
     }
   }

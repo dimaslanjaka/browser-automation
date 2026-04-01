@@ -1,7 +1,7 @@
 import path from 'path';
 import { writefile } from 'sbg-utility';
 import { getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
-import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
+import { puppeteerTempPath, endpointManager } from './utils.js';
 
 (async () => {
   const { browser, page } = await getPuppeteer({
@@ -24,7 +24,7 @@ import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
   // Write the WebSocket endpoint to a file for other processes to connect
   const wsEndpoint = browser.wsEndpoint();
   console.log('WebSocket Endpoint:', wsEndpoint);
-  writeEndpoint(wsEndpoint);
+  endpointManager.writeEndpoint(wsEndpoint);
 
   // Write indicator file to signal that the browser is running
   const runningIndicatorPath = path.join(puppeteerTempPath, 'browser-running', process.pid.toString());
@@ -34,7 +34,7 @@ import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
   // Keep the process alive until the browser is closed
   await new Promise((resolve) => {
     browser?.on('disconnected', () => {
-      removeEndpoint(wsEndpoint);
+      endpointManager.removeEndpoint(wsEndpoint);
       resolve(true);
     });
   });

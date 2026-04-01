@@ -1,13 +1,20 @@
 import { array_random } from 'sbg-utility';
 import { getPuppeteer } from '../../puppeteer_utils.js';
-import { getAvailableEndpoint } from './utils.js';
+import { endpointManager } from './utils.js';
 
 async function _main() {
-  const endpoint = getAvailableEndpoint();
+  const endpoint = endpointManager.getAvailableEndpoint();
   if (!endpoint) {
     console.error(
       'No available browser endpoints found. Make sure the launcher is running and has created an endpoint.'
     );
+    process.exit(1);
+  }
+
+  // Try to claim endpoint so other workers won't take it
+  const claimed = endpointManager.tryClaimEndpoint(endpoint, process.pid);
+  if (!claimed) {
+    console.error('Failed to claim endpoint, it may be in use by another process.');
     process.exit(1);
   }
 
@@ -16,6 +23,8 @@ async function _main() {
   console.log('Connected to browser WS endpoint:', browser.wsEndpoint());
 
   browser.once('disconnected', () => {
+    // release claim when the browser disconnects
+    endpointManager.releaseEndpointClaim(endpoint, process.pid);
     console.log('Browser disconnected, exiting.');
     process.exit(0);
   });
@@ -33,6 +42,8 @@ async function _main() {
     } catch {
       // ignore
     } finally {
+      // release claim on exit
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
       process.exit(0);
     }
   });
