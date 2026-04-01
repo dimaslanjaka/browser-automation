@@ -63,7 +63,9 @@ export async function processData(
   page: Page | Browser,
   data: ExcelRowData,
   database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase,
-  options: { validateDb?: boolean; skipCurrentMonthYearValidation?: boolean } = { validateDb: true }
+  options: { validateDb?: boolean; skipCurrentMonthValidation?: boolean; skipCurrentYearValidation?: boolean } = {
+    validateDb: true
+  }
 ): Promise<ProcessDataResult> {
   if ('pages' in page) {
     const pages = await page.pages();
@@ -166,20 +168,35 @@ export async function processData(
       throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
     }
 
-    if (!options?.skipCurrentMonthYearValidation) {
-      // Check if date is same year and month as today to prevent accidental input of old/future dates, which can cause issues in the system and data integrity
-      const today = moment();
-      if (parseTanggal.year() !== today.year() || parseTanggal.month() !== today.month()) {
+    // Separate validations for year and month so callers can skip them independently
+    const today = moment();
+
+    if (options?.skipCurrentYearValidation) {
+      console.warn('skipCurrentYearValidation enabled — skipping current year validation for', tanggalEntry);
+    } else {
+      if (parseTanggal.year() !== today.year()) {
         throw new Error(
-          `DATE NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+          `YEAR NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
             fixedData,
             null,
             2
           )}`
         );
       }
+    }
+
+    if (options?.skipCurrentMonthValidation) {
+      console.warn('skipCurrentMonthValidation enabled — skipping current month validation for', tanggalEntry);
     } else {
-      console.warn('skipCurrentMonthYearValidation enabled — skipping current month/year validation for', tanggalEntry);
+      if (parseTanggal.month() !== today.month()) {
+        throw new Error(
+          `MONTH NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+            fixedData,
+            null,
+            2
+          )}`
+        );
+      }
     }
 
     await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));

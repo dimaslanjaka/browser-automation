@@ -55,7 +55,8 @@ async function main(opts: { loop?: boolean; max?: number }) {
       // eslint-disable-next-line no-await-in-loop
       const result = await processData(page, data, database, {
         validateDb: true,
-        skipCurrentMonthYearValidation: true
+        skipCurrentMonthValidation: true,
+        skipCurrentYearValidation: false
       }).catch((err) => {
         console.error('Error processing data:', err);
         return { status: 'error', error: err.message || String(err) };
@@ -74,7 +75,8 @@ async function main(opts: { loop?: boolean; max?: number }) {
     const data = items.shift();
     const result = await processData(page, data, database, {
       validateDb: false,
-      skipCurrentMonthYearValidation: true
+      skipCurrentMonthValidation: true,
+      skipCurrentYearValidation: true
     }).catch((err) => {
       console.error('Error processing data:', err);
       return { status: 'error', error: err.message || String(err) };
