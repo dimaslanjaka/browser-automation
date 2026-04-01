@@ -45,6 +45,30 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   const items = array_shuffle(dataKunto);
 
+  // Infer the options type from processData's parameter list
+  type ProcessDataOptions = Parameters<typeof processData>[3];
+
+  // Read CLI overrides for processData options (undefined means not specified)
+  const cliValidateDb = typeof argv['validate-db'] !== 'undefined' ? Boolean(argv['validate-db']) : undefined;
+  const cliSkipMonth =
+    typeof argv['skip-current-month-validation'] !== 'undefined'
+      ? Boolean(argv['skip-current-month-validation'])
+      : undefined;
+  const cliSkipYear =
+    typeof argv['skip-current-year-validation'] !== 'undefined'
+      ? Boolean(argv['skip-current-year-validation'])
+      : undefined;
+
+  // helper: process one item and normalize error/result handling
+  async function processOne(page: any, data: any, databaseInstance: LogDatabase, options: ProcessDataOptions) {
+    const result = await processData(page, data, databaseInstance, options).catch((err) => {
+      console.error('Error processing data:', err);
+      return { status: 'error', error: err.message || String(err) };
+    });
+
+    return result;
+  }
+
   if (opts.loop) {
     const max = typeof opts.max === 'number' && opts.max > 0 ? opts.max : Infinity;
     let processed = 0;
@@ -53,14 +77,13 @@ async function main(opts: { loop?: boolean; max?: number }) {
       processed++;
       console.log(`Processing item ${processed}${isFinite(max) ? `/${max}` : ''}`);
       // eslint-disable-next-line no-await-in-loop
-      const result = await processData(page, data, database, {
-        validateDb: true,
-        skipCurrentMonthValidation: true,
-        skipCurrentYearValidation: false
-      }).catch((err) => {
-        console.error('Error processing data:', err);
-        return { status: 'error', error: err.message || String(err) };
-      });
+      const options: ProcessDataOptions = {
+        validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : true,
+        skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
+        skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
+      };
+
+      const result = await processOne(page, data, database, options);
 
       if (result.status !== 'success') {
         console.warn('Unexpected result status for item', processed, result);
@@ -73,14 +96,13 @@ async function main(opts: { loop?: boolean; max?: number }) {
     process.exit(0);
   } else {
     const data = items.shift();
-    const result = await processData(page, data, database, {
-      validateDb: false,
-      skipCurrentMonthValidation: true,
-      skipCurrentYearValidation: true
-    }).catch((err) => {
-      console.error('Error processing data:', err);
-      return { status: 'error', error: err.message || String(err) };
-    });
+    const options: ProcessDataOptions = {
+      validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : false,
+      skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
+      skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
+    };
+
+    const result = await processOne(page, data, database, options);
 
     if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
@@ -96,7 +118,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
-  boolean: ['loop', 'help'],
+  boolean: ['loop', 'help', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
   alias: { l: 'loop', h: 'help' },
   default: { loop: false }
 });
@@ -109,6 +131,9 @@ if (argv.help) {
     'Options:',
     '  --loop, -l         Loop over available inputs (default: single input)',
     '  --max <n>          Maximum items to process when looping',
+    '  --validate-db      Enable validation against DB (overrides default)',
+    '  --skip-current-month-validation  Skip current month validation (true/false)',
+    '  --skip-current-year-validation   Skip current year validation (true/false)',
     '  --help, -h         Show this help message'
   ];
   helpLines.forEach((line) => console.log(line));
