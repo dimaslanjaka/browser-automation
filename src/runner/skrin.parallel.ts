@@ -1,6 +1,6 @@
 import Bluebird from 'bluebird';
 import minimist from 'minimist';
-import { connect } from '../parallel-browsers/utils.js';
+import { connect } from '../puppeteer/parallel/utils.js';
 import type { Browser } from 'puppeteer';
 import { loadCsvData } from '../../data/index.js';
 import { ExcelRowData } from '../../globals.js';
