@@ -63,7 +63,7 @@ export async function processData(
   page: Page | Browser,
   data: ExcelRowData,
   database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase,
-  options: { validateDb?: boolean } = { validateDb: true }
+  options: { validateDb?: boolean; skipCurrentMonthYearValidation?: boolean } = { validateDb: true }
 ): Promise<ProcessDataResult> {
   if ('pages' in page) {
     const pages = await page.pages();
@@ -137,6 +137,7 @@ export async function processData(
 
     const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
 
+    // Always validate the date format to ensure it's in DD/MM/YYYY format, which is required by the form. This prevents issues with incorrect date formats causing silent failures or incorrect data entry.
     if (!`${tanggalEntry}`.includes('/') || !tanggalEntry || tanggalEntry.length < 8) {
       throw new Error(
         `INVALID DATE: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
@@ -149,6 +150,7 @@ export async function processData(
 
     const parseTanggal = moment(tanggalEntry, 'DD/MM/YYYY', true); // strict parsing
 
+    // Always validate the parsed date to ensure it's a valid calendar date. This prevents issues with invalid dates like 31/02/2023 being accepted and causing downstream errors in the form submission or data integrity.
     if (!parseTanggal.isValid()) {
       throw new Error(
         `INVALID DATE (parse failed): tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
@@ -159,21 +161,25 @@ export async function processData(
       );
     }
 
-    // Check if date is same year and month as today to prevent accidental input of old/future dates, which can cause issues in the system and data integrity
-    const today = moment();
-    if (parseTanggal.year() !== today.year() || parseTanggal.month() !== today.month()) {
-      throw new Error(
-        `DATE NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
-          fixedData,
-          null,
-          2
-        )}`
-      );
-    }
-
-    // Also check if the date is Sunday, which is not allowed for screening dates
+    // Always disallow Sunday dates as the system does not accept them and it can cause silent failures if entered. This check is important to ensure data integrity and prevent issues with form submission.
     if (parseTanggal.day() === 0) {
       throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
+    }
+
+    if (!options?.skipCurrentMonthYearValidation) {
+      // Check if date is same year and month as today to prevent accidental input of old/future dates, which can cause issues in the system and data integrity
+      const today = moment();
+      if (parseTanggal.year() !== today.year() || parseTanggal.month() !== today.month()) {
+        throw new Error(
+          `DATE NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+            fixedData,
+            null,
+            2
+          )}`
+        );
+      }
+    } else {
+      console.warn('skipCurrentMonthYearValidation enabled — skipping date format and range checks for', tanggalEntry);
     }
 
     await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
