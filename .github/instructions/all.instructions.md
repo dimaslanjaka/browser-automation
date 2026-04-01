@@ -16,3 +16,4 @@ applyTo: '**/*.*'
 - If the commit is related to styles, use the `style` prefix.
 - If the commit is related to performance improvements, use the `perf` prefix.
 - If the commit is related to security fixes, use the `security` prefix.
+- When modifying existing code, preserve comments and formatting as much as possible to maintain readability.
