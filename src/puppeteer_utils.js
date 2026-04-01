@@ -334,6 +334,17 @@ export async function getPuppeteer(options = {}) {
   }
 
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
+    // If a remote browser WebSocket endpoint is provided, connect instead of launching.
+    if (launchOptions.browserWSEndpoint) {
+      try {
+        puppeteer_browser = await puppeteer.connect({ browserWSEndpoint: launchOptions.browserWSEndpoint });
+        const page = await puppeteer_browser.newPage();
+        return { page, browser: puppeteer_browser, puppeteer };
+      } catch (err) {
+        console.warn('Failed to connect to provided browserWSEndpoint, falling back to launch:', err?.message || err);
+        // fall through to launch path
+      }
+    }
     if (launchOptions.executablePath && !fs.existsSync(launchOptions.executablePath)) {
       launchOptions.executablePath = undefined; // Use Puppeteer's default Chromium
     }

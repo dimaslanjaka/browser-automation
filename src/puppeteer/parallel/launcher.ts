@@ -13,7 +13,7 @@ import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
     reuse: false,
     autoSwitchProfileDir: true,
     stealth: {
-      mode: 'fingerprint',
+      mode: 'stealth',
       fingerprintStrategy: 'random-cached',
       screenSize: { maxHeight: 800, maxWidth: 1366 }
     }

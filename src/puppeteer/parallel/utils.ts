@@ -151,6 +151,15 @@ export function readEndpoints(): string[] {
   return parseEndpoints(content);
 }
 
+/**
+ * Return the first available (not locked) endpoint string, or undefined if none.
+ */
+export function getAvailableEndpoint(): string | undefined {
+  const endpoints = readEndpoints();
+  if (!endpoints.length) return undefined;
+  return endpoints.find((endpoint) => !isEndpointLocked(endpoint));
+}
+
 export async function launch() {
   const cwd = process.cwd();
   const jsLauncherPath = path.join(__dirname, 'launcher.js');
