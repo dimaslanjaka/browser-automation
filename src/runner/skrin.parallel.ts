@@ -72,7 +72,7 @@ const cliSkipYear =
 // Defaults chosen to match interactive/loop mode behavior: validate DB by default in parallel runs
 const processDataOptions: ProcessDataOptions = {
   validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : true,
-  skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
+  skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : false,
   skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
 };
 
@@ -83,8 +83,8 @@ if (cliArgs.help) {
     'Options:',
     '  --concurrent, -c <n>   Number of parallel workers (default: 2)',
     '  --validate-db, -v      Enable validation against DB (default: true)',
-    '  --skip-current-month-validation, -m  Skip current month validation',
-    '  --skip-current-year-validation, -y   Skip current year validation',
+    '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
+    '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
     '  --help, -h             Show this help message'
   ];
   helpLines.forEach((l) => console.log(l));

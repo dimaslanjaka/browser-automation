@@ -10,6 +10,7 @@ import { getNumbersOnly } from '../../utils-browser.js';
 import { getAvailableEndpoint } from './utils.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
+
 const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
   connectTimeout: 60000,
   connectionLimit: 10,
@@ -22,7 +23,11 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
 
 async function main(opts: { loop?: boolean; max?: number }) {
   const wsEndpoint = getAvailableEndpoint();
-  const { page, browser } = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: wsEndpoint });
+  const { page, browser } = await getPuppeteer({
+    autoSwitchProfileDir: true,
+    browserWSEndpoint: wsEndpoint
+  });
+
   await closeOtherTabs(browser, 2);
   await page.bringToFront();
 
@@ -48,6 +53,10 @@ async function main(opts: { loop?: boolean; max?: number }) {
   // Infer the options type from processData's parameter list
   type ProcessDataOptions = Parameters<typeof processData>[3];
 
+  // Strongly infer types instead of using any
+  type PageType = Awaited<ReturnType<typeof getPuppeteer>>['page'];
+  type DataType = Awaited<ReturnType<typeof loadCsvData>>[number];
+
   // Read CLI overrides for processData options (undefined means not specified)
   const cliValidateDb = typeof argv['validate-db'] !== 'undefined' ? Boolean(argv['validate-db']) : undefined;
   const cliSkipMonth =
@@ -59,8 +68,27 @@ async function main(opts: { loop?: boolean; max?: number }) {
       ? Boolean(argv['skip-current-year-validation'])
       : undefined;
 
+  // helper: resolve option value (removes repetition)
+  function resolveOpt(value: boolean | undefined, fallback: boolean): boolean {
+    return typeof value !== 'undefined' ? value : fallback;
+  }
+
+  // helper: build options once (removes duplication)
+  function buildOptions(isLoop: boolean): ProcessDataOptions {
+    return {
+      validateDb: resolveOpt(cliValidateDb, isLoop ? true : false),
+      skipCurrentMonthValidation: resolveOpt(cliSkipMonth, false),
+      skipCurrentYearValidation: resolveOpt(cliSkipYear, false)
+    };
+  }
+
   // helper: process one item and normalize error/result handling
-  async function processOne(page: any, data: any, databaseInstance: LogDatabase, options: ProcessDataOptions) {
+  async function processOne(
+    page: PageType,
+    data: DataType,
+    databaseInstance: LogDatabase,
+    options: ProcessDataOptions
+  ) {
     const result = await processData(page, data, databaseInstance, options).catch((err) => {
       console.error('Error processing data:', err);
       return { status: 'error', error: err.message || String(err) };
@@ -71,19 +99,17 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   if (opts.loop) {
     const max = typeof opts.max === 'number' && opts.max > 0 ? opts.max : Infinity;
+
     let processed = 0;
+
     for (const data of items) {
       if (processed >= max) break;
+
       processed++;
       console.log(`Processing item ${processed}${isFinite(max) ? `/${max}` : ''}`);
-      // eslint-disable-next-line no-await-in-loop
-      const options: ProcessDataOptions = {
-        validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : true,
-        skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
-        skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
-      };
 
-      const result = await processOne(page, data, database, options);
+      // eslint-disable-next-line no-await-in-loop
+      const result = await processOne(page, data, database, buildOptions(true));
 
       if (result.status !== 'success') {
         console.warn('Unexpected result status for item', processed, result);
@@ -92,17 +118,19 @@ async function main(opts: { loop?: boolean; max?: number }) {
         console.log('Processed:', result);
       }
     }
+
     await browser.close();
     process.exit(0);
   } else {
     const data = items.shift();
-    const options: ProcessDataOptions = {
-      validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : false,
-      skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : true,
-      skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
-    };
 
-    const result = await processOne(page, data, database, options);
+    if (!data) {
+      console.warn('No item to process.');
+      await browser.close();
+      process.exit(0);
+    }
+
+    const result = await processOne(page, data, database, buildOptions(false));
 
     if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
@@ -138,8 +166,8 @@ if (argv.help) {
     '  --loop, -l         Loop over available inputs (default: single input)',
     '  --max <n>          Maximum items to process when looping',
     '  --validate-db, -v  Enable validation against DB (overrides default)',
-    '  --skip-current-month-validation, -m  Skip current month validation (true/false)',
-    '  --skip-current-year-validation, -y   Skip current year validation (true/false)',
+    '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
+    '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
     '  --help, -h         Show this help message'
   ];
   helpLines.forEach((line) => console.log(line));
@@ -147,7 +175,11 @@ if (argv.help) {
 }
 
 const maxNum = argv.max ? Number(argv.max) : undefined;
-main({ loop: Boolean(argv.loop), max: Number.isFinite(maxNum) ? maxNum : undefined }).catch((err) => {
+
+main({
+  loop: Boolean(argv.loop),
+  max: Number.isFinite(maxNum) ? maxNum : undefined
+}).catch((err) => {
   console.error(err);
   process.exit(1);
 });
