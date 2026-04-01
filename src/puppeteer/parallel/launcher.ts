@@ -1,6 +1,6 @@
 import path from 'path';
 import { writefile } from 'sbg-utility';
-import { getPuppeteer, userDataDir } from '../puppeteer_utils.js';
+import { getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
 
 (async () => {
@@ -11,7 +11,12 @@ import { puppeteerTempPath, removeEndpoint, writeEndpoint } from './utils.js';
     defaultViewport: { width: 1200, height: 1000 },
     userDataDir,
     reuse: false,
-    autoSwitchProfileDir: true
+    autoSwitchProfileDir: true,
+    stealth: {
+      mode: 'fingerprint',
+      fingerprintStrategy: 'random-cached',
+      screenSize: { maxHeight: 800, maxWidth: 1366 }
+    }
   });
 
   await page.close();
