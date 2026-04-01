@@ -15,7 +15,8 @@ export class FileLockHelper {
    * @param {string} filePath Path to lock file.
    */
   constructor(filePath) {
-    this.filePath = filePath;
+    // Normalize to absolute path immediately to avoid surprises
+    this.filePath = path.resolve(filePath || '');
     this.handle = null;
     this.lockType = null;
     this._boundProcessEvents = [];
@@ -30,21 +31,95 @@ export class FileLockHelper {
    */
   lock(lockType = 'exclusive') {
     this.lockType = lockType;
-
-    if (!this._ensureLockDirWritable()) {
-      return false;
-    }
+    const filePath = path.resolve(this.filePath);
+    const lockDir = path.dirname(filePath);
+    // Ensure directory exists (propagate any error to caller)
+    fs.mkdirSync(lockDir, { recursive: true, mode: 0o777 });
 
     try {
-      this.handle = fs.openSync(this.filePath, 'wx');
+      this.handle = fs.openSync(filePath, 'wx');
+      // write metadata (best-effort) so other processes can detect stale locks
+      try {
+        const meta = JSON.stringify({ pid: process.pid, ts: Date.now(), cwd: process.cwd() });
+        fs.writeSync(this.handle, meta, 0, 'utf8');
+      } catch (_w) {
+        // ignore write errors
+      }
       this._bindProcessExitHooks();
       return true;
     } catch (error) {
       this.handle = null;
-      if (error && (error.code === 'EEXIST' || error.code === 'EACCES' || error.code === 'EPERM')) {
-        return false;
+      // If the file already exists, attempt stale-lock detection and cleanup.
+      if (error && error.code === 'EEXIST') {
+        try {
+          const raw = fs.readFileSync(filePath, 'utf8');
+          let parsed = null;
+          try {
+            parsed = raw ? JSON.parse(raw) : null;
+          } catch (_e) {
+            parsed = null;
+          }
+
+          const pid = parsed && typeof parsed.pid === 'number' ? parsed.pid : null;
+          const ts = parsed && typeof parsed.ts === 'number' ? parsed.ts : null;
+
+          let mtimeMs = null;
+          try {
+            mtimeMs = fs.statSync(filePath).mtimeMs;
+          } catch (_s) {
+            mtimeMs = null;
+          }
+
+          const isPidRunning = (p) => {
+            if (!p || typeof p !== 'number') return false;
+            try {
+              process.kill(p, 0);
+              return true;
+            } catch (_err) {
+              return false;
+            }
+          };
+
+          const STALE_MS = Number(process.env.FILELOCK_STALE_MS || 10 * 60 * 1000);
+          const now = Date.now();
+          const effectiveTs = ts || mtimeMs || 0;
+          const isStale = effectiveTs === 0 ? true : now - effectiveTs > STALE_MS;
+
+          // If lock file has a live PID and is not stale, treat as locked
+          if (pid && isPidRunning(pid) && !isStale) return false;
+
+          // If there's no PID but the file is recent, treat as locked
+          if (!pid && effectiveTs !== 0 && now - effectiveTs <= STALE_MS) return false;
+
+          // Otherwise consider it stale: try to remove and acquire once
+          try {
+            fs.unlinkSync(filePath);
+          } catch (_unlinkErr) {
+            return false;
+          }
+
+          try {
+            this.handle = fs.openSync(filePath, 'wx');
+            try {
+              const meta = JSON.stringify({ pid: process.pid, ts: Date.now(), cwd: process.cwd() });
+              fs.writeSync(this.handle, meta, 0, 'utf8');
+            } catch (_w2) {
+              // ignore
+            }
+            this._bindProcessExitHooks();
+            return true;
+          } catch (_retryErr) {
+            this.handle = null;
+            return false;
+          }
+        } catch (_readErr) {
+          // can't read metadata — fallback: treat as locked
+          return false;
+        }
       }
-      return false;
+
+      // For other errors (permissions, invalid path, ENOENT, etc.) surface them.
+      throw error;
     }
   }
 
@@ -86,27 +161,56 @@ export class FileLockHelper {
    * @returns {boolean}
    */
   isLocked() {
-    if (!this._ensureLockDirWritable()) {
-      return fs.existsSync(this.filePath);
-    }
+    const filePath = path.resolve(this.filePath);
+    const lockDir = path.dirname(filePath);
 
-    let tempHandle = null;
+    // If lock directory doesn't exist, there can't be a lock file
+    if (!fs.existsSync(lockDir)) return false;
+    if (!fs.existsSync(filePath)) return false;
+
     try {
-      tempHandle = fs.openSync(this.filePath, 'wx');
-      fs.closeSync(tempHandle);
-      if (fs.existsSync(this.filePath)) {
-        fs.unlinkSync(this.filePath);
+      const raw = fs.readFileSync(filePath, 'utf8');
+      let parsed = null;
+      try {
+        parsed = raw ? JSON.parse(raw) : null;
+      } catch (_e) {
+        parsed = null;
       }
-      return false;
-    } catch (error) {
-      if (tempHandle !== null) {
+
+      const pid = parsed && typeof parsed.pid === 'number' ? parsed.pid : null;
+      const ts = parsed && typeof parsed.ts === 'number' ? parsed.ts : null;
+
+      let mtimeMs = null;
+      try {
+        mtimeMs = fs.statSync(filePath).mtimeMs;
+      } catch (_s) {
+        mtimeMs = null;
+      }
+
+      const isPidRunning = (p) => {
+        if (!p || typeof p !== 'number') return false;
         try {
-          fs.closeSync(tempHandle);
-        } catch (_closeError) {
-          void _closeError;
+          process.kill(p, 0);
+          return true;
+        } catch (_err) {
+          return false;
         }
-      }
-      return error?.code === 'EEXIST' ? true : fs.existsSync(this.filePath);
+      };
+
+      const STALE_MS = Number(process.env.FILELOCK_STALE_MS || 10 * 60 * 1000);
+      const now = Date.now();
+      const effectiveTs = ts || mtimeMs || 0;
+      const isStale = effectiveTs === 0 ? true : now - effectiveTs > STALE_MS;
+
+      // Live pid and not stale => locked
+      if (pid && isPidRunning(pid) && !isStale) return true;
+      // No pid but recent file => consider locked
+      if (!pid && effectiveTs !== 0 && now - effectiveTs <= STALE_MS) return true;
+      // otherwise not locked
+      return false;
+    } catch (_err) {
+      // If we can't read the file for any reason, fallback to existence check
+      return fs.existsSync(filePath);
     }
   }
 
