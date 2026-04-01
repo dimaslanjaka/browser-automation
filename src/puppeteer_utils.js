@@ -1695,13 +1695,21 @@ export async function getActivePage(browser) {
 }
 
 /**
- * Closes all tabs (pages) in the browser context except for a specified number of them to keep open.
+ * Closes tabs (pages) in the browser context while preserving a given set or count of pages.
+ *
+ * If `instance` is a `Page`, its browser is used to list pages. If `instance` is a `Browser`,
+ * its pages are used directly.
+ *
+ * The `keepCount` parameter supports two modes:
+ * - number (legacy): keep that many most-recently opened/active pages. When a `Page` was passed
+ *   as `instance`, that page is always treated as protected in addition to the numeric keep count.
+ * - array or `Set` of `Page` objects: explicitly preserve exactly those pages; all other pages
+ *   will be closed.
  *
  * @param {import('puppeteer').Page|import('puppeteer').Browser} instance - The Puppeteer Page or Browser instance.
- * If a Page is provided, its browser will be used to get all pages.
- * If a Browser is provided, its pages will be used directly.
- * @param {number} keepCount - The number of tabs to keep open. The most recently active tabs will be kept.
- * All other tabs will be closed. If keepCount is greater than or equal to the total number of tabs, no tabs will be closed.
+ *   If a Page is provided, its browser will be used to get all pages. If a Browser is provided, its pages will be used directly.
+ * @param {number|import('puppeteer').Page[]|Set<import('puppeteer').Page>} [keepCount=2] - Number of pages to keep (legacy),
+ *   or an array/Set of Page objects to explicitly protect.
  * @returns {Promise<void>}
  */
 export async function closeOtherTabs(instance, keepCount = 2) {
