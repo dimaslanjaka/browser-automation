@@ -41,6 +41,44 @@ const database = new databaseModule.LogDatabase(toValidMySQLDatabaseName('skrin_
  *   function when a `puppeteerInstance` is supplied; the caller is responsible for closing it.
  */
 export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) => data) {
+  // Parse CLI flags using minimist: support --single, --shuffle and processData options
+  const args = minimist(process.argv.slice(2), {
+    boolean: [
+      'single',
+      'shuffle',
+      'help',
+      'validate-db',
+      'skip-current-month-validation',
+      'skip-current-year-validation'
+    ],
+    alias: {
+      h: 'help',
+      v: 'validate-db',
+      m: 'skip-current-month-validation',
+      y: 'skip-current-year-validation'
+    }
+  });
+  const flagSingle = Boolean(args.single);
+  const flagShuffle = Boolean(args.shuffle);
+
+  if (args.help) {
+    // close browser before showing help and exiting
+    puppeteerInstance.browser.close();
+    const helpLines = [
+      'Usage: node skrin.js [options]',
+      '',
+      'Options:',
+      '  --single            Process only the first entry (existing behavior)',
+      '  --shuffle           Shuffle data ordering before processing',
+      '  --validate-db, -v   Enable validation against DB (default: true)',
+      '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
+      '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
+      '  --help, -h          Show this help message'
+    ];
+    helpLines.forEach((l) => console.log(l));
+    process.exit(0);
+  }
+
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
   // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
   const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
@@ -51,18 +89,6 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
   // Print remaining count before processing
   console.log(`Total entries to process: ${dataKunto.length}`);
-
-  // Parse CLI flags using minimist: support --single, --shuffle and processData options
-  const args = minimist(process.argv.slice(2), {
-    boolean: ['single', 'shuffle', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
-    alias: {
-      v: 'validate-db',
-      m: 'skip-current-month-validation',
-      y: 'skip-current-year-validation'
-    }
-  });
-  const flagSingle = Boolean(args.single);
-  const flagShuffle = Boolean(args.shuffle);
 
   // CLI-driven processData options (defaults to previous behavior)
   const cliValidateDb = typeof args['validate-db'] !== 'undefined' ? Boolean(args['validate-db']) : true;
