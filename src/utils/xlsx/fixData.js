@@ -138,7 +138,8 @@ export default async function fixData(
       console.log(`✅ Using cached result for NIK: ${nik}`);
     }
     // Return cached result but preserve any new input data properties
-    return { ...cachedResult, ...initialData };
+    // Merge so that cached (normalized) fields override raw input fields.
+    return { ...initialData, ...cachedResult };
   }
 
   // Set normalized NIK on both key variants
