@@ -102,7 +102,8 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     const processPage = await browser.newPage();
     // close first tab if more than 2 tabs are open (1 for main page, 1 for processing), to prevent memory leak from too many open tabs
     while ((await browser.pages()).length > 2) {
-      await browser.pages()[0].close();
+      const pages = (await browser.pages()).filter((p) => p);
+      await pages[0]?.close();
     }
 
     const result = await processData(processPage, data, database, {

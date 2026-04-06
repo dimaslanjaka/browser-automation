@@ -22,6 +22,18 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
   type: MYSQL_HOST ? 'mysql' : 'sqlite'
 });
 
+// Helper: close extra pages, refreshing the pages list after each close so loops terminate.
+async function closeExtraPages(browser: import('puppeteer').Browser, keep = 2) {
+  try {
+    while ((await browser.pages()).length > keep) {
+      const pages = (await browser.pages()).filter((p) => p);
+      await pages[0]?.close();
+    }
+  } catch (err) {
+    console.warn('Error while attempting to close extra pages.', err);
+  }
+}
+
 async function main(opts: { loop?: boolean; max?: number }) {
   // instantiate endpoint manager and try to claim a free endpoint before connecting
   const endpointManager = new EndpointManager(puppeteerTempPath);
@@ -53,6 +65,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
       // connect using existing helper which will use puppeteer.connect when browserWSEndpoint is provided
       const res = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
       browser = res.browser;
+      res.page.goto('http://sh.webmanajemen.com').catch(noop);
       claimedEndpoint = endpoint;
       break;
     } catch (err: any) {
@@ -68,22 +81,15 @@ async function main(opts: { loop?: boolean; max?: number }) {
     }
   }
 
-  browser.once('disconnected', () => {
+  browser.once('disconnected', async () => {
     if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
     console.log('Browser disconnected, exiting.');
+    await closeExtraPages(browser, 2);
     process.exit(0);
   });
 
-  // close first tab if more than 2 tabs are open (sometimes puppeteer.connect opens an extra blank tab)
-  const pages = await browser.pages();
-  while (pages.length > 2) {
-    try {
-      await pages[0].close();
-    } catch {
-      console.warn('Failed to close extra page, it may have already been closed.');
-      break;
-    }
-  }
+  // close extra tabs if more than 2 are open (sometimes puppeteer.connect opens an extra blank tab)
+  await closeExtraPages(browser, 2);
   // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
   const page = await browser.newPage();
   page.goto('http://sh.webmanajemen.com').catch(noop);
