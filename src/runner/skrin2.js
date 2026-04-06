@@ -24,7 +24,7 @@ import { parseBabyName } from './skrin-utils.js';
 import { getAge } from '../utils/date.js';
 import { getAgeFromDateString } from '../utils/date.js';
 import { getStreetAddressInformation } from '../address/index.js';
-import { getNormalizedFormValuesFromFrame } from '../skrin_utils.js';
+import { getNormalizedFormValuesFromFrame } from './skrin/getNormalizedFormValuesFromFrame.js';
 
 console.clear();
 

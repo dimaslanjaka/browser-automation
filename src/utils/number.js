@@ -15,3 +15,13 @@ export function toNumber(value) {
   }
   return null;
 }
+
+/**
+ * Utility: Generate a random number between min and max (inclusive).
+ * @param {number} min - The minimum value (inclusive).
+ * @param {number} max - The maximum value (inclusive).
+ * @returns {number} A random integer between min and max.
+ */
+export function getRandomInRange(min, max) {
+  return Math.round(Math.random() * (max - min) + min);
+}

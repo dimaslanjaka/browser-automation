@@ -10,17 +10,15 @@ import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import {
-  confirmIdentityModal,
-  getNormalizedFormValues,
-  getPersonInfo,
-  isIdentityModalVisible,
-  isInvalidAlertVisible,
-  isNikErrorVisible,
-  isNIKNotFoundModalVisible,
-  isSessionExpiredAlertVisible,
-  isSuccessNotificationVisible
-} from '../../skrin_utils.js';
+import { confirmIdentityModal } from './confirmIdentityModal.js';
+import { getNormalizedFormValues } from './getNormalizedFormValues.js';
+import { getPersonInfo } from './getPersonInfo.js';
+import { isIdentityModalVisible } from './isIdentityModalVisible.js';
+import { isInvalidAlertVisible } from './isInvalidAlertVisible.js';
+import { isNikErrorVisible } from './isNikErrorVisible.js';
+import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
+import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
+import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';

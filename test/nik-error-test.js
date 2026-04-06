@@ -3,7 +3,7 @@ import { getPuppeteer, typeAndTrigger } from '../src/puppeteer_utils.js';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { getNumbersOnly, sleep } from '../src/utils.js';
-import { isNikErrorVisible } from '../src/skrin_utils.js';
+import { isNikErrorVisible } from '../src/runner/skrin/isNikErrorVisible.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
