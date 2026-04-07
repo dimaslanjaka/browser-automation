@@ -2,7 +2,8 @@ import path from 'path';
 import { writefile } from 'sbg-utility';
 import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import goWithRetry from '../goWithRetry.js';
-import { endpointManager, puppeteerTempPath } from './utils.js';
+import { endpointManager } from './utils.js';
+import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 
 (async () => {
   const { browser, page } = await getPuppeteer({

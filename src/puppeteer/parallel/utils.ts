@@ -5,9 +5,9 @@ import { delay } from 'sbg-utility';
 import path from 'upath';
 import { fileURLToPath } from 'url';
 import EndpointManager from './EndpointManager.js';
+import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const puppeteerTempPath = path.join(process.cwd(), 'tmp/puppeteer');
 const launcherLogPath = path.join(puppeteerTempPath, 'launcher.log');
 const launchTimeoutMs = 60_000;
 export const endpointManager = new EndpointManager(puppeteerTempPath);

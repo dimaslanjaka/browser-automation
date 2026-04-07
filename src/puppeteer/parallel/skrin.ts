@@ -8,7 +8,7 @@ import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
 import EndpointManager from './EndpointManager.js';
-import { puppeteerTempPath } from './utils.js';
+import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 
 async function main(opts: { loop?: boolean; max?: number }) {
   // instantiate endpoint manager and try to claim a free endpoint before connecting

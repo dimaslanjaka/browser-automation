@@ -29,7 +29,8 @@
     "**/*.cjs",
     "**/*.mjs",
     "tsup.config.ts",
-    "./types/**/*"
+    "./types/**/*",
+    "./.puppeteerrc.cjs"
   ],
   "exclude": [
     "**/node_modules/**",

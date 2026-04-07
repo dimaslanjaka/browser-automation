@@ -22,3 +22,6 @@ fs.mkdirSync(config.cacheDirectory, { recursive: true });
 fs.mkdirSync(config.temporaryDirectory, { recursive: true });
 
 module.exports = config;
+module.exports.default = config;
+module.exports.puppeteerConfig = config;
+module.exports.puppeteerTempPath = config.temporaryDirectory;
