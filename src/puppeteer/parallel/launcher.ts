@@ -1,7 +1,8 @@
 import path from 'path';
 import { writefile } from 'sbg-utility';
-import { getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
-import { puppeteerTempPath, endpointManager } from './utils.js';
+import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
+import goWithRetry from '../goWithRetry.js';
+import { endpointManager, puppeteerTempPath } from './utils.js';
 
 (async () => {
   const { browser, page } = await getPuppeteer({
@@ -19,7 +20,37 @@ import { puppeteerTempPath, endpointManager } from './utils.js';
     }
   });
 
-  await page.close();
+  await goWithRetry(page, 'http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' });
+  await closeOtherTabs(browser, 1);
+
+  // Detect when new targets (pages, workers, etc.) are created/destroyed/changed.
+  browser.on('targetcreated', async (target) => {
+    try {
+      console.log('Target created:', target.type(), target.url());
+      if (target.type() === 'page') {
+        const pageFromTarget = await target.page();
+        if (pageFromTarget) console.log('New page target URL:', pageFromTarget.url());
+      }
+    } catch (err) {
+      console.error('Error handling targetcreated:', err);
+    }
+  });
+
+  browser.on('targetdestroyed', (target) => {
+    try {
+      console.log('Target destroyed:', target.type(), target.url());
+    } catch (err) {
+      console.error('Error handling targetdestroyed:', err);
+    }
+  });
+
+  browser.on('targetchanged', (target) => {
+    try {
+      console.log('Target changed:', target.type(), target.url());
+    } catch (err) {
+      console.error('Error handling targetchanged:', err);
+    }
+  });
 
   // Write the WebSocket endpoint to a file for other processes to connect
   const wsEndpoint = browser.wsEndpoint();
