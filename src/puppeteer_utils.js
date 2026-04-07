@@ -11,6 +11,15 @@ import {
   getLatestCachedFingerprint,
   fetchAndSaveFingerprintToCache
 } from './puppeteer/fingerprint_utils.js';
+export { getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
+import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
+export { getFormValuesFromFrame } from './puppeteer/getFormValuesFromFrame.js';
+import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
+export { triggerInputChange } from './puppeteer/triggerInputChange.js';
+export { elementExists } from './puppeteer/elementExists.js';
+export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
+export { elementsContainText } from './puppeteer/elementsContainText.js';
+export { getActivePage } from './puppeteer/getActivePage.js';
 
 /**
  * Get the absolute path of the current script.
@@ -61,19 +70,7 @@ export function isUserDataDirInUse(targetUserDataDir) {
  * @param {string[]} [excludedDirs=[]] - Directories to skip when selecting fallback profile.
  * @returns {string}
  */
-export function getFallbackProfileDir(startIndex = 1, excludedDirs = []) {
-  const profilesRootDir = path.resolve(process.cwd(), '.cache/profiles');
-  let index = Math.max(1, Number(startIndex) || 1);
-  const excludedDirSet = new Set(excludedDirs.map((dir) => path.resolve(dir)));
-
-  while (true) {
-    const profileDir = path.join(profilesRootDir, `profile${index}`);
-    if (!excludedDirSet.has(profileDir) && !isUserDataDirInUse(profileDir)) {
-      return profileDir;
-    }
-    index += 1;
-  }
-}
+// `getFallbackProfileDir` is re-exported from `src/puppeteer/getFallbackProfileDir.js`
 
 /**
  * @param {unknown} error
@@ -94,7 +91,7 @@ function isProfileInUseLaunchError(error) {
  * @returns {string}
  */
 function reserveNextFallbackProfileDir(excludedUserDataDirs, startIndex = 1) {
-  const fallbackUserDataDir = getFallbackProfileDir(startIndex, [...excludedUserDataDirs]);
+  const fallbackUserDataDir = _getFallbackProfileDir(startIndex, [...excludedUserDataDirs]);
   const resolvedFallbackUserDataDir = path.resolve(fallbackUserDataDir);
   fs.mkdirSync(resolvedFallbackUserDataDir, { recursive: true });
   excludedUserDataDirs.add(resolvedFallbackUserDataDir);
@@ -1165,39 +1162,7 @@ export async function clickIframeElement(page, iframeSelector, elementSelector, 
  * { type: 'text', name: 'first_name', value: 'Alice', id: 'f1', disabled: 'false', isVisible: 'true', label: 'First name' }
  * ```
  */
-export function extractFormValues(elements) {
-  return elements.map((el) => {
-    const attrs = Array.from(el.attributes).reduce((acc, attr) => {
-      acc[attr.name] = String(attr.value);
-      return acc;
-    }, {});
-
-    const isVisible = !!(el.offsetParent || el.offsetWidth > 0 || el.offsetHeight > 0);
-    let textLabel = '';
-    let currentEl = el; // Start from the target element
-
-    for (let i = 0; i < 6 && currentEl; i++) {
-      const labelEl = currentEl.querySelector('.form-item-label');
-      if (labelEl) {
-        textLabel = labelEl.textContent.trim();
-        break;
-      }
-      currentEl = currentEl.parentElement; // Move one level up
-    }
-
-    const result = {};
-    for (const k in attrs) {
-      if (Object.prototype.hasOwnProperty.call(attrs, k)) result[k] = attrs[k];
-    }
-    result.name = el.name || '';
-    result.value = el.value;
-    result.id = el.id || '';
-    result.disabled = String(el.disabled);
-    result.isVisible = String(isVisible);
-    result.label = textLabel;
-    return result;
-  });
-}
+// `extractFormValues` is implemented and exported from `src/puppeteer/getFormValuesFromFrame.js`
 
 /**
  * Get values of all input and textarea elements within a container.
@@ -1211,58 +1176,7 @@ export async function getFormValues(context, containerSelector) {
   return await context.$$eval(`${containerSelector} input, ${containerSelector} textarea`, extractFormValues);
 }
 
-/**
- * Get values of all input and textarea elements within a container inside an iframe.
- *
- * @param {import('puppeteer').Page} page - The Puppeteer page instance.
- * @param {string} iframeSelector - The CSS selector for the iframe.
- * @param {string} containerSelector - The CSS selector for the container inside the iframe.
- * @returns {Promise<ReturnType<typeof getFormValues>>}
- */
-export async function getFormValuesFromFrame(page, iframeSelector, containerSelector) {
-  const iframeElement = await page.$(iframeSelector);
-  if (!iframeElement) throw new Error(`Iframe not found: ${iframeSelector}`);
-
-  const frame = await iframeElement.contentFrame();
-  if (!frame) throw new Error(`Failed to get frame from iframe element`);
-
-  return await getFormValues(frame, containerSelector);
-}
-
-/**
- * Triggers 'input' and 'change' events on an input or textarea element,
- * optionally within an iframe. Does NOT change the element’s value.
- *
- * @param {import('puppeteer').Page} page - Puppeteer Page object
- * @param {string} selector - CSS selector for the input or textarea
- * @param {Object} [options]
- * @param {string} [options.frameSelector] - Optional iframe CSS selector
- * @param {string} [options.frameName] - Optional iframe name
- */
-export async function triggerInputChange(page, selector, options = {}) {
-  const { frameSelector, frameName } = options;
-
-  let frame = page.mainFrame();
-
-  if (frameSelector) {
-    const iframeHandle = await page.$(frameSelector);
-    if (!iframeHandle) throw new Error(`Iframe not found with selector: ${frameSelector}`);
-    frame = await iframeHandle.contentFrame();
-  } else if (frameName) {
-    frame = page.frames().find((f) => f.name() === frameName);
-    if (!frame) throw new Error(`Iframe not found with name: ${frameName}`);
-  }
-
-  if (!frame) throw new Error('Target frame could not be resolved.');
-
-  await frame.evaluate((selector) => {
-    const el = document.querySelector(selector);
-    if (!el) throw new Error(`Element not found: ${selector}`);
-
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }, selector);
-}
+// re-exported above from src/puppeteer/*
 
 /**
  * Validates that a value was properly set in an iframe element and optionally retries with enhanced event triggering
@@ -1495,71 +1409,7 @@ export async function anyElementWithTextExists(page, selector, text) {
   return false; // no matches found
 }
 
-/**
- * Checks if an element matching the selector exists and is visible on the page.
- *
- * @param {import('puppeteer').Page} page - Puppeteer Page instance
- * @param {string} selector - CSS selector for the element to check
- * @returns {Promise<boolean>} Resolves to true if the element exists and is visible, false otherwise
- */
-export async function elementExists(page, selector) {
-  const elementHandle = await page.$(selector);
-  if (!elementHandle) return false;
-
-  const isVisible = await page.evaluate((el) => {
-    const style = window.getComputedStyle(el);
-    return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-  }, elementHandle);
-
-  return isVisible;
-}
-
-/**
- * Check if an element exists with specific text content and is visible
- * @param {import('puppeteer').Page} page Puppeteer Page object
- * @param {string} selector CSS selector to match elements
- * @param {string} text Text content to match
- * @returns {Promise<boolean>} true if element exists and contains the text
- */
-export async function elementWithTextExists(page, selector, text) {
-  const elementHandle = await page.$(selector);
-  if (!elementHandle) return false;
-
-  const matchesText = await page.evaluate(
-    (el, expectedText) => {
-      const style = window.getComputedStyle(el);
-      const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-      return isVisible && el.textContent?.includes(expectedText);
-    },
-    elementHandle,
-    text
-  );
-
-  return matchesText;
-}
-
-/**
- * Check if any element matching selector contains given text
- * @param {import('puppeteer').Page} page - Puppeteer page instance
- * @param {string} selector - CSS selector (e.g., "form")
- * @param {string} text - Substring to check inside elements
- * @returns {Promise<boolean>}
- */
-export async function elementsContainText(page, selector, text) {
-  return await page.evaluate(
-    (sel, str) => {
-      const els = document.querySelectorAll(sel);
-      for (const el of els) {
-        if (el.innerText.includes(str)) {
-          return true;
-        }
-      }
-      return false;
-    },
-    selector,
-    text
-  );
-}
+// re-exported above from src/puppeteer/*
 
 /**
  * Clears all cookies for the current page's domain using CDP.
@@ -1666,44 +1516,7 @@ export async function closeFirstTab(context) {
   }
 }
 
-/**
- * Return the currently active/focused Page in a Browser, if detectable.
- *
- * This attempts to evaluate `document.hasFocus()` in each open page and
- * returns the first page that reports focus. If none report focus, it
- * falls back to the last opened page or null if no pages exist.
- *
- * @param {import('puppeteer').Browser} browser
- * @returns {Promise<import('puppeteer').Page|null>}
- */
-export async function getActivePage(browser) {
-  if (!browser || typeof browser.pages !== 'function') return null;
-
-  let pages;
-  try {
-    pages = await browser.pages();
-  } catch (_e) {
-    return null;
-  }
-
-  for (const p of pages) {
-    try {
-      const hasFocus = await p.evaluate(() => {
-        try {
-          return document.hasFocus();
-        } catch (_e) {
-          return false;
-        }
-      });
-      if (hasFocus) return p;
-    } catch (_e) {
-      // ignore pages that cannot be evaluated
-    }
-  }
-
-  // Fallback: return the most recently opened page if any
-  return pages.length ? pages[pages.length - 1] : null;
-}
+// re-exported above from src/puppeteer/*
 
 /**
  * Closes tabs (pages) in the browser context while preserving a given set or count of pages.
