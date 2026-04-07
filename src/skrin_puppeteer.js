@@ -1,3 +1,4 @@
+import goWithRetry from './puppeteer/goWithRetry.js';
 import { waitForDomStable } from './puppeteer_utils.js';
 
 /**
@@ -8,7 +9,7 @@ import { waitForDomStable } from './puppeteer_utils.js';
  * @throws {Error} If login fails or required environment variables are missing
  */
 export async function skrinLogin(page) {
-  await page.goto('https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
+  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
   await page.type('input[name="username"]', process.env.skrin_username);
   await page.type('input[name="password"]', process.env.skrin_password);
   await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
@@ -26,7 +27,7 @@ export async function skrinLogin(page) {
  * @throws {Error} If navigation fails or required elements are not found within the timeout period
  */
 export async function enterSkriningPage(page, replacePage = true) {
-  await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
+  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/skrining', {
     waitUntil: 'networkidle2',
     timeout: 120000
   });
@@ -37,7 +38,7 @@ export async function enterSkriningPage(page, replacePage = true) {
   await page.click('#btnAdd_ta_skrining');
 
   if (replacePage) {
-    await page.goto('https://sumatera.sitb.id/sitb2024/Skrining/add', {
+    await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/Skrining/add', {
       waitUntil: 'networkidle2',
       timeout: 120000
     });
@@ -56,7 +57,7 @@ export async function autoLoginAndEnterSkriningPage(page) {
   }
 
   await page.bringToFront();
-  await page.goto('https://sumatera.sitb.id/sitb2024/skrining#', { waitUntil: 'networkidle2', timeout: 120000 });
+  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/skrining', { waitUntil: 'networkidle2', timeout: 120000 });
   await waitForDomStable(page, 3000, 30000);
 
   const sessionExpiredSelector = '.navbar-template.text-left p';
