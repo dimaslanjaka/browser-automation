@@ -1,25 +1,25 @@
 import fs from 'fs';
 import path from 'path';
+import { chromium } from 'playwright-extra';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { fileURLToPath } from 'url';
-import { sleep } from './utils-browser.js';
-import { chromium } from 'playwright-extra';
 import { array_unique, isEmpty } from 'sbg-utility';
+import { fileURLToPath } from 'url';
 import {
-  getRandomCachedFingerprint,
+  fetchAndSaveFingerprintToCache,
   getLatestCachedFingerprint,
-  fetchAndSaveFingerprintToCache
+  getRandomCachedFingerprint
 } from './puppeteer/fingerprint_utils.js';
-export { getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
 import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
-export { getFormValuesFromFrame } from './puppeteer/getFormValuesFromFrame.js';
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
-export { triggerInputChange } from './puppeteer/triggerInputChange.js';
+import { sleep } from './utils-browser.js';
 export { elementExists } from './puppeteer/elementExists.js';
-export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
 export { elementsContainText } from './puppeteer/elementsContainText.js';
+export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
 export { getActivePage } from './puppeteer/getActivePage.js';
+export { getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
+export { getFormValuesFromFrame } from './puppeteer/getFormValuesFromFrame.js';
+export { triggerInputChange } from './puppeteer/triggerInputChange.js';
 
 /**
  * Get the absolute path of the current script.

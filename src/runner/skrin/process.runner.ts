@@ -1,13 +1,15 @@
-import { array_shuffle } from 'sbg-utility';
+import Bluebird from 'bluebird';
+import { array_shuffle, scheduler } from 'sbg-utility';
+import path from 'upath';
 import { loadCsvData } from '../../../data/index.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
-import { getPuppeteer } from '../../puppeteer_utils.js';
-import { processData } from './direct-process-data.js';
-import path from 'upath';
+import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
 import { getNumbersOnly } from '../../utils-browser.js';
-import Bluebird from 'bluebird';
+import { processData } from './direct-process-data.js';
+
+scheduler.register();
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
@@ -22,7 +24,8 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
 export { database as skrinDatabase };
 
 async function main() {
-  const { page } = await getPuppeteer({ autoSwitchProfileDir: true });
+  const { page, release } = await getPuppeteerWithParallel();
+
   const baseDir = path.join(process.cwd(), 'tmp/puppeteer/xhr');
   const _stopCapture = setupXhrCapture(page, { baseDir });
 
@@ -30,12 +33,17 @@ async function main() {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) return false;
     return true;
+  }).then((data) => {
+    if (data.length === 0) {
+      return loadCsvData(); // if all data is already in database, reload without filtering to process at least one entry
+    }
+    return data;
   });
 
   const data = array_shuffle(dataKunto).shift();
   const result = await processData(page, data, database, {
-    // turn off this to disable validation of database entry after processing, which can speed up the process but might cause silent failures if the entry is not properly saved in database
-    validateDb: false
+    validateDb: false,
+    skipCurrentMonthValidation: true
   }).catch((err) => {
     console.error('Error processing data:', err);
     return { status: 'error', error: err.message || String(err) };
@@ -47,11 +55,16 @@ async function main() {
   } else {
     console.log(result);
   }
+
+  _stopCapture();
+  release();
 }
 
 if (process.argv.some((arg) => arg.includes('process.runner'))) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  main()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

@@ -1,6 +1,7 @@
 import moment from 'moment';
 import type { NikParseResult } from 'nik-parser-jurusid';
 import * as nikUtils from 'nik-parser-jurusid/index';
+import path from 'path';
 import type { Browser, Page } from 'puppeteer';
 import { isEmpty } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
@@ -8,9 +9,15 @@ import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
+import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
+import FileLockHelper from '../../utils/FileLockHelper.js';
+import { ucwords } from '../../utils/string.js';
+import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
+import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
 import { getNormalizedFormValues } from './getNormalizedFormValues.js';
 import { getPersonInfo } from './getPersonInfo.js';
 import { isIdentityModalVisible } from './isIdentityModalVisible.js';
@@ -19,12 +26,6 @@ import { isNikErrorVisible } from './isNikErrorVisible.js';
 import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
-import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
-import { ucwords } from '../../utils/string.js';
-import { fixData } from '../../xlsx-helper.js';
-import FileLockHelper from '../../utils/FileLockHelper.js';
-import path from 'path';
-import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -48,24 +49,29 @@ async function reEvaluate(page: Page): Promise<void> {
 /**
  * Processes a single row of Excel data by automating the form-filling process on the skrining site.
  *
- * Steps include navigating pages, inputting data, checking for various modals and alerts,
+ * Steps include navigating pages, inputting data, checking for modals and alerts,
  * correcting job/location fields, and submitting the form.
  *
- * @param page Puppeteer page or browser instance used to interact with the skrining form.
- *   When a browser instance is provided, the first available page is used, or a new page is created.
- * @param data A single row of Excel data to be submitted through the form.
- * @param database Database instance used for reading/writing logs.
- * @returns Result of the processing. On success, status is 'success' with the processed data. On failure, status is 'error' with reason and description.
- * @throws {Error} If required fields are missing or an unexpected state is encountered.
+ * @async
+ * @param page Puppeteer `Page` or `Browser`. If a `Browser` is provided, the first available page is used or a new page is created.
+ * @param data Single row of Excel data to submit.
+ * @param database Database instance used for reading and writing logs.
+ * @param options Optional settings that modify validation behavior — `validateDb` (default true), `skipCurrentMonthValidation`, `skipCurrentYearValidation`.
+ * @returns Result of processing: on success returns status 'success' with processed data; on error returns status 'error' with reason and description.
+ * @throws If required fields are missing or an unexpected state is encountered.
  */
 export async function processData(
-  page: Page | Browser,
+  page: Page | Browser | null | undefined,
   data: ExcelRowData,
   database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase,
   options: { validateDb?: boolean; skipCurrentMonthValidation?: boolean; skipCurrentYearValidation?: boolean } = {
     validateDb: true
   }
 ): Promise<ProcessDataResult> {
+  if (!page) {
+    const instance = await getPuppeteerWithParallel();
+    page = instance.page;
+  }
   if ('pages' in page) {
     const pages = await page.pages();
     page = pages[0] || (await page.newPage());
