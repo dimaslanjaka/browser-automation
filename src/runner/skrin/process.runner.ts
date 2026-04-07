@@ -19,6 +19,7 @@ const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env
   port: Number(MYSQL_PORT) || 3306,
   type: MYSQL_HOST ? 'mysql' : 'sqlite'
 });
+export { database as skrinDatabase };
 
 async function main() {
   const { page } = await getPuppeteer({ autoSwitchProfileDir: true });
@@ -48,7 +49,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv.some((arg) => arg.includes('process.runner'))) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

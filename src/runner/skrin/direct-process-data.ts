@@ -24,6 +24,7 @@ import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import path from 'path';
+import { setDatepickerValue } from './datePicker.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -197,46 +198,7 @@ export async function processData(
       }
     }
 
-    await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
-    await typeAndTrigger(page, '#dt_tgl_skrining', tanggalEntry);
-    await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
-
-    await page.evaluate(
-      (sel, dateStr) => {
-        const el = document.querySelector(sel) as HTMLInputElement | null;
-        const $ = (window as any).jQuery;
-        const kendo = (window as any).kendo;
-        try {
-          if ($ && $.fn && $.fn.kendoDatePicker && el) {
-            const widget = ($(el) as any).data('kendoDatePicker');
-            if (widget) {
-              let parsed: Date | null = null;
-              if (kendo && typeof kendo.parseDate === 'function') {
-                parsed = kendo.parseDate(dateStr, 'dd/MM/yyyy');
-              } else {
-                const parts = String(dateStr).split('/');
-                if (parts.length === 3) parsed = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-              }
-              widget.value(parsed);
-              if (typeof widget.trigger === 'function') widget.trigger('change');
-              return;
-            }
-          }
-        } catch {
-          // fall through to plain input fallback
-        }
-
-        if (el) {
-          if (typeof (el as any).removeAttribute === 'function') (el as any).removeAttribute('readonly');
-          el.value = dateStr;
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-          if (typeof (el as any).setAttribute === 'function') (el as any).setAttribute('readonly', 'true');
-        }
-      },
-      '#dt_tgl_skrining',
-      tanggalEntry
-    );
+    await setDatepickerValue(page, tanggalEntry);
 
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
