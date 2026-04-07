@@ -1712,10 +1712,10 @@ export async function getActivePage(browser) {
  * its pages are used directly.
  *
  * The `keepCount` parameter supports two modes:
- * - number (legacy): keep that many most-recently opened/active pages. When a `Page` was passed
- *   as `instance`, that page is always treated as protected in addition to the numeric keep count.
+ * - number (legacy): keep that many most-recently opened/active pages (the newest N pages).
  * - array or `Set` of `Page` objects: explicitly preserve exactly those pages; all other pages
- *   will be closed.
+ *   will be closed. If a `Page` was passed as `instance` and `keepCount` is an array/Set, that
+ *   page will be included among the protected pages.
  *
  * @param {import('puppeteer').Page|import('puppeteer').Browser} instance - The Puppeteer Page or Browser instance.
  *   If a Page is provided, its browser will be used to get all pages. If a Browser is provided, its pages will be used directly.
@@ -1724,47 +1724,61 @@ export async function getActivePage(browser) {
  * @returns {Promise<void>}
  */
 export async function closeOtherTabs(instance, keepCount = 2) {
-  let pages;
+  // Accept either a Page or Browser instance
   let currentPage = null;
+  let browser = null;
+
   if (instance && typeof instance.browser === 'function') {
     currentPage = instance; // instance is a Page
-    const browser = instance.browser();
-    pages = await browser.pages();
+    browser = instance.browser();
   } else if (instance && typeof instance.pages === 'function') {
-    pages = await instance.pages(); // instance is a Browser
+    browser = instance; // instance is a Browser
   } else {
     throw new Error('Instance must be a Puppeteer Page or Browser');
   }
 
-  // `keepCount` can be either a number (legacy behaviour) or an array/Set of pages to preserve.
-  // If an array/Set is provided, keep exactly those pages and close all others.
-  const arg = keepCount;
-  const protectedPages = new Set();
-
-  if (Array.isArray(arg) || arg instanceof Set) {
-    for (const p of arg) {
+  // If keepCount is an array/Set, preserve those pages (and currentPage if present)
+  if (Array.isArray(keepCount) || keepCount instanceof Set) {
+    const protectedPages = new Set();
+    for (const p of keepCount) {
       if (p) protectedPages.add(p);
     }
     if (currentPage) protectedPages.add(currentPage);
-  } else {
-    const keepNum = Math.max(0, Number(arg) || 2);
-    if (currentPage) protectedPages.add(currentPage);
-    if (pages.length <= keepNum) return; // nothing to close
 
-    // Keep the last `keepNum` pages (most recently created/active) in addition to currentPage
-    const recent = pages.slice(-keepNum);
-    for (const p of recent) protectedPages.add(p);
+    const pages = await browser.pages();
+    if (pages.length <= protectedPages.size) return; // nothing to close
+
+    const pagesToClose = pages.filter((page) => !protectedPages.has(page));
+    for (const page of pagesToClose) {
+      try {
+        if (typeof page?.isClosed === 'function' && page.isClosed()) continue;
+        await page.close();
+      } catch (error) {
+        const errorMessage = String(error?.message || error || '').toLowerCase();
+        if (
+          errorMessage.includes('no target with given id found') ||
+          errorMessage.includes('target closed') ||
+          errorMessage.includes('session closed')
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return;
   }
 
-  if (pages.length <= protectedPages.size) {
-    return; // nothing to close
-  }
-
-  const pagesToClose = pages.filter((page) => !protectedPages.has(page));
-  for (const page of pagesToClose) {
+  // Numeric keepCount: match closeExtraPages logic — repeatedly close the oldest page
+  const keepNum = Math.max(0, Number(keepCount) || 2);
+  // Close oldest pages until we have at most keepNum pages left
+  while ((await browser.pages()).length > keepNum) {
+    const pagesNow = (await browser.pages()).filter((p) => p);
+    if (pagesNow.length === 0) break;
     try {
-      if (typeof page?.isClosed === 'function' && page.isClosed()) continue;
-      await page.close();
+      const pageToClose = pagesNow[0];
+      if (typeof pageToClose?.isClosed === 'function' && pageToClose.isClosed()) continue;
+      await pageToClose.close();
     } catch (error) {
       const errorMessage = String(error?.message || error || '').toLowerCase();
       if (

@@ -3,24 +3,12 @@ import minimist from 'minimist';
 import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
-import { getPuppeteer } from '../../puppeteer_utils.js';
+import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
 import EndpointManager from './EndpointManager.js';
 import { puppeteerTempPath } from './utils.js';
-
-// Helper: close extra pages, refreshing the pages list after each close so loops terminate.
-async function closeExtraPages(browser: import('puppeteer').Browser, keep = 2) {
-  try {
-    while ((await browser.pages()).length > keep) {
-      const pages = (await browser.pages()).filter((p) => p);
-      await pages[0]?.close();
-    }
-  } catch (err) {
-    console.warn('Error while attempting to close extra pages.', err);
-  }
-}
 
 async function main(opts: { loop?: boolean; max?: number }) {
   // instantiate endpoint manager and try to claim a free endpoint before connecting
@@ -72,12 +60,12 @@ async function main(opts: { loop?: boolean; max?: number }) {
   browser.once('disconnected', async () => {
     if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
     console.log('Browser disconnected, exiting.');
-    await closeExtraPages(browser, 2);
+    await closeOtherTabs(browser, 2);
     process.exit(0);
   });
 
   // close extra tabs if more than 2 are open (sometimes puppeteer.connect opens an extra blank tab)
-  await closeExtraPages(browser, 2);
+  await closeOtherTabs(browser, 2);
   // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
   const page = await browser.newPage();
   page.goto('http://sh.webmanajemen.com').catch(noop);
