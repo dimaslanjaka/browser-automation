@@ -24,7 +24,7 @@ import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import path from 'path';
-import { setDatepickerValue } from './datePicker.js';
+import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -199,6 +199,7 @@ export async function processData(
     }
 
     await setDatepickerValue(page, tanggalEntry);
+    await selectDateWithUI(page, tanggalEntry, { skipMonthNavigation: true });
 
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
