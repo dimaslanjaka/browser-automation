@@ -126,7 +126,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
   }
 
   // helper: build options once (removes duplication)
-  function buildOptions(_isLoop: boolean): ProcessDataOptions {
+  function buildOptions(): ProcessDataOptions {
     return {
       skipValidateDb: resolveOpt(cliSkipValidateDb, false),
       skipCurrentMonthValidation: resolveOpt(cliSkipMonth, false),
@@ -161,7 +161,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
       console.log(`Processing item ${processed}${isFinite(max) ? `/${max}` : ''}`);
 
       // eslint-disable-next-line no-await-in-loop
-      const result = await processOne(page, data, database, buildOptions(true));
+      const result = await processOne(page, data, database, buildOptions());
 
       if (result.status !== 'success') {
         console.warn('Unexpected result status for item', processed, result);
@@ -184,7 +184,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
       process.exit(0);
     }
 
-    const result = await processOne(page, data, database, buildOptions(false));
+    const result = await processOne(page, data, database, buildOptions());
 
     if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
