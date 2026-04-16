@@ -4,7 +4,8 @@ import hashlib
 import subprocess
 import json
 
-CACHE_FILE = os.path.join("tmp", ".rollup_cache.json")
+CACHE_FILE_LAUNCHER = os.path.join("tmp", "build", ".rollup_cache_launcher.json")
+CACHE_FILE_SKRIN = os.path.join("tmp", "build", ".rollup_cache_skrin.json")
 SRC_DIR = os.path.join(os.getcwd(), "src")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
@@ -32,32 +33,34 @@ def calculate_checksum():
     return hasher.hexdigest()
 
 
-def load_cache():
-    if not os.path.exists(CACHE_FILE):
+def load_cache(cache_file):
+    if not os.path.exists(cache_file):
         return {}
-    with open(CACHE_FILE, "r") as f:
+    with open(cache_file, "r") as f:
         return json.load(f)
 
 
-def save_cache(data):
-    with open(CACHE_FILE, "w") as f:
+def save_cache(data, cache_file):
+    os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+    with open(cache_file, "w") as f:
         json.dump(data, f)
 
 
-def run_rollup_if_needed():
-    cache = load_cache()
+def run_rollup_if_needed(cache_file):
+    cache = load_cache(cache_file)
     current_hash = calculate_checksum()
 
+    rel_cache = os.path.relpath(cache_file, os.getcwd())
     if cache.get("hash") == current_hash:
-        print("✅ No changes detected. Skipping Rollup.")
+        print(f"✅ No changes detected. Skipping Rollup. [cache: {rel_cache}]")
         return 0
 
-    print("🔄 Changes detected. Running Rollup...")
+    print(f"🔄 Changes detected. Running Rollup... [cache: {rel_cache}]")
     # Use 'cmd /c npx ...' for better Windows compatibility
     code = subprocess.call(["cmd", "/c", "npx", "rollup", "-c", "rollup.config.js"])
 
     if code == 0:
-        save_cache({"hash": current_hash})
+        save_cache({"hash": current_hash}, cache_file)
 
     return code
 
@@ -92,7 +95,7 @@ def launch(args):
     )
     os.environ["BUNDLE_OUTPUT"] = os.path.join(cwd, "dist", "parallel", "launcher.cjs")
 
-    code = run_rollup_if_needed()
+    code = run_rollup_if_needed(CACHE_FILE_LAUNCHER)
     if code != 0:
         return code
 
@@ -108,7 +111,7 @@ def skrin(args):
     )
     os.environ["BUNDLE_OUTPUT"] = os.path.join(cwd, "dist", "parallel", "skrin.cjs")
 
-    code = run_rollup_if_needed()
+    code = run_rollup_if_needed(CACHE_FILE_SKRIN)
     if code != 0:
         return code
 
