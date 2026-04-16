@@ -6,7 +6,7 @@ const fs = require('fs');
  */
 const config = {
   // Cache location for Puppeteer.
-  cacheDirectory: path.join(__dirname, '.cache', 'puppeteer'),
+  cacheDirectory: path.join(process.cwd(), '.cache', 'puppeteer'),
   // Download Chrome (default `skipDownload: false`).
   chrome: {
     skipDownload: true
@@ -15,7 +15,7 @@ const config = {
   firefox: {
     skipDownload: true
   },
-  temporaryDirectory: path.join(__dirname, 'tmp/puppeteer')
+  temporaryDirectory: path.join(process.cwd(), 'tmp/puppeteer')
 };
 
 fs.mkdirSync(config.cacheDirectory, { recursive: true });
