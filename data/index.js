@@ -45,6 +45,11 @@ const keyMap = {
   'PETUGAS ENTRY': 'petugas'
 };
 
+export function normalizeCsvKey(key) {
+  const normalizedKey = key.trim().toUpperCase();
+  return keyMap[normalizedKey] || key.trim();
+}
+
 // -------------------------------------------------------------
 // ADD: comment filter stream (simple, safe, chunk-aware)
 // -------------------------------------------------------------
@@ -100,7 +105,7 @@ export async function loadCsvData(customCsvPath) {
       .on('data', (row) => {
         const mappedRow = {};
         for (const key in row) {
-          const mappedKey = keyMap[key] || key;
+          const mappedKey = normalizeCsvKey(key);
           mappedRow[mappedKey] = row[key];
         }
         mappedRow.rowIndex = mappedRecords.length;
