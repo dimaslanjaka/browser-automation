@@ -9,6 +9,8 @@ import xlsx from 'xlsx';
 import { authorize } from './src/utils/googleClient.js';
 import moment from 'moment';
 import 'moment/locale/id.js';
+import { getDatesWithoutSundays } from './src/utils/date.js';
+import { array_random } from 'sbg-utility';
 
 dotenv.config({ quiet: true, override: true });
 
@@ -171,6 +173,8 @@ export function ensureTanggalEntry(csvFilePath) {
 
   moment.locale('id');
   const monthName = moment().format('MMMM').toUpperCase();
+  const currentYear = moment().year();
+  const monthDates = getDatesWithoutSundays(monthName, currentYear, 'DD/MM/YYYY', true);
 
   const newLines = [];
   const newHeaderFields = ['TANGGAL ENTRY', ...splitCsv(headerLine, delimiter)];
@@ -183,7 +187,8 @@ export function ensureTanggalEntry(csvFilePath) {
       continue;
     }
     const fields = splitCsv(row, delimiter).map((f) => (f == null ? '' : f));
-    const outFields = [monthName, ...fields];
+
+    const outFields = [array_random(monthDates), ...fields];
     newLines.push(joinCsv(outFields, delimiter));
   }
 
