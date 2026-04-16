@@ -8,6 +8,13 @@ class Cookies {
   }
 
   getFilePath() {
+    // If id is an absolute path, use it directly (with or without .json extension)
+    if (path.isAbsolute(this.id)) {
+      if (this.id.endsWith('.json')) {
+        return this.id;
+      }
+      return `${this.id}_cookies.json`;
+    }
     return path.join(this.profileDir, `${this.id}_cookies.json`);
   }
 
@@ -79,6 +86,27 @@ class Cookies {
     }
 
     return false;
+  }
+
+  /**
+   * Read cookies data from file (no page interaction)
+   * @returns {Promise<Array|false>} cookies array or false if not found/invalid
+   */
+  async read() {
+    const filePath = this.getFilePath();
+    if (!(await fs.pathExists(filePath))) {
+      return false;
+    }
+    try {
+      const cookies = await fs.readJSON(filePath);
+      if (!Array.isArray(cookies) || cookies.length === 0) {
+        return false;
+      }
+      return cookies;
+    } catch (err) {
+      console.warn(`Failed to read cookies (${filePath}):`, err.message);
+      return false;
+    }
   }
 }
 

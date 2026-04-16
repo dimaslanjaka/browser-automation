@@ -1,5 +1,5 @@
 import path from 'upath';
-import { getPuppeteer, pageScreenshot } from './puppeteer_utils.js';
+import { closeOtherTabs, getPuppeteer, pageScreenshot } from './puppeteer_utils.js';
 
 async function _puppeterWithFingerpint() {
   let browser;
@@ -9,10 +9,12 @@ async function _puppeterWithFingerpint() {
         mode: 'stealth',
         fingerprintStrategy: 'random-cached',
         screenSize: { maxHeight: 800, maxWidth: 1366 }
-      }
+      },
+      autoSwitchProfileDir: true
     });
     browser = launched.browser;
     let { page, goto } = launched;
+    await closeOtherTabs(browser, page);
 
     // await autoLoginAndEnterSkriningPage(page);
     // await delay(5000);
@@ -21,7 +23,7 @@ async function _puppeterWithFingerpint() {
     //   fullPage: true
     // });
 
-    await goto('https://bot.sannysoft.com/', {
+    await goto(page, 'https://bot.sannysoft.com/', {
       waitUntil: 'networkidle2'
     });
 
@@ -36,18 +38,19 @@ async function _puppeterWithFingerpint() {
 
     page = await browser.newPage();
 
-    await goto('https://www.scrapingcourse.com/antibot-challenge', {
-      waitUntil: 'networkidle2'
-    });
+    // await goto(page, 'https://www.scrapingcourse.com/antibot-challenge', {
+    //   waitUntil: 'networkidle2'
+    // });
+    // await page.waitForFunction(() => /antibot challenge/i.test(document.title || ''), {
+    //   timeout: 5 * 60 * 1000
+    // });
+    // await pageScreenshot(page, {
+    //   path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/antibot-challenge.png'),
+    //   fullPage: true
+    // });
 
-    await page.waitForFunction(() => /antibot challenge/i.test(document.title || ''), {
-      timeout: 5 * 60 * 1000
-    });
-
-    await pageScreenshot(page, {
-      path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/antibot-challenge.png'),
-      fullPage: true
-    });
+    const cookies = await launched.cookie.read();
+    console.log('Cookies:', cookies);
   } finally {
     try {
       if (browser?.connected) {

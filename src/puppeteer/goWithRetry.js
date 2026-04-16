@@ -32,6 +32,10 @@ async function goWithRetry(page, url, opts = {}) {
         }
       }
       const response = await page.goto(url, { timeout, waitUntil });
+      if (cookie && response.ok()) {
+        // ✅ Save cookies after page is fully loaded
+        await cookie.save(page);
+      }
       return response;
     } catch (err) {
       lastErr = err;

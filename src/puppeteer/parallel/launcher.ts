@@ -1,12 +1,11 @@
 import path from 'path';
 import { writefile } from 'sbg-utility';
-import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
-import goWithRetry from '../goWithRetry.js';
-import { endpointManager } from './utils.js';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
+import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
+import { endpointManager } from './utils.js';
 
 (async () => {
-  const { browser, page } = await getPuppeteer({
+  const { browser, goto } = await getPuppeteer({
     args: ['--disable-features=site-per-process'],
     headless: false,
     devtools: false,
@@ -21,7 +20,7 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
     }
   });
 
-  await goWithRetry(page, 'http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' });
+  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' });
   await closeOtherTabs(browser, 1);
 
   // Detect when new targets (pages, workers, etc.) are created/destroyed/changed.

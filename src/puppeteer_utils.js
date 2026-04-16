@@ -392,7 +392,16 @@ export async function getPuppeteer(options = {}) {
 
   const page = await puppeteer_browser.newPage();
   const cookie = new PuppeteerCookies(actualProfileDir);
-  const goto = (url, options) => goWithRetry(page, url, { ...options, cookie });
+  // goto can be called as (url, options) or (page, url, options)
+  const goto = (pageOrUrl, url, options) => {
+    if (typeof pageOrUrl === 'string') {
+      // (url, options)
+      return goWithRetry(page, pageOrUrl, { ...url, cookie });
+    } else {
+      // (page, url, options)
+      return goWithRetry(pageOrUrl, url, { ...options, cookie });
+    }
+  };
   return {
     page,
     browser: puppeteer_browser,
