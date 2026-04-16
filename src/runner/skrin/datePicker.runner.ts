@@ -12,11 +12,11 @@ scheduler.register();
 
 async function main() {
   const endpointManager = new EndpointManager(puppeteerTempPath);
-  const endpoint = endpointManager.getAvailableEndpoint();
-  endpointManager.tryClaimEndpoint(endpoint, process.pid);
+  const endpoint = await endpointManager.getAvailableEndpoint();
+  await endpointManager.tryClaimEndpoint(endpoint, process.pid);
   const { page, browser } = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
   scheduler.add('browser-close', async () => {
-    if (endpoint) endpointManager.releaseEndpointClaim(endpoint, process.pid);
+    if (endpoint) await endpointManager.releaseEndpointClaim(endpoint, process.pid);
     console.log('Received SIGINT, exiting.');
     await closeOtherTabs(browser, 2);
     process.exit(0);

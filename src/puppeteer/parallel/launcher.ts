@@ -58,6 +58,15 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
   console.log('WebSocket Endpoint:', wsEndpoint);
   endpointManager.writeEndpoint(wsEndpoint);
 
+  // Remove unavailable endpoints after registering the new one
+  const endpoints = await endpointManager.getAllActiveEndpoints();
+  for (const item of endpoints) {
+    if (!item.puppeteerAvailable && item.endpoint !== wsEndpoint) {
+      endpointManager.removeEndpoint(item.endpoint);
+      console.log('Removed unavailable endpoint:', item.endpoint);
+    }
+  }
+
   // Write indicator file to signal that the browser is running
   const runningIndicatorPath = path.join(puppeteerTempPath, 'browser-running', process.pid.toString());
   writefile(runningIndicatorPath, 'Browser is running');

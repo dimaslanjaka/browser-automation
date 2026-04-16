@@ -87,38 +87,38 @@ export async function launch() {
 }
 
 export async function connect(): Promise<Browser> {
-  let endpoints = endpointManager.readEndpoints();
+  let endpoints = await endpointManager.getAllActiveEndpoints();
   const ownerPid = process.pid;
 
   if (!endpoints.length) {
     await launch();
-    endpoints = endpointManager.readEndpoints();
+    endpoints = await endpointManager.getAllActiveEndpoints();
   }
 
   while (true) {
     if (!endpoints.length) {
       await launch();
-      endpoints = endpointManager.readEndpoints();
+      endpoints = await endpointManager.getAllActiveEndpoints();
       if (!endpoints.length) {
         throw new Error('No browser endpoint is available to connect.');
       }
     }
 
-    const freeEndpoints = endpoints.filter((item) => !endpointManager.isEndpointLocked(item));
+    const freeEndpoints = endpoints.filter((item) => !item.locked && item.puppeteerAvailable);
     if (!freeEndpoints.length) {
       await launch();
-      endpoints = endpointManager.readEndpoints();
+      endpoints = await endpointManager.getAllActiveEndpoints();
       continue;
     }
 
-    const endpoint = freeEndpoints[0];
+    const endpoint = freeEndpoints[0]?.endpoint;
     if (!endpoint) {
       break;
     }
 
     const claimed = endpointManager.tryClaimEndpoint(endpoint, ownerPid);
     if (!claimed) {
-      endpoints = endpoints.filter((item) => item !== endpoint);
+      endpoints = endpoints.filter((item) => item.endpoint !== endpoint);
       continue;
     }
 
@@ -134,10 +134,10 @@ export async function connect(): Promise<Browser> {
       const err = error?.error || error;
       if (err?.code === 'ECONNREFUSED') {
         endpointManager.removeEndpoint(endpoint);
-        endpoints = endpoints.filter((item) => item !== endpoint);
+        endpoints = endpoints.filter((item) => item.endpoint !== endpoint);
         if (!endpoints.length) {
           await launch();
-          endpoints = endpointManager.readEndpoints();
+          endpoints = await endpointManager.getAllActiveEndpoints();
         }
         continue;
       }

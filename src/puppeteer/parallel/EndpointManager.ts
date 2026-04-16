@@ -1,6 +1,7 @@
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
 import path from 'upath';
 import fs from 'fs-extra';
+import puppeteer from 'puppeteer';
 
 type EndpointLock = {
   ownerPid: number;
@@ -93,10 +94,68 @@ export default class EndpointManager {
     fs.removeSync(lockPath);
   }
 
-  getAvailableEndpoint(): string | undefined {
+  /**
+   * Checks if a Puppeteer endpoint is available by attempting Puppeteer.connect.
+   */
+  private async isPuppeteerEndpointAvailable(endpoint: string): Promise<boolean> {
+    try {
+      const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+      await browser.disconnect();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Returns the first available endpoint (not locked, not stale, and Puppeteer responds)
+   */
+  async getAvailableEndpoint(): Promise<string | undefined> {
     const endpoints = this.readEndpoints();
     if (!endpoints.length) return undefined;
-    return endpoints.find((endpoint) => !this.isEndpointLocked(endpoint));
+    for (const endpoint of endpoints) {
+      const lock = this.readEndpointLock(endpoint);
+      if (lock && this.isProcessRunning(lock.ownerPid)) continue;
+      const available = await this.isPuppeteerEndpointAvailable(endpoint);
+      if (available) {
+        return endpoint;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Returns all endpoints with their lock status, inactive status, and Puppeteer availability
+   */
+  async getAllActiveEndpoints() {
+    const endpoints = this.readEndpoints();
+    const results = [];
+    for (const endpoint of endpoints) {
+      const lock = this.readEndpointLock(endpoint);
+      let locked = false;
+      let inactive = false;
+      let ownerPid = null;
+      let claimedAt = null;
+      if (lock) {
+        ownerPid = lock.ownerPid;
+        claimedAt = lock.claimedAt;
+        if (this.isProcessRunning(lock.ownerPid)) {
+          locked = true;
+        } else {
+          inactive = true;
+        }
+      }
+      const puppeteerAvailable = await this.isPuppeteerEndpointAvailable(endpoint);
+      results.push({
+        endpoint,
+        locked,
+        inactive,
+        ownerPid,
+        claimedAt,
+        puppeteerAvailable
+      });
+    }
+    return results;
   }
 
   tryClaimEndpoint(endpoint: string, ownerPid: number): boolean {

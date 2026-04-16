@@ -30,7 +30,7 @@ export default async function getPuppeteerWithParallel(options = {}) {
 
   const tried = new Set<string>();
   while (true) {
-    const endpoint = endpointManager.getAvailableEndpoint();
+    const endpoint = await endpointManager.getAvailableEndpoint();
     if (!endpoint) {
       console.error('No browser endpoint available to connect.');
       process.exit(1);
