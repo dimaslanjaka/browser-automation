@@ -1,6 +1,8 @@
-import type { LaunchOptions } from 'puppeteer';
+import type { GoToOptions, LaunchOptions } from 'puppeteer';
 import type { ClusterOptions } from 'puppeteer-cluster';
 import type { LaunchOptions as PlaywrightLaunchOptions } from 'playwright';
+import goWithRetry from './puppeteer/goWithRetry.js';
+import { PuppeteerCookies } from './puppeteer/Cookies.js';
 
 export interface getPuppeteerOptions extends LaunchOptions {
   reuse?: boolean;
@@ -30,6 +32,10 @@ export interface GetPuppeteerSingleReturn {
   page: import('puppeteer').Page;
   browser: import('puppeteer').Browser;
   puppeteer: typeof import('puppeteer-extra');
+  profileDir: string;
+  cookie: PuppeteerCookies;
+  goto: (url: string, options?: GoToOptions) => Promise<ReturnType<typeof goWithRetry>>;
+  navigate: (url: string, options?: GoToOptions) => Promise<ReturnType<typeof goWithRetry>>;
 }
 
 export interface GetPuppeteerClusterReturn {
