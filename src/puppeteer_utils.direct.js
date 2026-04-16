@@ -1,29 +1,27 @@
-import { delay } from 'sbg-utility';
 import path from 'upath';
 import { getPuppeteer, pageScreenshot } from './puppeteer_utils.js';
-import { autoLoginAndEnterSkriningPage } from './skrin_puppeteer.js';
 
 async function _puppeterWithFingerpint() {
   let browser;
   try {
     const launched = await getPuppeteer({
       stealth: {
-        mode: 'fingerprint',
+        mode: 'stealth',
         fingerprintStrategy: 'random-cached',
         screenSize: { maxHeight: 800, maxWidth: 1366 }
       }
     });
     browser = launched.browser;
-    const { page } = launched;
+    let { page, goto } = launched;
 
-    await autoLoginAndEnterSkriningPage(page);
-    await delay(5000);
-    await pageScreenshot(page, {
-      path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/skrining.png'),
-      fullPage: true
-    });
+    // await autoLoginAndEnterSkriningPage(page);
+    // await delay(5000);
+    // await pageScreenshot(page, {
+    //   path: path.join(process.cwd(), 'tmp/puppeteer/screenshots/skrining.png'),
+    //   fullPage: true
+    // });
 
-    await page.goto('https://bot.sannysoft.com/', {
+    await goto('https://bot.sannysoft.com/', {
       waitUntil: 'networkidle2'
     });
 
@@ -36,7 +34,9 @@ async function _puppeterWithFingerpint() {
       fullPage: true
     });
 
-    await page.goto('https://www.scrapingcourse.com/antibot-challenge', {
+    page = await browser.newPage();
+
+    await goto('https://www.scrapingcourse.com/antibot-challenge', {
       waitUntil: 'networkidle2'
     });
 

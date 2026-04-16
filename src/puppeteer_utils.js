@@ -14,6 +14,7 @@ import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/get
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
 import { sleep } from './utils-browser.js';
 import { PuppeteerCookies } from './puppeteer/Cookies.js';
+import goWithRetry from './puppeteer/goWithRetry.js';
 export { elementExists } from './puppeteer/elementExists.js';
 export { elementsContainText } from './puppeteer/elementsContainText.js';
 export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
@@ -391,7 +392,16 @@ export async function getPuppeteer(options = {}) {
 
   const page = await puppeteer_browser.newPage();
   const cookie = new PuppeteerCookies(actualProfileDir);
-  return { page, browser: puppeteer_browser, puppeteer: puppeteer_module, profileDir: actualProfileDir, cookie };
+  const goto = (url, options) => goWithRetry(page, url, { ...options, cookie });
+  return {
+    page,
+    browser: puppeteer_browser,
+    puppeteer: puppeteer_module,
+    profileDir: actualProfileDir,
+    cookie,
+    goto,
+    navigate: goto
+  };
 }
 
 /**
