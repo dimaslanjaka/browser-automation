@@ -1,14 +1,15 @@
 import Bluebird from 'bluebird';
 import minimist from 'minimist';
 import { array_shuffle } from 'sbg-utility';
+import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
+import { ExcelRowData } from '../../../globals.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
 import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
 import EndpointManager from './EndpointManager.js';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 
 async function main(opts: { loop?: boolean; max?: number }) {
   // instantiate endpoint manager and try to claim a free endpoint before connecting
@@ -86,11 +87,28 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   const database = skrinDatabase;
 
-  const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
-    const existing = await database.getLogById(getNumbersOnly(data.nik));
-    if (existing && existing.data) return false;
-    return true;
-  });
+  // Read CLI overrides for processData options (undefined means not specified)
+  const cliSkipValidateDb =
+    typeof argv['skip-validate-db'] !== 'undefined' ? Boolean(argv['skip-validate-db']) : undefined;
+  const cliSkipMonth =
+    typeof argv['skip-current-month-validation'] !== 'undefined'
+      ? Boolean(argv['skip-current-month-validation'])
+      : undefined;
+  const cliSkipYear =
+    typeof argv['skip-current-year-validation'] !== 'undefined'
+      ? Boolean(argv['skip-current-year-validation'])
+      : undefined;
+
+  let dataKunto: ExcelRowData[];
+  if (cliSkipValidateDb) {
+    dataKunto = await loadCsvData<ExcelRowData>();
+  } else {
+    dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
+      const existing = await database.getLogById(getNumbersOnly(data.nik));
+      if (existing && existing.data) return false;
+      return true;
+    });
+  }
 
   if (!Array.isArray(dataKunto) || dataKunto.length === 0) {
     console.warn('No data available to process.');
@@ -106,19 +124,6 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   // Strongly infer types instead of using any
   type PageType = Awaited<ReturnType<typeof getPuppeteer>>['page'];
-  type DataType = Awaited<ReturnType<typeof loadCsvData>>[number];
-
-  // Read CLI overrides for processData options (undefined means not specified)
-  const cliSkipValidateDb =
-    typeof argv['skip-validate-db'] !== 'undefined' ? Boolean(argv['skip-validate-db']) : undefined;
-  const cliSkipMonth =
-    typeof argv['skip-current-month-validation'] !== 'undefined'
-      ? Boolean(argv['skip-current-month-validation'])
-      : undefined;
-  const cliSkipYear =
-    typeof argv['skip-current-year-validation'] !== 'undefined'
-      ? Boolean(argv['skip-current-year-validation'])
-      : undefined;
 
   // helper: resolve option value (removes repetition)
   function resolveOpt(value: boolean | undefined, fallback: boolean): boolean {
@@ -137,7 +142,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
   // helper: process one item and normalize error/result handling
   async function processOne(
     page: PageType,
-    data: DataType,
+    data: ExcelRowData,
     databaseInstance: LogDatabase,
     options: ProcessDataOptions
   ) {

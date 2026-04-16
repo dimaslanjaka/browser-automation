@@ -79,18 +79,6 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     process.exit(0);
   }
 
-  // const datas = getXlsxData(process.env.index_start, process.env.index_end);
-  // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
-  /** @type {import('../../globals').ExcelRowData[]} */
-  const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
-    const existing = await database.getLogById(getNumbersOnly(data.nik));
-    if (existing && existing.data) return false;
-    return true;
-  });
-
-  // Print remaining count before processing
-  console.log(`Total entries to process: ${dataKunto.length}`);
-
   // CLI-driven processData options (defaults to previous behavior)
   const cliSkipValidateDb = typeof args['skip-validate-db'] !== 'undefined' ? Boolean(args['skip-validate-db']) : false;
   const cliSkipMonth =
@@ -99,6 +87,23 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       : false;
   const cliSkipYear =
     typeof args['skip-current-year-validation'] !== 'undefined' ? Boolean(args['skip-current-year-validation']) : false;
+
+  // const dataKunto = getXlsxData(process.env.index_start, process.env.index_end);
+  // const dataKunto = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+  /** @type {import('../../globals').ExcelRowData[]} */
+  let dataKunto;
+  if (cliSkipValidateDb) {
+    dataKunto = await loadCsvData();
+  } else {
+    dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
+      const existing = await database.getLogById(getNumbersOnly(data.nik));
+      if (existing && existing.data) return false;
+      return true;
+    });
+  }
+
+  // Print remaining count before processing
+  console.log(`Total entries to process: ${dataKunto.length}`);
 
   if (flagShuffle && Array.isArray(dataKunto) && dataKunto.length > 1) {
     // Fisher-Yates shuffle

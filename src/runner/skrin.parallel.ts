@@ -168,12 +168,17 @@ async function processRowWithRetry(row: ExcelRowData, browser: Browser, workerIn
 
 async function main() {
   try {
-    const dataKunto = await Bluebird.resolve((await loadCsvData<ExcelRowData>()) as ExcelRowData[])
-      .filter(async (data) => {
-        const existing = await database.getLogById(getNumbersOnly(data.nik));
-        return !(existing && existing.data);
-      })
-      .then(array_shuffle);
+    let dataKunto: ExcelRowData[];
+    if (processDataOptions.skipValidateDb) {
+      dataKunto = array_shuffle(await loadCsvData<ExcelRowData>());
+    } else {
+      dataKunto = await Bluebird.resolve(await loadCsvData<ExcelRowData>())
+        .filter(async (data) => {
+          const existing = await database.getLogById(getNumbersOnly(data.nik));
+          return !(existing && existing.data);
+        })
+        .then(array_shuffle);
+    }
 
     const totalRows = dataKunto.length;
     let processedRows = 0;
