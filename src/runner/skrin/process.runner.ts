@@ -42,7 +42,7 @@ async function main() {
 
   const data = array_shuffle(dataKunto).shift();
   const result = await processData(page, data, database, {
-    validateDb: false,
+    skipValidateDb: true,
     skipCurrentMonthValidation: true
   }).catch((err) => {
     console.error('Error processing data:', err);

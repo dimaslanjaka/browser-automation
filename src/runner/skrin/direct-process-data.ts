@@ -56,7 +56,7 @@ async function reEvaluate(page: Page): Promise<void> {
  * @param page Puppeteer `Page` or `Browser`. If a `Browser` is provided, the first available page is used or a new page is created.
  * @param data Single row of Excel data to submit.
  * @param database Database instance used for reading and writing logs.
- * @param options Optional settings that modify validation behavior — `validateDb` (default true), `skipCurrentMonthValidation`, `skipCurrentYearValidation`.
+ * @param options Optional settings that modify validation behavior — `skipValidateDb` (default false), `skipCurrentMonthValidation`, `skipCurrentYearValidation`.
  * @returns Result of processing: on success returns status 'success' with processed data; on error returns status 'error' with reason and description.
  * @throws If required fields are missing or an unexpected state is encountered.
  */
@@ -64,8 +64,8 @@ export async function processData(
   page: Page | Browser | null | undefined,
   data: ExcelRowData,
   database: LogDatabase | MysqlLogDatabase | SQLiteLogDatabase,
-  options: { validateDb?: boolean; skipCurrentMonthValidation?: boolean; skipCurrentYearValidation?: boolean } = {
-    validateDb: true
+  options: { skipValidateDb?: boolean; skipCurrentMonthValidation?: boolean; skipCurrentYearValidation?: boolean } = {
+    skipValidateDb: false
   }
 ): Promise<ProcessDataResult> {
   if (!page) {
@@ -103,7 +103,7 @@ export async function processData(
     };
   }
 
-  if (options?.validateDb) {
+  if (!options?.skipValidateDb) {
     const existing = await database.getLogById(getNumbersOnly(NIK));
     if (existing && existing.data) {
       console.log(`Data with NIK ${NIK} has already been processed. Skipping...`);

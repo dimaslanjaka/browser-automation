@@ -86,7 +86,7 @@ async function main() {
           await cluster.execute(data, async ({ page, data }: { page: Page; data: ExcelRowData }) => {
             try {
               await closeOtherTabs(page);
-              const result = await processData(page, data, database);
+              const result = await processData(page, data, database, { skipValidateDb: false });
               if (result.status === 'error') {
                 console.error('Error processing data:', {
                   error: result.reason || 'Unknown error',

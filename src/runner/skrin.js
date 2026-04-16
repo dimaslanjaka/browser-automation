@@ -47,13 +47,13 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       'single',
       'shuffle',
       'help',
-      'validate-db',
+      'skip-validate-db',
       'skip-current-month-validation',
       'skip-current-year-validation'
     ],
     alias: {
       h: 'help',
-      v: 'validate-db',
+      v: 'skip-validate-db',
       m: 'skip-current-month-validation',
       y: 'skip-current-year-validation'
     }
@@ -70,7 +70,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
       'Options:',
       '  --single            Process only the first entry (existing behavior)',
       '  --shuffle           Shuffle data ordering before processing',
-      '  --validate-db, -v   Enable validation against DB (default: true)',
+      '  --skip-validate-db, -v   Skip validation against DB (default: false)',
       '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
       '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
       '  --help, -h          Show this help message'
@@ -91,7 +91,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
   console.log(`Total entries to process: ${dataKunto.length}`);
 
   // CLI-driven processData options (defaults to previous behavior)
-  const cliValidateDb = typeof args['validate-db'] !== 'undefined' ? Boolean(args['validate-db']) : true;
+  const cliSkipValidateDb = typeof args['skip-validate-db'] !== 'undefined' ? Boolean(args['skip-validate-db']) : false;
   const cliSkipMonth =
     typeof args['skip-current-month-validation'] !== 'undefined'
       ? Boolean(args['skip-current-month-validation'])
@@ -133,7 +133,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
     }
 
     const result = await processData(processPage, data, database, {
-      validateDb: cliValidateDb,
+      skipValidateDb: cliSkipValidateDb,
       skipCurrentMonthValidation: cliSkipMonth,
       skipCurrentYearValidation: cliSkipYear
     });
@@ -202,11 +202,11 @@ export async function executeSkriningProcess() {
   let puppeteerInstance;
   try {
     puppeteerInstance = await getPuppeteer({
-      stealth: {
-        mode: 'fingerprint',
-        fingerprintStrategy: 'random-cached',
-        screenSize: { maxHeight: 800, maxWidth: 1366 }
-      }
+      // stealth: {
+      //   mode: 'fingerprint',
+      //   fingerprintStrategy: 'random-cached',
+      //   screenSize: { maxHeight: 800, maxWidth: 1366 }
+      // }
     });
   } catch (e) {
     console.error('Failed to launch puppeteer:', e && e.stack ? e.stack : e);

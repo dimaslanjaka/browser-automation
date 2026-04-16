@@ -96,7 +96,8 @@ async function main(opts: { loop?: boolean; max?: number }) {
   type DataType = Awaited<ReturnType<typeof loadCsvData>>[number];
 
   // Read CLI overrides for processData options (undefined means not specified)
-  const cliValidateDb = typeof argv['validate-db'] !== 'undefined' ? Boolean(argv['validate-db']) : undefined;
+  const cliSkipValidateDb =
+    typeof argv['skip-validate-db'] !== 'undefined' ? Boolean(argv['skip-validate-db']) : undefined;
   const cliSkipMonth =
     typeof argv['skip-current-month-validation'] !== 'undefined'
       ? Boolean(argv['skip-current-month-validation'])
@@ -112,9 +113,9 @@ async function main(opts: { loop?: boolean; max?: number }) {
   }
 
   // helper: build options once (removes duplication)
-  function buildOptions(isLoop: boolean): ProcessDataOptions {
+  function buildOptions(_isLoop: boolean): ProcessDataOptions {
     return {
-      validateDb: resolveOpt(cliValidateDb, isLoop ? true : false),
+      skipValidateDb: resolveOpt(cliSkipValidateDb, false),
       skipCurrentMonthValidation: resolveOpt(cliSkipMonth, false),
       skipCurrentYearValidation: resolveOpt(cliSkipYear, false)
     };
@@ -188,11 +189,11 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
-  boolean: ['loop', 'help', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
+  boolean: ['loop', 'help', 'skip-validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
   alias: {
     l: 'loop',
     h: 'help',
-    v: 'validate-db',
+    v: 'skip-validate-db',
     m: 'skip-current-month-validation',
     y: 'skip-current-year-validation'
   },
@@ -207,7 +208,7 @@ if (argv.help) {
     'Options:',
     '  --loop, -l         Loop over available inputs (default: single input)',
     '  --max <n>          Maximum items to process when looping',
-    '  --validate-db, -v  Enable validation against DB (overrides default)',
+    '  --skip-validate-db, -v  Skip validation against DB (default: false)',
     '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
     '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
     '  --help, -h         Show this help message'

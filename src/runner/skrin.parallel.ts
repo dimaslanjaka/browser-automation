@@ -33,11 +33,11 @@ const retryDelayMsFromEnv = Number(process.env.SKRIN_RETRY_DELAY_MS);
 
 const cliArgs = minimist(process.argv.slice(2), {
   string: ['concurrent'],
-  boolean: ['help', 'validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
+  boolean: ['help', 'skip-validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
   alias: {
     c: 'concurrent',
     h: 'help',
-    v: 'validate-db',
+    v: 'skip-validate-db',
     m: 'skip-current-month-validation',
     y: 'skip-current-year-validation'
   }
@@ -59,7 +59,9 @@ let isShuttingDown = false;
 
 // Infer ProcessData options type from imported function and read CLI overrides
 type ProcessDataOptions = Parameters<typeof processData>[3];
-const cliValidateDb = typeof cliArgs['validate-db'] !== 'undefined' ? Boolean(cliArgs['validate-db']) : undefined;
+// Removed cliValidateDb, now using skip-validate-db
+const cliSkipValidateDb =
+  typeof cliArgs['skip-validate-db'] !== 'undefined' ? Boolean(cliArgs['skip-validate-db']) : undefined;
 const cliSkipMonth =
   typeof cliArgs['skip-current-month-validation'] !== 'undefined'
     ? Boolean(cliArgs['skip-current-month-validation'])
@@ -71,7 +73,7 @@ const cliSkipYear =
 
 // Defaults chosen to match interactive/loop mode behavior: validate DB by default in parallel runs
 const processDataOptions: ProcessDataOptions = {
-  validateDb: typeof cliValidateDb !== 'undefined' ? cliValidateDb : true,
+  skipValidateDb: typeof cliSkipValidateDb !== 'undefined' ? cliSkipValidateDb : false,
   skipCurrentMonthValidation: typeof cliSkipMonth !== 'undefined' ? cliSkipMonth : false,
   skipCurrentYearValidation: typeof cliSkipYear !== 'undefined' ? cliSkipYear : false
 };
@@ -82,7 +84,7 @@ if (cliArgs.help) {
     '',
     'Options:',
     '  --concurrent, -c <n>   Number of parallel workers (default: 2)',
-    '  --validate-db, -v      Enable validation against DB (default: true)',
+    '  --skip-validate-db, -v  Skip validation against DB (default: false)',
     '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
     '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
     '  --help, -h             Show this help message'
