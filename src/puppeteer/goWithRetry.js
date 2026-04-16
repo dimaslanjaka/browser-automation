@@ -6,17 +6,31 @@
  * @param {number} [opts.retries=3] - Number of retry attempts (not counting the first try).
  * @param {number} [opts.timeout=30000] - Navigation timeout in ms.
  * @param {string|string[]} [opts.waitUntil='networkidle2'] - Puppeteer waitUntil option.
+ * @param {import('./Cookies.js').PuppeteerCookies} [opts.cookie] - Optional PuppeteerCookies instance to load cookies before navigation.
  * @param {number} [opts.retryDelay=1000] - Initial delay in ms between retries (exponential backoff).
  * @param {function} [opts.onRetry] - Optional callback called before each retry with {attempt, err, delay}.
  * @returns {Promise<import('puppeteer').HTTPResponse|null>}
  */
 async function goWithRetry(page, url, opts = {}) {
-  const { retries = 3, timeout = 30000, waitUntil = 'networkidle2', retryDelay = 1000, onRetry } = opts;
+  const { retries = 3, timeout = 30000, waitUntil = 'networkidle2', retryDelay = 1000, onRetry, cookie } = opts;
 
   let lastErr = null;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      if (cookie) {
+        // ✅ IMPORTANT: open domain first
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+        // ✅ load cookies AFTER initial navigation
+        const loaded = await cookie.load(page);
+        console.log('[cookies] loaded:', loaded);
+
+        // ✅ apply cookies properly
+        if (loaded) {
+          await page.reload({ waitUntil: 'domcontentloaded' });
+        }
+      }
       const response = await page.goto(url, { timeout, waitUntil });
       return response;
     } catch (err) {

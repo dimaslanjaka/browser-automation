@@ -13,6 +13,7 @@ import {
 import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
 import { sleep } from './utils-browser.js';
+import { PuppeteerCookies } from './puppeteer/Cookies.js';
 export { elementExists } from './puppeteer/elementExists.js';
 export { elementsContainText } from './puppeteer/elementsContainText.js';
 export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
@@ -330,6 +331,7 @@ export async function getPuppeteer(options = {}) {
     puppeteer_module = fingerprintPlugin;
   }
 
+  let actualProfileDir = merged.userDataDir;
   if (!puppeteer_browser || !puppeteer_browser.connected || !merged.reuse) {
     // If a remote browser WebSocket endpoint is provided, connect instead of launching.
     if (launchOptions.browserWSEndpoint) {
@@ -346,8 +348,10 @@ export async function getPuppeteer(options = {}) {
       launchOptions.executablePath = undefined; // Use Puppeteer's default Chromium
     }
 
+    let usedProfileDir = merged.userDataDir;
     puppeteer_browser = await launchWithProfileFallback({
       launchFn: async (currentLaunchOptions) => {
+        usedProfileDir = currentLaunchOptions.userDataDir;
         if (stealthMode === 'fingerprint') {
           const clonedArgs = [...currentLaunchOptions.args];
           // remove --user-data-dir from args to avoid conflicts with fingerprint profile management
@@ -382,10 +386,12 @@ export async function getPuppeteer(options = {}) {
       autoSwitchProfileDir,
       launcherName: 'Puppeteer'
     });
+    actualProfileDir = usedProfileDir;
   }
 
   const page = await puppeteer_browser.newPage();
-  return { page, browser: puppeteer_browser, puppeteer: puppeteer_module };
+  const cookie = new PuppeteerCookies(actualProfileDir);
+  return { page, browser: puppeteer_browser, puppeteer: puppeteer_module, profileDir: actualProfileDir, cookie };
 }
 
 /**
