@@ -45,6 +45,10 @@ export type Region1Row = Partial<ExcelRowData> & { headerRegion: 1; originalRowN
 export type FetchXlsxData4Result = Array<Region0Row | Region1Row>;
 
 declare global {
+  // ESM shim globals installed from src/utils/shim/__dirname.mjs
+  let __dirname: string;
+  let __filename: string;
+
   namespace NodeJS {
     interface ProcessEnv {
       skrin_username: string;
