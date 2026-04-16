@@ -78,5 +78,21 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
       endpointManager.removeEndpoint(wsEndpoint);
       resolve(true);
     });
+    // Listen for process disconnects from clients (e.g., skrin.ts)
+    process.on('SIGINT', () => {
+      endpointManager.removeEndpoint(wsEndpoint);
+      console.log('SIGINT received, released endpoint:', wsEndpoint);
+      resolve(true);
+    });
+    process.on('SIGTERM', () => {
+      endpointManager.removeEndpoint(wsEndpoint);
+      console.log('SIGTERM received, released endpoint:', wsEndpoint);
+      resolve(true);
+    });
+    process.on('exit', () => {
+      endpointManager.removeEndpoint(wsEndpoint);
+      console.log('Process exit, released endpoint:', wsEndpoint);
+      resolve(true);
+    });
   });
 })();

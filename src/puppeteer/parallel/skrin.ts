@@ -37,6 +37,19 @@ async function main(opts: { loop?: boolean; max?: number }) {
       continue;
     }
 
+    // Register cleanup after successful claim
+    process.on('SIGINT', () => {
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      process.exit(0);
+    });
+    process.on('exit', () => {
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+    });
+
     try {
       // connect using existing helper which will use puppeteer.connect when browserWSEndpoint is provided
       const res = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
