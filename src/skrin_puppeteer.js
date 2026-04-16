@@ -1,3 +1,4 @@
+import { delay } from 'sbg-utility';
 import goWithRetry from './puppeteer/goWithRetry.js';
 import { waitForDomStable } from './puppeteer_utils.js';
 
@@ -9,11 +10,38 @@ import { waitForDomStable } from './puppeteer_utils.js';
  * @throws {Error} If login fails or required environment variables are missing
  */
 export async function skrinLogin(page) {
-  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
-  await page.type('input[name="username"]', process.env.skrin_username);
-  await page.type('input[name="password"]', process.env.skrin_password);
+  // Always go to login page and do login
+  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/app/login', { waitUntil: 'networkidle2' });
+  // Wait for username and password fields to be visible
+  await page.waitForSelector('input[name="username"]', { visible: true });
+  await page.waitForSelector('input[name="password"]', { visible: true });
+  // Focus, clear, and type username
+  await page.focus('input[name="username"]');
+  await page.evaluate(() => {
+    const el = document.querySelector('input[name="username"]');
+    if (el) el.value = '';
+  });
+  await page.type('input[name="username"]', process.env.skrin_username, { delay: 50 });
+  // Focus, clear, and type password
+  await page.focus('input[name="password"]');
+  await page.evaluate(() => {
+    const el = document.querySelector('input[name="password"]');
+    if (el) el.value = '';
+  });
+  await page.type('input[name="password"]', process.env.skrin_password, { delay: 50 });
+  // Wait a short moment to ensure values are registered
+  await delay(500);
   await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
+  // After login, check if login form is still present (login failed)
+  await waitForDomStable(page, 2000, 10000);
+  const loginFormSelector = 'input[name="username"]';
+  const loginFormEl = await page.$(loginFormSelector);
+  if (loginFormEl) {
+    return false;
+  }
+  // Optionally, check for a known post-login element here if needed
   console.log('Login successful');
+  return true;
 }
 
 /**
@@ -55,35 +83,49 @@ export async function autoLoginAndEnterSkriningPage(page) {
   if (typeof page?.isClosed === 'function' && page.isClosed()) {
     throw new Error('Cannot focus selected tab because the page is already closed.');
   }
-
   await page.bringToFront();
   await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/skrining', { waitUntil: 'networkidle2', timeout: 120000 });
   await waitForDomStable(page, 3000, 30000);
 
+  // Only check for session expired on skrining page
   const sessionExpiredSelector = '.navbar-template.text-left p';
   const sessionMessagePattern =
-    /(?:maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali|anda\s+tidak\s+mempunyai\s+kewenangan\s+untuk\s+mengakses\s+halaman\s+ini)/i;
-
-  const sessionExpiredElement = await page.$(sessionExpiredSelector);
-  const sessionExpiredState = sessionExpiredElement
-    ? await page.evaluate((element) => {
-        const style = window.getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        const text = element.textContent?.trim() ?? '';
-        const isVisible =
-          style.display !== 'none' &&
-          style.visibility !== 'hidden' &&
-          style.opacity !== '0' &&
-          rect.width > 0 &&
-          rect.height > 0;
-
-        return { isVisible, text };
-      }, sessionExpiredElement)
-    : { isVisible: false, text: '' };
-
-  if (sessionExpiredState.isVisible && sessionMessagePattern.test(sessionExpiredState.text)) {
+    /(?:maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali|anda\s+tidak\s+mempunyai\s+kewenangan\s+untuk\s+mengakses\s+halaman\s+ini|expired)/i;
+  let sessionExpired = false;
+  let sessionText = '';
+  const currentUrl = await page.url();
+  if (currentUrl.includes('/skrining')) {
+    const sessionExpiredElement = await page.$(sessionExpiredSelector);
+    if (sessionExpiredElement) {
+      sessionText = await page.evaluate((element) => element.textContent?.trim() ?? '', sessionExpiredElement);
+      if (sessionMessagePattern.test(sessionText)) {
+        sessionExpired = true;
+      }
+    }
+  }
+  if (sessionExpired) {
     console.log('Session expired detected. Re-login required.');
-    await skrinLogin(page);
+    const loginSuccess = await skrinLogin(page);
+    if (!loginSuccess) {
+      throw new Error('Login failed: login form still present after login.');
+    }
+    // After login, re-enter skrining page and recheck
+    await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/skrining', {
+      waitUntil: 'networkidle2',
+      timeout: 120000
+    });
+    await waitForDomStable(page, 3000, 30000);
+    const urlAfterLogin = await page.url();
+    if (urlAfterLogin.includes('/skrining')) {
+      const sessionExpiredElement2 = await page.$(sessionExpiredSelector);
+      let sessionText2 = '';
+      if (sessionExpiredElement2) {
+        sessionText2 = await page.evaluate((element) => element.textContent?.trim() ?? '', sessionExpiredElement2);
+        if (sessionMessagePattern.test(sessionText2)) {
+          throw new Error('Login failed: session expired message still present after login.');
+        }
+      }
+    }
   }
   await enterSkriningPage(page);
 }
