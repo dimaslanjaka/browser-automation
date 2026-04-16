@@ -74,10 +74,44 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
     if is_ts:
         node_cmd += ["--loader", "ts-node/esm"]
     node_cmd += ["-r", "./.vscode/js-hook.cjs", script_path, *args]
+
     if same_terminal:
         return subprocess.call(node_cmd)
     else:
-        subprocess.Popen(["cmd", "/c", "start"] + node_cmd)
+        # Detect if this is the launcher or skrin script to set a custom title
+        custom_title = None
+        try:
+            base = os.path.basename(script_path)
+            if base.startswith("launcher"):
+                ps_cmd = [
+                    "powershell",
+                    "-Command",
+                    "(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'launcher.cjs' } | ForEach-Object { try { $p = $_; $t = (Get-Process -Id $p.ProcessId).MainWindowTitle } catch {}; if ($t -like 'Launcher*') { $t } } | Measure-Object).Count",
+                ]
+                result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                try:
+                    count = int(result.stdout.strip())
+                except Exception:
+                    count = 0
+                custom_title = f"Launcher {count + 1}"
+            elif base.startswith("skrin"):
+                ps_cmd = [
+                    "powershell",
+                    "-Command",
+                    "(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'skrin.cjs' } | ForEach-Object { try { $p = $_; $t = (Get-Process -Id $p.ProcessId).MainWindowTitle } catch {}; if ($t -like 'Skrin*') { $t } } | Measure-Object).Count",
+                ]
+                result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                try:
+                    count = int(result.stdout.strip())
+                except Exception:
+                    count = 0
+                custom_title = f"Skrin {count + 1}"
+        except Exception:
+            pass
+        start_cmd = ["cmd", "/c", "start"]
+        if custom_title:
+            start_cmd.append(custom_title)
+        subprocess.Popen(start_cmd + node_cmd)
         return 0
 
 
