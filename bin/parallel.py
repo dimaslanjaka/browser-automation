@@ -62,19 +62,26 @@ def run_rollup_if_needed():
     return code
 
 
-def run_node(script_path, args, keep_open=False):
-    # Launch node in a new terminal window and exit current script
+def run_node(script_path, args, keep_open=False, same_terminal=False):
+    is_ts = script_path.endswith(".ts")
     node_cmd = [
         "node",
         "--no-warnings=ExperimentalWarning",
-        "-r",
-        "./.vscode/js-hook.cjs",
-        script_path,
-        *args,
     ]
-    # Use 'start' to open a new terminal window
-    subprocess.Popen(["cmd", "/c", "start"] + node_cmd)
-    return 0
+    if is_ts:
+        node_cmd += ["--loader", "ts-node/esm"]
+    node_cmd += ["-r", "./.vscode/js-hook.cjs", script_path, *args]
+    if same_terminal:
+        return subprocess.call(node_cmd)
+    else:
+        subprocess.Popen(["cmd", "/c", "start"] + node_cmd)
+        return 0
+
+
+def check(args):
+    cwd = os.getcwd()
+    script = os.path.join(cwd, "src", "puppeteer", "parallel", "check.ts")
+    return run_node(script, args, keep_open=False, same_terminal=True)
 
 
 def launch(args):
@@ -120,6 +127,8 @@ def main():
         code = launch(args)
     elif command == "skrin":
         code = skrin(args)
+    elif command == "check":
+        code = check(args)
     else:
         sys.exit(1)
 

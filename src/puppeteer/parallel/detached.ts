@@ -3,7 +3,7 @@ import { getPuppeteer } from '../../puppeteer_utils.js';
 import { endpointManager } from './utils.js';
 
 async function _main() {
-  const endpoint = endpointManager.getAvailableEndpoint();
+  const endpoint = await endpointManager.getAvailableEndpoint();
   if (!endpoint) {
     console.error(
       'No available browser endpoints found. Make sure the launcher is running and has created an endpoint.'
