@@ -51,7 +51,7 @@ async function main() {
 
   try {
     while (true) {
-      const dataKunto = await Bluebird.filter((await loadCsvData()) as ExcelRowData[], async (data) => {
+      const dataKunto = await Bluebird.filter((await loadCsvData<ExcelRowData>()) as ExcelRowData[], async (data) => {
         const existing = await database.getLogById(getNumbersOnly(data.nik));
         if (existing && existing.data) return false;
         return true;

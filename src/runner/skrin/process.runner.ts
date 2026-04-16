@@ -8,6 +8,7 @@ import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithP
 import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
 import { getNumbersOnly } from '../../utils-browser.js';
 import { processData } from './direct-process-data.js';
+import { ExcelRowData } from '../../../globals.js';
 
 scheduler.register();
 
@@ -29,13 +30,13 @@ async function main() {
   const baseDir = path.join(process.cwd(), 'tmp/puppeteer/xhr');
   const _stopCapture = setupXhrCapture(page, { baseDir });
 
-  const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
+  const dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) return false;
     return true;
   }).then((data) => {
     if (data.length === 0) {
-      return loadCsvData(); // if all data is already in database, reload without filtering to process at least one entry
+      return loadCsvData<ExcelRowData>(); // if all data is already in database, reload without filtering to process at least one entry
     }
     return data;
   });

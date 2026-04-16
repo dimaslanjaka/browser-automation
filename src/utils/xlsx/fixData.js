@@ -222,6 +222,7 @@ export default async function fixData(
 if (process.argv[1].includes('fixData.js')) {
   (async () => {
     try {
+      /** @type {import('../../../globals').ExcelRowData[]} */
       const dataKunto = await loadCsvData();
       for (const item of dataKunto) {
         try {

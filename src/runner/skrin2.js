@@ -758,6 +758,7 @@ async function re_evaluate(page) {
 }
 
 async function _testSkriningData() {
+  /** @type {import('../../globals').ExcelRowData[]} */
   const dataKunto = await loadCsvData();
   console.log('original', dataKunto[0]);
   console.log('fixed', await fixData(dataKunto[0], { autofillTanggalEntry: true }));
@@ -773,7 +774,7 @@ const _main = async () => {
   /**
    * @type {import('./types.js').SkrinData[]}
    */
-  const dataKunto = await loadCsvData();
+  const dataKunto = await loadCsvData(/* as ExcelRowData[] */);
 
   // Fix data names
   for (let i = 0; i < dataKunto.length; i++) {

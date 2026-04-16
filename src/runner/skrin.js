@@ -81,6 +81,7 @@ export async function runEntrySkrining(puppeteerInstance, dataCallback = (data) 
 
   // const datas = getXlsxData(process.env.index_start, process.env.index_end);
   // const datas = await fetchXlsxData3(process.env.index_start, process.env.index_end);
+  /** @type {import('../../globals').ExcelRowData[]} */
   const dataKunto = await Bluebird.filter(await loadCsvData(), async (data) => {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) return false;

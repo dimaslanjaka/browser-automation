@@ -85,7 +85,8 @@ function createCommentFilter(commentChar = '#') {
  *
  * @async
  * @param {string} [customCsvPath] - Optional custom path to CSV file. Defaults to './data.csv'
- * @returns {Promise<Array<Object>>} Array of mapped and parsed CSV records
+ * @template T
+ * @returns {Promise<Array<T>>} Array of mapped and parsed CSV records
  */
 export async function loadCsvData(customCsvPath) {
   // Use custom path if provided, otherwise use default

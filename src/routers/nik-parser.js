@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
   }
   // Parse the NIK using nik-parser-jurusid
   let parsed = nikParser(nik);
+  /** @type {import('../../globals').ExcelRowData[]} */
   const dataKunto = await loadCsvData();
   // Find the corresponding item in dataKunto
   parsed.current = dataKunto.find((item) => getNumbersOnly(item.nik) === nik);

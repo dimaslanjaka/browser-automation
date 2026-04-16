@@ -1,6 +1,7 @@
 import Bluebird from 'bluebird';
 import { array_shuffle, scheduler } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
+import type { ExcelRowData } from '../../../globals.js';
 import EndpointManager from '../../puppeteer/parallel/EndpointManager.js';
 import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
@@ -23,7 +24,7 @@ async function main() {
   });
   await closeOtherTabs(browser, 2);
 
-  const raw = await loadCsvData();
+  const raw = await loadCsvData<ExcelRowData>();
   const dataKunto = await Bluebird.map(
     raw,
     async (data) => {

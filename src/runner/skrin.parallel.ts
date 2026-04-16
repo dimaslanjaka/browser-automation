@@ -168,7 +168,7 @@ async function processRowWithRetry(row: ExcelRowData, browser: Browser, workerIn
 
 async function main() {
   try {
-    const dataKunto = await Bluebird.resolve((await loadCsvData()) as ExcelRowData[])
+    const dataKunto = await Bluebird.resolve((await loadCsvData<ExcelRowData>()) as ExcelRowData[])
       .filter(async (data) => {
         const existing = await database.getLogById(getNumbersOnly(data.nik));
         return !(existing && existing.data);
