@@ -23,7 +23,7 @@ import SitemapVitePlugin from './scripts/sitemap-vite-plugin.js';
  * @type {import('vite').UserConfig}
  */
 export default defineConfig({
-  cacheDir: path.resolve(__dirname, 'node_modules/.vite'),
+  cacheDir: path.resolve(__dirname, 'tmp/vite'),
   plugins: [
     PrepareVitePlugin(),
     vitePluginMkcert(),
