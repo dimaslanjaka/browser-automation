@@ -3,6 +3,7 @@ import sys
 import hashlib
 import subprocess
 import json
+import argparse
 
 # Global variables
 SRC_DIR = os.path.join(os.getcwd(), "src")
@@ -126,20 +127,21 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
                 custom_title = base
         except Exception:
             pass
-        start_cmd = ["cmd", "/c", "start"]
+        # Use /k to keep terminal open if keep_open, otherwise /c
+        start_cmd = ["cmd", "/k" if keep_open else "/c", "start"]
         if custom_title:
             start_cmd.append(custom_title)
         subprocess.Popen(start_cmd + node_cmd)
         return 0
 
 
-def check(args):
+def check(args, keep_open=False):
     cwd = os.getcwd()
     script = os.path.join(cwd, "src", "puppeteer", "parallel", "check.ts")
-    return run_node(script, args, keep_open=False, same_terminal=True)
+    return run_node(script, args, keep_open=keep_open, same_terminal=True)
 
 
-def launch(args):
+def launch(args, keep_open=False):
     cwd = os.getcwd()
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
@@ -152,10 +154,10 @@ def launch(args):
         return code
 
     script = os.path.join(cwd, "dist", "parallel", "launcher.cjs")
-    return run_node(script, args, keep_open=False)
+    return run_node(script, args, keep_open=keep_open)
 
 
-def skrin(args):
+def skrin(args, keep_open=False):
     cwd = os.getcwd()
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
@@ -168,10 +170,10 @@ def skrin(args):
         return code
 
     script = os.path.join(cwd, "dist", "parallel", "skrin.cjs")
-    return run_node(script, args, keep_open=True)
+    return run_node(script, args, keep_open=keep_open)
 
 
-def skrin_check(args):
+def skrin_check(args, keep_open=False):
     cwd = os.getcwd()
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
@@ -186,46 +188,87 @@ def skrin_check(args):
         return code
 
     script = os.path.join(cwd, "dist", "parallel", "skrin-check-data.cjs")
-    return run_node(script, args, keep_open=True)
+    return run_node(script, args, keep_open=keep_open)
 
 
 def main():
-    def print_help():
-        print("""
-Usage: parallel.py <command> [args...]
+    parser = argparse.ArgumentParser(
+        description="Parallel script runner for browser-automation project.\n\n"
+        "Usage: parallel.py <command> [args...] [-k|--keep-open]"
+    )
+    parser.add_argument(
+        "command",
+        choices=["launch", "skrin", "check", "skrin-check"],
+        help="Command to run",
+    )
+    parser.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        help="Arguments to forward to the JS/TS script",
+    )
+    parser.add_argument(
+        "-k",
+        "--keep-open",
+        action="store_true",
+        help="Keep the terminal open after running the script (only for new terminals)",
+    )
 
-Commands:
-  launch         Build and run the parallel launcher
-  skrin          Build and run the skrin script
-  check          Run the check script
-  skrin-check    Build and run the skrin-check-data script
-
-Options:
-  -h, --help     Show this help message and exit
-        """.strip())
-
-    if (
-        len(sys.argv) < 2
-        or sys.argv[1] in ("-h", "--help")
-        or (len(sys.argv) > 2 and sys.argv[2] in ("-h", "--help"))
-    ):
-        print_help()
+    if "-h" in sys.argv or "--help" in sys.argv:
+        parser.print_help()
+        print("\n\nForwarding help to the selected command's script...\n\n")
+        # Try to forward --help to the JS/TS script for the selected command
+        # Only if a valid command is present
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1]
+            if cmd in ["launch", "skrin", "check", "skrin-check"]:
+                # Forward --help to the JS/TS script
+                # Remove -h/--help from sys.argv for argparse, but pass it to the script
+                args = [a for a in sys.argv[2:] if a not in ["-h", "--help"]]
+                args.append("--help")
+                # Run in same terminal so both help outputs are visible together
+                # Always run in the same terminal for help output
+                if cmd == "launch":
+                    # launch() does not support same_terminal, so call run_node directly
+                    cwd = os.getcwd()
+                    script = os.path.join(cwd, "dist", "parallel", "launcher.cjs")
+                    run_node(script, args, keep_open=False, same_terminal=True)
+                elif cmd == "skrin":
+                    cwd = os.getcwd()
+                    script = os.path.join(cwd, "dist", "parallel", "skrin.cjs")
+                    run_node(script, args, keep_open=False, same_terminal=True)
+                elif cmd == "check":
+                    cwd = os.getcwd()
+                    script = os.path.join(
+                        cwd, "src", "puppeteer", "parallel", "check.ts"
+                    )
+                    run_node(script, args, keep_open=False, same_terminal=True)
+                elif cmd == "skrin-check":
+                    cwd = os.getcwd()
+                    script = os.path.join(
+                        cwd, "dist", "parallel", "skrin-check-data.cjs"
+                    )
+                    run_node(script, args, keep_open=False, same_terminal=True)
         sys.exit(0)
 
-    command = sys.argv[1].lower()
-    args = sys.argv[2:]
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
+
+    parsed = parser.parse_args()
+    command = parsed.command
+    args = parsed.args or []
+    keep_open = parsed.keep_open
 
     if command == "launch":
-        code = launch(args)
+        code = launch(args, keep_open=keep_open)
     elif command == "skrin":
-        code = skrin(args)
+        code = skrin(args, keep_open=keep_open)
     elif command == "check":
-        code = check(args)
+        code = check(args, keep_open=keep_open)
     elif command == "skrin-check":
-        code = skrin_check(args)
+        code = skrin_check(args, keep_open=keep_open)
     else:
-        print(f"Unknown command: {command}\n")
-        print_help()
+        parser.print_help()
         sys.exit(1)
 
     sys.exit(code)
