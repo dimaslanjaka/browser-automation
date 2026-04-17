@@ -190,8 +190,27 @@ def skrin_check(args):
 
 
 def main():
-    if len(sys.argv) < 2:
-        sys.exit(1)
+    def print_help():
+        print("""
+Usage: parallel.py <command> [args...]
+
+Commands:
+  launch         Build and run the parallel launcher
+  skrin          Build and run the skrin script
+  check          Run the check script
+  skrin-check    Build and run the skrin-check-data script
+
+Options:
+  -h, --help     Show this help message and exit
+        """.strip())
+
+    if (
+        len(sys.argv) < 2
+        or sys.argv[1] in ("-h", "--help")
+        or (len(sys.argv) > 2 and sys.argv[2] in ("-h", "--help"))
+    ):
+        print_help()
+        sys.exit(0)
 
     command = sys.argv[1].lower()
     args = sys.argv[2:]
@@ -205,6 +224,8 @@ def main():
     elif command == "skrin-check":
         code = skrin_check(args)
     else:
+        print(f"Unknown command: {command}\n")
+        print_help()
         sys.exit(1)
 
     sys.exit(code)
