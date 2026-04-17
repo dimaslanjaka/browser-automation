@@ -11,7 +11,7 @@ import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import { useTheme } from './components/ThemeContext.jsx';
 
-function LogAccordionItem({ log, idx }) {
+function LogAccordionItem({ log, idx, imageUrl }) {
   let indicatorCLass = '';
   if (log.data?.status === 'invalid') {
     indicatorCLass = styles.textInvalid;
@@ -44,6 +44,26 @@ function LogAccordionItem({ log, idx }) {
         </span>
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
+        {/* Screenshot image if available */}
+        {imageUrl && (
+          <div className="mb-3 text-center">
+            <div>
+              <img
+                src={imageUrl}
+                alt={`Screenshot for NIK ${log.data?.nik}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: 240,
+                  borderRadius: 8,
+                  boxShadow: '0 1px 8px rgba(0,0,0,0.10)',
+                  margin: '0.5em 0',
+                  background: '#f8f9fa',
+                  border: '1px solid #eee'
+                }}
+              />
+            </div>
+          </div>
+        )}
         {/* NIK with copy button */}
         <div className={`d-flex align-items-center mb-2 ${styles.nikRow}`}>
           <span className="fw-bold me-2">NIK:</span>
@@ -277,6 +297,7 @@ function LogAccordionItem({ log, idx }) {
 export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [imageDb, setImageDb] = useState({});
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' });
   const [currentPage, setCurrentPage] = useState(1);
@@ -290,10 +311,11 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     let mounted = true;
     (async () => {
       setLoading(true);
+      const secret = import.meta.env.VITE_JSON_SECRET;
       try {
+        // Fetch logs
         const res = await axios.get(getViteUrl('/assets/data/logs.bin'), { responseType: 'text' });
         let data = [];
-        const secret = import.meta.env.VITE_JSON_SECRET;
         try {
           data = decryptJson(res.data, secret);
         } catch (err) {
@@ -304,9 +326,23 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
       } catch (err) {
         console.error('Failed to fetch logs:', err);
         if (mounted) setLogs([]);
-      } finally {
-        setLoading(false);
       }
+      // Fetch screenshot image DB
+      try {
+        const resImg = await axios.get(getViteUrl('/assets/data/screenshot.bin'), { responseType: 'text' });
+        let imgDb = {};
+        try {
+          imgDb = decryptJson(resImg.data, secret);
+        } catch (err) {
+          console.error('Failed to decrypt screenshot.bin:', err);
+          imgDb = {};
+        }
+        if (mounted) setImageDb(imgDb);
+      } catch (err) {
+        console.error('Failed to fetch screenshot.bin:', err);
+        if (mounted) setImageDb({});
+      }
+      setLoading(false);
     })();
     return () => {
       mounted = false;
@@ -621,9 +657,18 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                 }
               });
             }}>
-            {paginatedLogs.map((log, idx) => (
-              <LogAccordionItem log={log} idx={String(idx + 1 + (safeCurrentPage - 1) * batch)} key={idx} />
-            ))}
+            {paginatedLogs.map((log, idx) => {
+              const nik = log?.data?.nik;
+              const imageUrl = nik && imageDb && typeof imageDb === 'object' ? imageDb[nik] : undefined;
+              return (
+                <LogAccordionItem
+                  log={log}
+                  idx={String(idx + 1 + (safeCurrentPage - 1) * batch)}
+                  key={idx}
+                  imageUrl={imageUrl}
+                />
+              );
+            })}
           </Accordion>
           {/* Pagination */}
           <div className={`my-3 d-flex justify-content-center ${styles.paginationScroll}`}>
