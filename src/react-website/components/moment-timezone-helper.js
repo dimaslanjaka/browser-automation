@@ -1,4 +1,5 @@
 // https://codepen.io/dimaslanjaka/pen/LYegjaV
+/* global Intl */
 // data timezone load https://momentjs.com/timezone/docs/#/data-loading/
 // list timezone https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 // import 'moment';
