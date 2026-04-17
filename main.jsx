@@ -17,8 +17,14 @@ const FullTimezoneListPage = React.lazy(() =>
 const DateFormatWeb = React.lazy(() => import('./src/react-website/DateFormatWeb.jsx'));
 const KemkesIndonesiaKuLogs = React.lazy(() => import('./src/react-website/KemkesIndonesiaKuLogs.jsx'));
 
-const _react = typeof React;
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root');
+let root;
+if (!container._reactRoot) {
+  root = ReactDOM.createRoot(container);
+  container._reactRoot = root;
+} else {
+  root = container._reactRoot;
+}
 
 // Add Backspace navigation handler
 window.addEventListener('keydown', function (e) {

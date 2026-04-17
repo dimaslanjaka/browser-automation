@@ -1,14 +1,15 @@
+import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { getViteUrl } from '../utils-browser-esm.js';
 import copyToClipboard from '../utils/copyToClipboard.js';
+import { decryptJson } from '../utils/json-crypto.js';
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.scss';
 import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import { useTheme } from './components/ThemeContext.jsx';
-import { getViteUrl } from '../utils-browser-esm.js';
-import { useSnackbar } from './components/SnackbarProvider.jsx';
 
 function LogAccordionItem({ log, idx }) {
   let indicatorCLass = '';
@@ -281,38 +282,32 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeKeys, setActiveKeys] = useState([]); // [] means all collapsed
   const [filterOpen, setFilterOpen] = useState(false); // Collapsible filter state
-  const [buildLoading, setBuildLoading] = useState(false);
-  const { showSnackbar } = useSnackbar();
   const batch = 20;
   const navigate = useNavigate();
   const { theme } = useTheme();
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
-    import('../utils/json-crypto.js').then(({ decryptJson }) => {
-      import('axios').then(({ default: axios }) => {
-        axios
-          .get(getViteUrl('/assets/data/logs.json'), { responseType: 'text' })
-          .then((res) => {
-            let data = [];
-            const secret = import.meta.env.VITE_JSON_SECRET;
-            try {
-              data = decryptJson(res.data, secret);
-            } catch (err) {
-              console.error('Failed to decrypt logs:', err);
-              data = [];
-            }
-            if (mounted) setLogs(data);
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.error('Failed to fetch logs:', err);
-            if (mounted) setLogs([]);
-            setLoading(false);
-          });
-      });
-    });
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(getViteUrl('/assets/data/logs.json'), { responseType: 'text' });
+        let data = [];
+        const secret = import.meta.env.VITE_JSON_SECRET;
+        try {
+          data = decryptJson(res.data, secret);
+        } catch (err) {
+          console.error('Failed to decrypt logs:', err);
+          data = [];
+        }
+        if (mounted) setLogs(data);
+      } catch (err) {
+        console.error('Failed to fetch logs:', err);
+        if (mounted) setLogs([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
     return () => {
       mounted = false;
     };
@@ -401,7 +396,9 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   }, [logs, search, filters]);
 
   const totalPages = Math.ceil(filteredLogs.length / batch);
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * batch, currentPage * batch);
+  // Ensure currentPage is always valid (avoid setState in effect)
+  const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedLogs = filteredLogs.slice((safeCurrentPage - 1) * batch, safeCurrentPage * batch);
   // Debug: log the state of logs and pagination
   useEffect(() => {
     console.log(
@@ -414,44 +411,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
       'paginatedLogs.length:',
       paginatedLogs.length
     );
-    if (currentPage > 1 && paginatedLogs.length === 0) {
-      setCurrentPage(1);
-    }
   }, [filteredLogs.length, totalPages, currentPage, paginatedLogs.length]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-    setActiveKeys([]); // Reset expanded accordions on search or filter change
-  }, [search, filters]);
-  useEffect(() => {
-    setActiveKeys([]); // Reset expanded accordions on page change
-  }, [currentPage]);
-
-  async function triggerBuild() {
-    setBuildLoading(true);
-    try {
-      const res = await fetch('/vite/build');
-      let data = null;
-      try {
-        data = await res.json();
-      } catch (err) {
-        // Non-JSON response
-      }
-      if (res.ok && data && data.success) {
-        showSnackbar(data.message || 'Static HTML build triggered', { variant: 'success' });
-      } else if (res.ok && data && !data.success) {
-        showSnackbar(data.error || data.message || 'Build failed', { variant: 'error' });
-      } else if (!res.ok) {
-        showSnackbar(`Build request failed: ${res.status} ${res.statusText}`, { variant: 'error' });
-      } else {
-        showSnackbar('Build triggered (no details returned)', { variant: 'info' });
-      }
-    } catch (err) {
-      showSnackbar('Request failed: ' + err.message, { variant: 'error' });
-    } finally {
-      setBuildLoading(false);
-    }
-  }
 
   if (loading) {
     return <div className="text-center my-5">Loading logs...</div>;
@@ -471,19 +431,6 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             onClick={() => navigate('/')}>
             <i className="fa fa-arrow-left me-2" /> Back
           </button>
-          {import.meta.env.DEV && (
-            <>
-              <button
-                type="button"
-                className={`btn btn-sm ms-2 ${theme === 'dark' ? 'btn-outline-light' : 'btn-outline-dark'} mb-3`}
-                onClick={triggerBuild}
-                disabled={buildLoading}
-                title="Build static HTML from DB (dev only)">
-                <i className={`fa ${buildLoading ? 'fa-spinner fa-spin' : 'fa-hammer'} me-2`} />
-                {buildLoading ? 'Building...' : 'Build Static'}
-              </button>
-            </>
-          )}
           {/* Theme toggle UI omitted for brevity */}
           <h1 className="my-4 text-body text-center">{pageTitle}</h1>
           <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
@@ -657,6 +604,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             </button>
           </InputGroup>
           <Accordion
+            key={`${safeCurrentPage}-${search}-${JSON.stringify(filters)}`}
             style={{ maxHeight: '70vh', overflowY: 'auto' }}
             activeKey={activeKeys}
             onSelect={(eventKey) => {
@@ -674,13 +622,15 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
               });
             }}>
             {paginatedLogs.map((log, idx) => (
-              <LogAccordionItem log={log} idx={String(idx + 1 + (currentPage - 1) * batch)} key={idx} />
+              <LogAccordionItem log={log} idx={String(idx + 1 + (safeCurrentPage - 1) * batch)} key={idx} />
             ))}
           </Accordion>
           {/* Pagination */}
           <div className={`my-3 d-flex justify-content-center ${styles.paginationScroll}`}>
             <Pagination size="sm">
-              <Pagination.Prev disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
+              <Pagination.Prev
+                disabled={safeCurrentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
                 <i className="fa fa-angle-left" aria-hidden="true"></i>
                 <span className="visually-hidden">Previous</span>
               </Pagination.Prev>
@@ -697,7 +647,10 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                     (page >= currentPage - pageWindow && page <= currentPage + pageWindow)
                   ) {
                     pages.push(
-                      <Pagination.Item active={page === currentPage} key={page} onClick={() => setCurrentPage(page)}>
+                      <Pagination.Item
+                        active={page === safeCurrentPage}
+                        key={page}
+                        onClick={() => setCurrentPage(page)}>
                         {page}
                       </Pagination.Item>
                     );
@@ -712,7 +665,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                 return pages;
               })()}
               <Pagination.Next
-                disabled={currentPage === totalPages}
+                disabled={safeCurrentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
                 <i className="fa fa-angle-right" aria-hidden="true"></i>
                 <span className="visually-hidden">Next</span>
