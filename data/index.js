@@ -81,7 +81,7 @@ function createCommentFilter(commentChar = '#') {
  * Filters out comments (lines starting with #) before parsing
  * Maps column names to standardized keys (e.g., 'NAMA' -> 'nama')
  * Parses dates and adds rowIndex to each record
- * Encrypts and saves output as dataKunto.json
+ * Encrypts and saves output as dataKunto.bin
  *
  * @async
  * @param {string} [customCsvPath] - Optional custom path to CSV file. Defaults to './data.csv'
@@ -121,7 +121,7 @@ export async function loadCsvData(customCsvPath) {
 
         const outputDir = path.join(process.cwd(), 'public/assets/data');
         fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(path.join(outputDir, 'dataKunto.json'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
+        fs.writeFileSync(path.join(outputDir, 'dataKunto.bin'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
 
         resolve(dataKunto);
       })

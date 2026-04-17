@@ -11,7 +11,7 @@ This module parses and normalizes CSV data from `data.csv`, mapping various colu
 - **Column Normalization**: Maps multiple possible column names to standardized keys via a `keyMap` (e.g., `NAMA PASIEN` and `NAMA` → `nama`).
 - **Row Indexing**: Adds a `rowIndex` property to each row for easy reference.
 - **Date Formatting**: Normalizes date fields (like `tgl_lahir`) to `DD/MM/YYYY` using [`moment`](https://momentjs.com/), while preserving the original value as `originalTglLahir`.
-- **Data Export**: Writes the normalized data to `public/assets/data/dataKunto.json` for debugging or further use.
+- **Data Export**: Writes the normalized data to `public/assets/data/dataKunto.bin` for debugging or further use.
 - **TypeScript Support**: Output is typed as `ExcelRowData4[]` (see `globals.d.ts`).
 
 ## Usage
@@ -47,4 +47,4 @@ Each row is an object with standardized keys:
 
 - Update `keyMap` in `data/index.js` to support new or changed column names.
 - For debugging, you can uncomment the `console.log` lines in the source to inspect the first and last records.
-- The loader writes the normalized data to `public/assets/data/dataKunto.json` on each run.
+- The loader writes the normalized data to `public/assets/data/dataKunto.bin` on each run.

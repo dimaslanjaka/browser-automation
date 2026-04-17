@@ -291,7 +291,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     (async () => {
       setLoading(true);
       try {
-        const res = await axios.get(getViteUrl('/assets/data/logs.json'), { responseType: 'text' });
+        const res = await axios.get(getViteUrl('/assets/data/logs.bin'), { responseType: 'text' });
         let data = [];
         const secret = import.meta.env.VITE_JSON_SECRET;
         try {

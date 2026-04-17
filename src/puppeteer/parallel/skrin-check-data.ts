@@ -15,7 +15,7 @@ import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
 import EndpointManager from './EndpointManager.js';
 import { isValidNik } from '../../utils/xlsx/fixData.js';
 
-const IMAGE_DATABASE_PATH = 'public/assets/data/screenshot.json';
+const IMAGE_DATABASE_PATH = 'public/assets/data/screenshot.bin';
 const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH)
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};

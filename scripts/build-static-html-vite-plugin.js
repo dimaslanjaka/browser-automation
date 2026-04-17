@@ -15,7 +15,7 @@ nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: tru
 const filename = process.env.DATABASE_FILENAME;
 const currentYear = new Date().getFullYear();
 export const outHtmlPath = path.resolve(process.cwd(), `public/log-${filename}-${currentYear}.html`);
-export const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
+export const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.bin');
 fs.ensureDirSync(path.dirname(outHtmlPath));
 fs.ensureDirSync(path.dirname(outLogsPath));
 

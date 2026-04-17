@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { getViteUrl } from '../utils-browser-esm';
 import { decryptJson } from '../utils/json-crypto';
 import AdSense from './components/Adsense';
-import { useTheme } from './components/ThemeContext';
-import Header from './components/Header';
 import Footer from './components/Footer';
-import { getViteUrl } from '../utils-browser-esm';
+import Header from './components/Header';
+import { useTheme } from './components/ThemeContext';
 
 /**
  * @type {import('highlight.js').HLJSApi | undefined}
@@ -40,7 +40,7 @@ async function loadHighlightAndNikParser() {
  * @returns {React.ReactElement}
  */
 export default function NikParserWeb() {
-  const [nik, setNik] = useState('');
+  const [nik, setNik] = React.useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const resultRef = useRef(null);
@@ -59,7 +59,7 @@ export default function NikParserWeb() {
       let dataKunto = [];
       try {
         const axios = (await import('axios')).default;
-        const response = await axios.get(getViteUrl('/assets/data/dataKunto.json'), { responseType: 'text' });
+        const response = await axios.get(getViteUrl('/assets/data/dataKunto.bin'), { responseType: 'text' });
         const encodedResponse = response.data;
         const secret = import.meta.env.VITE_JSON_SECRET;
         dataKunto = decryptJson(encodedResponse, secret);
