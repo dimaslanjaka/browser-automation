@@ -1632,28 +1632,38 @@ export async function closeOtherTabs(instance, keepCount = 2) {
 }
 
 /**
- * Take a screenshot of the provided Puppeteer `page` and save it to disk when
- * `options.path` is provided. Any directory portion of the path will be
- * created automatically.
+ * Take a screenshot of the provided Puppeteer `page` or a specific element and save it to disk when
+ * `options.path` is provided. Any directory portion of the path will be created automatically.
  *
  * @param {import('puppeteer').Page} page - Puppeteer Page instance.
  * @param {Object} [options] - Screenshot options.
  * @param {string} [options.path] - Filesystem path to write the screenshot. If omitted,
  *   Puppeteer's screenshot will still be created but this function resolves without
  *   returning the buffer.
- * @param {boolean} [options.fullPage=true] - Capture the full scrollable page.
+ * @param {boolean} [options.fullPage=true] - Capture the full scrollable page (ignored if selector is set).
+ * @param {string} [options.selector] - CSS selector for a specific element to screenshot.
  * @returns {Promise<void>} Resolves when the screenshot operation completes.
  */
 export async function pageScreenshot(page, options = {}) {
-  const { path: screenshotPath, fullPage = true } = options;
+  const { path: screenshotPath, fullPage = true, selector } = options;
   // auto create directory if not exists
   if (screenshotPath) {
     const dir = path.dirname(screenshotPath);
-    // `path.dirname('file.png')` returns '.' — only create when a real directory is present
     if (dir && dir !== '.') {
       await fs.promises.mkdir(dir, { recursive: true });
     }
   }
+
+  if (selector) {
+    // Screenshot a specific element
+    const element = await page.$(selector);
+    if (!element) {
+      throw new Error(`Element not found for selector: ${selector}`);
+    }
+    await element.screenshot({ path: screenshotPath });
+    return;
+  }
+
   // Try to avoid CDP errors when the page or document reports 0 width/height
   const getPageDimensions = async () => {
     try {
@@ -1692,7 +1702,6 @@ export async function pageScreenshot(page, options = {}) {
     }
   } catch (err) {
     const msg = String(err?.message || err || '').toLowerCase();
-    // If we received the "0 width" ProtocolError, retry with a fallback viewport and non-fullPage
     if (msg.includes('cannot take screenshot with 0 width') || msg.includes('0 width')) {
       try {
         const vw = Math.max(800, dims.width || 800);
@@ -1700,7 +1709,7 @@ export async function pageScreenshot(page, options = {}) {
         await page.setViewport({ width: vw, height: vh });
         await page.screenshot({ path: screenshotPath, fullPage: false });
       } catch (_e) {
-        throw err; // rethrow original if retry fails
+        throw err;
       }
     } else {
       throw err;
