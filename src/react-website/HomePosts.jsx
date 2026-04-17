@@ -8,7 +8,9 @@ function HomePosts() {
   const [posts, setPosts] = React.useState([]);
 
   React.useEffect(() => {
-    import('./components/post-lists.json').then((module) => setPosts(module.default)).catch(() => setPosts([]));
+    import('./components/post-lists.json', { assert: { type: 'json' } })
+      .then((module) => setPosts(module.default))
+      .catch(() => setPosts([]));
   }, []);
 
   const filteredPosts = posts.filter(
