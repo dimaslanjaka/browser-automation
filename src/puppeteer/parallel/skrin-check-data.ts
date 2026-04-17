@@ -20,10 +20,44 @@ const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
 
-const argv = minimist(process.argv.slice(2));
+const argv = minimist(process.argv.slice(2), {
+  string: ['id'],
+  boolean: ['force', 'help'],
+  alias: {
+    i: 'id',
+    f: 'force',
+    h: 'help'
+  },
+  default: { force: false, id: '' }
+});
 const checkId = argv.id || '';
+const force = argv.force;
+
+// Show help and exit if --help or -h is passed
+if (argv.help) {
+  const helpLines = [
+    'Usage: node skrin-check-data [options]',
+    '',
+    'Options:',
+    '  --id, -i <id>      Set custom screenshot ID suffix',
+    '  --force, -f        Process all data, ignore filters',
+    '  --help, -h         Show this help message',
+    '',
+    'Examples:',
+    '  node skrin-check-data --id=test',
+    '  node skrin-check-data -f',
+    '  node skrin-check-data -i test -f'
+  ];
+  helpLines.forEach((line) => console.log(line));
+  process.exit(0);
+}
+
 if (checkId.length > 0) {
   console.log('Checking data for ID:', checkId);
+}
+
+if (force) {
+  console.log('Force mode enabled: all data will be processed.');
 }
 
 async function main() {
@@ -117,11 +151,19 @@ async function main() {
     })
   );
 
-  console.log('total data', dataKunto.length);
   await autoLoginAndEnterSkriningPage(page);
 
-  for (const data of dataKunto) {
-    if (isValidNik(data.nik)) await findData(data, page);
+  let toProcess: ExcelRowData[];
+  if (force) {
+    toProcess = dataKunto;
+  } else {
+    const filterValidNik = dataKunto.filter((data) => isValidNik(data.nik));
+    const dataNotInImageDb = filterValidNik.filter((data) => !IMAGE_DATABASE[data.nik]);
+    toProcess = dataNotInImageDb;
+  }
+  console.log(`Total data to process: ${toProcess.length}`);
+  for (const data of toProcess) {
+    await findData(data, page, force);
   }
 
   // exit the process after 5 seconds to allow any pending operations to complete
