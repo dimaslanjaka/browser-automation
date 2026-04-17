@@ -151,19 +151,19 @@ async function main() {
     })
   );
 
-  await autoLoginAndEnterSkriningPage(page);
-
   let toProcess: ExcelRowData[];
   if (force) {
     toProcess = dataKunto;
   } else {
     const filterValidNik = dataKunto.filter((data) => isValidNik(data.nik));
-    const dataNotInImageDb = filterValidNik.filter((data) => !IMAGE_DATABASE[data.nik]);
+    const dataNotInImageDb = filterValidNik.filter(
+      (data) => data.nik && data.nik !== '' && data.nik.length > 100 && !IMAGE_DATABASE[data.nik]
+    );
     toProcess = dataNotInImageDb;
   }
   console.log(`Total data to process: ${toProcess.length}`);
   for (const data of toProcess) {
-    await findData(data, page, force);
+    await findData(data, page);
   }
 
   // exit the process after 5 seconds to allow any pending operations to complete
@@ -172,7 +172,21 @@ async function main() {
   }, 5000);
 }
 
-async function findData(data: ExcelRowData, page: import('puppeteer').Page, force = false) {
+let lastLoginTime = 0;
+async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
+  // run `await autoLoginAndEnterSkriningPage(page)` every 10 minutes to keep the session alive, since the skrining page will auto logout after some time
+  const now = Date.now();
+  if (!page || page.isClosed()) {
+    console.error('Page is not available or already closed.');
+    return;
+  }
+  if (!page.url().includes('/skrining')) {
+    await autoLoginAndEnterSkriningPage(page);
+  } else if (now - lastLoginTime > 10 * 60 * 1000) {
+    await autoLoginAndEnterSkriningPage(page);
+    lastLoginTime = now;
+  }
+
   await page.goto('https://sumatera.sitb.id/sitb2024/skrining', { waitUntil: 'networkidle0' });
   // Fill the NIK input field with data.nik
   await page.waitForSelector('#nik_peserta', { visible: true });
@@ -218,19 +232,17 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page, forc
     checkId.length > 0
       ? path.join(tempDir, `${md5(data.nik)}-${checkId}.png`)
       : path.join(tempDir, `${md5(data.nik)}.png`);
-  if (!fs.existsSync(filePath) || force) {
-    await pageScreenshot(page, {
-      path: filePath,
-      selector: '#grid_ta_skrining'
-    });
-    console.log(`Screenshot saved: ${filePath}`);
-    const uri = imageFileToDataUrl(filePath);
-    IMAGE_DATABASE[data.nik] = uri;
-    // Atomic write: write to temp file then rename to avoid truncation/race condition
-    const tmpPath = path.join(tempDir, `${md5(data.nik)}-${process.pid}.json`);
-    writefile(tmpPath, encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
-    fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
-  }
+  await pageScreenshot(page, {
+    path: filePath,
+    selector: '#grid_ta_skrining'
+  });
+  console.log(`Screenshot saved: ${filePath}`);
+  const uri = imageFileToDataUrl(filePath);
+  IMAGE_DATABASE[data.nik] = uri;
+  // Atomic write: write to temp file then rename to avoid truncation/race condition
+  const tmpPath = path.join(tempDir, `${md5(data.nik)}-${process.pid}.json`);
+  writefile(tmpPath, encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
+  fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
 }
 
 if (process.argv.some((arg) => arg.includes('skrin-check-data'))) {
