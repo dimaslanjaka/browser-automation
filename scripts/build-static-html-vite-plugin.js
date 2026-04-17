@@ -1,11 +1,10 @@
+import dotenv from 'dotenv';
 import fs from 'fs-extra';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
-import { getDatabaseFilePath } from '../src/database/SQLiteLogDatabase.js';
-import { toValidMySQLDatabaseName } from '../src/database/db_utils.js';
 import * as databaseModule from '../dist/database/index.mjs';
-import dotenv from 'dotenv';
+import { toValidMySQLDatabaseName } from '../src/database/db_utils.js';
 import { encryptJson } from '../src/utils/json-crypto.js';
 
 // Load .env from parent directory
@@ -14,7 +13,6 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true, quiet
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });
 const filename = process.env.DATABASE_FILENAME;
-const dbPath = getDatabaseFilePath(filename);
 const currentYear = new Date().getFullYear();
 export const outHtmlPath = path.resolve(process.cwd(), `public/log-${filename}-${currentYear}.html`);
 export const outLogsPath = path.resolve(process.cwd(), 'public/assets/data/logs.json');
@@ -78,43 +76,6 @@ export async function buildStaticHtml(options) {
   fs.writeFileSync(outHtmlPath, liveHtml);
   console.log(`Log HTML written to ${outHtmlPath}`);
   return liveHtml;
-}
-
-/**
- * Vite plugin to watch the database file and trigger a full reload when it changes.
- * Runs buildStaticHtml on dev server startup and on .db file changes.
- * @returns {import('vite').Plugin} Vite plugin object
- */
-export default function dbLogHtmlStatic() {
-  return {
-    name: 'db-log-html-static',
-    async configureServer(server) {
-      // Dev server: generate on startup and on .db changes
-      await buildStaticHtml();
-      server.watcher.add([dbPath]);
-      server.watcher.on('change', async (file) => {
-        if (file.endsWith(path.extname(dbPath))) {
-          await buildStaticHtml();
-        }
-      });
-      // Add custom middleware for /vite/build (compatible with Vite 4/5)
-      server.middlewares.use('/vite/build', async (req, res, _next) => {
-        try {
-          await buildStaticHtml();
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ success: true, message: 'Static HTML built.' }));
-        } catch (err) {
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ success: false, error: err.message }));
-        }
-      });
-    },
-    async buildStart() {
-      // Production build: generate once at build start
-      await buildStaticHtml();
-    }
-  };
 }
 
 if (process.argv.some((arg) => arg.includes('build-static-html'))) {

@@ -1,10 +1,10 @@
 import vitePluginLegacy from '@vitejs/plugin-legacy';
 import vitePluginReact from '@vitejs/plugin-react';
+import { spawnAsync } from 'cross-spawn';
 import path from 'path';
 import { defineConfig } from 'vite';
 import vitePluginMkcert from 'vite-plugin-mkcert';
 import AfterBuildCopyPlugin from './scripts/after-build-vite-plugin.js';
-import dbLogHtmlStatic from './scripts/build-static-html-vite-plugin.js';
 import HtmlListPlugin from './scripts/list-public-html-vite-plugin.js';
 import PrepareVitePlugin from './scripts/prepare-vite-plugin.js';
 import RedirectBrowserAutomationPlugin from './scripts/redirect-browser-automation-plugin.js';
@@ -28,7 +28,16 @@ export default defineConfig({
     PrepareVitePlugin(),
     vitePluginMkcert(),
     RedirectBrowserAutomationPlugin(),
-    dbLogHtmlStatic(),
+    {
+      name: 'build-static-html-once',
+      async buildStart() {
+        // spawn node scripts\build-static-html-vite-plugin.js
+        await spawnAsync('node', ['-r', './.vscode/js-hook.cjs', 'scripts/build-static-html-vite-plugin.js'], {
+          stdio: 'inherit',
+          shell: true
+        });
+      }
+    },
     HtmlListPlugin(),
     vitePluginReact(),
     AfterBuildCopyPlugin(),
