@@ -1,4 +1,5 @@
 import Bluebird from 'bluebird';
+import minimist from 'minimist';
 import moment from 'moment';
 import { array_shuffle, fs, md5, writefile } from 'sbg-utility';
 import path from 'upath';
@@ -12,11 +13,18 @@ import { getNumbersOnly, noop } from '../../utils-browser.js';
 import { imageFileToDataUrl } from '../../utils/image.js';
 import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
 import EndpointManager from './EndpointManager.js';
+import { isValidNik } from '../../utils/xlsx/fixData.js';
 
 const IMAGE_DATABASE_PATH = 'public/assets/data/screenshot.json';
 const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH)
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
+
+const argv = minimist(process.argv.slice(2));
+const checkId = argv.id || '';
+if (checkId.length > 0) {
+  console.log('Checking data for ID:', checkId);
+}
 
 async function main() {
   // instantiate endpoint manager and try to claim a free endpoint before connecting
@@ -113,7 +121,7 @@ async function main() {
   await autoLoginAndEnterSkriningPage(page);
 
   for (const data of dataKunto) {
-    await findData(data, page);
+    if (isValidNik(data.nik)) await findData(data, page);
   }
 
   // exit the process after 5 seconds to allow any pending operations to complete
@@ -164,7 +172,10 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page, forc
 
   // screenshot #grid_ta_skrining element using pageScreenshot util
   const tempDir = path.join(process.cwd(), 'tmp/screenshot');
-  const filePath = path.join(tempDir, `${md5(data.nik)}.png`);
+  const filePath =
+    checkId.length > 0
+      ? path.join(tempDir, `${md5(data.nik)}-${checkId}.png`)
+      : path.join(tempDir, `${md5(data.nik)}.png`);
   if (!fs.existsSync(filePath) || force) {
     await pageScreenshot(page, {
       path: filePath,
@@ -180,7 +191,9 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page, forc
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv.some((arg) => arg.includes('skrin-check-data'))) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
