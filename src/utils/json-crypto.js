@@ -53,6 +53,14 @@ function jsonParseWithCircularRefsBrowser(str) {
   return obj;
 }
 
+/**
+ * Encrypt a JSON-serializable object using AES encryption.
+ * Handles circular references safely.
+ *
+ * @param {any} data - The data to encrypt (can contain circular references)
+ * @param {string} secret - The encryption key
+ * @returns {string} The encrypted string
+ */
 export function encryptJson(data, secret) {
   const jsonString = jsonStringifyWithCircularRefsBrowser(data);
   // Use CryptoJS AES for both Node.js and browser
@@ -60,13 +68,15 @@ export function encryptJson(data, secret) {
 }
 
 /**
- * Decrypt an encrypted JSON string
+ * Decrypt an AES-encrypted JSON string.
+ * Handles circular references safely.
+ *
+ * @template T
  * @param {string} encrypted - The encrypted string
  * @param {string} secret - The encryption key
- * @returns {Object} Decrypted JSON object
+ * @returns {T} The decrypted JSON object (may contain circular references)
  */
-
-export function decryptJson(encrypted, secret) {
+export function decryptJson /** @type {<T = any>(encrypted: string, secret: string) => T} */(encrypted, secret) {
   // Use CryptoJS AES for both Node.js and browser
   const bytes = CryptoJS.AES.decrypt(encrypted, secret);
   const jsonString = bytes.toString(CryptoJS.enc.Utf8);
