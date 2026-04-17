@@ -4,9 +4,12 @@ import hashlib
 import subprocess
 import json
 
-CACHE_FILE_LAUNCHER = os.path.join("tmp", "build", ".rollup_cache_launcher.json")
-CACHE_FILE_SKRIN = os.path.join("tmp", "build", ".rollup_cache_skrin.json")
+# Global variables
 SRC_DIR = os.path.join(os.getcwd(), "src")
+CACHE_DIR = os.path.join("tmp", "build")
+CACHE_FILE_LAUNCHER = os.path.join(CACHE_DIR, ".rollup_cache_launcher.json")
+CACHE_FILE_SKRIN = os.path.join(CACHE_DIR, ".rollup_cache_skrin.json")
+CACHE_FILE_SKRIN_CHECK = os.path.join(CACHE_DIR, ".rollup_cache_skrin_check.json")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
 
@@ -78,11 +81,23 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
     if same_terminal:
         return subprocess.call(node_cmd)
     else:
-        # Detect if this is the launcher or skrin script to set a custom title
+        # Set a custom terminal title based on script name or type
         custom_title = None
         try:
             base = os.path.basename(script_path)
-            if base.startswith("launcher"):
+            if base == "skrin-check-data.cjs":
+                ps_cmd = [
+                    "powershell",
+                    "-Command",
+                    "(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'skrin-check-data.cjs' } | ForEach-Object { try { $p = $_; $t = (Get-Process -Id $p.ProcessId).MainWindowTitle } catch {}; if ($t -like 'Skrin-Check*') { $t } } | Measure-Object).Count",
+                ]
+                result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                try:
+                    count = int(result.stdout.strip())
+                except Exception:
+                    count = 0
+                custom_title = f"Skrin-Check {count + 1}"
+            elif base.startswith("launcher"):
                 ps_cmd = [
                     "powershell",
                     "-Command",
@@ -106,6 +121,9 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
                 except Exception:
                     count = 0
                 custom_title = f"Skrin {count + 1}"
+            else:
+                # Use the script base name as the terminal title for other scripts
+                custom_title = base
         except Exception:
             pass
         start_cmd = ["cmd", "/c", "start"]
@@ -153,6 +171,24 @@ def skrin(args):
     return run_node(script, args, keep_open=True)
 
 
+def skrin_check(args):
+    cwd = os.getcwd()
+
+    os.environ["BUNDLE_INPUT"] = os.path.join(
+        cwd, "src", "puppeteer", "parallel", "skrin-check-data.ts"
+    )
+    os.environ["BUNDLE_OUTPUT"] = os.path.join(
+        cwd, "dist", "parallel", "skrin-check-data.cjs"
+    )
+
+    code = run_rollup_if_needed(CACHE_FILE_SKRIN_CHECK)
+    if code != 0:
+        return code
+
+    script = os.path.join(cwd, "dist", "parallel", "skrin-check-data.cjs")
+    return run_node(script, args, keep_open=True)
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(1)
@@ -166,6 +202,8 @@ def main():
         code = skrin(args)
     elif command == "check":
         code = check(args)
+    elif command == "skrin-check":
+        code = skrin_check(args)
     else:
         sys.exit(1)
 
