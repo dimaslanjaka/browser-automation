@@ -11,6 +11,7 @@
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "build:tsc": "npx tsc -p tsconfig.build.json",
     "build:tsup": "tsup",
+    "build:logs": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs scripts/build-static-html-vite-plugin.js",
     "clean": "rimraf node_modules/.vite dist",
     "clean:full": "rimraf node_modules .vite dist && yarn install",
     "download:google-sheet": "node download-google-sheet.js",
@@ -168,7 +169,7 @@
     "tsup": "^8",
     "typescript": "^5",
     "typescript-eslint": "^8",
-    "vite": "^7.3.1",
+    "vite": "^8.0.8",
     "vite-plugin-mkcert": "^1.17.10",
     "watchpack": "^2.5.1",
     "why-is-node-running": "^3"
