@@ -2,14 +2,13 @@ import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
 import moment from 'moment';
-import { normalizePathUnix } from 'sbg-utility';
-import SharedPreferences from 'sbg-utility/dist/utils/SharedPreferences';
+import { normalizePathUnix, SharedPreferences } from 'sbg-utility';
 import path from 'upath';
 import xlsx from 'xlsx';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { downloadSheets } from '../utils/googleSheet.js';
-import { DataItem } from './types.js';
 import { ucwords } from '../utils/string.js';
+import { DataItem } from './types.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 let sehatindonesiakuDb = new LogDatabase('sehatindonesiaku-kemkes', {
