@@ -5,13 +5,11 @@ import subprocess
 import json
 import argparse
 
-# Global variables
 CWD = os.getcwd()
 SRC_DIR = os.path.join(CWD, "src")
 CACHE_DIR = os.path.join("tmp", "build")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
-# Cache file list (avoid repeated os.walk)
 _SOURCE_FILES = None
 
 
@@ -64,7 +62,7 @@ def save_cache(data, cache_file):
         json.dump(data, f, separators=(",", ":"))
 
 
-def run_rollup_if_needed(cache_file, entry, output_file):
+def run_rollup_if_needed(cache_file, entry, output_file, same_terminal=False):
     cache = load_cache(cache_file)
 
     files = get_files_for_bundle(entry)
@@ -77,12 +75,17 @@ def run_rollup_if_needed(cache_file, entry, output_file):
         print(f"✅ No changes detected. Skipping Rollup. [cache: {rel_cache}]")
         return 0
 
-    if not output_exists:
-        print(f"⚠️ Output missing. Forcing rebuild: {output_file}")
+    print(f"🔄 Running Rollup... [cache: {rel_cache}]")
 
-    print(f"🔄 Changes detected. Running Rollup... [cache: {rel_cache}]")
+    cmd_str = "npx rollup -c rollup.config.js"
 
-    code = subprocess.call(["cmd", "/c", "npx", "rollup", "-c", "rollup.config.js"])
+    if same_terminal:
+        code = subprocess.call(cmd_str, shell=True)
+    else:
+        if os.name == "nt":
+            code = subprocess.call(["cmd", "/c", cmd_str])
+        else:
+            code = subprocess.call(cmd_str, shell=True)
 
     if code == 0:
         save_cache({"hash": current_hash}, cache_file)
@@ -91,33 +94,45 @@ def run_rollup_if_needed(cache_file, entry, output_file):
 
 
 def run_node(script_path, args, keep_open=False, same_terminal=False):
+    script_path = os.path.abspath(script_path)
+
+    if not os.path.exists(script_path):
+        print(f"❌ Script not found: {script_path}")
+        return 1
+
     is_ts = script_path.endswith(".ts")
 
-    node_cmd = [
-        "node",
-        "--no-warnings=ExperimentalWarning",
-    ]
+    node_cmd = ["node", "--no-warnings=ExperimentalWarning"]
 
     if is_ts:
         node_cmd += ["--loader", "ts-node/esm"]
 
-    node_cmd += ["-r", "./.vscode/js-hook.cjs", script_path, *args]
+    node_cmd += ["-r", "./.vscode/js-hook.cjs", script_path] + args
 
+    print(f"[DEBUG] CMD: {' '.join(node_cmd)}")
+
+    # ✅ SAME TERMINAL
     if same_terminal:
-        return subprocess.call(node_cmd)
+        code = subprocess.call(node_cmd)
 
-    creationflags = 0
+        if keep_open:
+            input("\nPress Enter to exit...")
+
+        return code
+
+    # ❗ NEW TERMINAL
     if os.name == "nt":
-        creationflags = subprocess.CREATE_NEW_CONSOLE
-
-    subprocess.Popen(node_cmd, creationflags=creationflags)
+        cmd = ["cmd", "/k"] + node_cmd if keep_open else ["cmd", "/c"] + node_cmd
+        subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    else:
+        subprocess.Popen(node_cmd)
 
     return 0
 
 
-def check(args, keep_open=False):
+def check(args, keep_open=False, same_terminal=False):
     script = os.path.join(CWD, "src", "puppeteer", "parallel", "check.ts")
-    return run_node(script, args, keep_open=keep_open, same_terminal=True)
+    return run_node(script, args, keep_open, same_terminal)
 
 
 COMMANDS = {
@@ -142,7 +157,7 @@ COMMANDS = {
 }
 
 
-def run_bundle(command, args, keep_open=False):
+def run_bundle(command, args, keep_open=False, same_terminal=False):
     cfg = COMMANDS[command]
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
@@ -152,75 +167,47 @@ def run_bundle(command, args, keep_open=False):
 
     script = os.path.join(CWD, "dist", "parallel", cfg["output"])
 
-    code = run_rollup_if_needed(cfg["cache"], cfg["entry"], script)
-    if code != 0:
-        return code
+    # ensure build exists
+    if not os.path.exists(script):
+        print(f"⚠️ Output missing: {script}")
+        code = run_rollup_if_needed(
+            cfg["cache"], cfg["entry"], script, same_terminal=True
+        )
+        if code != 0:
+            return code
+    else:
+        code = run_rollup_if_needed(cfg["cache"], cfg["entry"], script, same_terminal)
+        if code != 0:
+            return code
 
-    return run_node(script, args, keep_open=keep_open)
+    return run_node(script, args, keep_open, same_terminal)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parallel script runner for browser-automation project.\n\n"
-        "Usage: parallel.py <command> [args...] [-k|--keep-open]"
-    )
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "command",
         choices=["launch", "skrin", "check", "skrin-check"],
-        help="Command to run",
     )
 
-    parser.add_argument(
-        "args",
-        nargs=argparse.REMAINDER,
-        help="Arguments to forward to the JS/TS script",
-    )
+    parser.add_argument("-k", "--keep-open", action="store_true")
+    parser.add_argument("-s", "--same-terminal", action="store_true")
 
-    parser.add_argument(
-        "-k",
-        "--keep-open",
-        action="store_true",
-        help="Keep the terminal open after running the script",
-    )
+    # 🔥 important fix
+    parsed, unknown = parser.parse_known_args()
 
-    if "-h" in sys.argv or "--help" in sys.argv:
-        parser.print_help()
-        print("\n\nForwarding help to the selected command's script...\n\n")
-
-        if len(sys.argv) > 1:
-            cmd = sys.argv[1]
-
-            if cmd in COMMANDS or cmd == "check":
-                args = [a for a in sys.argv[2:] if a not in ["-h", "--help"]]
-                args.append("--help")
-
-                if cmd == "check":
-                    script = os.path.join(
-                        CWD, "src", "puppeteer", "parallel", "check.ts"
-                    )
-                else:
-                    script = os.path.join(
-                        CWD, "dist", "parallel", COMMANDS[cmd]["output"]
-                    )
-
-                run_node(script, args, same_terminal=True)
-
-        sys.exit(0)
-
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(0)
-
-    parsed = parser.parse_args()
     command = parsed.command
-    args = parsed.args or []
+    args = unknown
     keep_open = parsed.keep_open
+    same_terminal = parsed.same_terminal
+
+    print(f"[DEBUG] same_terminal={same_terminal}, args={args}")
 
     if command == "check":
-        code = check(args, keep_open=keep_open)
+        code = check(args, keep_open, same_terminal)
     else:
-        code = run_bundle(command, args, keep_open=keep_open)
+        code = run_bundle(command, args, keep_open, same_terminal)
 
     sys.exit(code)
 
