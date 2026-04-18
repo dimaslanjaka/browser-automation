@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,3 +25,35 @@ export function imageFileToDataUrl(filePath, mimeType) {
 }
 
 export { imageFileToDataUrl as imageToUri };
+
+/**
+ * Open an image file with the default system image viewer.
+ * Works on Windows, macOS, and Linux (xdg-open).
+ * @param {string} filePath
+ */
+export async function openImageExternally(filePath) {
+  if (!fs.existsSync(filePath)) {
+    console.error(`File does not exist: ${filePath}`);
+    return;
+  }
+  try {
+    const safePath = String(filePath).replace(/"/g, '\\"');
+    const cmd =
+      process.platform === 'win32'
+        ? `start "" "${safePath}"`
+        : process.platform === 'darwin'
+          ? `open "${safePath}"`
+          : `xdg-open "${safePath}"`;
+    exec(cmd, (err) => {
+      if (err) console.error('Failed to open image:', err && err.message ? err.message : err);
+    });
+  } catch (e) {
+    // ignore
+  }
+}
+
+if (process.argv.some((arg) => arg.includes('image.js'))) {
+  // const body = await got('https://sindresorhus.com/unicorn').buffer();
+  // const preview = await displayImageInTerminal(body);
+  // console.log(preview);
+}
