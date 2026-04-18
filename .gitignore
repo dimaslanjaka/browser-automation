@@ -80,5 +80,5 @@ deobfuscate/
 /database*
 /phpmyadmin
 
-# Ignore rollup bundle output for database
-/src/bundle/database/
+# Ignore rollup bundle output
+/src/bundle/
