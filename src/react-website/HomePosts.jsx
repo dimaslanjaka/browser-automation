@@ -1,17 +1,11 @@
 import React from 'react';
 import { Card, Col, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import posts from './components/post-lists.json';
 
 function HomePosts() {
   const navigate = useNavigate();
   const [search, setSearch] = React.useState('');
-  const [posts, setPosts] = React.useState([]);
-
-  React.useEffect(() => {
-    import('./components/post-lists.json', { assert: { type: 'json' } })
-      .then((module) => setPosts(module.default))
-      .catch(() => setPosts([]));
-  }, []);
 
   const filteredPosts = posts.filter(
     (post) =>
