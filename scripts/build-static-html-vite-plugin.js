@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import nunjucks from 'nunjucks';
 import path from 'path';
 import { loadCsvData } from '../data/index.js';
-import * as databaseModule from '../dist/database/index.mjs';
+import * as databaseModule from '../src/bundle/database/index.mjs';
 import { toValidMySQLDatabaseName } from '../src/database/db_utils.js';
 import { encryptJson } from '../src/utils/json-crypto.js';
 

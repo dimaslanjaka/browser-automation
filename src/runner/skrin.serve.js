@@ -1,6 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as databaseModule from '../../dist/database/index.mjs';
+import * as databaseModule from '../../src/bundle/database/index.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import cors from 'cors';
 import express from 'express';

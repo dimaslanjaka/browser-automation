@@ -49,7 +49,7 @@ const databaseConfig = {
   external,
   output: [
     {
-      dir: 'dist/database',
+      dir: 'src/bundle/database',
       format: 'cjs',
       preserveModules: true,
       preserveModulesRoot: 'src/database',
@@ -57,7 +57,7 @@ const databaseConfig = {
       sourcemap: true
     },
     {
-      dir: 'dist/database',
+      dir: 'src/bundle/database',
       format: 'esm',
       preserveModules: true,
       preserveModulesRoot: 'src/database',
@@ -68,7 +68,7 @@ const databaseConfig = {
   plugins: [
     json(),
     resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] }),
-    typescript({ compilerOptions: { outDir: 'dist/database' } }),
+    typescript({ compilerOptions: { outDir: 'src/bundle/database' } }),
     commonjs({ extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] })
   ]
 };
@@ -78,14 +78,14 @@ const databaseDtsConfig = {
   input: 'src/database/index.ts',
   output: [
     {
-      dir: 'dist/database',
+      dir: 'src/bundle/database',
       format: 'es',
       preserveModules: true,
       preserveModulesRoot: 'src/database',
       entryFileNames: '[name].d.cts'
     },
     {
-      dir: 'dist/database',
+      dir: 'src/bundle/database',
       format: 'es',
       preserveModules: true,
       preserveModulesRoot: 'src/database',

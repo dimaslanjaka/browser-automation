@@ -3,7 +3,7 @@ import minimist from 'minimist';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { loadCsvData } from '../../data/index.js';
-import * as databaseModule from '../../dist/database/index.mjs';
+import * as databaseModule from '../../src/bundle/database/index.mjs';
 import { processData } from '../../dist/runner/skrin/direct-process-data.mjs';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { getPuppeteer } from '../puppeteer_utils.js';
