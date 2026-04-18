@@ -273,6 +273,9 @@ def main():
         same_terminal = True
 
     if command == "check":
+        # Always run 'check' in the same terminal so its output/help appears inline
+        same_terminal = True
+        keep_open = False
         code = check(args, keep_open, same_terminal)
     else:
         code = run_bundle(command, args, keep_open, same_terminal)
