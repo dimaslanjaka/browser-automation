@@ -20,6 +20,7 @@ export default function LogAccordionItem({ log, idx, imageUrl }) {
     <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
       <Accordion.Header className={styles.accordionHeader}>
         <span className="d-block w-100">
+          {imageUrl && <i className="fa-duotone fa-solid fa-image me-2" title="Image available" aria-hidden="true"></i>}
           <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> -{' '}
           {
             // On mobile, trim nama to fit smaller screens
