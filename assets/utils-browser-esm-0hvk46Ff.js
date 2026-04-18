@@ -1,0 +1,1 @@
+function e(...e){let t=`/`;typeof window<`u`&&(t=`/browser-automation/`);let n=e.filter(Boolean).map(e=>e.replace(/^\/+|\/+$/g,``)).join(`/`);return t.replace(/\/+$/,``)+(n?`/`+n:``)}export{e as t};
