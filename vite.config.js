@@ -31,10 +31,11 @@ export default defineConfig({
     {
       name: 'build-static-html-once',
       async buildStart() {
-        // spawn node scripts\build-static-html-vite-plugin.js
         await spawnAsync('node', ['-r', './.vscode/js-hook.cjs', 'scripts/build-static-html-vite-plugin.js'], {
           stdio: 'inherit',
           shell: true
+        }).catch((e) => {
+          console.error('Failed to build static HTML:', e && e.message ? e.message : e);
         });
       }
     },
@@ -61,15 +62,29 @@ export default defineConfig({
     rollupOptions: {
       // https://rollupjs.org/configuration-options/
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          'react-router': ['react-router', 'react-router-dom'],
-          bootstrap: ['bootstrap', 'react-bootstrap'],
-          highlight: ['highlight.js'],
-          'nik-parser': ['nik-parser-jurusid'],
-          moment: ['moment', 'moment-timezone'],
-          axios: ['axios'],
-          'deepmerge-ts': ['deepmerge-ts']
+        manualChunks: (id) => {
+          const idn = id.split(path.sep).join('/');
+          const mapping = {
+            react: ['react', 'react-dom'],
+            'react-router': ['react-router', 'react-router-dom'],
+            bootstrap: ['bootstrap', 'react-bootstrap'],
+            highlight: ['highlight.js'],
+            'nik-parser': ['nik-parser-jurusid'],
+            moment: ['moment', 'moment-timezone'],
+            axios: ['axios'],
+            'deepmerge-ts': ['deepmerge-ts']
+          };
+          for (const [chunk, pkgs] of Object.entries(mapping)) {
+            for (const pkg of pkgs) {
+              if (
+                idn.includes(`/node_modules/${pkg}/`) ||
+                idn.includes(`/node_modules/${pkg}$`) ||
+                idn.includes(`/node_modules/${pkg}.`)
+              ) {
+                return chunk;
+              }
+            }
+          }
         }
       }
     }
