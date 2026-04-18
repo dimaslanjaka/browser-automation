@@ -101,7 +101,7 @@ const directProcessDataConfig = {
   external,
   output: [
     {
-      dir: 'dist/runner/skrin',
+      dir: 'src/bundle/runner/skrin',
       format: 'cjs',
       preserveModules: true,
       preserveModulesRoot: 'src/runner/skrin',
@@ -109,7 +109,7 @@ const directProcessDataConfig = {
       sourcemap: true
     },
     {
-      dir: 'dist/runner/skrin',
+      dir: 'src/bundle/runner/skrin',
       format: 'esm',
       preserveModules: true,
       preserveModulesRoot: 'src/runner/skrin',
@@ -120,7 +120,7 @@ const directProcessDataConfig = {
   plugins: [
     json(),
     resolve({ preferBuiltins: true, extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] }),
-    typescript({ compilerOptions: { outDir: 'dist/runner/skrin' } }),
+    typescript({ compilerOptions: { outDir: 'src/bundle/runner/skrin' } }),
     commonjs({ extensions: ['.js', '.mjs', '.cjs', '.ts', '.json', '.node'] })
   ]
 };
@@ -134,14 +134,14 @@ const directProcessDataDtsConfig = {
   },
   output: [
     {
-      dir: 'dist/runner/skrin',
+      dir: 'src/bundle/runner/skrin',
       format: 'es',
       preserveModules: true,
       preserveModulesRoot: 'src/runner/skrin',
       entryFileNames: '[name].d.cts'
     },
     {
-      dir: 'dist/runner/skrin',
+      dir: 'src/bundle/runner/skrin',
       format: 'es',
       preserveModules: true,
       preserveModulesRoot: 'src/runner/skrin',
