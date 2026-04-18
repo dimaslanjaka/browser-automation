@@ -184,17 +184,76 @@ def run_bundle(command, args, keep_open=False, same_terminal=False):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    # visible/helping parser used only to print nice top-level help
+    help_text = (
+        "Wrapper to build and run parallel bundles (launcher, skrin, etc.).\n"
+        "This script will build the requested bundle if missing and then run it with Node.\n"
+    )
 
+    epilog = (
+        "Commands:\n"
+        "  launch       Build & run the launcher bundle.\n"
+        "  skrin        Build & run the skrin bundle.\n"
+        "  skrin-check  Build & run the skrin-check-data bundle.\n"
+        "  check        Run the local TypeScript check script (no bundling).\n\n"
+        "Options:\n"
+        "  -k, --keep-open     Keep the launched process console open after it exits.\n"
+        "  -s, --same-terminal Run the process in the same terminal (blocking).\n\n"
+        "Notes:\n"
+        "  Any remaining arguments are forwarded to the underlying script.\n"
+        "  Providing `-h` or `--help` after the command will print this top-level help\n"
+        "  and still forward the help flag to the bundled script so it can print its own help.\n\n"
+        "Examples:\n"
+        "  python bin/parallel.py skrin -s -- -h\n"
+        "  python bin/parallel.py launch -k\n"
+    )
+
+    help_parser = argparse.ArgumentParser(
+        prog=os.path.basename(sys.argv[0]),
+        description=help_text,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    help_parser.add_argument(
+        "command",
+        choices=["launch", "skrin", "check", "skrin-check"],
+        help="Which parallel command to build/run (see Commands section).",
+    )
+    help_parser.add_argument(
+        "-k",
+        "--keep-open",
+        action="store_true",
+        help="Keep the launched console open after exit.",
+    )
+    help_parser.add_argument(
+        "-s",
+        "--same-terminal",
+        action="store_true",
+        help="Run the process in the same terminal (blocking).",
+    )
+
+    # primary parser: disable automatic -h so we can forward it to the node script
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         "command",
         choices=["launch", "skrin", "check", "skrin-check"],
     )
-
     parser.add_argument("-k", "--keep-open", action="store_true")
     parser.add_argument("-s", "--same-terminal", action="store_true")
 
-    # 🔥 important fix
+    raw = sys.argv[1:]
+
+    if not raw:
+        help_parser.print_help()
+        sys.exit(0)
+
+    # If user asked top-level help (before any command), show it and exit
+    if raw[0] in ("-h", "--help"):
+        help_parser.print_help()
+        sys.exit(0)
+
+    # parse known args without argparse swallowing -h after command
     parsed, unknown = parser.parse_known_args()
 
     command = parsed.command
@@ -203,6 +262,15 @@ def main():
     same_terminal = parsed.same_terminal
 
     print(f"[DEBUG] same_terminal={same_terminal}, args={args}")
+
+    # If the user requested help for the subcommand (e.g. `parallel.py skrin-check -h`),
+    # print the python help first, add a blank line, and force running the
+    # underlying script in the same terminal so its help prints inline.
+    forward_help = "-h" in args or "--help" in args
+    if forward_help:
+        help_parser.print_help()
+        print()
+        same_terminal = True
 
     if command == "check":
         code = check(args, keep_open, same_terminal)
