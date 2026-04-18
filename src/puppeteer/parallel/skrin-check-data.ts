@@ -52,9 +52,17 @@ if (argv.help) {
     'Usage: node skrin-check-data [options]',
     '',
     'Options:',
-    '  --nik, -n <nik>    Process specific NIK(s)',
+    '  --nik, -n <nik>    Process specific NIK(s) (comma-separated allowed)',
     '  --force, -f        Process all data',
+    '  --open, -o         Open saved screenshot(s) after capture',
     '  --help, -h         Show this help message',
+    '',
+    'Notes:',
+    '  - Screenshots are saved to tmp/screenshot as JPEG for local inspection.',
+    '  - Per-entry encrypted .bin files are written to',
+    '    public/assets/data/screenshots/<md5>.bin and referenced in',
+    '    tmp/screenshot/metadata.bin (encrypted).',
+    '  - Ensure VITE_JSON_SECRET is set in the environment for encryption.',
     '',
     'Examples:',
     '  node skrin-check-data -n 3201',
@@ -227,6 +235,17 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
   const tmpScreenshotDir = path.join(process.cwd(), 'tmp', 'screenshot');
   const tmpFilename = `${md5(data.nik)}.jpg`;
   const tmpFilePath = path.join(tmpScreenshotDir, tmpFilename);
+  // Maximize window and set viewport to available screen size or fallback to 1920x1080
+  try {
+    const windowId = await page.windowId();
+    await browser.setWindowBounds(windowId, { windowState: 'maximized' });
+    const { width, height } = browser.wsEndpoint
+      ? { width: 1920, height: 1080 }
+      : await page.evaluate(() => ({ width: window.screen.availWidth, height: window.screen.availHeight }));
+    await page.setViewport({ width, height });
+  } catch {
+    // Ignore errors (some runtimes may not support windowId/setWindowBounds)
+  }
   await pageScreenshot(page, {
     path: tmpFilePath,
     selector: '#grid_ta_skrining',
