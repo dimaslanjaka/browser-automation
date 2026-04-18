@@ -34,6 +34,12 @@ import { endpointManager } from './utils.js';
     } catch (err) {
       console.error('Error handling targetcreated:', err);
     }
+    // refresh endpoint file when targets change
+    try {
+      endpointManager.writeEndpoint(browser.wsEndpoint());
+    } catch (e) {
+      console.error('Failed to refresh endpoint on targetcreated:', e);
+    }
   });
 
   browser.on('targetdestroyed', (target) => {
@@ -42,6 +48,11 @@ import { endpointManager } from './utils.js';
     } catch (err) {
       console.error('Error handling targetdestroyed:', err);
     }
+    try {
+      endpointManager.writeEndpoint(browser.wsEndpoint());
+    } catch (e) {
+      console.error('Failed to refresh endpoint on targetdestroyed:', e);
+    }
   });
 
   browser.on('targetchanged', (target) => {
@@ -49,6 +60,11 @@ import { endpointManager } from './utils.js';
       console.log('Target changed:', target.type(), target.url());
     } catch (err) {
       console.error('Error handling targetchanged:', err);
+    }
+    try {
+      endpointManager.writeEndpoint(browser.wsEndpoint());
+    } catch (e) {
+      console.error('Failed to refresh endpoint on targetchanged:', e);
     }
   });
 
