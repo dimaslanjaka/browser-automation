@@ -40,6 +40,7 @@
   "type": "module",
   "dependencies": {
     "7zip-bin": "^5",
+    "@fancyapps/ui": "^6.1.13",
     "@google-cloud/local-auth": "^3",
     "@popperjs/core": "^2",
     "ansi-colors": "^4",

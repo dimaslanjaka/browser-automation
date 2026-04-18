@@ -1,8 +1,9 @@
-import { Accordion, Table } from 'react-bootstrap';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { decryptJson } from '../utils/json-crypto.js';
+import { useEffect, useState } from 'react';
+import { Accordion, Table } from 'react-bootstrap';
+import Fancybox from './Fancybox.jsx';
 import copyToClipboard from '../utils/copyToClipboard.js';
+import { decryptJson } from '../utils/json-crypto.js';
 import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.scss';
 
@@ -287,13 +288,13 @@ function ImageBlock({ imageUrl, nik }) {
             if (!cancelled) setSrc(uri);
           } catch (err) {
             // per instruction: on error don't display, just log
-            console.error('Failed to fetch/decrypt image bin for', nik, err);
+            console.warn('Failed to fetch/decrypt image bin for', nik, err);
           }
         } else {
           if (!cancelled) setSrc(imageUrl);
         }
       } catch (err) {
-        console.error('Failed to load image for', nik, err);
+        console.warn('Failed to load image for', nik, err);
       }
     }
     load();
@@ -303,24 +304,27 @@ function ImageBlock({ imageUrl, nik }) {
   }, [imageUrl, nik]);
 
   if (!src) return null;
+  const Thumb = (
+    <a data-fancybox="gallery" href={src}>
+      <img
+        src={src}
+        alt={`Screenshot for NIK ${nik}`}
+        loading="lazy"
+        style={{
+          maxWidth: '100%',
+          maxHeight: 240,
+          borderRadius: 8,
+          boxShadow: '0 1px 8px rgba(0,0,0,0.10)',
+          margin: '0.5em 0',
+          background: '#f8f9fa',
+          border: '1px solid #eee'
+        }}
+      />
+    </a>
+  );
   return (
     <div className="mb-3 text-center">
-      <div>
-        <img
-          src={src}
-          alt={`Screenshot for NIK ${nik}`}
-          loading="lazy"
-          style={{
-            maxWidth: '100%',
-            maxHeight: 240,
-            borderRadius: 8,
-            boxShadow: '0 1px 8px rgba(0,0,0,0.10)',
-            margin: '0.5em 0',
-            background: '#f8f9fa',
-            border: '1px solid #eee'
-          }}
-        />
-      </div>
+      <Fancybox>{Thumb}</Fancybox>
     </div>
   );
 }
