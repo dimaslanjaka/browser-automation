@@ -74,11 +74,11 @@ if (force) {
   console.log('Force mode enabled: all data will be processed.');
 }
 
-async function main() {
-  const endpointManager = new EndpointManager(puppeteerTempPath);
-  let claimedEndpoint: string | undefined;
-  let browser: import('puppeteer').Browser;
+const endpointManager = new EndpointManager(puppeteerTempPath);
+let claimedEndpoint: string | undefined;
+let browser: import('puppeteer').Browser;
 
+async function main() {
   const tried = new Set<string>();
 
   while (true) {
@@ -99,6 +99,15 @@ async function main() {
       continue;
     }
 
+    // Register cleanup after successful claim
+    process.on('SIGINT', () => {
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      process.exit(0);
+    });
     process.on('exit', () => {
       endpointManager.releaseEndpointClaim(endpoint, process.pid);
     });
@@ -258,8 +267,15 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
 }
 
 if (process.argv.some((arg) => arg.includes('skrin-check-data'))) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  main()
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    })
+    .finally(() => {
+      // Do not close the browser here to allow inspection of the final state.
+      // If you want to close it, you can uncomment the following lines:
+      endpointManager.releaseEndpointClaim(claimedEndpoint!, process.pid);
+      process.exit(0);
+    });
 }
