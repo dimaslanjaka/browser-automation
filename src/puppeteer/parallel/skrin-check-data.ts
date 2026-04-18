@@ -1,7 +1,8 @@
 import Bluebird from 'bluebird';
 import minimist from 'minimist';
 import moment from 'moment';
-import { array_shuffle, fs, md5, writefile } from 'sbg-utility';
+import { array_shuffle, fs, writefile } from 'sbg-utility';
+import md5 from '../../utils/md5.js';
 import path from 'upath';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
@@ -15,7 +16,7 @@ import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
 import { isValidNik } from '../../utils/xlsx/fixData.js';
 import EndpointManager from './EndpointManager.js';
 
-const IMAGE_DATABASE_PATH = 'public/assets/data/screenshot.bin';
+const IMAGE_DATABASE_PATH = 'tmp/screenshot/metadata.bin';
 const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH)
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
@@ -213,18 +214,21 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
     return tbody && tbody.querySelectorAll('tr').length > 0;
   });
 
-  const tempDir = path.join(process.cwd(), 'tmp/screenshot');
-  const filePath = path.join(tempDir, `${md5(data.nik)}.png`);
-
+  // Save real image to tmp for inspection
+  const tmpScreenshotDir = path.join(process.cwd(), 'tmp', 'screenshot');
+  const tmpFilename = `${md5(data.nik)}.jpg`;
+  const tmpFilePath = path.join(tmpScreenshotDir, tmpFilename);
   await pageScreenshot(page, {
-    path: filePath,
-    selector: '#grid_ta_skrining'
+    path: tmpFilePath,
+    selector: '#grid_ta_skrining',
+    type: 'jpeg',
+    quality: 70
   });
 
-  console.log(`Screenshot saved: ${filePath}`);
+  console.log(`Screenshot saved (tmp): ${tmpFilePath}`);
   if (openScreenshots) {
     console.log('Opening image with default viewer...');
-    await openImageExternally(filePath);
+    await openImageExternally(tmpFilePath);
   }
 
   // overwrite only targeted NIKs
@@ -232,10 +236,23 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
     delete IMAGE_DATABASE[data.nik];
   }
 
-  const uri = imageFileToDataUrl(filePath);
-  IMAGE_DATABASE[data.nik] = uri;
+  // Convert the saved JPEG to a data URI, encrypt it, and write per-image .bin file
+  try {
+    const uri = imageFileToDataUrl(tmpFilePath);
+    const outDir = path.join(process.cwd(), 'public', 'assets', 'data', 'screenshots');
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    const outFilename = `${md5(data.nik)}.bin`;
+    const outPath = path.join(outDir, outFilename);
+    const tmpOut = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.bin`);
+    writefile(tmpOut, encryptJson(uri, process.env.VITE_JSON_SECRET));
+    fs.renameSync(tmpOut, outPath);
+    IMAGE_DATABASE[data.nik] = `/assets/data/screenshots/${outFilename}`;
+  } catch {
+    // Fallback: store the tmp jpeg as a public asset path
+    IMAGE_DATABASE[data.nik] = `/tmp/screenshot/${tmpFilename}`;
+  }
 
-  const tmpPath = path.join(tempDir, `${md5(data.nik)}-${process.pid}.json`);
+  const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);
   writefile(tmpPath, encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
   fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
 }

@@ -1642,10 +1642,12 @@ export async function closeOtherTabs(instance, keepCount = 2) {
  *   returning the buffer.
  * @param {boolean} [options.fullPage=true] - Capture the full scrollable page (ignored if selector is set).
  * @param {string} [options.selector] - CSS selector for a specific element to screenshot.
+ * @param {string} [options.type] - Image type to write: 'png', 'jpeg' or 'webp'.
+ * @param {number} [options.quality] - Image quality (0-100) for lossy formats like 'jpeg' or 'webp'.
  * @returns {Promise<void>} Resolves when the screenshot operation completes.
  */
 export async function pageScreenshot(page, options = {}) {
-  const { path: screenshotPath, fullPage = true, selector } = options;
+  const { path: screenshotPath, fullPage = true, selector, type, quality } = options;
   // auto create directory if not exists
   if (screenshotPath) {
     const dir = path.dirname(screenshotPath);
@@ -1660,7 +1662,11 @@ export async function pageScreenshot(page, options = {}) {
     if (!element) {
       throw new Error(`Element not found for selector: ${selector}`);
     }
-    await element.screenshot({ path: screenshotPath });
+    /** @type {import('puppeteer').ScreenshotOptions} */
+    const opts = { path: screenshotPath };
+    if (type) opts.type = type;
+    if (quality) opts.quality = quality;
+    await element.screenshot(opts);
     return;
   }
 
@@ -1695,11 +1701,11 @@ export async function pageScreenshot(page, options = {}) {
 
   try {
     // If fullPage requested but dimensions are still zero, avoid fullPage to prevent ProtocolError
-    if (fullPage && dims.width > 0 && dims.height > 0) {
-      await page.screenshot({ path: screenshotPath, fullPage: true });
-    } else {
-      await page.screenshot({ path: screenshotPath, fullPage: false });
-    }
+    /** @type {import('puppeteer').ScreenshotOptions} */
+    const opts = { path: screenshotPath, fullPage: fullPage && dims.width > 0 && dims.height > 0 };
+    if (type) opts.type = type;
+    if (quality) opts.quality = quality;
+    await page.screenshot(opts);
   } catch (err) {
     const msg = String(err?.message || err || '').toLowerCase();
     if (msg.includes('cannot take screenshot with 0 width') || msg.includes('0 width')) {
@@ -1707,7 +1713,10 @@ export async function pageScreenshot(page, options = {}) {
         const vw = Math.max(800, dims.width || 800);
         const vh = Math.max(600, dims.height || 600);
         await page.setViewport({ width: vw, height: vh });
-        await page.screenshot({ path: screenshotPath, fullPage: false });
+        const opts = { path: screenshotPath, fullPage: false };
+        if (type) opts.type = type;
+        if (quality) opts.quality = quality;
+        await page.screenshot(opts);
       } catch (_e) {
         throw err;
       }

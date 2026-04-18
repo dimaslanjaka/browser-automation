@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { getViteUrl } from '../utils-browser-esm.js';
+import md5 from '../utils/md5.js';
 import { decryptJson } from '../utils/json-crypto.js';
 import { useTheme } from './components/ThemeContext.jsx';
 import styles from './LogsViewer.module.scss';
@@ -13,7 +14,7 @@ import LogAccordionItem from './LogAccordionItem.jsx';
 export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [logs, setLogs] = useState(/** @type {import('../runner/skrin/types.js').SkrinDatabaseEntry[]} */ ([]));
   const [loading, setLoading] = useState(true);
-  const [imageDb, setImageDb] = useState({});
+
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' });
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,21 +44,7 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
         console.error('Failed to fetch logs:', err);
         if (mounted) setLogs([]);
       }
-      // Fetch screenshot image DB
-      try {
-        const resImg = await axios.get(getViteUrl('/assets/data/screenshot.bin'), { responseType: 'text' });
-        let imgDb = {};
-        try {
-          imgDb = decryptJson(resImg.data, secret);
-        } catch (err) {
-          console.error('Failed to decrypt screenshot.bin:', err);
-          imgDb = {};
-        }
-        if (mounted) setImageDb(imgDb);
-      } catch (err) {
-        console.error('Failed to fetch screenshot.bin:', err);
-        if (mounted) setImageDb({});
-      }
+      // screenshot.bin is no longer used by the frontend; images are loaded per-entry
       setLoading(false);
     })();
     return () => {
@@ -375,7 +362,11 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
             }}>
             {paginatedLogs.map((log, idx) => {
               const nik = log?.data?.nik;
-              const imageUrl = nik && imageDb && typeof imageDb === 'object' ? imageDb[nik] : undefined;
+              let imageUrl = undefined;
+              if (nik) {
+                const filename = `${md5(nik)}.bin`;
+                imageUrl = getViteUrl(`/assets/data/screenshots/${filename}`);
+              }
               return (
                 <LogAccordionItem
                   log={log}

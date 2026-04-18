@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { md5, writefile } from 'sbg-utility';
+import { writefile } from 'sbg-utility';
+import md5 from '../utils/md5.js';
 import { toNumber } from '../utils/number.js';
 
 /**
