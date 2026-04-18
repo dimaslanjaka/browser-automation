@@ -1,8 +1,7 @@
 import Bluebird from 'bluebird';
 import minimist from 'minimist';
 import moment from 'moment';
-import { array_shuffle, fs, writefile } from 'sbg-utility';
-import md5 from '../../utils/md5.js';
+import { fs, writefile } from 'sbg-utility';
 import path from 'upath';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
@@ -13,6 +12,7 @@ import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { getNumbersOnly } from '../../utils-browser.js';
 import { imageFileToDataUrl, openImageExternally } from '../../utils/image.js';
 import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
+import md5 from '../../utils/md5.js';
 import { isValidNik } from '../../utils/xlsx/fixData.js';
 import EndpointManager from './EndpointManager.js';
 
@@ -148,12 +148,10 @@ async function main() {
 
   const database = skrinDatabase;
 
-  const dataKunto = array_shuffle(
-    await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      return !!existing;
-    })
-  );
+  const dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
+    const existing = await database.getLogById(getNumbersOnly(data.nik));
+    return !!existing;
+  });
 
   let toProcess: ExcelRowData[];
 
