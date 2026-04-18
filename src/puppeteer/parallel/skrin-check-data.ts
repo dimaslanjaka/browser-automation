@@ -9,7 +9,7 @@ import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs, getPuppeteer, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { getNumbersOnly } from '../../utils-browser.js';
+import { getNumbersOnly, sleep } from '../../utils-browser.js';
 import { imageFileToDataUrl, openImageExternally } from '../../utils/image.js';
 import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
 import md5 from '../../utils/md5.js';
@@ -244,14 +244,16 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
   } catch {
     // Ignore errors (some runtimes may not support windowId/setWindowBounds)
   }
+  await sleep(1000); // Wait for resize to take effect
   await pageScreenshot(page, {
     path: tmpFilePath,
     selector: '#grid_ta_skrining',
     type: 'jpeg',
     quality: 70
   });
+  await sleep(500); // Ensure file is fully written
 
-  console.log(`Screenshot saved (tmp): ${tmpFilePath}`);
+  console.log(`Screenshot saved: ${tmpFilePath}`);
   if (openScreenshots) {
     console.log('Opening image with default viewer...');
     await openImageExternally(tmpFilePath);
