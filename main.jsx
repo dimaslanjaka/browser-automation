@@ -1,9 +1,11 @@
 import './main.scss';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './src/react-website/components/ThemeContext.jsx'; // IMPORTANT: Do NOT lazy load ThemeProvider. It must wrap the app at the top level for context to work.
 import { SnackbarProvider } from './src/react-website/components/SnackbarProvider.jsx';
+import ReactGA from 'react-ga4';
+
 const Home = React.lazy(() => import('./src/react-website/Home.jsx'));
 const NikParserApp = React.lazy(() => import('./src/react-website/nik-parser-website.jsx'));
 const LogsViewer = React.lazy(() => import('./src/react-website/LogsViewer.jsx'));
@@ -18,31 +20,52 @@ const DateFormatWeb = React.lazy(() => import('./src/react-website/DateFormatWeb
 const KemkesIndonesiaKuLogs = React.lazy(() => import('./src/react-website/KemkesIndonesiaKuLogs.jsx'));
 
 const container = document.getElementById('root');
-let root;
-if (!container._reactRoot) {
-  root = ReactDOM.createRoot(container);
-  container._reactRoot = root;
-} else {
-  root = container._reactRoot;
+
+// Safer root initialization (avoid mutating DOM node)
+const root = ReactDOM.createRoot(container);
+
+const testMode = import.meta.env.DEV || false;
+
+// Initialize Google Analytics (GA4) if measurement ID is provided via Vite env
+const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+if (GA_ID) {
+  ReactGA.initialize(GA_ID, {
+    // Enable test mode in development to prevent sending real hits
+    testMode
+  });
+}
+
+function RouteChangeTracker() {
+  // Hooks must run unconditionally
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (testMode || !GA_ID) return; // Skip sending hits in dev/test or if GA not configured
+
+    // Send a page_view to GA4 on each route change
+    ReactGA.send({
+      hitType: 'pageview',
+      page: location.pathname + location.search
+    });
+  }, [location]);
+
+  return null;
 }
 
 // Add Backspace navigation handler
 window.addEventListener('keydown', function (e) {
   // Only trigger on Backspace, not in input/textarea/contenteditable
-  if (
-    e.key === 'Backspace' &&
-    !e.repeat &&
-    !(
-      document.activeElement &&
-      (document.activeElement.tagName === 'INPUT' ||
-        document.activeElement.tagName === 'TEXTAREA' ||
-        document.activeElement.isContentEditable)
-    )
-  ) {
+  const active = document.activeElement;
+
+  const isEditable =
+    active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+
+  if (e.key === 'Backspace' && !e.repeat && !isEditable) {
     // Only go back if previous page is in same domain
     if (window.history.length > 1) {
       const prevUrl = document.referrer;
-      if (prevUrl && prevUrl.startsWith(window.location.origin)) {
+
+      if (prevUrl?.startsWith(window.location.origin)) {
         e.preventDefault();
         window.history.back();
       }
@@ -54,6 +77,7 @@ root.render(
   <ThemeProvider>
     <SnackbarProvider>
       <BrowserRouter basename="/browser-automation">
+        <RouteChangeTracker />
         <React.Suspense fallback={<div>Loading...</div>}>
           <Routes>
             <Route path="/" element={<Home />} />

@@ -88,6 +88,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-with-fingerprints": "^2.3.4",
     "react-bootstrap": "^2",
+    "react-ga4": "^3.0.1",
     "react-router-dom": "^7",
     "safelinkify": "^1",
     "sbg-utility": "^2.0.11",
