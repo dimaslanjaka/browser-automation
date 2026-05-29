@@ -1,7 +1,7 @@
 import { delay } from 'sbg-utility';
 import goWithRetry from './puppeteer/goWithRetry.js';
-import { waitForDomStable, isElementVisible } from './puppeteer_utils.js';
-import { waitEnter } from './utils.js';
+import { isElementVisible, waitForDomStable } from './puppeteer_utils.js';
+import { sleep } from './utils.js';
 
 /**
  * Logs into the skrining web application using provided credentials.
@@ -123,18 +123,18 @@ export async function autoLoginAndEnterSkriningPage(page) {
     if (!firstResult) {
       if (firstReason === 'captcha_visible') {
         let attempts = 0;
+        process.stdout.write('CAPTCHA is visible. Please solve the CAPTCHA in the browser to continue.\n\n');
         let solved = false;
-        while (attempts < 5) {
+        while (true) {
           attempts++;
-          await waitEnter('CAPTCHA detected. Please solve it in the browser, then press Enter to continue...');
-
+          process.stdout.write('\rWaiting for user to solve CAPTCHA...  ' + (attempts + 1));
           // After user indicates they've attempted to solve CAPTCHA, check for welcome panel
           try {
             const welcomeEl = await page.$('.panel.panel-primary');
             if (welcomeEl) {
               const welcomeText = await page.evaluate((el) => el.innerText || '', welcomeEl);
               if (/SELAMAT\s+DATANG\s+DI\s+SISTEM\s+INFORMASI\s+TUBERKULOSIS/i.test(welcomeText)) {
-                console.log('Detected SITB welcome panel — treating as logged in.');
+                process.stdout.write('\nDetected SITB welcome panel — treating as logged in.');
                 solved = true;
                 break;
               }
@@ -143,12 +143,14 @@ export async function autoLoginAndEnterSkriningPage(page) {
             // Also accept if login form is no longer present (meaning login succeeded)
             const loginFormEl2 = await page.$('input[name="username"]');
             if (!loginFormEl2) {
-              console.log('Login form no longer present — treating as logged in.');
+              process.stdout.write('\nLogin form no longer present — treating as logged in.');
               solved = true;
               break;
             }
           } catch (_err) {
             // ignore and retry
+          } finally {
+            await sleep(1000); // wait before next check
           }
         }
         if (!solved) {
