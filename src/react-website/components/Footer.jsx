@@ -17,7 +17,7 @@ export default function Footer() {
         <div className="d-flex justify-content-between align-items-center">
           <small>&copy; 2025 {siteInfo.title}</small>
           <div>
-            {socialMedia.facebook && (
+            {/* {socialMedia.facebook && (
               <a
                 href={socialMedia.facebook}
                 target="_blank"
@@ -26,7 +26,7 @@ export default function Footer() {
                 className="mx-2">
                 <i className="fab fa-facebook fa-lg" style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }} />
               </a>
-            )}
+            )} */}
             {/* {socialMedia.github && (
               <a
                 href={socialMedia.github}

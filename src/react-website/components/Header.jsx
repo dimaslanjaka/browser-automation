@@ -47,7 +47,7 @@ export default function Header() {
               <i className={`fa fa-${theme === 'light' ? 'moon' : 'sun'}`} style={{ fontSize: '1.1em' }} />
             </label>
           </div>
-          {socialMedia.facebook && (
+          {/* {socialMedia.facebook && (
             <Nav.Link
               href={socialMedia.facebook}
               target="_blank"
@@ -60,7 +60,7 @@ export default function Header() {
                 style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2', fontSize: '1.25em' }}
               />
             </Nav.Link>
-          )}
+          )} */}
           {/* {socialMedia.github && (
             <Nav.Link
               href={socialMedia.github}
