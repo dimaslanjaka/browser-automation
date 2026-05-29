@@ -8,6 +8,7 @@ import { LogDatabase } from '../../database/LogDatabase.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
 import puppeteer from 'puppeteer';
 import { processData } from '../../runner/skrin/direct-process-data.js';
+import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
 import EndpointManager from './EndpointManager.js';
@@ -148,10 +149,17 @@ async function main(opts: { loop?: boolean; max?: number }) {
     data: ExcelRowData,
     databaseInstance: LogDatabase,
     options: ProcessDataOptions
-  ) {
+  ): Promise<ProcessDataResult> {
     const result = await processData(page, data, databaseInstance, options).catch((err) => {
+      const description = err instanceof Error ? err.message : String(err);
       console.error('Error processing data:', err);
-      return { status: 'error', error: err.message || String(err) };
+      const caughtResult: ProcessDataResult = {
+        status: 'error',
+        reason: 'process_data_exception',
+        description
+      };
+
+      return caughtResult;
     });
 
     return result;
