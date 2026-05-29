@@ -62,7 +62,14 @@ def save_cache(data, cache_file):
         json.dump(data, f, separators=(",", ":"))
 
 
-def run_rollup_if_needed(cache_file, entry, output_file, same_terminal=False):
+def run_rollup_if_needed(
+    cache_file, entry, output_file, same_terminal=False, force=False
+):
+    """Run Rollup if cache differs or if `force` is True.
+
+    When `force` is True (e.g. --no-cache), ignore the saved cache and
+    always run Rollup to rebuild the bundle.
+    """
     cache = load_cache(cache_file)
 
     files = get_files_for_bundle(entry)
@@ -71,11 +78,11 @@ def run_rollup_if_needed(cache_file, entry, output_file, same_terminal=False):
     rel_cache = os.path.relpath(cache_file, CWD)
     output_exists = os.path.exists(output_file)
 
-    if cache.get("hash") == current_hash and output_exists:
+    if not force and cache.get("hash") == current_hash and output_exists:
         print(f"✅ No changes detected. Skipping Rollup. [cache: {rel_cache}]")
         return 0
 
-    print(f"🔄 Running Rollup... [cache: {rel_cache}]")
+    print(f"🔄 Running Rollup... [cache: {rel_cache}] (force={force})")
 
     cmd_str = "npx rollup -c rollup.config.js"
 
@@ -157,7 +164,7 @@ COMMANDS = {
 }
 
 
-def run_bundle(command, args, keep_open=False, same_terminal=False):
+def run_bundle(command, args, keep_open=False, same_terminal=False, force=False):
     cfg = COMMANDS[command]
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
@@ -171,12 +178,14 @@ def run_bundle(command, args, keep_open=False, same_terminal=False):
     if not os.path.exists(script):
         print(f"⚠️ Output missing: {script}")
         code = run_rollup_if_needed(
-            cfg["cache"], cfg["entry"], script, same_terminal=True
+            cfg["cache"], cfg["entry"], script, same_terminal=True, force=force
         )
         if code != 0:
             return code
     else:
-        code = run_rollup_if_needed(cfg["cache"], cfg["entry"], script, same_terminal)
+        code = run_rollup_if_needed(
+            cfg["cache"], cfg["entry"], script, same_terminal, force=force
+        )
         if code != 0:
             return code
 
@@ -232,6 +241,12 @@ def main():
         action="store_true",
         help="Run the process in the same terminal (blocking).",
     )
+    help_parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force rebuild and bypass cache check (useful for debugging).",
+    )
 
     # primary parser: disable automatic -h so we can forward it to the node script
     parser = argparse.ArgumentParser(add_help=False)
@@ -241,6 +256,7 @@ def main():
     )
     parser.add_argument("-k", "--keep-open", action="store_true")
     parser.add_argument("-s", "--same-terminal", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true")
 
     raw = sys.argv[1:]
 
@@ -260,8 +276,9 @@ def main():
     args = unknown
     keep_open = parsed.keep_open
     same_terminal = parsed.same_terminal
+    force = getattr(parsed, "force", False)
 
-    print(f"[DEBUG] same_terminal={same_terminal}, args={args}")
+    print(f"[DEBUG] same_terminal={same_terminal}, force={force}, args={args}")
 
     # If the user requested help for the subcommand (e.g. `parallel.py skrin-check -h`),
     # print the python help first, add a blank line, and force running the
@@ -278,7 +295,7 @@ def main():
         keep_open = False
         code = check(args, keep_open, same_terminal)
     else:
-        code = run_bundle(command, args, keep_open, same_terminal)
+        code = run_bundle(command, args, keep_open, same_terminal, force=force)
 
     sys.exit(code)
 
