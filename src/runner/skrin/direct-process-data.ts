@@ -494,6 +494,26 @@ export async function processData(
       }
     }
 
+    // CXR handle
+
+    await typeAndTrigger(page, '#form_item_cxr_pemeriksaan_id input', 'Tidak');
+
+    // <div id="form_item_cxr_pemeriksaan_id" class="form-item">
+    //     <div class="form-item-label">Dilakukan Pemeriksaan CXR<span class="required"> *</span></div>
+    //     <div class="form-item-separator">:</div>
+    //     <div id="field_item_cxr_pemeriksaan_id" class="form-item-field">
+    //         <span class="k-widget k-combobox k-header" style="width: 250px;"><span tabindex="-1" unselectable="on" class="k-dropdown-wrap k-state-default"><input name="cxr_pemeriksaan_id_input" class="k-input k-valid" type="text" autocomplete="off" title="" role="combobox" aria-expanded="false" tabindex="0" aria-disabled="false" aria-readonly="false" aria-autocomplete="list" aria-owns="cxr_pemeriksaan_id_listbox" aria-busy="false" aria-activedescendant="07c94f4a-bb67-4609-a169-0ca1f1adaab3" style="width: 100%;"><span tabindex="-1" unselectable="on" class="k-select"><span unselectable="on" class="k-icon k-i-arrow-s" role="button" tabindex="-1" aria-controls="cxr_pemeriksaan_id_listbox">select</span></span></span><input id="cxr_pemeriksaan_id" name="cxr_pemeriksaan_id" required="required" data-required-msg="Kolom Dilakukan Pemeriksaan CXR harus diisi" style="width: 250px; display: none;" data-role="combobox" aria-disabled="false" aria-readonly="false" class="k-valid"></span>
+    //         <span class="k-invalid-msg" data-for="cxr_pemeriksaan_id" style="display: none;"></span>
+    //     </div>
+    // </div>
+
+    await typeAndTrigger(page, '#form_item_cxr_alasan textarea', 'Tidak');
+
+    // <div id="field_item_cxr_alasan" class="form-item-field">
+    //     <textarea type="text" id="cxr_alasan" name="cxr_alasan" data-required-msg="Kolom Alasan Tidak CXR harus diisi" class="k-textbox k-invalid" maxlength="500" style="width:350px;" required="required" aria-invalid="true"></textarea>
+    //     <span class="k-widget k-tooltip k-tooltip-validation k-invalid-msg" data-for="cxr_alasan" role="alert"><span class="k-icon k-warning"> </span> Kolom Alasan Tidak CXR harus diisi</span>
+    // </div>
+
     await sleep(2000);
 
     // Re-check if the identity modal is visible
