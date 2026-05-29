@@ -5,7 +5,8 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
-import { closeOtherTabs, getPuppeteer, maximizeWindow } from '../../puppeteer_utils.js';
+import { closeOtherTabs } from '../../puppeteer_utils.js';
+import puppeteer from 'puppeteer';
 import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
@@ -52,10 +53,12 @@ async function main(opts: { loop?: boolean; max?: number }) {
     });
 
     try {
-      // connect using existing helper which will use puppeteer.connect when browserWSEndpoint is provided
-      const res = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
-      browser = res.browser;
-      res.page.goto('http://sh.webmanajemen.com').catch(noop);
+      // connect directly using puppeteer's connect when browserWSEndpoint is provided
+      browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+      // reuse an existing page if available, otherwise open a new one
+      const pages = await browser.pages();
+      const connPage = pages && pages.length > 0 ? pages[0] : await browser.newPage();
+      connPage.goto('http://sh.webmanajemen.com').catch(noop);
       claimedEndpoint = endpoint;
       break;
     } catch (err: any) {
@@ -82,8 +85,6 @@ async function main(opts: { loop?: boolean; max?: number }) {
   await closeOtherTabs(browser, 2);
   // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
   const page = await browser.newPage();
-  // maximize browser window and set viewport to fill the screen
-  await maximizeWindow(page);
   page.goto('http://sh.webmanajemen.com').catch(noop);
   await page.bringToFront();
 
@@ -125,7 +126,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
   type ProcessDataOptions = Parameters<typeof processData>[3];
 
   // Strongly infer types instead of using any
-  type PageType = Awaited<ReturnType<typeof getPuppeteer>>['page'];
+  type PageType = import('puppeteer').Page;
 
   // helper: resolve option value (removes repetition)
   function resolveOpt(value: boolean | undefined, fallback: boolean): boolean {
