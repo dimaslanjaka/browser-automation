@@ -1,6 +1,7 @@
 import { delay } from 'sbg-utility';
 import goWithRetry from './puppeteer/goWithRetry.js';
-import { waitForDomStable } from './puppeteer_utils.js';
+import { waitForDomStable, isElementVisible } from './puppeteer_utils.js';
+import { waitEnter } from './utils.js';
 
 /**
  * Logs into the skrining web application using provided credentials.
@@ -31,17 +32,27 @@ export async function skrinLogin(page) {
   await page.type('input[name="password"]', process.env.skrin_password, { delay: 50 });
   // Wait a short moment to ensure values are registered
   await delay(500);
+  // If CAPTCHA image exists and is visible, skip automatic submit to allow manual solving
+  try {
+    const captchaSelector = '#gambar-captcha';
+    if (await isElementVisible(page, captchaSelector)) {
+      console.warn('CAPTCHA detected on login page; skipping automatic submit.');
+      return { result: false, reason: 'captcha_visible' };
+    }
+  } catch (_err) {
+    // ignore errors from visibility check and proceed with submit
+  }
   await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
   // After login, check if login form is still present (login failed)
   await waitForDomStable(page, 2000, 10000);
   const loginFormSelector = 'input[name="username"]';
   const loginFormEl = await page.$(loginFormSelector);
   if (loginFormEl) {
-    return false;
+    return { result: false, reason: 'login_form_present' };
   }
   // Optionally, check for a known post-login element here if needed
   console.log('Login successful');
-  return true;
+  return { result: true, reason: 'success' };
 }
 
 /**
@@ -105,9 +116,46 @@ export async function autoLoginAndEnterSkriningPage(page) {
   }
   if (sessionExpired) {
     console.log('Session expired detected. Re-login required.');
-    const loginSuccess = await skrinLogin(page);
-    if (!loginSuccess) {
-      throw new Error('Login failed: login form still present after login.');
+
+    // Try to login once. If CAPTCHA appears, wait for manual solve and check for success
+    const { result: firstResult, reason: firstReason } = await skrinLogin(page);
+    if (!firstResult) {
+      if (firstReason === 'captcha_visible') {
+        let attempts = 0;
+        let solved = false;
+        while (attempts < 5) {
+          attempts++;
+          await waitEnter('CAPTCHA detected. Please solve it in the browser, then press Enter to continue...');
+
+          // After user indicates they've attempted to solve CAPTCHA, check for welcome panel
+          try {
+            const welcomeEl = await page.$('.panel.panel-primary');
+            if (welcomeEl) {
+              const welcomeText = await page.evaluate((el) => el.innerText || '', welcomeEl);
+              if (/SELAMAT\s+DATANG\s+DI\s+SISTEM\s+INFORMASI\s+TUBERKULOSIS/i.test(welcomeText)) {
+                console.log('Detected SITB welcome panel — treating as logged in.');
+                solved = true;
+                break;
+              }
+            }
+
+            // Also accept if login form is no longer present (meaning login succeeded)
+            const loginFormEl2 = await page.$('input[name="username"]');
+            if (!loginFormEl2) {
+              console.log('Login form no longer present — treating as logged in.');
+              solved = true;
+              break;
+            }
+          } catch (_err) {
+            // ignore and retry
+          }
+        }
+        if (!solved) {
+          throw new Error('Login failed: CAPTCHA not solved after multiple attempts.');
+        }
+      } else {
+        throw new Error(`Login failed: ${firstReason || 'unknown'}`);
+      }
     }
     // After login, re-enter skrining page and recheck
     await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/skrining', {

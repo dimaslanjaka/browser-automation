@@ -770,7 +770,11 @@ async function _testSkriningData() {
 
 const _main = async () => {
   const { page, browser } = await getPuppeteer();
-  await skrinLogin(page);
+  const { result: loginResult, reason: loginReason } = await skrinLogin(page);
+  if (!loginResult) {
+    logLine(`Login failed: ${loginReason || 'unknown'}`);
+    throw new Error(`Login failed: ${loginReason || 'unknown'}`);
+  }
   /**
    * @type {import('./types.js').SkrinData[]}
    */

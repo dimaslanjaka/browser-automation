@@ -165,7 +165,6 @@ async function main(opts: { loop?: boolean; max?: number }) {
       processed++;
       console.log(`Processing item ${processed}${isFinite(max) ? `/${max}` : ''}`);
 
-      // eslint-disable-next-line no-await-in-loop
       const result = await processOne(page, data, database, buildOptions());
 
       if (result.status !== 'success') {
