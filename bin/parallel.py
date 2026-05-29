@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import sys
 import hashlib
@@ -62,13 +63,25 @@ def save_cache(data, cache_file):
         json.dump(data, f, separators=(",", ":"))
 
 
+@dataclass
+class RollupResult:
+    exit_code: int
+    did_build: bool
+    current_hash: str
+
+
 def run_rollup_if_needed(
     cache_file, entry, output_file, same_terminal=False, force=False
 ):
     """Run Rollup if cache differs or if `force` is True.
 
+    Returns a tuple: (exit_code, did_build, current_hash)
+
     When `force` is True (e.g. --no-cache), ignore the saved cache and
     always run Rollup to rebuild the bundle.
+    NOTE: this function no longer saves the cache file; the caller is
+    responsible for saving the cache only after the spawned process
+    (node script) succeeds.
     """
     cache = load_cache(cache_file)
 
@@ -80,7 +93,7 @@ def run_rollup_if_needed(
 
     if not force and cache.get("hash") == current_hash and output_exists:
         print(f"✅ No changes detected. Skipping Rollup. [cache: {rel_cache}]")
-        return 0
+        return RollupResult(exit_code=0, did_build=False, current_hash=current_hash)
 
     print(f"🔄 Running Rollup... [cache: {rel_cache}] (force={force})")
 
@@ -94,10 +107,9 @@ def run_rollup_if_needed(
         else:
             code = subprocess.call(cmd_str, shell=True)
 
-    if code == 0:
-        save_cache({"hash": current_hash}, cache_file)
-
-    return code
+    # Do NOT save cache here; let the caller decide when it's appropriate
+    did_build = code == 0
+    return RollupResult(exit_code=code, did_build=did_build, current_hash=current_hash)
 
 
 def run_node(script_path, args, keep_open=False, same_terminal=False):
@@ -177,19 +189,30 @@ def run_bundle(command, args, keep_open=False, same_terminal=False, force=False)
     # ensure build exists
     if not os.path.exists(script):
         print(f"⚠️ Output missing: {script}")
-        code = run_rollup_if_needed(
+        result = run_rollup_if_needed(
             cfg["cache"], cfg["entry"], script, same_terminal=True, force=force
         )
-        if code != 0:
-            return code
+        if result.exit_code != 0:
+            return result.exit_code
     else:
-        code = run_rollup_if_needed(
+        result = run_rollup_if_needed(
             cfg["cache"], cfg["entry"], script, same_terminal, force=force
         )
-        if code != 0:
-            return code
+        if result.exit_code != 0:
+            return result.exit_code
 
-    return run_node(script, args, keep_open, same_terminal)
+    node_code = run_node(script, args, keep_open, same_terminal)
+
+    # Only persist the rollup cache if we actually built and the spawned
+    # Node process exited successfully.
+    if node_code == 0 and result.did_build:
+        try:
+            save_cache({"hash": result.current_hash}, cfg["cache"])
+        except Exception:
+            # Non-fatal: don't let cache save failures break the run
+            pass
+
+    return node_code
 
 
 def main():
