@@ -9,14 +9,11 @@ import { endpointManager } from './utils.js';
     args: ['--start-maximized', '--disable-features=site-per-process'],
     headless: false,
     devtools: false,
-    defaultViewport: null,
     userDataDir,
     reuse: false,
     autoSwitchProfileDir: true,
     stealth: {
-      mode: 'stealth',
-      fingerprintStrategy: 'random-cached',
-      screenSize: { maxHeight: 800, maxWidth: 1366 }
+      mode: 'stealth'
     }
   });
 
