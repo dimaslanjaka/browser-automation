@@ -204,8 +204,18 @@ export async function processData(
       }
     }
 
-    await setDatepickerValue(page, tanggalEntry);
-    await selectDateWithUI(page, tanggalEntry, { skipMonthNavigation: true });
+    try {
+      await setDatepickerValue(page, tanggalEntry);
+      await selectDateWithUI(page, tanggalEntry, { skipMonthNavigation: true });
+    } catch (error) {
+      const description = error instanceof Error ? error.message : String(error);
+      console.error('Failed to set or select tanggal entry date:', description);
+      return {
+        status: 'error',
+        reason: 'datepicker_error',
+        description: `Failed to set or select tanggal entry date: ${description}`
+      };
+    }
 
     await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');

@@ -97,27 +97,27 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
  * @param dateValue
  */
 export async function setDatepickerValue(page: Page, dateValue: string) {
+  const parsedDate = moment(dateValue, 'DD/MM/YYYY', true);
+  if (!parsedDate.isValid()) {
+    throw new Error(`Invalid dateValue for datepicker: ${dateValue}`);
+  }
+
+  const dateObject = parsedDate.toDate();
+  const formattedDate = parsedDate.format('DD/MM/YYYY');
+
   await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
-  await typeAndTrigger(page, '#dt_tgl_skrining', dateValue);
+  await typeAndTrigger(page, '#dt_tgl_skrining', formattedDate);
   await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
 
   await page.evaluate(
-    (sel, dateStr) => {
+    (sel, dateObj, fallbackValue) => {
       const el = document.querySelector(sel) as HTMLInputElement | null;
       const $ = (window as any).jQuery;
-      const kendo = (window as any).kendo;
       try {
         if ($ && $.fn && $.fn.kendoDatePicker && el) {
           const widget = ($(el) as any).data('kendoDatePicker');
           if (widget) {
-            let parsed: Date | null = null;
-            if (kendo && typeof kendo.parseDate === 'function') {
-              parsed = kendo.parseDate(dateStr, 'dd/MM/yyyy');
-            } else {
-              const parts = String(dateStr).split('/');
-              if (parts.length === 3) parsed = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-            }
-            widget.value(parsed);
+            widget.value(dateObj);
             if (typeof widget.trigger === 'function') widget.trigger('change');
             return;
           }
@@ -128,13 +128,14 @@ export async function setDatepickerValue(page: Page, dateValue: string) {
 
       if (el) {
         if (typeof (el as any).removeAttribute === 'function') (el as any).removeAttribute('readonly');
-        el.value = dateStr;
+        el.value = fallbackValue;
         el.dispatchEvent(new Event('input', { bubbles: true }));
         el.dispatchEvent(new Event('change', { bubbles: true }));
         if (typeof (el as any).setAttribute === 'function') (el as any).setAttribute('readonly', 'true');
       }
     },
     '#dt_tgl_skrining',
-    dateValue
+    dateObject,
+    formattedDate
   );
 }
