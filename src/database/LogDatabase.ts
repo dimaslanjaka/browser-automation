@@ -145,9 +145,9 @@ export class LogDatabase<TDefault = any> implements BaseLogDatabase {
    * @param save Whether to update the stored checksum file if the checksum has changed.
    * @returns True if the checksum has changed, false otherwise.
    */
-  private isChecksumChanged(save = false) {
+  private async isChecksumChanged(save = false) {
     const sqliteFile = getDatabaseFilePath(this.dbName);
-    const sqliteChecksum = getChecksum(sqliteFile);
+    const sqliteChecksum = await getChecksum(sqliteFile);
     const checksumFile = path.join(process.cwd(), `.cache/migrations/${this.dbName || 'logs'}.checksum`);
     const lastChecksum = fs.existsSync(checksumFile) ? fs.readFileSync(checksumFile, 'utf-8') : null;
     if (save && lastChecksum !== sqliteChecksum) {
@@ -171,7 +171,7 @@ export class LogDatabase<TDefault = any> implements BaseLogDatabase {
    */
   async migrate() {
     // Only migrate if checksum has changed
-    if (!this.isChecksumChanged()) {
+    if (!(await this.isChecksumChanged())) {
       // Skipping migration as it has already been completed
       return;
     }
@@ -192,6 +192,6 @@ export class LogDatabase<TDefault = any> implements BaseLogDatabase {
     sqlite.close();
     await mysql.close();
     // Save new checksum after migration
-    this.isChecksumChanged(true);
+    await this.isChecksumChanged(true);
   }
 }
