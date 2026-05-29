@@ -25,6 +25,6 @@ skrin
 or using parallel
 
 ```bash
-parallel launch
-parallel skrin
+pp launch
+pp skrin
 ```
