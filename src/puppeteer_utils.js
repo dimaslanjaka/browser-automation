@@ -1729,3 +1729,22 @@ export async function pageScreenshot(page, options = {}) {
     }
   }
 }
+
+/**
+ * Maximizes the browser window.
+ * @param {import('puppeteer').Page} page - Puppeteer Page instance.
+ */
+export async function maximizeWindow(page) {
+  const browser = page.browser();
+  const session = await page.target().createCDPSession();
+  const { windowId } = await session.send('Browser.getWindowForTarget');
+  await session.send('Browser.setWindowBounds', {
+    windowId,
+    bounds: { windowState: 'maximized' }
+  });
+
+  const { width, height } = browser.wsEndpoint
+    ? { width: 1920, height: 1080 }
+    : await page.evaluate(() => ({ width: window.screen.availWidth, height: window.screen.availHeight }));
+  await page.setViewport({ width, height });
+}

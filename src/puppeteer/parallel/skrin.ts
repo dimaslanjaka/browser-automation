@@ -5,7 +5,7 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { LogDatabase } from '../../database/LogDatabase.js';
-import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
+import { closeOtherTabs, getPuppeteer, maximizeWindow } from '../../puppeteer_utils.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
@@ -83,17 +83,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
   // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
   const page = await browser.newPage();
   // maximize browser window and set viewport to fill the screen
-  try {
-    const windowId = await page.windowId();
-    await browser.setWindowBounds(windowId, { windowState: 'maximized' });
-    const { width, height } = browser.wsEndpoint
-      ? { width: 1920, height: 1080 }
-      : await page.evaluate(() => ({ width: window.screen.availWidth, height: window.screen.availHeight }));
-    await page.setViewport({ width, height });
-  } catch {
-    // fallback: set a standard full-HD viewport if window management is not available
-    await page.setViewport({ width: 1920, height: 1080 }).catch(() => {});
-  }
+  await maximizeWindow(page);
   page.goto('http://sh.webmanajemen.com').catch(noop);
   await page.bringToFront();
 
