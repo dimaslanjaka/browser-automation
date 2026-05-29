@@ -102,7 +102,7 @@ export async function autoLoginAndEnterSkriningPage(page) {
   // Only check for session expired on skrining page
   const sessionExpiredSelector = '.navbar-template.text-left p';
   const sessionMessagePattern =
-    /(?:maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali|anda\s+tidak\s+mempunyai\s+kewenangan\s+untuk\s+mengakses\s+halaman\s+ini|expired)/i;
+    /(?:maaf\s+session\s+anda\s+telah\s+habis\s+silahkan\s+login\s+kembali|anda\s+tidak\s+mempunyai\s+kewenangan\s+untuk\s+mengakses\s+halaman\s+ini|you\s+do\s+not\s+have\s+the\s+authorization\s+to\s+access\s+this\s+page|expired)/i;
   let sessionExpired = false;
   let sessionText = '';
   const currentUrl = await page.url();
