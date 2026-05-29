@@ -640,8 +640,32 @@ export async function processData(
     if (hasSubmitted) {
       console.log('✅\tData submitted successfully:', fixedData);
     } else {
-      console.warn('⚠️\tData processed but not submitted:', fixedData);
-      await waitEnter('Press Enter to continue...');
+      console.warn('⚠️\tData processed but not submitted:', fixedData, '\n');
+
+      // Waiting for user input to proceed in case of manual intervention needed
+      const waitStart = Date.now();
+      while (!hasSubmitted) {
+        const isSuccessVisible = await isSuccessNotificationVisible(page);
+        if (isSuccessVisible) {
+          console.log('✅ Success notification is visible');
+          hasSubmitted = true;
+          break;
+        }
+        const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
+        if (elapsedSeconds >= 300) {
+          process.stdout.write('\n');
+          process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
+          return {
+            status: 'error',
+            reason: 'success_notification_timeout',
+            description:
+              'Timed out waiting for success notification after 5 minutes. (data was not submitted, likely due to manual intervention needed)'
+          };
+        }
+        // Optional: wait a bit to avoid tight loop
+        await new Promise((r) => setTimeout(r, 1000));
+        process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
+      }
     }
 
     // Get form values after submission (to capture any changes triggered by submission)
