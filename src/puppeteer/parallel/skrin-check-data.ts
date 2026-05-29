@@ -148,10 +148,13 @@ async function main() {
 
   const database = skrinDatabase;
 
-  const dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
-    const existing = await database.getLogById(getNumbersOnly(data.nik));
-    return !!existing;
-  });
+  const dataKunto: ExcelRowData[] = await Bluebird.filter(
+    (await loadCsvData<ExcelRowData>()) as ExcelRowData[],
+    async (data: ExcelRowData) => {
+      const existing = await database.getLogById(getNumbersOnly(data.nik));
+      return !!existing;
+    }
+  );
 
   let toProcess: ExcelRowData[];
 
@@ -165,7 +168,8 @@ async function main() {
     if (missing.length > 0) {
       console.warn('Some NIK not found in CSV, using manual input:', missing);
       for (const nik of missing) {
-        toProcess.push({ ...dataKunto[0], nik });
+        const fallbackRow = dataKunto[0] as ExcelRowData;
+        toProcess.push({ ...fallbackRow, nik: String(nik) });
       }
     }
   } else if (force) {

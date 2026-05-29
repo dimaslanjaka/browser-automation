@@ -173,7 +173,7 @@ async function main() {
       dataKunto = array_shuffle(await loadCsvData<ExcelRowData>());
     } else {
       dataKunto = await Bluebird.resolve(await loadCsvData<ExcelRowData>())
-        .filter(async (data) => {
+        .filter(async (data: ExcelRowData) => {
           const existing = await database.getLogById(getNumbersOnly(data.nik));
           return !(existing && existing.data);
         })
