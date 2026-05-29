@@ -6,10 +6,10 @@ import { endpointManager } from './utils.js';
 
 (async () => {
   const { browser, goto } = await getPuppeteer({
-    args: ['--disable-features=site-per-process'],
+    args: ['--start-maximized', '--disable-features=site-per-process'],
     headless: false,
     devtools: false,
-    defaultViewport: { width: 1200, height: 1000 },
+    defaultViewport: null,
     userDataDir,
     reuse: false,
     autoSwitchProfileDir: true,

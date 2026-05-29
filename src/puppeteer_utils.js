@@ -241,6 +241,7 @@ export async function getPuppeteer(options = {}) {
     userDataDir: userDataDir,
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     args: [
+      '--start-maximized',
       '--disable-features=HeavyAdIntervention',
       '--disable-features=AdInterestGroupAPI',
       '--disable-popup-blocking',
@@ -356,7 +357,10 @@ export async function getPuppeteer(options = {}) {
         if (stealthMode === 'fingerprint') {
           const clonedArgs = [...currentLaunchOptions.args];
           // remove --user-data-dir from args to avoid conflicts with fingerprint profile management
-          const filteredArgs = clonedArgs.filter((arg) => !arg.startsWith('--user-data-dir='));
+          // remove --start-maximized from args for fingerprint mode
+          const filteredArgs = clonedArgs.filter(
+            (arg) => !arg.startsWith('--user-data-dir=') && arg !== '--start-maximized'
+          );
           const args = [
             ...filteredArgs,
             '--disable-features=HeavyAdIntervention', // Disable Chrome's blocking of intrusive ads
