@@ -37,14 +37,18 @@ export default {
       ? [
           typescript({
             tsconfig: false,
-            compilerOptions: {
-              allowSyntheticDefaultImports: true,
-              esModuleInterop: true,
-              resolveJsonModule: true
-            },
+            allowSyntheticDefaultImports: true,
+            esModuleInterop: true,
+            resolveJsonModule: true,
+            moduleResolution: 'bundler',
+            target: 'ES2019',
+            module: 'ESNext',
+            declaration: false,
+            strict: false,
             noEmitOnError: false,
             noEmit: false,
-            outDir: undefined // Prevent plugin from setting outDir
+            outDir: undefined,
+            exclude: ['**/node_modules/**', '**/dist/**', '**/test/**', '**/tmp/**']
           })
         ]
       : []),
