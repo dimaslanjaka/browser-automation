@@ -61,7 +61,7 @@ export default function Header() {
               />
             </Nav.Link>
           )}
-          {socialMedia.github && (
+          {/* {socialMedia.github && (
             <Nav.Link
               href={socialMedia.github}
               target="_blank"
@@ -74,7 +74,7 @@ export default function Header() {
                 style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F', fontSize: '1.25em' }}
               />
             </Nav.Link>
-          )}
+          )} */}
         </Nav>
       </Container>
     </Navbar>

@@ -27,7 +27,7 @@ export default function Footer() {
                 <i className="fab fa-facebook fa-lg" style={{ color: theme === 'dark' ? '#1877F3' : '#4267B2' }} />
               </a>
             )}
-            {socialMedia.github && (
+            {/* {socialMedia.github && (
               <a
                 href={socialMedia.github}
                 target="_blank"
@@ -36,7 +36,7 @@ export default function Footer() {
                 className="mx-2">
                 <i className="fab fa-github fa-lg" style={{ color: theme === 'dark' ? '#f5f5f5' : '#24292F' }} />
               </a>
-            )}
+            )} */}
           </div>
         </div>
       </Container>
