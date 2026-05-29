@@ -121,8 +121,6 @@ async function main(opts: { loop?: boolean; max?: number }) {
     process.exit(0);
   }
 
-  const items = array_shuffle(dataKunto);
-
   // Infer the options type from processData's parameter list
   type ProcessDataOptions = Parameters<typeof processData>[3];
 
@@ -169,8 +167,9 @@ async function main(opts: { loop?: boolean; max?: number }) {
     const max = typeof opts.max === 'number' && opts.max > 0 ? opts.max : Infinity;
 
     let processed = 0;
+    const shuffled = array_shuffle(dataKunto);
 
-    for (const data of items) {
+    for (const data of shuffled) {
       if (processed >= max) break;
 
       processed++;
@@ -190,7 +189,7 @@ async function main(opts: { loop?: boolean; max?: number }) {
     console.log('Leaving browser running. Exiting worker.');
     process.exit(0);
   } else {
-    const data = items.shift();
+    const data = dataKunto.shift();
 
     if (!data) {
       console.warn('No item to process.');
