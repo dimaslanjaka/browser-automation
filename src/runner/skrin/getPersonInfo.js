@@ -1,4 +1,4 @@
-import { getAge } from '../../utils/date.js';
+import { getAge, parseDate } from '../../utils/date.js';
 
 /**
  * Get patient data information from the page form elements.
@@ -7,7 +7,8 @@ import { getAge } from '../../utils/date.js';
  */
 export async function getPersonInfo(page) {
   const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
-  const birthDate = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
+  const rawBirthDate = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
+  const birthDate = parseDate(rawBirthDate);
   const age = getAge(birthDate);
   const province = await page.$eval('#field_item_provinsi_ktp_id input[type="text"]', (input) => input.value.trim());
   const city = await page.$eval('#field_item_kabupaten_ktp_id input[type="text"]', (input) => input.value.trim());
