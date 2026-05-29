@@ -6,10 +6,17 @@ import alias from '@rollup/plugin-alias';
 import fs from 'fs';
 import path from 'path';
 
-const inputFile = process.env.BUNDLE_INPUT || 'src/index.ts';
-const outputFile = process.env.BUNDLE_OUTPUT || 'dist/bundle.cjs';
+function stripWrappingQuotes(value) {
+  return typeof value === 'string' ? value.replace(/^(["'])(.*)\1$/, '$2') : value;
+}
 
+const inputFile = path.resolve(stripWrappingQuotes(process.env.BUNDLE_INPUT) || 'src/index.ts');
+const outputFile = stripWrappingQuotes(process.env.BUNDLE_OUTPUT) || 'dist/bundle.cjs';
 const isTypeScript = /\.(ts|tsx)$/.test(inputFile);
+
+console.log(`Input file: ${inputFile}`);
+console.log(`Output file: ${outputFile}`);
+console.log(`Is TypeScript: ${isTypeScript}`);
 
 export default {
   input: inputFile,
@@ -30,6 +37,11 @@ export default {
       ? [
           typescript({
             tsconfig: false,
+            compilerOptions: {
+              allowSyntheticDefaultImports: true,
+              esModuleInterop: true,
+              resolveJsonModule: true
+            },
             noEmitOnError: false,
             noEmit: false,
             outDir: undefined // Prevent plugin from setting outDir
