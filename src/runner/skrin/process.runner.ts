@@ -30,7 +30,7 @@ async function main() {
   const baseDir = path.join(process.cwd(), 'tmp/puppeteer/xhr');
   const _stopCapture = setupXhrCapture(page, { baseDir });
 
-  const dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
+  const dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data: ExcelRowData) => {
     const existing = await database.getLogById(getNumbersOnly(data.nik));
     if (existing && existing.data) return false;
     return true;
