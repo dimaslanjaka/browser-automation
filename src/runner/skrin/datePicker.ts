@@ -49,6 +49,7 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
     //
   }
   await sleep(200);
+  // Parse the caller-provided DD/MM/YYYY string into a Moment instance for all later transformations.
   const parseDate = moment(dateValue, 'DD/MM/YYYY');
 
   if (!options?.skipMonthNavigation) {
@@ -71,23 +72,48 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
     }
   }
 
-  // click matching date value in datepicker, e.g. <a tabindex="-1" class="k-link" href="#" data-value="2026/3/7" title="07 April 2026">7</a>
-  // prefer selecting the day by its title attribute (e.g. "28 Maret 2026")
-  const titleStr = parseDate.locale('id').format('DD MMMM YYYY');
-  console.log('Title attribute selector:', titleStr);
+  // click matching date value in datepicker, e.g. <a tabindex="-1" class="k-link" href="#" data-value="2026/4/9" title="Saturday, May 09, 2026">9</a>
+  // Build the title strings the calendar may render depending on locale.
+  const titleCandidates = [
+    parseDate.locale('id').format('DD MMMM YYYY'),
+    parseDate.locale('en').format('dddd, MMMM DD, YYYY')
+  ];
+  // Build the Kendo data-value selector from the parsed year/month/day.
+  const dataValueSelector = `[data-value="${parseDate.year()}/${parseDate.month()}/${parseDate.date()}"]`;
+
   // small pause to allow UI to settle before selecting date
   await sleep(100);
-  await page.waitForSelector(`[title="${titleStr}"]`, { visible: true, timeout: 5000 });
+
+  // Try localized title selectors first, then fall back to the stable data-value selector.
+  const selectorCandidates = [...titleCandidates.map((title) => `[title="${title}"]`), dataValueSelector];
+
+  let selectedSelector: string | null = null;
+  for (const selector of selectorCandidates) {
+    // Probe the DOM so we only click the selector that actually exists on this calendar.
+    const match = await page.$(selector);
+    if (match) {
+      selectedSelector = selector;
+      break;
+    }
+  }
+
+  if (!selectedSelector) {
+    throw new Error(`Unable to find datepicker cell for ${dateValue}. Tried: ${selectorCandidates.join(', ')}`);
+  }
+
+  console.log('Date selector:', selectedSelector);
+
+  await page.waitForSelector(selectedSelector, { visible: true, timeout: 5000 });
   try {
-    await page.$eval(`[title="${titleStr}"]`, (el) => (el as HTMLElement).scrollIntoView({ block: 'center' }));
+    await page.$eval(selectedSelector, (el) => (el as HTMLElement).scrollIntoView({ block: 'center' }));
   } catch {
     // ignore scroll failure
   }
   try {
-    await page.click(`[title="${titleStr}"]`);
+    await page.click(selectedSelector);
   } catch {
     // fallback: run a DOM click if puppeteer's click fails
-    await page.$eval(`[title="${titleStr}"]`, (el) => (el as HTMLElement).click());
+    await page.$eval(selectedSelector, (el) => (el as HTMLElement).click());
   }
 }
 
@@ -97,27 +123,53 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
  * @param dateValue
  */
 export async function setDatepickerValue(page: Page, dateValue: string) {
+  // Parse and validate the raw date string before writing anything into the input.
   const parsedDate = moment(dateValue, 'DD/MM/YYYY', true);
   if (!parsedDate.isValid()) {
     throw new Error(`Invalid dateValue for datepicker: ${dateValue}`);
   }
 
+  // Reuse the parsed date both as a Date object for Kendo and as a safe fallback string.
   const dateObject = parsedDate.toDate();
   const formattedDate = parsedDate.format('DD/MM/YYYY');
 
+  // Temporarily unlock the field so the injected text can trigger the widget's handlers.
   await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
+  // Seed the input with the normalized date string before we set the widget value.
   await typeAndTrigger(page, '#dt_tgl_skrining', formattedDate);
+  // Restore readonly after the synthetic input event has fired.
   await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
 
   await page.evaluate(
     (sel, dateObj, fallbackValue) => {
+      // Resolve the datepicker input element inside the page context.
       const el = document.querySelector(sel) as HTMLInputElement | null;
+      // Reuse jQuery/Kendo if the widget is available on the page.
       const $ = (window as any).jQuery;
+      const kendo = (window as any).kendo;
       try {
         if ($ && $.fn && $.fn.kendoDatePicker && el) {
+          // Align the widget format with DD/MM/YYYY before writing the parsed Date value.
           const widget = ($(el) as any).data('kendoDatePicker');
           if (widget) {
+            if (kendo && typeof kendo.culture === 'function') {
+              try {
+                kendo.culture('id-ID');
+              } catch {
+                // ignore if the culture pack is not available
+              }
+            }
+
+            if (typeof widget.setOptions === 'function') {
+              widget.setOptions({ format: 'dd/MM/yyyy' });
+            } else if (widget.options) {
+              widget.options.format = 'dd/MM/yyyy';
+            }
+
             widget.value(dateObj);
+            if (typeof widget.element?.val === 'function') {
+              widget.element.val(fallbackValue);
+            }
             if (typeof widget.trigger === 'function') widget.trigger('change');
             return;
           }
@@ -127,6 +179,7 @@ export async function setDatepickerValue(page: Page, dateValue: string) {
       }
 
       if (el) {
+        // Fallback path for non-Kendo cases: write the normalized string and emit input/change events.
         if (typeof (el as any).removeAttribute === 'function') (el as any).removeAttribute('readonly');
         el.value = fallbackValue;
         el.dispatchEvent(new Event('input', { bubbles: true }));
