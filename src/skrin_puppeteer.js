@@ -12,7 +12,7 @@ import { waitEnter } from './utils.js';
  */
 export async function skrinLogin(page) {
   // Always go to login page and do login
-  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/app/login', { waitUntil: 'networkidle2' });
+  await goWithRetry(page, 'https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
   // Wait for username and password fields to be visible
   await page.waitForSelector('input[name="username"]', { visible: true });
   await page.waitForSelector('input[name="password"]', { visible: true });
@@ -39,8 +39,9 @@ export async function skrinLogin(page) {
       console.warn('CAPTCHA detected on login page; skipping automatic submit.');
       return { result: false, reason: 'captcha_visible' };
     }
-  } catch (_err) {
+  } catch (e) {
     // ignore errors from visibility check and proceed with submit
+    console.log('Error checking CAPTCHA visibility, proceeding with login submit:', e);
   }
   await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
   // After login, check if login form is still present (login failed)
