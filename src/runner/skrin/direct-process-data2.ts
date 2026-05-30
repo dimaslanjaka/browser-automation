@@ -519,12 +519,24 @@ export async function processData(
     }
 
     // Get the patient's name from the form after confirming identity (or if no modal appeared)
-    const nama = await page.evaluate(
+    let nama = await page.evaluate(
       () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
     );
     fixedData.nama_from_page = `${nama}`.trim();
     if (isEmpty(`${fixedData.nama_from_page}`)) {
-      throw new Error("❌ Failed to take the patient's name");
+      const NAMA = fixedData.nama || fixedData.NAMA || '';
+      if (!NAMA || NAMA.length === 0) {
+        throw new Error("❌ Failed to take the patient's name");
+      }
+      nama = await page.evaluate(
+        () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
+      );
+      fixedData.nama_from_page = `${nama}`.trim();
+      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
+    }
+
+    if (isEmpty(`${fixedData.nama_from_page}`)) {
+      throw new Error("❌ Patient's name is empty after confirmation");
     }
 
     const { gender, age, birthDate, location } = await getPersonInfo(page);
