@@ -21,18 +21,50 @@ const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
 
+function getTmpScreenshotPath(nik: string) {
+  return path.join(process.cwd(), 'tmp', 'screenshot', `${md5(nik)}.jpg`);
+}
+
+function getPublishedScreenshotPath(nik: string) {
+  const imagePath = IMAGE_DATABASE[nik];
+  if (!imagePath || !imagePath.startsWith('/assets/data/screenshots/')) return undefined;
+
+  return path.join(process.cwd(), 'public', imagePath);
+}
+
+function publishScreenshotFromTmp(data: ExcelRowData, tmpFilePath: string) {
+  const outDir = path.join(process.cwd(), 'public', 'assets', 'data', 'screenshots');
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+  const outFilename = `${md5(data.nik)}.bin`;
+  const outPath = path.join(outDir, outFilename);
+  const tmpOut = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.bin`);
+  const uri = imageFileToDataUrl(tmpFilePath);
+
+  writefile(tmpOut, encryptJson(uri, process.env.VITE_JSON_SECRET));
+  fs.renameSync(tmpOut, outPath);
+  IMAGE_DATABASE[data.nik] = `/assets/data/screenshots/${outFilename}`;
+}
+
 const endpointManager = new EndpointManager(puppeteerTempPath);
 let claimedEndpoint: string | undefined;
 export { endpointManager as parallelSkrinCheckEndpointManager, claimedEndpoint as parallelSkrinCheckClaimedEndpoint };
 let browser: import('puppeteer').Browser;
 
+/**
+ * Processes screening data, reusing existing screenshots when possible and fetching new ones when needed.
+ *
+ * @param options Processing options for custom NIKs, force mode, screenshot opening, and limiting output.
+ * @returns A promise that resolves when processing finishes.
+ */
 export async function parallelSkrinCheck(options?: {
   specificNiks?: string[];
   force?: boolean;
   openScreenshots?: boolean;
+  limit?: number;
 }) {
   const opts = { specificNiks: [] as string[], force: false, openScreenshots: false, ...options };
-  const { specificNiks, force, openScreenshots } = opts;
+  const { specificNiks, force, openScreenshots, limit } = opts;
   const normalizedTargets: string[] = specificNiks.map(getNumbersOnly);
   const tried = new Set<string>();
 
@@ -97,7 +129,11 @@ export async function parallelSkrinCheck(options?: {
     (await loadCsvData<ExcelRowData>()) as ExcelRowData[],
     async (data: ExcelRowData) => {
       const existing = await database.getLogById(getNumbersOnly(data.nik));
-      return !!existing;
+      if (!existing) return false;
+
+      if (normalizedTargets.length > 0) return true;
+
+      return !fs.existsSync(getTmpScreenshotPath(data.nik));
     }
   );
 
@@ -121,13 +157,39 @@ export async function parallelSkrinCheck(options?: {
     toProcess = dataKunto;
   } else {
     const filterValidNik = dataKunto.filter((data) => isValidNik(data.nik));
-    const dataNotInImageDb = filterValidNik.filter((data) => data.nik && data.nik !== '' && !IMAGE_DATABASE[data.nik]);
+    const dataNotInImageDb = filterValidNik.filter((data) => {
+      if (!data.nik || data.nik === '') return false;
+
+      const publishedFilePath = getPublishedScreenshotPath(data.nik);
+      return !publishedFilePath || !fs.existsSync(publishedFilePath);
+    });
     toProcess = dataNotInImageDb;
   }
 
   console.log(`Total data to process: ${toProcess.length}`);
 
-  for (const data of toProcess) {
+  const hasLimit = typeof limit === 'number' && Number.isFinite(limit) && limit >= 0;
+  const limitedToProcess = hasLimit ? toProcess.slice(0, limit) : toProcess;
+
+  if (limitedToProcess !== toProcess) {
+    console.log(`Applying limit: ${limit}, processing ${limitedToProcess.length} item(s).`);
+  }
+
+  for (const data of limitedToProcess) {
+    const tmpFilePath = getTmpScreenshotPath(data.nik);
+    const publishedFilePath = getPublishedScreenshotPath(data.nik);
+
+    if (publishedFilePath && !fs.existsSync(publishedFilePath) && fs.existsSync(tmpFilePath)) {
+      console.log(`Reusing tmp screenshot for NIK ${data.nik} to republish encrypted asset.`);
+      publishScreenshotFromTmp(data, tmpFilePath);
+
+      const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);
+      writefile(tmpPath, encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
+      fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
+      continue;
+    }
+
+    console.log(`Fetching new screenshot for NIK ${data.nik}.`);
     await findData(data, page, { normalizedTargets: normalizedTargets as string[], openScreenshots });
   }
 
@@ -147,6 +209,8 @@ async function findData(
   const now = Date.now();
 
   if (!page || page.isClosed()) return;
+
+  const tmpFilePath = getTmpScreenshotPath(data.nik);
 
   if (!page.url().includes('/skrining') || now - lastLoginTime > 10 * 60 * 1000) {
     await autoLoginAndEnterSkriningPage(page);
@@ -183,9 +247,6 @@ async function findData(
   });
 
   // Save real image to tmp for inspection
-  const tmpScreenshotDir = path.join(process.cwd(), 'tmp', 'screenshot');
-  const tmpFilename = `${md5(data.nik)}.jpg`;
-  const tmpFilePath = path.join(tmpScreenshotDir, tmpFilename);
   // Maximize window and set viewport to available screen size
   await maximizeWindow(page);
   await sleep(1000); // Wait for resize to take effect
@@ -211,18 +272,10 @@ async function findData(
 
   // Convert the saved JPEG to a data URI, encrypt it, and write per-image .bin file
   try {
-    const uri = imageFileToDataUrl(tmpFilePath);
-    const outDir = path.join(process.cwd(), 'public', 'assets', 'data', 'screenshots');
-    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-    const outFilename = `${md5(data.nik)}.bin`;
-    const outPath = path.join(outDir, outFilename);
-    const tmpOut = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.bin`);
-    writefile(tmpOut, encryptJson(uri, process.env.VITE_JSON_SECRET));
-    fs.renameSync(tmpOut, outPath);
-    IMAGE_DATABASE[data.nik] = `/assets/data/screenshots/${outFilename}`;
+    publishScreenshotFromTmp(data, tmpFilePath);
   } catch {
     // Fallback: store the tmp jpeg as a public asset path
-    IMAGE_DATABASE[data.nik] = `/tmp/screenshot/${tmpFilename}`;
+    IMAGE_DATABASE[data.nik] = `/tmp/screenshot/${path.basename(tmpFilePath)}`;
   }
 
   const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);

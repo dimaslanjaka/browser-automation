@@ -7,15 +7,16 @@ import {
 
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
-  string: ['nik'],
+  string: ['nik', 'limit'],
   boolean: ['force', 'help', 'open'],
   alias: {
     f: 'force',
     h: 'help',
     n: 'nik',
-    o: 'open'
+    o: 'open',
+    l: 'limit'
   },
-  default: { force: false, nik: '', open: false }
+  default: { force: false, nik: '', open: false, limit: '' }
 });
 
 if (argv.help) {
@@ -25,6 +26,7 @@ if (argv.help) {
     'Options:',
     '  --nik, -n <nik>    Process specific NIK(s) (comma-separated allowed)',
     '  --force, -f        Process all data',
+    '  --limit, -l <n>    Process only the first n matching items',
     '  --open, -o         Open saved screenshot(s) after capture',
     '  --help, -h         Show this help message',
     '',
@@ -58,12 +60,10 @@ if (specificNiks.length > 0) {
 
 const force = Boolean(argv.force);
 const openScreenshots = Boolean(argv.open);
+const parsedLimit = Number.parseInt(String(argv.limit), 10);
+const limit = Number.isFinite(parsedLimit) && parsedLimit >= 0 ? parsedLimit : undefined;
 
-if (force) {
-  console.log('Force mode enabled: all data will be processed.');
-}
-
-parallelSkrinCheck({ specificNiks, force, openScreenshots })
+parallelSkrinCheck({ specificNiks, force, openScreenshots, limit })
   .catch((err) => {
     console.error(err);
     process.exit(1);
