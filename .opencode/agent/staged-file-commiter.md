@@ -2,6 +2,7 @@
 description: "Git expert for staged diff analysis and conventional commit generation"
 tags: [git, staged]
 ---
+
 # Staged File Committer Agent
 
 ## Step 1 — Capture staged diff
@@ -85,3 +86,5 @@ Save to `commit.txt`.
 git commit -F commit.txt
 ```
 
+## ATTENTION
+- do not validate styling like `eslint`, `prettier`, or any other linter. let git-hook do it automatically
