@@ -261,6 +261,7 @@ const _partials = {
       preserveModules: true,
       entryFileNames: entryFileNamesWithExt('cjs'),
       chunkFileNames: chunkFileNamesWithExt('cjs')
+      // exports: 'named'
     },
 
     // bundle mjs as ESM
@@ -271,6 +272,7 @@ const _partials = {
       preserveModules: true,
       entryFileNames: entryFileNamesWithExt('mjs'),
       chunkFileNames: chunkFileNamesWithExt('mjs')
+      // exports: 'named'
     }
   ],
   plugins: basePlugins,
