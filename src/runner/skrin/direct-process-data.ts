@@ -538,16 +538,22 @@ export async function processData(
     }
 
     // Check if the invalid element alert is visible
-    while (await isInvalidAlertVisible(page)) {
+    let invalidAlert = await isInvalidAlertVisible(page);
+    while (invalidAlert.result) {
       // Solve common problems
       // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
       await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
       // Re-check
-      if (await isInvalidAlertVisible(page)) await reEvaluate(page);
-      if (await isInvalidAlertVisible(page)) {
+      invalidAlert = await isInvalidAlertVisible(page);
+      if (invalidAlert.result) await reEvaluate(page);
+      invalidAlert = await isInvalidAlertVisible(page);
+      if (invalidAlert.result) {
         console.warn('⚠️ Invalid alert detected for the following data:');
+        console.warn(
+          `⚠️ Please review the alert and press Enter to continue...\n⚠️ Invalid alert contents: ${invalidAlert.contents.join(' | ')}`
+        );
         console.dir(fixedData, { depth: null });
         await waitEnter('Please review the alert and press Enter to continue...');
       }
@@ -556,7 +562,8 @@ export async function processData(
     // Auto submit
     let hasSubmitted = false;
     const identityModalVisible = await isIdentityModalVisible(page);
-    const invalidAlertVisible = await isInvalidAlertVisible(page);
+    const invalidAlertState = await isInvalidAlertVisible(page);
+    const invalidAlertVisible = invalidAlertState.result;
     const nikErrorVisible = await isNikErrorVisible(page);
     const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
     const sessionExpiredAlertVisible = await isSessionExpiredAlertVisible(page);
@@ -569,6 +576,9 @@ export async function processData(
     console.log(
       `Submission eligibility check: identityModalVisible=${identityModalVisible}, invalidAlertVisible=${invalidAlertVisible}, nikErrorVisible=${nikErrorVisible}, nikNotFoundModalVisible=${nikNotFoundModalVisible}, sessionExpiredAlertVisible=${sessionExpiredAlertVisible}, isAllowedToSubmit=${isAllowedToSubmit}`
     );
+    if (invalidAlertState.contents.length > 0) {
+      console.log(`Invalid alert contents: ${invalidAlertState.contents.join(' | ')}`);
+    }
 
     // Re-login if session expired
     if (sessionExpiredAlertVisible) {

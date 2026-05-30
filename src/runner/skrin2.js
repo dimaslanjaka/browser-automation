@@ -217,8 +217,34 @@ async function processData(page, data) {
     await waitEnter('Please handle the "Data tidak ditemukan" modal manually, then press Enter to continue...');
   }
 
-  const isInvalidAlertVisible = async () =>
-    await isIframeElementVisible(page, iframeSelector, '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg');
+  const isInvalidAlertVisible = async () => {
+    const invalidAlertState = await iframe.$$eval(
+      '.k-widget.k-tooltip.k-tooltip-validation.k-invalid-msg',
+      (elements) => {
+        const contents = [];
+
+        for (const elem of elements) {
+          const style = window.getComputedStyle(elem);
+          const rect = elem.getBoundingClientRect();
+          const isVisible =
+            style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            parseFloat(style.opacity || '1') > 0 &&
+            rect.width > 0 &&
+            rect.height > 0;
+
+          if (isVisible) {
+            const content = (elem.textContent || '').trim();
+            if (content) contents.push(content);
+          }
+        }
+
+        return { result: contents.length > 0, contents };
+      }
+    );
+
+    return invalidAlertState;
+  };
   const isIdentityModalVisible = async () =>
     await isIframeElementVisible(page, iframeSelector, '.k-widget.k-window.k-window-maximized');
   const isNikErrorVisible = async () => await isIframeElementVisible(page, iframeSelector, '.k-notification-error');
@@ -557,12 +583,16 @@ async function processData(page, data) {
 
   const isAllowedToSubmit = async () => {
     const identityModalVisible = await isIdentityModalVisible(page);
-    const invalidAlertVisible = await isInvalidAlertVisible(page);
+    const invalidAlertState = await isInvalidAlertVisible(page);
+    const invalidAlertVisible = invalidAlertState.result;
     const nikErrorVisible = await isNikErrorVisible(page);
     const nikNotFoundModalVisible = await isNIKNotFoundModalVisible(page);
 
     logLine('identityModalVisible:', identityModalVisible);
     logLine('invalidAlertVisible:', invalidAlertVisible);
+    if (invalidAlertState.contents.length > 0) {
+      logLine('invalidAlertContents:', invalidAlertState.contents.join(' | '));
+    }
     logLine('nikErrorVisible:', nikErrorVisible);
     logLine('nikNotFoundModalVisible:', nikNotFoundModalVisible);
     return !identityModalVisible && !invalidAlertVisible && !nikErrorVisible && !nikNotFoundModalVisible;
