@@ -168,7 +168,7 @@ COMMANDS = {
         "cache": os.path.join(CACHE_DIR, ".rcs.json"),
     },
     "skrin-check": {
-        "input": "skrin-check-data.ts",
+        "input": "skrin-check-data.runner.ts",
         "output": "skrin-check-data.cjs",
         "entry": "skrin-check-data",
         "cache": os.path.join(CACHE_DIR, ".rcsc.json"),

@@ -86,7 +86,7 @@ const endpointManager = new EndpointManager(puppeteerTempPath);
 let claimedEndpoint: string | undefined;
 let browser: import('puppeteer').Browser;
 
-async function main() {
+export async function parallelSkrinCheck() {
   const tried = new Set<string>();
 
   while (true) {
@@ -278,18 +278,4 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
   const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);
   writefile(tmpPath, encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
   fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
-}
-
-if (process.argv.some((arg) => arg.includes('skrin-check-data'))) {
-  main()
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .finally(() => {
-      // Do not close the browser here to allow inspection of the final state.
-      // If you want to close it, you can uncomment the following lines:
-      endpointManager.releaseEndpointClaim(claimedEndpoint!, process.pid);
-      process.exit(0);
-    });
 }
