@@ -216,7 +216,7 @@ export async function screenshot(page: Page, filePath: string = 'tmp/screenshot.
     path: filePath as any,
     fullPage: true
   });
-  console.log(`Screenshot saved as ${filePath}`);
+  console.log(`Screenshot saved as ${path.relative(process.cwd(), filePath)}`);
 }
 
 export async function clickDaftarBaru(page: Page) {
@@ -241,7 +241,7 @@ export async function clickDaftarBaru(page: Page) {
         function waitForDomStable(timeout = 10000, stableMs = 800) {
           return new Promise((resolve, reject) => {
             let lastChange = Date.now();
-            // eslint-disable-next-line prefer-const
+
             let observer: MutationObserver;
             const timer = setTimeout(() => {
               if (observer) observer.disconnect();
@@ -339,7 +339,7 @@ export async function enterSehatIndonesiaKu(page: Page) {
     function waitForDomStable(timeout = 10000, stableMs = 800) {
       return new Promise((resolve, reject) => {
         let lastChange = Date.now();
-        // eslint-disable-next-line prefer-const
+
         let observer: MutationObserver;
         const timer = setTimeout(() => {
           if (observer) observer.disconnect();

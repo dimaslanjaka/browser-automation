@@ -248,7 +248,7 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
   });
   await sleep(500); // Ensure file is fully written
 
-  console.log(`Screenshot saved: ${tmpFilePath}`);
+  console.log(`Screenshot saved: ${path.relative(process.cwd(), tmpFilePath)}`);
   if (openScreenshots) {
     console.log('Opening image with default viewer...');
     await openImageExternally(tmpFilePath);
