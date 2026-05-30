@@ -152,6 +152,13 @@ async function resolveAndFillAddress(
   await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
   await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
   await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
+
+  const invalidAlert = await isInvalidAlertVisible(page);
+  if (invalidAlert.result) {
+    console.warn('⚠️ Invalid alert detected after filling address:');
+    console.warn(`  ${invalidAlert.contents.join(' - ')}`);
+    throw new Error('Invalid alert appeared after filling address');
+  }
 }
 
 /**
