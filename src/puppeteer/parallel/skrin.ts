@@ -100,6 +100,9 @@ async function main(opts: { loop?: boolean; max?: number }) {
 
   function exitWorker(code = 0): never {
     console.log('Leaving browser running. Exiting worker.');
+    if (dataKunto.length > 0) {
+      console.log(`Data left: ${dataKunto.length} item(s)`);
+    }
     process.exit(code);
   }
 
