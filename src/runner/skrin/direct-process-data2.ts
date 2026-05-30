@@ -9,7 +9,6 @@ import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
-import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
@@ -277,8 +276,7 @@ export async function processData(
   }
 ): Promise<ProcessDataResult> {
   if (!page) {
-    const instance = await getPuppeteerWithParallel();
-    page = instance.page;
+    throw new Error('Puppeteer page instance is required');
   }
   if ('pages' in page) {
     const pages = await page.pages();
