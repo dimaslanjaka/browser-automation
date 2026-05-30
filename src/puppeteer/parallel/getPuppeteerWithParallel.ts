@@ -18,7 +18,7 @@ let registered = false;
  * @param options Optional options forwarded to `getPuppeteer` (e.g. for puppeteer.connect).
  * @returns An object: `{ page, browser, endpoint, endpointManager, release }`.
  */
-export default async function getPuppeteerWithParallel(options = {}) {
+export async function getPuppeteerWithParallel(options = {}) {
   if (!registered) {
     scheduler.register();
     registered = true;
@@ -98,3 +98,5 @@ export default async function getPuppeteerWithParallel(options = {}) {
 
   return { page, browser, endpoint: claimedEndpoint, endpointManager, release };
 }
+
+export default getPuppeteerWithParallel;

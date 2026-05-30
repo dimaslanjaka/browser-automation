@@ -30,6 +30,16 @@ function isProcessRunning(pid: number): boolean {
   }
 }
 
+/**
+ * Spawns a detached child process that runs the Puppeteer launcher
+ * (`launcher.runner.ts` or its compiled `.js` counterpart).
+ *
+ * Waits up to 60 seconds for a running-indicator file to appear under
+ * `puppeteerTempPath`. Throws if the child exits prematurely or the
+ * timeout is exceeded.
+ *
+ * @returns A promise that resolves once the browser process signals it is ready
+ */
 export async function launch() {
   const cwd = process.cwd();
   const jsLauncherPath = path.join(__dirname, 'launcher.runner.js');
@@ -86,6 +96,21 @@ export async function launch() {
   console.log(`Browser process with PID: ${pid} is ready.`);
 }
 
+/**
+ * Connects to an available Puppeteer browser endpoint.
+ *
+ * Queries the {@link endpointManager} for active endpoints. If none exist, or
+ * no free endpoint can be claimed, a new browser is launched automatically via
+ * {@link launch}.
+ *
+ * The function loops until it can claim an unlocked, Puppeteer-responsive
+ * endpoint. Dead endpoints (`ECONNREFUSED`) are removed from the registry
+ * transparently. Once a connection is established a `disconnected` listener
+ * releases the claim.
+ *
+ * @returns A promise that resolves with a connected {@link Browser} instance
+ * @throws If no endpoint can be obtained after repeated launch attempts
+ */
 export async function connect(): Promise<Browser> {
   let endpoints = await endpointManager.getAllActiveEndpoints();
   const ownerPid = process.pid;
