@@ -123,9 +123,12 @@ async function shouldDownload(url, local) {
     console.log('Extracting...');
     if (ext === '.zip') {
       if (os.platform() === 'win32') {
-        execSync(`powershell -Command "Expand-Archive -Path '${local}' -DestinationPath '${binDir}' -Force"`, {
-          stdio: 'inherit'
-        });
+        execSync(
+          `powershell -NoProfile -NonInteractive -Command "Expand-Archive -Path '${local}' -DestinationPath '${binDir}' -Force"`,
+          {
+            stdio: 'inherit'
+          }
+        );
       } else {
         execSync(`unzip -o '${local}' -d '${binDir}'`, { stdio: 'inherit' });
       }
