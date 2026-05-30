@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getViteUrl } from '../utils-browser-esm';
+import { useEffect, useMemo, useState } from 'react';
+import { getViteUrl } from '../utils/browser-esm';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -17,12 +17,6 @@ const KemkesIndonesiaKuLogs = () => {
   const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('');
-  /**
-   * @type {[DataMerged[], React.Dispatch<React.SetStateAction<DataMerged[]>>]}
-   * Data state and setter for merged data rows.
-   * @see {import('../runner/types').DataMerged}
-   */
-  const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 20;
 
@@ -38,7 +32,7 @@ const KemkesIndonesiaKuLogs = () => {
     });
   }, []);
 
-  useEffect(() => {
+  const filteredData = useMemo(() => {
     let result = data;
     if (search) {
       const s = search.toLowerCase();
@@ -47,8 +41,7 @@ const KemkesIndonesiaKuLogs = () => {
     if (filter) {
       result = result.filter((row) => Object.values(row).some((val) => String(val) === filter));
     }
-    setFilteredData(result);
-    setCurrentPage(1); // Reset to first page on filter/search change
+    return result;
   }, [search, filter, data]);
 
   // Get table columns from first row
@@ -71,11 +64,20 @@ const KemkesIndonesiaKuLogs = () => {
               className="form-control"
               placeholder="Search..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setSearch(e.target.value);
+              }}
             />
           </div>
           <div className="col-auto">
-            <select className="form-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <select
+              className="form-select"
+              value={filter}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setFilter(e.target.value);
+              }}>
               <option value="">All</option>
               {/* Example: filter by a specific column if needed */}
               {/* {Array.from(new Set(data.map(row => row.status))).map(opt => (
