@@ -13,7 +13,7 @@ import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } fr
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
-import { ucwords } from '../../utils/string.js';
+import { findInArray, ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
 import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
@@ -146,17 +146,35 @@ async function resolveAndFillAddress(
 
   console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
 
-  await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
-  await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota));
-  await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
-  await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
-  await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
+  for (const [selector, value] of [
+    ['#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi)],
+    ['#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota)],
+    ['#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan)],
+    ['#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan)],
+    ['#field_item_alamat_ktp textarea', fixedData.alamat]
+  ] as const) {
+    await page.waitForSelector(selector, { visible: true });
+    await page.type(selector, value, { delay: 100 });
+
+    // wait for dropdown to appear (important)
+    await sleep(300);
+
+    // move to first suggestion
+    await page.keyboard.press('ArrowDown');
+
+    // select it
+    await page.keyboard.press('Enter');
+
+    await sleep(200);
+  }
 
   const invalidAlert = await isInvalidAlertVisible(page);
   if (invalidAlert.result) {
-    console.warn('⚠️ Invalid alert detected after filling address:');
-    console.warn(`  ${invalidAlert.contents.join(' - ')}`);
-    throw new Error('Invalid alert appeared after filling address');
+    const findAddressError = findInArray(invalidAlert.contents, /kabupaten/i);
+    if (findAddressError.length > 0) {
+      console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
+      throw new Error(`Address validation error: ${findAddressError.join('; ')}`);
+    }
   }
 }
 

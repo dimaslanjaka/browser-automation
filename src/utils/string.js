@@ -37,3 +37,30 @@ export function ucwords(str) {
 export function removeWhitespaces(str) {
   return str.replace(/\s+/g, '');
 }
+
+/**
+ * Find matching strings in an array.
+ * Supports string match or RegExp.
+ *
+ * @param {string[]} arr
+ * @param {string|RegExp} pattern
+ * @returns {string[]} matched items
+ */
+export function findInArray(arr, pattern) {
+  if (!Array.isArray(arr)) {
+    throw new TypeError('First argument must be an array of strings');
+  }
+
+  if (!pattern) return [];
+
+  // If regex
+  if (pattern instanceof RegExp) {
+    return arr.filter((item) => pattern.test(item));
+  }
+
+  // If string -> convert to regex-safe substring match
+  const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(escaped);
+
+  return arr.filter((item) => regex.test(item));
+}
