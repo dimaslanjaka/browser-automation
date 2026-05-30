@@ -1,7 +1,7 @@
 import minimist from 'minimist';
 import {
   parallelSkrinCheckEndpointManager,
-  parallelSkrinCheckClaimedEndpoint,
+  getParallelSkrinCheckClaimedEndpoint,
   parallelSkrinCheck
 } from './skrin-check-data.js';
 
@@ -71,6 +71,6 @@ parallelSkrinCheck({ specificNiks, force, openScreenshots, limit })
   .finally(() => {
     // Do not close the browser here to allow inspection of the final state.
     // If you want to close it, you can uncomment the following lines:
-    parallelSkrinCheckEndpointManager.releaseEndpointClaim(parallelSkrinCheckClaimedEndpoint!, process.pid);
+    parallelSkrinCheckEndpointManager.releaseEndpointClaim(getParallelSkrinCheckClaimedEndpoint(), process.pid);
     process.exit(0);
   });
