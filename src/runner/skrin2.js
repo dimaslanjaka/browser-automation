@@ -186,7 +186,7 @@ async function processData(page, data) {
 
   // Insert default skrining inputs
 
-  await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+  // await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
   await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
   await typeAndTriggerIframe(page, iframeSelector, 'input[name="nik"]', NIK);
 
@@ -750,9 +750,10 @@ async function re_evaluate(page) {
     }
   };
   if (await isInputEmpty('#field_item_nama_peserta input[type="text"]'))
-    await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
-  if (await isInputEmpty('input[name="tempat_skrining_id_input"]'))
-    await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
+    if (await isInputEmpty('input[name="tempat_skrining_id_input"]')) {
+      // await iframeType('#field_item_metode_id input[type="text"]', 'Tunggal');
+      await iframeType('input[name="tempat_skrining_id_input"]', 'Puskesmas');
+    }
 
   return await getNormalizedFormValuesFromFrame(page, iframeSelector, '#main-container');
 }

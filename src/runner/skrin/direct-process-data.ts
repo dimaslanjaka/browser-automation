@@ -42,7 +42,7 @@ type NormalizedFormValue = Awaited<ReturnType<typeof getNormalizedFormValues>>[n
  * @param page Puppeteer page instance.
  */
 async function reEvaluate(page: Page): Promise<void> {
-  await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+  // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
   await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
 }
 
@@ -217,7 +217,7 @@ export async function processData(
       };
     }
 
-    await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+    // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
     await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
 
@@ -540,7 +540,7 @@ export async function processData(
     // Check if the invalid element alert is visible
     while (await isInvalidAlertVisible(page)) {
       // Solve common problems
-      await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
+      // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
       await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
