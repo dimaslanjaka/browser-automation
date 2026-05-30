@@ -1,5 +1,4 @@
 import Bluebird from 'bluebird';
-import minimist from 'minimist';
 import moment from 'moment';
 import { fs, writefile } from 'sbg-utility';
 import path from 'upath';
@@ -22,73 +21,19 @@ const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
 
-// ✅ minimist (NO `array` property)
-const argv = minimist(process.argv.slice(2), {
-  string: ['nik'],
-  boolean: ['force', 'help', 'open'],
-  alias: {
-    f: 'force',
-    h: 'help',
-    n: 'nik',
-    o: 'open'
-  },
-  default: { force: false, nik: '', open: false }
-});
-
-// ✅ normalize nik (supports single, multiple, comma-separated)
-const specificNiks: string[] = ([] as string[])
-  .concat(argv.nik || [])
-  .flatMap((n: string) => String(n).split(','))
-  .map((n) => n.trim())
-  .filter(Boolean);
-
-// normalize once (performance)
-const normalizedTargets = specificNiks.map(getNumbersOnly);
-
-const force = argv.force;
-const openScreenshots = argv.open;
-
-if (argv.help) {
-  const helpLines = [
-    'Usage: node skrin-check-data [options]',
-    '',
-    'Options:',
-    '  --nik, -n <nik>    Process specific NIK(s) (comma-separated allowed)',
-    '  --force, -f        Process all data',
-    '  --open, -o         Open saved screenshot(s) after capture',
-    '  --help, -h         Show this help message',
-    '',
-    'Notes:',
-    '  - Screenshots are saved to tmp/screenshot as JPEG for local inspection.',
-    '  - Per-entry encrypted .bin files are written to',
-    '    public/assets/data/screenshots/<md5>.bin and referenced in',
-    '    tmp/screenshot/metadata.bin (encrypted).',
-    '  - Ensure VITE_JSON_SECRET is set in the environment for encryption.',
-    '',
-    'Examples:',
-    '  node skrin-check-data -n 3201',
-    '  node skrin-check-data -n 3201 -n 3202',
-    '  node skrin-check-data -n 3201,3202,3203',
-    '  node skrin-check-data -f'
-  ];
-  helpLines.forEach(console.log);
-  process.exit(0);
-}
-
-if (specificNiks.length > 0) {
-  console.log('Specific NIK mode:', specificNiks.join(', '));
-}
-
-if (force) {
-  console.log('Force mode enabled: all data will be processed.');
-}
-
 const endpointManager = new EndpointManager(puppeteerTempPath);
 let claimedEndpoint: string | undefined;
 export { endpointManager as parallelSkrinCheckEndpointManager, claimedEndpoint as parallelSkrinCheckClaimedEndpoint };
 let browser: import('puppeteer').Browser;
 
-export async function parallelSkrinCheck() {
+export async function parallelSkrinCheck(options?: {
+  specificNiks?: string[];
+  force?: boolean;
+  openScreenshots?: boolean;
+}) {
+  const opts = { specificNiks: [] as string[], force: false, openScreenshots: false, ...options };
+  const { specificNiks, force, openScreenshots } = opts;
+  const normalizedTargets = specificNiks.map(getNumbersOnly);
   const tried = new Set<string>();
 
   while (true) {
@@ -183,7 +128,7 @@ export async function parallelSkrinCheck() {
   console.log(`Total data to process: ${toProcess.length}`);
 
   for (const data of toProcess) {
-    await findData(data, page);
+    await findData(data, page, { normalizedTargets, openScreenshots });
   }
 
   // Intentionally keep the browser running (do not close it) so it can be inspected.
@@ -194,7 +139,11 @@ export async function parallelSkrinCheck() {
 
 let lastLoginTime = 0;
 
-async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
+async function findData(
+  data: ExcelRowData,
+  page: import('puppeteer').Page,
+  options?: { normalizedTargets?: string[]; openScreenshots?: boolean }
+) {
   const now = Date.now();
 
   if (!page || page.isClosed()) return;
@@ -249,6 +198,7 @@ async function findData(data: ExcelRowData, page: import('puppeteer').Page) {
   await sleep(500); // Ensure file is fully written
 
   console.log(`Screenshot saved: ${path.relative(process.cwd(), tmpFilePath)}`);
+  const { normalizedTargets = [], openScreenshots = false } = options || {};
   if (openScreenshots) {
     console.log('Opening image with default viewer...');
     await openImageExternally(tmpFilePath);
