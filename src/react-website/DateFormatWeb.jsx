@@ -6,7 +6,7 @@ import { Container, Form, Button } from 'react-bootstrap';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { useTheme } from './components/ThemeContext';
-import { getViteUrl } from '../utils-browser-esm';
+import { getViteUrl } from '../utils/browser-esm';
 
 const defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { defaultLogFilePath } from './src/utils.js';
+import { defaultLogFilePath } from './src/utils/index.js';
 
 // Path output
 const outputPath = path.join(process.cwd(), '.cache/extracted.log');

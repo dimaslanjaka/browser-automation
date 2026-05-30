@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writefile } from 'sbg-utility';
 import { newLogPath } from './src/runner/skrin.log-restart.js';
-import { defaultLogFilePath } from './src/utils.js';
+import { defaultLogFilePath } from './src/utils/index.js';
 
 // Define __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);

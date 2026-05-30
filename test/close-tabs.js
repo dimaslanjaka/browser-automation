@@ -1,5 +1,5 @@
 import { getPuppeteer } from '../src/puppeteer_utils.js';
-import { sleep } from '../src/utils-browser.js';
+import { sleep } from '../src/utils/browser.js';
 
 async function main() {
   const { browser } = await getPuppeteer();

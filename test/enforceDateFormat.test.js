@@ -1,5 +1,5 @@
 import { describe, expect, jest, test } from '@jest/globals';
-import { enforceDateFormat } from '../src/utils.js';
+import { enforceDateFormat } from '../src/utils/index.js';
 
 const formats = ['DD/MM/YYYY', 'DD-MM-YYYY', 'MM/DD/YYYY', 'MM-DD-YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'];
 

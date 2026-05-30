@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { logLine } from '../src/utils.js';
+import { logLine } from '../src/utils/index.js';
 import * as cheerio from 'cheerio';
 import postList from '../src/react-website/components/post-lists.json' with { type: 'json' };
 

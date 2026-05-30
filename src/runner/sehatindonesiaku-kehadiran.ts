@@ -10,7 +10,7 @@ import {
   isElementExist,
   waitForDomStable
 } from '../puppeteer_utils.js';
-import { sleep } from '../utils-browser.js';
+import { sleep } from '../utils/browser.js';
 import { getSehatIndonesiaKuDb, sehatindonesiakuDataPath } from './sehatindonesiaku-data.js';
 import { DataItem } from './types.js';
 import { ErrorDataKehadiranNotFound, UnauthorizedError } from './sehatindonesiaku-errors.js';

@@ -1,4 +1,4 @@
-import { logLine } from '../src/utils.js';
+import { logLine } from '../src/utils/index.js';
 
 logLine('This is a test log message.');
 logLine(123);

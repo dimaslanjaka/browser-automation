@@ -12,7 +12,7 @@ import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';

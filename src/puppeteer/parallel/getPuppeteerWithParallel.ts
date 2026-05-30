@@ -1,7 +1,7 @@
 import { bindProcessExit, scheduler } from 'sbg-utility';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
-import { noop } from '../../utils-browser.js';
+import { noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
 
 let registered = false;

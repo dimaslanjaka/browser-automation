@@ -11,7 +11,7 @@ import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import { ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
@@ -287,8 +287,8 @@ export async function processData(
 
   // Note: keep login early to ensure session available for locking checks/UI interactions.
   await autoLoginAndEnterSkriningPage(page);
+  await waitForDomStable(page, 3000, 60000);
   await page.waitForSelector('#nik', { visible: true });
-  await sleep(3000);
 
   if (!data) {
     throw new Error('No more data to process.');

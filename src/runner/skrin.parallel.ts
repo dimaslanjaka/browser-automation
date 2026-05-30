@@ -4,7 +4,7 @@ import { connect } from '../puppeteer/parallel/utils.js';
 import type { Browser } from 'puppeteer';
 import { loadCsvData } from '../../data/index.js';
 import { ExcelRowData } from '../../globals.js';
-import { getNumbersOnly } from '../utils-browser.js';
+import { getNumbersOnly } from '../utils/browser.js';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { processData } from './skrin/direct-process-data.js';

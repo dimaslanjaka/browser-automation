@@ -1,6 +1,6 @@
 import minimist from 'minimist';
 import { normalizePathUnix } from 'sbg-utility';
-import { sleep } from '../utils-browser.js';
+import { sleep } from '../utils/browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import fs from 'fs-extra';
 import { LogDatabase } from '../database/LogDatabase.js';

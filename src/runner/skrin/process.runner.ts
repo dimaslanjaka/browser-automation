@@ -6,7 +6,7 @@ import { LogDatabase } from '../../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
 import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
-import { getNumbersOnly } from '../../utils-browser.js';
+import { getNumbersOnly } from '../../utils/browser.js';
 import { processData } from './direct-process-data.js';
 import { ExcelRowData } from '../../../globals.js';
 

@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { nikParserStrictSync as nikParserStrict } from 'nik-parser-jurusid';
-import { getNumbersOnly } from '../../utils-browser.js';
+import { getNumbersOnly } from '../browser.js';
 import { loadCsvData } from '../../../data/index.js';
 import { fixNama } from './fixData/nama.js';
 import { fixPekerjaan } from './fixData/pekerjaan.js';

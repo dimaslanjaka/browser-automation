@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { Accordion, Badge, FormControl, InputGroup, Pagination } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { getViteUrl } from '../utils-browser-esm.js';
+import { getViteUrl } from '../utils/browser-esm.js';
 import md5 from '../utils/md5.js';
 import { decryptJson } from '../utils/json-crypto.js';
 import { useTheme } from './components/ThemeContext.jsx';

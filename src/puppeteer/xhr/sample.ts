@@ -5,7 +5,7 @@ import { delay } from 'sbg-utility';
 import { getPuppeteer, pageScreenshot } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { setupXhrCapture } from './capture-xhr.js';
-import { noop } from '../../utils-browser.js';
+import { noop } from '../../utils/browser.js';
 
 puppeteer.use(StealthPlugin());
 

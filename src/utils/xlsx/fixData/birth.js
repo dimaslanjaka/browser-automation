@@ -1,7 +1,7 @@
 import ansiColors from 'ansi-colors';
 import moment from 'moment';
 import { getAge } from '../../../utils/date.js';
-import { logLine } from '../../../utils.js';
+import { logLine } from '../../index.js';
 
 /**
  * Normalize and validate TGL LAHIR (birth date) and calculate age.

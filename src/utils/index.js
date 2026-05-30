@@ -6,7 +6,7 @@ import nikParse from 'nik-parser-jurusid';
 import path from 'node:path';
 import readline from 'node:readline';
 import { readfile } from 'sbg-utility';
-export * from './utils-browser.js';
+export * from './browser.js';
 
 export function singleBeep() {
   exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
@@ -76,7 +76,7 @@ export function appendLog(data, message = 'Processed Data', logFilePath = null) 
  * - `raw`: the original line string from the log
  *
  * @param {string|null} [logFilePath=null] - The path to the log file. If `null`, uses `defaultLogFilePath`.
- * @returns {Array<{timestamp: string, status: string, data: import('../globals').ExcelRowData, raw: string}>}
+ * @returns {Array<{timestamp: string, status: string, data: import('../../globals.js').ExcelRowData, raw: string}>}
  */
 export function getLogData(logFilePath = null) {
   if (!logFilePath) logFilePath = defaultLogFilePath;

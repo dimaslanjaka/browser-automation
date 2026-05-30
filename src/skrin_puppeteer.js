@@ -1,7 +1,7 @@
 import { delay } from 'sbg-utility';
 import goWithRetry from './puppeteer/goWithRetry.js';
 import { isElementVisible, waitForDomStable } from './puppeteer_utils.js';
-import { sleep } from './utils.js';
+import { sleep } from './utils/index.js';
 
 /**
  * Logs into the skrining web application using provided credentials.

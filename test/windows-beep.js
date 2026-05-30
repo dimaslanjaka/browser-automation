@@ -1,3 +1,3 @@
-import { singleBeep } from '../src/utils.js';
+import { singleBeep } from '../src/utils/index.js';
 
 singleBeep();

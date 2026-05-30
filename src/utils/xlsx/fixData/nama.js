@@ -1,5 +1,5 @@
 import { parseBabyName } from '../../../runner/skrin-utils.js';
-import { logLine } from '../../../utils.js';
+import { logLine } from '../../index.js';
 import ansiColors from 'ansi-colors';
 
 /**

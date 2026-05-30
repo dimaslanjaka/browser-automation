@@ -8,7 +8,7 @@ import { processData } from '../../src/bundle/runner/skrin/direct-process-data.m
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { getPuppeteer } from '../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../skrin_puppeteer.js';
-import { getNumbersOnly, sleep } from '../utils.js';
+import { getNumbersOnly, sleep } from '../utils/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

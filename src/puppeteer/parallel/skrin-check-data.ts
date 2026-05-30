@@ -9,7 +9,7 @@ import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs, getPuppeteer, maximizeWindow, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { getNumbersOnly, sleep } from '../../utils-browser.js';
+import { getNumbersOnly, sleep } from '../../utils/browser.js';
 import { imageFileToDataUrl, openImageExternally } from '../../utils/image.js';
 import { decryptJson, encryptJson } from '../../utils/json-crypto.js';
 import md5 from '../../utils/md5.js';

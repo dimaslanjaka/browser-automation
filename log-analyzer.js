@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { defaultLogFilePath } from './src/utils.js';
+import { defaultLogFilePath } from './src/utils/index.js';
 
 const log = fs.readFileSync(defaultLogFilePath, 'utf-8');
 const lines = log.split('\n').filter(Boolean);

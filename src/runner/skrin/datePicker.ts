@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer';
 import moment from 'moment';
 import { parseDate as parseDateUtil } from '../../utils/date.js';
-import { sleep } from '../../utils-browser.js';
+import { sleep } from '../../utils/browser.js';
 import { isInvalidAlertVisible } from './isInvalidAlertVisible.js';
 
 /**

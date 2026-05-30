@@ -1,5 +1,5 @@
 import { array_random } from 'sbg-utility';
-import { getWeekdaysOfCurrentMonth } from '../src/utils.js';
+import { getWeekdaysOfCurrentMonth } from '../src/utils/index.js';
 
 console.log(getWeekdaysOfCurrentMonth(true));
 console.log('random:', array_random(getWeekdaysOfCurrentMonth()));

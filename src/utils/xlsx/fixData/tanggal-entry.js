@@ -2,7 +2,7 @@ import ansiColors from 'ansi-colors';
 import moment from 'moment';
 import { array_random } from 'sbg-utility';
 import { extractMonthName, getDatesWithoutSundays } from '../../../utils/date.js';
-import { logLine } from '../../../utils.js';
+import { logLine } from '../../index.js';
 
 /**
  * Normalize and validate TANGGAL ENTRY (entry date).

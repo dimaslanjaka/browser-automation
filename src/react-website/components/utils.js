@@ -1,5 +1,5 @@
 import * as safelinkify from 'safelinkify/browser_module';
-import { sleep } from '../../utils-browser.js';
+import { sleep } from '../../utils/browser.js';
 import { getCookie, setCookieMins } from './cookie.js';
 
 /**

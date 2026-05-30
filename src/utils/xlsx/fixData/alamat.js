@@ -1,6 +1,6 @@
 import ansiColors from 'ansi-colors';
 import { geocodeWithNominatim } from '../../../address/nominatim.js';
-import { logLine } from '../../../utils.js';
+import { logLine } from '../../index.js';
 
 /**
  * Normalize and validate alamat (address) field.

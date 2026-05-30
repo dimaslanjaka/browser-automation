@@ -6,7 +6,7 @@ import { Page } from 'puppeteer';
 import { array_shuffle, array_unique } from 'sbg-utility';
 import { LogEntry } from '../database/BaseLogDatabase.js';
 import { closeFirstTab, getPuppeteer, waitForDomStable } from '../puppeteer_utils.js';
-import { noop, sleep } from '../utils-browser.js';
+import { noop, sleep } from '../utils/browser.js';
 import { getExcelData, getSehatIndonesiaKuDb } from './sehatindonesiaku-data.js';
 import {
   DataTidakSesuaiKTPError,

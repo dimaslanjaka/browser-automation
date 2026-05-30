@@ -17,7 +17,7 @@ import {
   waitForDomStable
 } from '../puppeteer_utils.js';
 import { enterSkriningPage, skrinLogin } from '../skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils.js';
+import { extractNumericWithComma, getNumbersOnly, logInline, logLine, sleep, waitEnter } from '../utils/index.js';
 import { removeWhitespaces, ucwords } from '../utils/string.js';
 import fixData from '../utils/xlsx/fixData.js';
 import { parseBabyName } from './skrin-utils.js';

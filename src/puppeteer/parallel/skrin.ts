@@ -9,7 +9,7 @@ import puppeteer from 'puppeteer';
 import { processData } from '../../runner/skrin/direct-process-data2.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
-import { getNumbersOnly, noop } from '../../utils-browser.js';
+import { getNumbersOnly, noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
 
 /**

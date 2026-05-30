@@ -4,7 +4,7 @@ import { loadCsvData } from '../data/index.js';
 import { fetchXlsxData4 } from '../src/fetchXlsxData4.js';
 import fixData, { isValidNik } from '../src/utils/xlsx/fixData.js';
 import Bluebird from 'bluebird';
-import { noop } from '../src/utils-browser.js';
+import { noop } from '../src/utils/browser.js';
 
 async function _runFixDataDirect() {
   const rows = await fetchXlsxData4();

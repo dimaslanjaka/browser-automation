@@ -5,7 +5,7 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import { useTheme } from './components/ThemeContext';
 import HomePosts from './HomePosts';
-import { getViteUrl } from '../utils-browser-esm';
+import { getViteUrl } from '../utils/browser-esm';
 const _react = typeof React;
 
 export default function Home() {

@@ -1,4 +1,4 @@
-import { uniqueArrayObjByKey } from '../src/utils.js';
+import { uniqueArrayObjByKey } from '../src/utils/index.js';
 
 // { nik: '3578102009820006', bb: '75', tb: '90', dm: 'ya', batuk: 'bapilnas 2 hr' }
 const data = [

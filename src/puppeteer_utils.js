@@ -12,7 +12,7 @@ import {
 } from './puppeteer/fingerprint_utils.js';
 import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
-import { sleep } from './utils-browser.js';
+import { sleep } from './utils/browser.js';
 import { PuppeteerCookies } from './puppeteer/Cookies.js';
 import goWithRetry from './puppeteer/goWithRetry.js';
 export { elementExists } from './puppeteer/elementExists.js';

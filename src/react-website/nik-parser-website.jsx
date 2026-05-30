@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { getViteUrl } from '../utils-browser-esm';
+import { getViteUrl } from '../utils/browser-esm';
 import { decryptJson } from '../utils/json-crypto';
 import AdSense from './components/Adsense';
 import Footer from './components/Footer';

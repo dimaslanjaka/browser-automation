@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import xlsx from 'xlsx';
-import { logLine } from '../utils.js';
+import { logLine } from '../utils/index.js';
 
 /**
  * Parse baby name from entry string

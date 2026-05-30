@@ -1,5 +1,5 @@
 import ansiColors from 'ansi-colors';
-import { logLine } from '../../../utils.js';
+import { logLine } from '../../index.js';
 
 /**
  * Normalize and map pekerjaan (occupation) to a canonical value.

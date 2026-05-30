@@ -7,7 +7,7 @@ import type { ExcelRowData } from '../../globals.js';
 import { LogDatabase } from '../database/LogDatabase.js';
 import { toValidMySQLDatabaseName } from '../database/db_utils.js';
 import { closeOtherTabs, getPuppeteerCluster } from '../puppeteer_utils.js';
-import { getNumbersOnly } from '../utils.js';
+import { getNumbersOnly } from '../utils/index.js';
 import { processData } from './skrin/direct-process-data.js';
 
 const cliArgs = minimist(process.argv.slice(2), {
