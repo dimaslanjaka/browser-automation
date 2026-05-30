@@ -26,12 +26,25 @@ export function multiBeep() {
 export function waitEnter(message, sound = true) {
   return new Promise(function (resolve) {
     if (sound) singleBeep();
+
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
-    rl.question(message, () => {
-      rl.close(); // Close immediately after use
+
+    readline.emitKeypressEvents(process.stdin);
+
+    const onKeypress = (str, key) => {
+      if (key && key.name === 'escape') {
+        process.exit(1);
+      }
+    };
+
+    process.stdin.on('keypress', onKeypress);
+
+    rl.question(message.replace(/(\.\.\.)\s*$/, '') + ' (Esc to exit)... ', () => {
+      process.stdin.removeListener('keypress', onKeypress);
+      rl.close();
       resolve();
     });
   });
