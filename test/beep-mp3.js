@@ -1,4 +1,4 @@
-import { playMp3FromUrl } from '../src/beep.js';
+import { playMp3FromUrl } from '../src/utils/beep.js';
 import { sleep } from '../src/utils/index.js';
 
 await playMp3FromUrl('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3').catch(console.error);
