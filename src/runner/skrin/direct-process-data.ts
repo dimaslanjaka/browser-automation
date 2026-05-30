@@ -14,7 +14,7 @@ import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppetee
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
-import { ucwords } from '../../utils/string.js';
+import { normalizeAddressNameToIndonesian, ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
 import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
@@ -362,6 +362,24 @@ export async function processData(
           throw new Error(
             `❌ Failed to determine address: no geocoder result and no parsed NIK data available (nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
           );
+        }
+
+        const originalAddressParts = { provinsi, kabupatenOrKota, kecamatan, kelurahan };
+        provinsi = normalizeAddressNameToIndonesian(provinsi);
+        kabupatenOrKota = normalizeAddressNameToIndonesian(kabupatenOrKota);
+        kecamatan = normalizeAddressNameToIndonesian(kecamatan);
+        kelurahan = normalizeAddressNameToIndonesian(kelurahan);
+
+        if (
+          originalAddressParts.provinsi !== provinsi ||
+          originalAddressParts.kabupatenOrKota !== kabupatenOrKota ||
+          originalAddressParts.kecamatan !== kecamatan ||
+          originalAddressParts.kelurahan !== kelurahan
+        ) {
+          console.log('Normalized address parts to Indonesian format:', {
+            before: originalAddressParts,
+            after: { provinsi, kabupatenOrKota, kecamatan, kelurahan }
+          });
         }
 
         if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {
