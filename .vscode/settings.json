@@ -53,13 +53,11 @@
   "editor.formatOnPaste": false,
   "editor.formatOnSave": false,
   "eslint.useFlatConfig": true,
-  "git.autoStash": true,
-  "git.useCommitInputAsStashMessage": true,
   "python.analysis.autoImportCompletions": true,
   "python.createEnvironment.contentButton": "show",
   "python.terminal.activateEnvInCurrentTerminal": false,
   "terminal.integrated.fontFamily": "MesloLGM Nerd Font",
-  "terminal.integrated.defaultProfile.windows": "PowerShell 7",
+  "terminal.integrated.defaultProfile.windows": "Oh My Posh",
   "terminal.integrated.env.linux": {
     "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${workspaceFolder}/bin:${workspaceFolder}/node_modules/.bin:${workspaceFolder}/vendor/bin",
     "NUITKA_CACHE_DIR": "${workspaceFolder}\\tmp\\nuitka-cache",
@@ -120,7 +118,7 @@
       "args": [
         "-NoExit",
         "-Command",
-        "$candidates = @('${workspaceFolder}/scripts/OhMyPoshInit.ps1','${workspaceFolder}/node_modules/@dimaslanjaka/eslint-base-config/scripts/OhMyPoshInit.ps1'); $init = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($init) { if ((Get-ExecutionPolicy -Scope CurrentUser) -eq 'Restricted') { Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force }; & $init } else { oh-my-posh init pwsh | Invoke-Expression }"
+        "$init = $null; foreach ($candidate in @('${workspaceFolder}/scripts/OhMyPoshInit.ps1','${workspaceFolder}/node_modules/@dimaslanjaka/eslint-base-config/scripts/OhMyPoshInit.ps1')) { if (Test-Path $candidate) { $init = $candidate; break } }; if ($init) { & $init } else { oh-my-posh init pwsh | Invoke-Expression }"
       ],
       "icon": "terminal-powershell"
     },
@@ -188,7 +186,5 @@
     "data/script": true
   },
   "search.useGlobalIgnoreFiles": false,
-  "python.terminal.activateEnvironment": false,
-  "git.autorefresh": false,
-  "git.autofetch": true
+  "python.terminal.activateEnvironment": false
 }
