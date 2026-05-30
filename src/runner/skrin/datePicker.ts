@@ -2,7 +2,6 @@ import { Page } from 'puppeteer';
 import moment from 'moment';
 import { parseDate as parseDateUtil } from '../../utils/date.js';
 import { sleep } from '../../utils-browser.js';
-import { typeAndTrigger } from '../../puppeteer_utils.js';
 import { isInvalidAlertVisible } from './isInvalidAlertVisible.js';
 
 /**
@@ -147,13 +146,6 @@ export async function setDatepickerValue(page: Page, dateValue: string) {
   const dateObject = parsedDate.toDate();
   const formattedDate = parsedDate.format('DD/MM/YYYY');
 
-  // Temporarily unlock the field so the injected text can trigger the widget's handlers.
-  await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
-  // Seed the input with the normalized date string before we set the widget value.
-  await typeAndTrigger(page, '#dt_tgl_skrining', formattedDate);
-  // Restore readonly after the synthetic input event has fired.
-  await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
-
   await page.evaluate(
     (sel, dateObj, fallbackValue) => {
       // Resolve the datepicker input element inside the page context.
@@ -181,9 +173,6 @@ export async function setDatepickerValue(page: Page, dateValue: string) {
             }
 
             widget.value(dateObj);
-            if (typeof widget.element?.val === 'function') {
-              widget.element.val(fallbackValue);
-            }
             if (typeof widget.trigger === 'function') widget.trigger('change');
             return;
           }
