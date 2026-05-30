@@ -259,6 +259,7 @@ const _partials = {
       format: 'cjs',
       sourcemap: false,
       preserveModules: true,
+      preserveModulesRoot: 'src',
       entryFileNames: entryFileNamesWithExt('cjs'),
       chunkFileNames: chunkFileNamesWithExt('cjs')
       // exports: 'named'
@@ -270,6 +271,7 @@ const _partials = {
       format: 'esm',
       sourcemap: false,
       preserveModules: true,
+      preserveModulesRoot: 'src',
       entryFileNames: entryFileNamesWithExt('mjs'),
       chunkFileNames: chunkFileNamesWithExt('mjs')
       // exports: 'named'
