@@ -32,8 +32,8 @@ function isProcessRunning(pid: number): boolean {
 
 export async function launch() {
   const cwd = process.cwd();
-  const jsLauncherPath = path.join(__dirname, 'launcher.js');
-  const tsLauncherPath = path.join(__dirname, 'launcher.ts');
+  const jsLauncherPath = path.join(__dirname, 'launcher.runner.js');
+  const tsLauncherPath = path.join(__dirname, 'launcher.runner.ts');
   const hasJsLauncher = fs.existsSync(jsLauncherPath);
   const launcherPath = hasJsLauncher ? jsLauncherPath : tsLauncherPath;
   const args = hasJsLauncher

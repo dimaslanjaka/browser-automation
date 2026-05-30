@@ -12,7 +12,7 @@ if /I "%~1"=="skrin" goto :skrin
 
 :launch
 shift
-set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\launcher.ts"
+set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\launcher.runner.ts"
 set "BUNDLE_OUTPUT=%CD%\dist\parallel\launcher.cjs"
 call npx rollup -c rollup.config.js
 start "" cmd /c "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs %CD%\dist\parallel\launcher.cjs %*"

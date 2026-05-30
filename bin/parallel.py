@@ -156,10 +156,10 @@ def check(args, keep_open=False, same_terminal=False):
 
 COMMANDS = {
     "launch": {
-        "input": "launcher.ts",
+        "input": "launcher.runner.ts",
         "output": "launcher.cjs",
         "entry": "launcher",
-        "cache": os.path.join(CACHE_DIR, ".rollup_cache_launcher.json"),
+        "cache": os.path.join(CACHE_DIR, ".rollup_cache_launcher.runner.json"),
     },
     "skrin": {
         "input": "skrin.ts",

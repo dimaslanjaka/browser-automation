@@ -28,7 +28,7 @@ function QuoteArg([string]$s) {
 
 switch ($command) {
     'launch' {
-        $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\launcher.ts'
+        $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\launcher.runner.ts'
         $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\launcher.cjs'
 
         # Run rollup (will print output to this terminal)

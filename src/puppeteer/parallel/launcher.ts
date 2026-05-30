@@ -4,7 +4,7 @@ import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import { endpointManager } from './utils.js';
 
-(async () => {
+export async function parallelLauncher() {
   const { browser, goto } = await getPuppeteer({
     args: ['--start-maximized', '--disable-features=site-per-process'],
     headless: false,
@@ -107,4 +107,4 @@ import { endpointManager } from './utils.js';
       resolve(true);
     });
   });
-})();
+}
