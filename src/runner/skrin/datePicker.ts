@@ -1,7 +1,9 @@
 import { Page } from 'puppeteer';
 import moment from 'moment';
+import { parseDate as parseDateUtil } from '../../utils/date.js';
 import { sleep } from '../../utils-browser.js';
 import { typeAndTrigger } from '../../puppeteer_utils.js';
+import { isInvalidAlertVisible } from './isInvalidAlertVisible.js';
 
 /**
  * Select a date using the calendar UI by opening the datepicker and clicking the matching day.
@@ -49,13 +51,18 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
     //
   }
   await sleep(200);
-  // Parse the caller-provided DD/MM/YYYY string into a Moment instance for all later transformations.
-  const parseDate = moment(dateValue, 'DD/MM/YYYY');
+  // Use the shared parseDate utility to normalize the incoming string,
+  // then create a Moment instance for all later transformations.
+  const formatted = parseDateUtil(dateValue);
+  const parsedMoment = moment(formatted, 'DD/MM/YYYY', true);
+  if (!parsedMoment.isValid()) {
+    throw new Error(`Invalid dateValue after parsing: ${dateValue}`);
+  }
 
   if (!options?.skipMonthNavigation) {
     // click previous month button if needed, e.g. <a href="#" role="button" class="k-link k-nav-prev" aria-disabled="false"><span class="k-icon k-i-arrow-w"></span></a>
     // check if dateValue month is before the currently displayed month in datepicker, if so click previous month button until the month is correct
-    const dateMonth = parseDate.month();
+    const dateMonth = parsedMoment.month();
     const currentMonth = moment().month();
     const totalClickPrev = currentMonth - dateMonth;
     console.log('Date month:', dateMonth, 'Current month:', currentMonth, 'Total click prev:', totalClickPrev);
@@ -75,11 +82,11 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
   // click matching date value in datepicker, e.g. <a tabindex="-1" class="k-link" href="#" data-value="2026/4/9" title="Saturday, May 09, 2026">9</a>
   // Build the title strings the calendar may render depending on locale.
   const titleCandidates = [
-    parseDate.locale('id').format('DD MMMM YYYY'),
-    parseDate.locale('en').format('dddd, MMMM DD, YYYY')
+    parsedMoment.locale('id').format('DD MMMM YYYY'),
+    parsedMoment.locale('en').format('dddd, MMMM DD, YYYY')
   ];
   // Build the Kendo data-value selector from the parsed year/month/day.
-  const dataValueSelector = `[data-value="${parseDate.year()}/${parseDate.month()}/${parseDate.date()}"]`;
+  const dataValueSelector = `[data-value="${parsedMoment.year()}/${parsedMoment.month()}/${parsedMoment.date()}"]`;
 
   // small pause to allow UI to settle before selecting date
   await sleep(100);
@@ -114,6 +121,13 @@ export async function selectDateWithUI(page: Page, dateValue: string, options?: 
   } catch {
     // fallback: run a DOM click if puppeteer's click fails
     await page.$eval(selectedSelector, (el) => (el as HTMLElement).click());
+  }
+
+  const invalidAlert = await isInvalidAlertVisible(page);
+  if (invalidAlert.result) {
+    console.warn('⚠️ Invalid alert detected after selecting date:');
+    console.warn(`  ${invalidAlert.contents.join(' - ')}`);
+    throw new Error('Invalid alert appeared after selecting date');
   }
 }
 
