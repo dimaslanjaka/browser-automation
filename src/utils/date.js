@@ -247,3 +247,27 @@ export function extractMonthName(str) {
   const match = str.match(monthRegex);
   return match ? match[0] : null;
 }
+
+/**
+ * Normalize and validate a birth date (e.g. from NIK) to DD/MM/YYYY format.
+ *
+ * @param {string} dateStr - Raw birth date string (e.g. from parsed NIK).
+ * @param {string[]} formats - List of acceptable input date formats. eg: ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'].
+ * @param {string} [context=''] - Optional context for clearer error messages.
+ * @returns {string} - A normalized date string in DD/MM/YYYY format.
+ * @throws Will throw an error if the input cannot be parsed with the given formats.
+ */
+export function enforceDateFormat(dateStr, formats, context = '') {
+  const parsed = moment(dateStr, formats, true);
+  if (!parsed.isValid()) {
+    throw new Error(
+      `❌ Invalid birth date format${context ? ` in ${context}` : ''}. Expected one of [${formats.join(', ')}], got: ${dateStr}`
+    );
+  }
+
+  if (!moment(dateStr, 'DD/MM/YYYY', true).isValid()) {
+    console.warn(`⚠️ Converted birth date to DD/MM/YYYY: ${parsed.format('DD/MM/YYYY')} (from: ${dateStr})`);
+  }
+
+  return parsed.format('DD/MM/YYYY');
+}

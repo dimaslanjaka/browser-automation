@@ -336,3 +336,11 @@ export async function playMp3FromUrl(mp3Url, ffmpegOptions) {
     }
   }, 5000);
 }
+
+export function singleBeep() {
+  exec('[console]::beep(1000, 500)', { shell: 'powershell.exe' });
+}
+
+export function multiBeep() {
+  exec('1..3 | %{ [console]::beep(1000, 500) }', { shell: 'powershell.exe' });
+}
