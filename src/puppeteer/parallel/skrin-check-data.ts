@@ -33,7 +33,7 @@ export async function parallelSkrinCheck(options?: {
 }) {
   const opts = { specificNiks: [] as string[], force: false, openScreenshots: false, ...options };
   const { specificNiks, force, openScreenshots } = opts;
-  const normalizedTargets = specificNiks.map(getNumbersOnly);
+  const normalizedTargets: string[] = specificNiks.map(getNumbersOnly);
   const tried = new Set<string>();
 
   while (true) {
@@ -128,7 +128,7 @@ export async function parallelSkrinCheck(options?: {
   console.log(`Total data to process: ${toProcess.length}`);
 
   for (const data of toProcess) {
-    await findData(data, page, { normalizedTargets, openScreenshots });
+    await findData(data, page, { normalizedTargets: normalizedTargets as string[], openScreenshots });
   }
 
   // Intentionally keep the browser running (do not close it) so it can be inspected.
