@@ -26,7 +26,6 @@ import { isNikErrorVisible } from './isNikErrorVisible.js';
 import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
-import { isNumeric } from '../../react-website/components/moment-timezone-helper.js';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -512,7 +511,7 @@ export async function processData(
     fixedData.tgl_lahir_from_page = birthDate;
     fixedData.umur_from_page = age;
     console.log('Jenis kelamin:', gender, 'Umur:', age, 'tahun');
-    if (!gender || isNumeric(age)) {
+    if (!gender || !Number.isFinite(age)) {
       throw new Error('Invalid input: Gender or age is missing/invalid.');
     }
 
