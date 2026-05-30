@@ -6,7 +6,8 @@ import path from 'upath';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
-import { closeOtherTabs, getPuppeteer, maximizeWindow, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
+import puppeteer from 'puppeteer';
+import { closeOtherTabs, maximizeWindow, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../../utils/browser.js';
@@ -84,6 +85,7 @@ if (force) {
 
 const endpointManager = new EndpointManager(puppeteerTempPath);
 let claimedEndpoint: string | undefined;
+export { endpointManager as parallelSkrinCheckEndpointManager, claimedEndpoint as parallelSkrinCheckClaimedEndpoint };
 let browser: import('puppeteer').Browser;
 
 export async function parallelSkrinCheck() {
@@ -121,11 +123,9 @@ export async function parallelSkrinCheck() {
     });
 
     try {
-      const res = await getPuppeteer({
-        autoSwitchProfileDir: true,
+      browser = await puppeteer.connect({
         browserWSEndpoint: endpoint
       });
-      browser = res.browser;
       claimedEndpoint = endpoint;
       break;
     } catch {

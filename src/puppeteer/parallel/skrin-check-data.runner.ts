@@ -1,4 +1,8 @@
-import { parallelSkrinCheck } from './skrin-check-data.js';
+import {
+  parallelSkrinCheckEndpointManager,
+  parallelSkrinCheckClaimedEndpoint,
+  parallelSkrinCheck
+} from './skrin-check-data.js';
 
 parallelSkrinCheck()
   .catch((err) => {
@@ -8,6 +12,6 @@ parallelSkrinCheck()
   .finally(() => {
     // Do not close the browser here to allow inspection of the final state.
     // If you want to close it, you can uncomment the following lines:
-    // endpointManager.releaseEndpointClaim(claimedEndpoint!, process.pid);
+    parallelSkrinCheckEndpointManager.releaseEndpointClaim(parallelSkrinCheckClaimedEndpoint!, process.pid);
     process.exit(0);
   });

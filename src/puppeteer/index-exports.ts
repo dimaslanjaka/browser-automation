@@ -9,8 +9,6 @@ export * from './getActivePage.js';
 export * from './getFallbackProfileDir.js';
 export * from './getFormValuesFromFrame.js';
 export * from './goWithRetry.js';
-export * from './parallel/check.js';
-export * from './parallel/detached.js';
 export * from './parallel/EndpointManager.js';
 export * from './parallel/getPuppeteerWithParallel.js';
 export * from './parallel/index.js';

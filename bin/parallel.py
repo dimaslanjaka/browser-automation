@@ -150,7 +150,7 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
 
 
 def check(args, keep_open=False, same_terminal=False):
-    script = os.path.join(CWD, "src", "puppeteer", "parallel", "check.ts")
+    script = os.path.join(CWD, "src", "puppeteer", "parallel", "check.runner.ts")
     return run_node(script, args, keep_open, same_terminal)
 
 
