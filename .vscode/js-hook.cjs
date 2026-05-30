@@ -49,10 +49,10 @@ process.on('uncaughtException', (error) => {
 // };
 
 // --- Startup info ---
-console.log('JavaScript hook (CommonJS) loaded successfully');
-console.log('Working directory:', process.cwd());
-console.log('Node.js version:', process.version);
-console.log('Environment:', process.env.NODE_ENV || 'development');
+// console.log('JavaScript hook (CommonJS) loaded successfully');
+// console.log('Working directory:', process.cwd());
+// console.log('Node.js version:', process.version);
+// console.log('Environment:', process.env.NODE_ENV || 'development');
 
 // Set VITE_INSTANCE_ID for Vite (random per process)
 process.env.VITE_INSTANCE_ID = Math.random().toString(36).substring(2, 15);
