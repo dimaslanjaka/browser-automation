@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { logLine } from '../src/utils/index.js';
 import * as cheerio from 'cheerio';
 import postList from '../src/react-website/components/post-lists.json' with { type: 'json' };
 
@@ -63,12 +62,12 @@ function AfterBuildCopyPlugin() {
       for (const option of options) {
         const { dest = undefined, title, canonical, thumbnail = '', author = '', description = '', icon = '' } = option;
         if (typeof dest !== 'string' || !dest) {
-          logLine('Skipped option with invalid dest:', option);
+          console.log('Skipped option with invalid dest:', option);
           continue;
         }
         fs.ensureDirSync(path.dirname(dest));
         fs.copyFileSync(src, dest);
-        logLine(`Copied ${src} to ${dest}`);
+        console.log(`Copied ${src} to ${dest}`);
 
         // Update HTML metadata
         const htmlContent = fs.readFileSync(dest, 'utf-8');
@@ -122,7 +121,7 @@ function AfterBuildCopyPlugin() {
         // Add more meta tags as needed for SEO...
         const updatedHtml = $.html();
         fs.writeFileSync(dest, updatedHtml, 'utf-8');
-        logLine(`Updated html in ${dest}`);
+        console.log(`Updated html in ${dest}`);
       }
     }
   };
