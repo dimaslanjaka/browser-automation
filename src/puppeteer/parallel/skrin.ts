@@ -4,94 +4,74 @@ import { array_shuffle } from 'sbg-utility';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
-import { LogDatabase } from '../../database/LogDatabase.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
 import puppeteer from 'puppeteer';
-import { processData } from '../../runner/skrin/direct-process-data.js';
+import { processData } from '../../runner/skrin/direct-process-data2.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils-browser.js';
 import EndpointManager from './EndpointManager.js';
 
-async function main(opts: { loop?: boolean; max?: number }) {
-  // instantiate endpoint manager and try to claim a free endpoint before connecting
+/**
+ * Connects to an available browser endpoint, registers cleanup handlers,
+ * and returns a ready-to-use page.
+ */
+async function getPage(): Promise<import('puppeteer').Page> {
   const endpointManager = new EndpointManager(puppeteerTempPath);
-  let claimedEndpoint: string | undefined;
-  let browser: import('puppeteer').Browser;
-
   const tried = new Set<string>();
+
   while (true) {
     const endpoint = await endpointManager.getAvailableEndpoint();
-    if (!endpoint) {
-      console.error('No browser endpoint available to connect.');
-      process.exit(1);
-    }
-
-    if (tried.has(endpoint)) {
-      // All known endpoints exhausted
+    if (!endpoint || tried.has(endpoint)) {
       console.error('No free browser endpoint found after trying all endpoints.');
       process.exit(1);
     }
 
-    // Try to claim it
-    const claimed = endpointManager.tryClaimEndpoint(endpoint, process.pid);
-    if (!claimed) {
+    if (!endpointManager.tryClaimEndpoint(endpoint, process.pid)) {
       tried.add(endpoint);
       continue;
     }
 
-    // Register cleanup after successful claim
+    const release = () => endpointManager.releaseEndpointClaim(endpoint, process.pid);
     process.on('SIGINT', () => {
-      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      release();
       process.exit(0);
     });
     process.on('SIGTERM', () => {
-      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      release();
       process.exit(0);
     });
-    process.on('exit', () => {
-      endpointManager.releaseEndpointClaim(endpoint, process.pid);
-    });
+    process.on('exit', release);
 
     try {
-      // connect directly using puppeteer's connect when browserWSEndpoint is provided
-      browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
-      // reuse an existing page if available, otherwise open a new one
-      const pages = await browser.pages();
-      const connPage = pages && pages.length > 0 ? pages[0] : await browser.newPage();
-      connPage.goto('http://sh.webmanajemen.com').catch(noop);
-      claimedEndpoint = endpoint;
-      break;
+      const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+
+      browser.once('disconnected', async () => {
+        release();
+        console.log('Browser disconnected, exiting.');
+        await closeOtherTabs(browser, 2);
+        process.exit(0);
+      });
+
+      await closeOtherTabs(browser, 2);
+      const page = await browser.newPage();
+      page.goto('http://sh.webmanajemen.com').catch(noop);
+      await page.bringToFront();
+
+      return page;
     } catch (err: any) {
-      // Release claim and remove dead endpoint if connection refused
-      endpointManager.releaseEndpointClaim(endpoint, process.pid);
+      release();
       tried.add(endpoint);
-      const errObj = err?.error || err;
-      if (errObj?.code === 'ECONNREFUSED') {
+      if ((err?.error ?? err)?.code === 'ECONNREFUSED') {
         endpointManager.removeEndpoint(endpoint);
       }
-      // try next endpoint
-      continue;
     }
   }
+}
 
-  browser.once('disconnected', async () => {
-    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
-    console.log('Browser disconnected, exiting.');
-    await closeOtherTabs(browser, 2);
-    process.exit(0);
-  });
+async function main(opts: { loop?: boolean; max?: number }) {
+  const page = await getPage();
 
-  // close extra tabs if more than 2 are open (sometimes puppeteer.connect opens an extra blank tab)
-  await closeOtherTabs(browser, 2);
-  // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
-  const page = await browser.newPage();
-  page.goto('http://sh.webmanajemen.com').catch(noop);
-  await page.bringToFront();
-
-  const database = skrinDatabase;
-
-  // Read CLI overrides for processData options (undefined means not specified)
   const cliSkipValidateDb =
     typeof argv['skip-validate-db'] !== 'undefined' ? Boolean(argv['skip-validate-db']) : undefined;
   const cliSkipMonth =
@@ -108,109 +88,71 @@ async function main(opts: { loop?: boolean; max?: number }) {
     dataKunto = await loadCsvData<ExcelRowData>();
   } else {
     dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      if (existing && existing.data) return false;
-      return true;
+      const existing = await skrinDatabase.getLogById(getNumbersOnly(data.nik));
+      return !(existing && existing.data);
     });
+  }
+
+  function exitWorker(code = 0): never {
+    console.log('Leaving browser running. Exiting worker.');
+    process.exit(code);
   }
 
   if (!Array.isArray(dataKunto) || dataKunto.length === 0) {
     console.warn('No data available to process.');
-    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
-    console.log('Leaving browser running. Exiting worker.');
-    process.exit(0);
+    exitWorker(0);
   }
 
-  // Infer the options type from processData's parameter list
-  type ProcessDataOptions = Parameters<typeof processData>[3];
+  const options: Parameters<typeof processData>[3] = {
+    skipValidateDb: cliSkipValidateDb ?? false,
+    skipCurrentMonthValidation: cliSkipMonth ?? false,
+    skipCurrentYearValidation: cliSkipYear ?? false
+  };
 
-  // Strongly infer types instead of using any
-  type PageType = import('puppeteer').Page;
-
-  // helper: resolve option value (removes repetition)
-  function resolveOpt(value: boolean | undefined, fallback: boolean): boolean {
-    return typeof value !== 'undefined' ? value : fallback;
-  }
-
-  // helper: build options once (removes duplication)
-  function buildOptions(): ProcessDataOptions {
-    return {
-      skipValidateDb: resolveOpt(cliSkipValidateDb, false),
-      skipCurrentMonthValidation: resolveOpt(cliSkipMonth, false),
-      skipCurrentYearValidation: resolveOpt(cliSkipYear, false)
-    };
-  }
-
-  // helper: process one item and normalize error/result handling
-  async function processOne(
-    page: PageType,
-    data: ExcelRowData,
-    databaseInstance: LogDatabase,
-    options: ProcessDataOptions
-  ): Promise<ProcessDataResult> {
-    const result = await processData(page, data, databaseInstance, options).catch((err) => {
-      const description = err instanceof Error ? err.message : String(err);
-      console.error('Error processing data:', err);
-      const caughtResult: ProcessDataResult = {
-        status: 'error',
-        reason: 'process_data_exception',
-        description
-      };
-
-      return caughtResult;
-    });
-
-    return result;
+  async function processOne(data: ExcelRowData): Promise<ProcessDataResult> {
+    return processData(page, data, skrinDatabase, options).catch((err) => ({
+      status: 'error' as const,
+      reason: 'process_data_exception',
+      description: err instanceof Error ? err.message : String(err)
+    }));
   }
 
   if (opts.loop) {
     const max = typeof opts.max === 'number' && opts.max > 0 ? opts.max : Infinity;
-
     let processed = 0;
-    const shuffled = array_shuffle(dataKunto);
 
-    for (const data of shuffled) {
+    for (const data of array_shuffle(dataKunto)) {
       if (processed >= max) break;
-
       processed++;
       console.log(`Processing item ${processed}${isFinite(max) ? `/${max}` : ''}`);
 
-      const result = await processOne(page, data, database, buildOptions());
-
+      const result = await processOne(data);
       if (result.status !== 'success') {
         console.warn('Unexpected result status for item', processed, result);
-        // continue processing next items instead of exiting to allow best-effort run
       } else {
         console.log('Processed:', result);
       }
     }
 
-    if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
-    console.log('Leaving browser running. Exiting worker.');
-    process.exit(0);
+    exitWorker(0);
   } else {
     const data = dataKunto.shift();
 
     if (!data) {
       console.warn('No item to process.');
-      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
-      console.log('Leaving browser running. Exiting worker.');
-      process.exit(0);
+      exitWorker(0);
     }
 
-    const result = await processOne(page, data, database, buildOptions());
+    const result = await processOne(data);
 
     if (result.status !== 'success') {
       console.warn('Unexpected result status:', result.status, result);
-      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
       console.log('Leaving browser running due to unexpected status. Exiting worker with error.');
-      process.exit(1); // exit on unexpected status to avoid silent failures
-    } else {
-      console.log(result);
-      if (claimedEndpoint) endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
-      console.log('Leaving browser running. Exiting worker.');
-      process.exit(0);
+      exitWorker(1);
     }
+
+    console.log(result);
+    exitWorker(0);
   }
 }
 
@@ -228,8 +170,7 @@ const argv = minimist(process.argv.slice(2), {
 });
 
 if (argv.help) {
-  // simple help output (print line-by-line)
-  const helpLines = [
+  [
     'Usage: node skrin [options]',
     '',
     'Options:',
@@ -239,8 +180,7 @@ if (argv.help) {
     '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
     '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
     '  --help, -h         Show this help message'
-  ];
-  helpLines.forEach((line) => console.log(line));
+  ].forEach((line) => console.log(line));
   process.exit(0);
 }
 
