@@ -10,7 +10,7 @@ import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
-import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
+import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
@@ -422,8 +422,7 @@ export async function processData(
 
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
     await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
-
-    await sleep(5000);
+    await waitForDomStable(page, 5000, 60000);
 
     // Check if the ID modal appears
     try {
