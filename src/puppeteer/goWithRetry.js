@@ -11,7 +11,7 @@
  * @param {function} [opts.onRetry] - Optional callback called before each retry with {attempt, err, delay}.
  * @returns {Promise<import('puppeteer').HTTPResponse|null>}
  */
-async function goWithRetry(page, url, opts = {}) {
+export async function goWithRetry(page, url, opts = {}) {
   const { retries = 3, timeout = 30000, waitUntil = 'networkidle2', retryDelay = 1000, onRetry, cookie } = opts;
 
   let lastErr = null;
@@ -46,7 +46,7 @@ async function goWithRetry(page, url, opts = {}) {
           // Support sync and async callbacks. If onRetry returns a Promise,
           // awaiting Promise.resolve will handle both cases.
           await Promise.resolve(onRetry({ attempt, err, delay }));
-        } catch (e) {
+        } catch {
           // swallow callback errors
         }
       }
