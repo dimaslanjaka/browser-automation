@@ -41,7 +41,7 @@ switch ($command) {
         exit 0
     }
     'skrin' {
-        $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\skrin.ts'
+        $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\skrin.runner.ts'
         $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\skrin.cjs'
 
         & npx rollup -c rollup.config.js

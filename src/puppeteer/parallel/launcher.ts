@@ -90,7 +90,7 @@ export async function parallelLauncher() {
       endpointManager.removeEndpoint(wsEndpoint);
       resolve(true);
     });
-    // Listen for process disconnects from clients (e.g., skrin.ts)
+    // Listen for process disconnects from clients (e.g., skrin.runner.ts)
     process.on('SIGINT', () => {
       endpointManager.removeEndpoint(wsEndpoint);
       console.log('SIGINT received, released endpoint:', wsEndpoint);

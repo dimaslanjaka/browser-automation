@@ -1,13 +1,12 @@
 import Bluebird from 'bluebird';
-import minimist from 'minimist';
+import puppeteer from 'puppeteer';
 import { array_shuffle } from 'sbg-utility';
 import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
-import puppeteer from 'puppeteer';
-import { processData } from '../../runner/skrin/direct-process-data2.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
+import { processData } from '../../runner/skrin/direct-process-data2.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
@@ -74,9 +73,9 @@ async function getPage(): Promise<import('puppeteer').Page> {
   }
 }
 
-async function main(opts: { loop?: boolean; max?: number }) {
+export async function parallelSkrin(opts: { loop?: boolean; max?: number; argv: Record<string, any> }) {
   const page = await getPage();
-
+  const argv = opts.argv;
   const cliSkipValidateDb =
     typeof argv['skip-validate-db'] !== 'undefined' ? Boolean(argv['skip-validate-db']) : undefined;
   const cliSkipMonth =
@@ -164,40 +163,4 @@ async function main(opts: { loop?: boolean; max?: number }) {
   }
 }
 
-// CLI parsing
-const argv = minimist(process.argv.slice(2), {
-  boolean: ['loop', 'help', 'skip-validate-db', 'skip-current-month-validation', 'skip-current-year-validation'],
-  alias: {
-    l: 'loop',
-    h: 'help',
-    v: 'skip-validate-db',
-    m: 'skip-current-month-validation',
-    y: 'skip-current-year-validation'
-  },
-  default: { loop: false }
-});
-
-if (argv.help) {
-  [
-    'Usage: node skrin [options]',
-    '',
-    'Options:',
-    '  --loop, -l         Loop over available inputs (default: single input)',
-    '  --max <n>          Maximum items to process when looping',
-    '  --skip-validate-db, -v  Skip validation against DB (default: false)',
-    '  --skip-current-month-validation, -m  Skip current month validation (default: false)',
-    '  --skip-current-year-validation, -y   Skip current year validation (default: false)',
-    '  --help, -h         Show this help message'
-  ].forEach((line) => console.log(line));
-  process.exit(0);
-}
-
-const maxNum = argv.max ? Number(argv.max) : undefined;
-
-main({
-  loop: Boolean(argv.loop),
-  max: Number.isFinite(maxNum) ? maxNum : undefined
-}).catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+export default parallelSkrin;

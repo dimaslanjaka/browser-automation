@@ -20,7 +20,7 @@ exit /b %ERRORLEVEL%
 
 :skrin
 shift
-set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\skrin.ts"
+set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\skrin.runner.ts"
 set "BUNDLE_OUTPUT=%CD%\dist\parallel\skrin.cjs"
 call npx rollup -c rollup.config.js
 start "" cmd /k "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs %CD%\dist\parallel\skrin.cjs %*"

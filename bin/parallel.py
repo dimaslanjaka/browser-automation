@@ -159,19 +159,19 @@ COMMANDS = {
         "input": "launcher.runner.ts",
         "output": "launcher.cjs",
         "entry": "launcher",
-        "cache": os.path.join(CACHE_DIR, ".rollup_cache_launcher.runner.json"),
+        "cache": os.path.join(CACHE_DIR, ".rcl.json"),
     },
     "skrin": {
-        "input": "skrin.ts",
+        "input": "skrin.runner.ts",
         "output": "skrin.cjs",
         "entry": "skrin",
-        "cache": os.path.join(CACHE_DIR, ".rollup_cache_skrin.json"),
+        "cache": os.path.join(CACHE_DIR, ".rcs.json"),
     },
     "skrin-check": {
         "input": "skrin-check-data.ts",
         "output": "skrin-check-data.cjs",
         "entry": "skrin-check-data",
-        "cache": os.path.join(CACHE_DIR, ".rollup_cache_skrin_check.json"),
+        "cache": os.path.join(CACHE_DIR, ".rcsc.json"),
     },
 }
 
