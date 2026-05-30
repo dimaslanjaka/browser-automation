@@ -14,7 +14,7 @@
     "build:tsc": "npx tsc -p tsconfig.build.json",
     "build:tsup": "tsup",
     "build:logs": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs scripts/build-static-html-vite-plugin.js",
-    "build:bundle": "rollup -c rollup.bundle.js",
+    "build:bundle": "node build.exports.cjs && rollup -c rollup.bundle.js",
     "clean": "rimraf node_modules/.vite tmp/vite tmp/.vite dist tmp/screenshot public/assets/data/screenshots tmp/puppeteer tmp/puppeteer-profile tmp/build lib",
     "clean:full": "npm run clean && rimraf node_modules && yarn install",
     "download:google-sheet": "node download-google-sheet.js",
