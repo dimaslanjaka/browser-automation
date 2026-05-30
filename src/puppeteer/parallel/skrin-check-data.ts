@@ -21,10 +21,12 @@ const IMAGE_DATABASE: Record<string, string> = fs.existsSync(IMAGE_DATABASE_PATH
   ? decryptJson(fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
   : {};
 
+// Build the local JPEG path from the NIK so tmp screenshots can be reused.
 function getTmpScreenshotPath(nik: string) {
   return path.join(process.cwd(), 'tmp', 'screenshot', `${md5(nik)}.jpg`);
 }
 
+// Resolve the published encrypted asset path stored in IMAGE_DATABASE.
 function getPublishedScreenshotPath(nik: string) {
   const imagePath = IMAGE_DATABASE[nik];
   if (!imagePath || !imagePath.startsWith('/assets/data/screenshots/')) return undefined;
@@ -32,6 +34,7 @@ function getPublishedScreenshotPath(nik: string) {
   return path.join(process.cwd(), 'public', imagePath);
 }
 
+// Convert a tmp JPEG to an encrypted public .bin asset and update the in-memory index.
 function publishScreenshotFromTmp(data: ExcelRowData, tmpFilePath: string) {
   const outDir = path.join(process.cwd(), 'public', 'assets', 'data', 'screenshots');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
@@ -67,13 +70,16 @@ async function findData(
   const now = Date.now();
   if (!page || page.isClosed()) return;
 
+  // Reuse the tmp JPEG path for this NIK when taking a fresh screenshot.
   const tmpFilePath = getTmpScreenshotPath(data.nik);
 
+  // Refresh login if the page is stale or the session is old.
   if (!page.url().includes('/skrining') || now - lastLoginTime > 10 * 60 * 1000) {
     await autoLoginAndEnterSkriningPage(page);
     lastLoginTime = now;
   }
 
+  // Navigate to the screening page and fill the NIK and date range fields.
   await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
     waitUntil: 'networkidle0'
   });
@@ -212,22 +218,29 @@ export async function parallelSkrinCheck(options?: {
 
   const database = skrinDatabase;
 
-  const dataKunto = await Bluebird.filter(
-    (await loadCsvData<ExcelRowData>()) as ExcelRowData[],
-    async (data: ExcelRowData) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
-      if (!existing) return false;
+  const csvData = (await loadCsvData<ExcelRowData>()) as ExcelRowData[];
 
-      if (normalizedTargets.length > 0) return true;
+  const dataKunto = await Bluebird.filter(csvData, async (data: ExcelRowData) => {
+    // Only consider rows that already exist in the screening log database.
+    const existing = await database.getLogById(getNumbersOnly(data.nik));
+    if (!existing) return false;
 
-      const tmpFilePath = getTmpScreenshotPath(data.nik);
-      const publishedFilePath = getPublishedScreenshotPath(data.nik);
+    // Custom NIK mode should keep the row even if screenshots already exist.
+    if (normalizedTargets.length > 0) return true;
 
-      if (!fs.existsSync(tmpFilePath)) return true;
+    // Force mode processes the row without tmp/public screenshot checks.
+    if (force) return true;
 
-      return !publishedFilePath || !fs.existsSync(publishedFilePath);
-    }
-  );
+    // Reuse tmp/public state only in the default flow.
+    const tmpFilePath = getTmpScreenshotPath(data.nik);
+    const publishedFilePath = getPublishedScreenshotPath(data.nik);
+
+    // If no tmp screenshot exists yet, fetch a new one.
+    if (!fs.existsSync(tmpFilePath)) return true;
+
+    // Keep the row when tmp exists but the published asset is missing.
+    return !publishedFilePath || !fs.existsSync(publishedFilePath);
+  });
 
   let toProcess: ExcelRowData[];
 
@@ -260,6 +273,7 @@ export async function parallelSkrinCheck(options?: {
 
   const limited = typeof limit === 'number' ? toProcess.slice(0, limit) : toProcess;
 
+  // Limit the work set when requested from the CLI.
   if (limited !== toProcess) {
     console.log(`Applying limit: ${limit}, processing ${limited.length} item(s).`);
   }
@@ -268,6 +282,7 @@ export async function parallelSkrinCheck(options?: {
     const tmpFilePath = getTmpScreenshotPath(data.nik);
     const publishedFilePath = getPublishedScreenshotPath(data.nik);
 
+    // If the public asset is gone but tmp exists, rebuild the encrypted asset without fetching again.
     if (publishedFilePath && !fs.existsSync(publishedFilePath) && fs.existsSync(tmpFilePath)) {
       console.log(`Reusing tmp screenshot for NIK ${data.nik} to republish encrypted asset.`);
       publishScreenshotFromTmp(data, tmpFilePath);
@@ -279,6 +294,7 @@ export async function parallelSkrinCheck(options?: {
       continue;
     }
 
+    // Otherwise fetch a new screenshot from the site.
     console.log(`Fetching new screenshot for NIK ${data.nik}.`);
     await findData(data, page, {
       normalizedTargets,
