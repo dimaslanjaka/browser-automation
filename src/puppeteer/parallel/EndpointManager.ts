@@ -8,7 +8,7 @@ type EndpointLock = {
   claimedAt: string;
 };
 
-export default class EndpointManager {
+export class EndpointManager {
   basePath: string;
   endpointFile: string;
   endpointLocksPath: string;
@@ -209,3 +209,5 @@ export default class EndpointManager {
     });
   }
 }
+
+export default EndpointManager;
