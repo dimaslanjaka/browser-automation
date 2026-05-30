@@ -22,9 +22,14 @@ async function getPage(): Promise<import('puppeteer').Page> {
 
   while (true) {
     const endpoint = await endpointManager.getAvailableEndpoint();
-    if (!endpoint || tried.has(endpoint)) {
+    if (!endpoint) {
       console.error('No free browser endpoint found after trying all endpoints.');
       process.exit(1);
+    }
+
+    if (tried.has(endpoint)) {
+      console.warn(`Already tried endpoint ${endpoint}, skipping.`);
+      continue;
     }
 
     if (!endpointManager.tryClaimEndpoint(endpoint, process.pid)) {
