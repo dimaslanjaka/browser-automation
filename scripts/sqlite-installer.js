@@ -15,10 +15,16 @@ async function fetchDownloadCSV() {
     https
       .get('https://www.sqlite.org/download.html', (res) => {
         let data = '';
+
         res.on('data', (chunk) => (data += chunk));
+
         res.on('end', () => {
           const match = data.match(/<!--\s*Download product data([\s\S]*?)-->/);
-          if (!match) return reject(new Error('Download CSV not found'));
+
+          if (!match) {
+            return reject(new Error('Download CSV not found'));
+          }
+
           const csv = match[1].trim().split('\n');
           resolve(csv);
         });
@@ -33,6 +39,7 @@ function pickDownload(csvLines) {
   const arch = os.arch();
 
   let target;
+
   if (platform === 'win32') {
     target = arch === 'x64' ? 'win-x64' : 'win-x86';
   } else if (platform === 'darwin') {
@@ -43,9 +50,11 @@ function pickDownload(csvLines) {
     throw new Error(`Unsupported platform: ${platform} ${arch}`);
   }
 
-  const tool = csvLines.map((line) => line.split(',')).find((f) => f[2] && f[2].includes(`sqlite-tools-${target}`));
+  const tool = csvLines.map((line) => line.split(',')).find((fields) => fields[2]?.includes(`sqlite-tools-${target}`));
 
-  if (!tool) throw new Error(`No sqlite-tools found for ${target}`);
+  if (!tool) {
+    throw new Error(`No sqlite-tools found for ${target}`);
+  }
 
   return {
     relative: tool[2],
@@ -57,13 +66,16 @@ function pickDownload(csvLines) {
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
+
     https
       .get(url, (res) => {
         if (res.statusCode !== 200) {
           reject(new Error(`Download failed: ${res.statusCode}`));
           return;
         }
+
         res.pipe(file);
+
         file.on('finish', () => file.close(resolve));
       })
       .on('error', reject);
@@ -72,18 +84,31 @@ async function downloadFile(url, dest) {
 
 // === Check if download is needed ===
 async function shouldDownload(url, local) {
-  if (!fs.existsSync(local)) return true;
+  if (!fs.existsSync(local)) {
+    return true;
+  }
+
   const localSize = fs.statSync(local).size;
+
   return new Promise((resolve, reject) => {
-    https
-      .get(url, { method: 'HEAD' }, (res) => {
+    const req = https.request(
+      url,
+      {
+        method: 'HEAD'
+      },
+      (res) => {
         const remoteSize = parseInt(res.headers['content-length'], 10);
-        if (!remoteSize || isNaN(remoteSize)) {
+
+        if (!remoteSize || Number.isNaN(remoteSize)) {
           return resolve(true);
         }
+
         resolve(localSize !== remoteSize);
-      })
-      .on('error', reject);
+      }
+    );
+
+    req.on('error', reject);
+    req.end();
   });
 }
 
@@ -91,57 +116,83 @@ async function shouldDownload(url, local) {
 (async () => {
   try {
     console.log('Fetching SQLite download list...');
+
     const csv = await fetchDownloadCSV();
     const { relative, filename } = pickDownload(csv);
 
     const base = 'https://www.sqlite.org';
     const url = `${base}/${relative}`;
+
     console.log('Resolved URL:', url);
 
     const ext = path.extname(filename);
+
     // Save download to process.cwd()/tmp/download
     const tmpDir = path.resolve(process.cwd(), 'tmp', 'download');
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
-    }
+    await fs.ensureDir(tmpDir);
+
     const local = path.join(tmpDir, filename);
 
     // Set extraction directory to /bin in process.cwd()
     const binDir = path.resolve(process.cwd(), 'bin');
-    if (!fs.existsSync(binDir)) {
-      fs.mkdirSync(binDir, { recursive: true });
-    }
+    await fs.ensureDir(binDir);
+
+    let downloaded = false;
 
     if (await shouldDownload(url, local)) {
       console.log('Downloading:', filename);
+
       await downloadFile(url, local);
+
       console.log('Download complete:', local);
+
+      downloaded = true;
     } else {
       console.log('Local file is up to date, skipping download.');
     }
 
-    console.log('Extracting...');
-    if (ext === '.zip') {
-      if (os.platform() === 'win32') {
-        execSync(
-          `powershell -NoProfile -NonInteractive -Command "Expand-Archive -Path '${local}' -DestinationPath '${binDir}' -Force"`,
-          {
-            stdio: 'inherit'
-          }
-        );
-      } else {
-        execSync(`unzip -o '${local}' -d '${binDir}'`, { stdio: 'inherit' });
-      }
-    } else if (ext === '.gz') {
-      execSync(`mkdir -p '${binDir}' && tar -xzf '${local}' -C '${binDir}' --strip-components=1`, { stdio: 'inherit' });
-    }
+    const sqliteBinary = os.platform() === 'win32' ? path.join(binDir, 'sqlite3.exe') : path.join(binDir, 'sqlite3');
 
-    // Auto-create bin/sqlite3.cmd for Windows CLI usage, only if sqlite3.exe exists
-    const exePath = path.join(binDir, 'sqlite3.exe');
-    if (fs.existsSync(exePath)) {
-      const cmdScript = `@echo off\r\nREM Forward all arguments to sqlite3.exe in the same directory\r\nset SCRIPT_DIR=%~dp0\r\n"%SCRIPT_DIR%sqlite3.exe" %*\r\n`;
-      const cmdPath = path.join(binDir, 'sqlite3.cmd');
-      await fs.writeFile(cmdPath, cmdScript, 'utf8');
+    const needExtract = downloaded || !fs.existsSync(sqliteBinary);
+
+    if (needExtract) {
+      console.log('Extracting...');
+
+      if (ext === '.zip') {
+        if (os.platform() === 'win32') {
+          execSync(
+            `powershell -NoProfile -NonInteractive -Command "Expand-Archive -Path '${local}' -DestinationPath '${binDir}' -Force"`,
+            {
+              stdio: 'inherit'
+            }
+          );
+        } else {
+          execSync(`unzip -o '${local}' -d '${binDir}'`, {
+            stdio: 'inherit'
+          });
+        }
+      } else if (ext === '.gz') {
+        execSync(`mkdir -p '${binDir}' && tar -xzf '${local}' -C '${binDir}' --strip-components=1`, {
+          stdio: 'inherit'
+        });
+      }
+
+      // Auto-create bin/sqlite3.cmd for Windows CLI usage, only if sqlite3.exe exists
+      const exePath = path.join(binDir, 'sqlite3.exe');
+
+      if (fs.existsSync(exePath)) {
+        const cmdScript = `@echo off\r
+REM Forward all arguments to sqlite3.exe in the same directory\r
+set SCRIPT_DIR=%~dp0\r
+"%SCRIPT_DIR%sqlite3.exe" %*\r
+`;
+
+        const cmdPath = path.join(binDir, 'sqlite3.cmd');
+
+        await fs.writeFile(cmdPath, cmdScript, 'utf8');
+      }
+    } else {
+      console.log('SQLite binary already exists, skipping extraction.');
     }
 
     console.log('✅ SQLite installed in ./bin/');
