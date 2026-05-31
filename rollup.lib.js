@@ -8,6 +8,7 @@ import jsonc from 'jsonc-parser';
 import _ from 'lodash';
 import path from 'upath';
 import { fileURLToPath } from 'url';
+import { dts } from 'rollup-plugin-dts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -225,6 +226,13 @@ const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index*.{ts
   posix: true,
   ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
 });
+/**
+ * @type {import('rollup').RollupOptions['input']}
+ */
+const _runnerInputs = glob.globSync(['src/**/*.runner.*'], {
+  posix: true,
+  ignore: tsconfig.exclude
+});
 
 const basePlugins = [
   typescript({
@@ -250,7 +258,9 @@ const baseOutput = {
  * @type {import('rollup').RollupOptions}
  */
 const _partials = {
-  input: [...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs])],
+  input: [
+    ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs, ..._runnerInputs])
+  ],
   output: [
     // bundle CJS
     {
@@ -274,4 +284,30 @@ const _partials = {
   external: externalPackagesFilter // External dependencies package name to exclude from bundle
 };
 
-export default [_partials];
+const dtsEntries = ['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts'];
+
+/**
+ * Declaration bundle
+ *
+ * @type {import('rollup').RollupOptions[]}
+ */
+const dtsConfigs = dtsEntries.map((entry) => {
+  const rel = path.relative('src', entry);
+  const output = path.join('lib', rel).replace(/\.(ts|mts|cts)$/, '.d.ts');
+
+  return {
+    input: entry,
+    output: {
+      file: output,
+      format: 'es'
+    },
+    plugins: [
+      dts({
+        tsconfig: tsconfigPath
+      })
+    ],
+    external: externalPackagesFilter
+  };
+});
+
+export default [_partials, ...dtsConfigs];

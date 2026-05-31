@@ -6,8 +6,18 @@
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/**/*"
+    "lib/**/*",
+    "bin/pp",
+    "bin/pp.*",
+    "bin/py",
+    "bin/py.*",
+    "bin/*.py",
+    "bin/*.mjs"
   ],
+  "bin": {
+    "pp": "./bin/pp.mjs",
+    "py": "./bin/py.mjs"
+  },
   "exports": {
     ".": {
       "import": "./lib/index.mjs",
