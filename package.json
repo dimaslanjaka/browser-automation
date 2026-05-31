@@ -8,6 +8,24 @@
   "files": [
     "lib/**/*"
   ],
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.cjs",
+      "types": "./lib/index.d.ts"
+    },
+    "./*": {
+      "import": "./lib/*.mjs",
+      "require": "./lib/*.cjs",
+      "types": "./lib/*.d.ts"
+    },
+    "./package.json": "./package.json",
+    "./database": {
+      "import": "./lib/database/index.mjs",
+      "require": "./lib/database/index.cjs",
+      "types": "./lib/database/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "npm run build:tsup",
     "build:all": "npm run clean && npm run build:packages && npm run build",
@@ -16,7 +34,7 @@
     "build:tsc": "npx tsc -p tsconfig.build.json",
     "build:tsup": "tsup",
     "build:logs": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs scripts/build-static-html-vite-plugin.js",
-    "build:lib": "rimraf lib && node build.exports.cjs && rollup -c rollup.bundle.js",
+    "build:lib": "rimraf lib && node build.exports.cjs && rollup -c rollup.lib.js",
     "clean": "rimraf node_modules/.vite tmp/vite tmp/.vite dist tmp/screenshot public/assets/data/screenshots tmp/puppeteer tmp/puppeteer-profile tmp/build lib",
     "clean:full": "npm run clean && rimraf node_modules && yarn install",
     "download:google-sheet": "node download-google-sheet.js",

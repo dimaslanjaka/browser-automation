@@ -43,22 +43,20 @@ export const bundledPackages = [
  * List external dependencies, excluding specific packages that should be bundled
  * @type {string[]}
  */
-export const externalPackages = _.uniq(
-  Object.keys(pkg.dependencies)
-    .concat(Object.keys(pkg.devDependencies))
-    .concat(
-      'hexo',
-      'warehouse',
-      'hexo-util',
-      'canvas',
-      'jsdom',
-      'mime-db',
-      'sbg-utility',
-      'through2',
-      'gulp',
-      'bluebird'
-    )
-).filter((pkgName) => !bundledPackages.includes(pkgName));
+export const externalPackages = _.uniq([
+  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.devDependencies || {}),
+  'hexo',
+  'warehouse',
+  'hexo-util',
+  'canvas',
+  'jsdom',
+  'mime-db',
+  'sbg-utility',
+  'through2',
+  'gulp',
+  'bluebird'
+]).filter((pkgName) => !bundledPackages.includes(pkgName));
 
 export { pkg as packageJson, tsconfig };
 
@@ -95,17 +93,11 @@ const boolColor = (val) => (val ? color.green('true') : color.red('false'));
 function normalizeNodeModulePath(value) {
   const nodeModulesIdx = value.indexOf('node_modules');
 
-  let rel = value.slice(nodeModulesIdx);
-
-  rel = rel.replace('node_modules', 'dependencies');
-
-  // Remove any null bytes (\x00) that may be present
-  rel = rel.replace(/\0/g, '');
-
-  // Remove any leading slashes
-  rel = rel.replace(/^\/\/+/, '');
-
-  return rel;
+  return value
+    .slice(nodeModulesIdx)
+    .replace('node_modules', 'dependencies')
+    .replace(/\0/g, '') // Remove any null bytes (\x00) that may be present
+    .replace(/^\/\/+/, ''); // Remove any leading slashes
 }
 
 /**
@@ -154,7 +146,7 @@ export function entryFileNamesWithExt(ext) {
 export function chunkFileNamesWithExt(ext) {
   return function ({ name }) {
     // For node_modules chunks, place in dependencies folder
-    if (name && name.includes('node_modules')) {
+    if (name?.includes('node_modules')) {
       let rel = normalizeNodeModulePath(name);
 
       // Remove extension using upath.extname
@@ -229,7 +221,7 @@ export function externalPackagesFilter(source, importer, isResolved) {
 /**
  * @type {import('rollup').RollupOptions['input']}
  */
-const _nodeInputs = glob.globSync(['src/{puppeteer,database}/**/*.{ts,js,cjs,mjs}', 'src/index.ts'], {
+const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index*.{ts,js,cjs,mjs}', 'src/index.ts'], {
   posix: true,
   ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
 });
@@ -247,19 +239,23 @@ const basePlugins = [
   commonjs()
 ];
 
+const baseOutput = {
+  dir: 'lib',
+  sourcemap: false,
+  preserveModules: true,
+  preserveModulesRoot: 'src'
+};
+
 /**
  * @type {import('rollup').RollupOptions}
  */
 const _partials = {
-  input: 'src/index.ts',
+  input: [...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs])],
   output: [
     // bundle CJS
     {
-      dir: 'lib',
+      ...baseOutput,
       format: 'cjs',
-      sourcemap: false,
-      preserveModules: true,
-      preserveModulesRoot: 'src',
       entryFileNames: entryFileNamesWithExt('cjs'),
       chunkFileNames: chunkFileNamesWithExt('cjs')
       // exports: 'named'
@@ -267,11 +263,8 @@ const _partials = {
 
     // bundle mjs as ESM
     {
-      dir: 'lib',
+      ...baseOutput,
       format: 'esm',
-      sourcemap: false,
-      preserveModules: true,
-      preserveModulesRoot: 'src',
       entryFileNames: entryFileNamesWithExt('mjs'),
       chunkFileNames: chunkFileNamesWithExt('mjs')
       // exports: 'named'
