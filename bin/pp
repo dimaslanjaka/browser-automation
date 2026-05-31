@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
+
+if command -v python >/dev/null 2>&1; then
+	python "$repo_root/bin/parallel.py" "$@"
+	exit $?
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+	python3 "$repo_root/bin/parallel.py" "$@"
+	exit $?
+fi
+
+if [ $# -eq 0 ]; then
+	echo "Usage: pp <launch|skrin|check|skrin-check> [options] [-- args]"
+	exit 0
+fi
+
+subcommand="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+shift || true
+
+case "$subcommand" in
+	launch)
+		export BUNDLE_INPUT="$repo_root/src/puppeteer/parallel/launcher.runner.ts"
+		export BUNDLE_OUTPUT="$repo_root/dist/parallel/launcher.cjs"
+
+		npx rollup -c rollup.config.js
+
+		node_args=(--no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "$BUNDLE_OUTPUT" "$@")
+		nohup node "${node_args[@]}" >/dev/null 2>&1 &
+		exit 0
+		;;
+	skrin)
+		export BUNDLE_INPUT="$repo_root/src/puppeteer/parallel/skrin.runner.ts"
+		export BUNDLE_OUTPUT="$repo_root/dist/parallel/skrin.cjs"
+
+		npx rollup -c rollup.config.js
+
+		node_args=(--no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "$BUNDLE_OUTPUT" "$@")
+		node "${node_args[@]}"
+		;;
+	*)
+		echo "Unknown command: $subcommand"
+		exit 1
+		;;
+esac
