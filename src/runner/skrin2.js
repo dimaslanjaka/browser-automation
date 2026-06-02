@@ -1,5 +1,4 @@
 import ansiColors from 'ansi-colors';
-import 'dotenv/config';
 import minimist from 'minimist';
 import moment from 'moment';
 import * as nikUtils from 'nik-parser-jurusid/index';

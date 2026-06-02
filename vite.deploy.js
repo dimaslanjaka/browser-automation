@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { execFileSync } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';

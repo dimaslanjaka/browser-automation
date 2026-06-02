@@ -103,7 +103,9 @@ export class LogDatabase<TDefault = any> implements BaseLogDatabase {
     const safeOptions = { ...this.options };
     if (safeOptions.password) safeOptions.password = '***';
     if (safeOptions.user) safeOptions.user = '***';
-    console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, safeOptions);
+    if (process.env.DEBUG) {
+      console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, safeOptions);
+    }
     // Decide which database to use based on options.type
     if (this.options?.type === 'sqlite') {
       this.store = new SQLiteLogDatabase(this.dbName);

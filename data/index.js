@@ -1,19 +1,15 @@
+import ansiColors from 'ansi-colors';
 import csvParser from 'csv-parser';
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
-import { encryptJson } from '../src/utils/json-crypto.js';
-import { parseDate } from '../src/utils/date.js';
-import ansiColors from 'ansi-colors';
 import { Transform } from 'stream';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { parseBabyName } from '../src/runner/skrin-utils.js';
+import { parseDate } from '../src/utils/date.js';
+import { encryptJson } from '../src/utils/json-crypto.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load .env from parent directory
-dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true, quiet: true });
 
 const csvFilePath = path.join(process.cwd(), 'data/data.csv');
 

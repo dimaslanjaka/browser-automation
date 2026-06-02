@@ -1,13 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import { getPuppeteer, typeAndTrigger } from '../src/puppeteer_utils.js';
 import path from 'node:path';
-import dotenv from 'dotenv';
 import { getNumbersOnly, sleep } from '../src/utils/index.js';
 import { isNikErrorVisible } from '../src/runner/skrin/isNikErrorVisible.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
 
 async function main() {
   const puppeteer = await getPuppeteer();

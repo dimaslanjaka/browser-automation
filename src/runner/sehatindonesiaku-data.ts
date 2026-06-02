@@ -1,4 +1,3 @@
-import 'dotenv/config.js';
 import fs from 'fs-extra';
 import minimist from 'minimist';
 import moment from 'moment';

@@ -1,4 +1,3 @@
-import 'dotenv/config.js';
 import fs from 'fs-extra';
 import moment from 'moment';
 import type { ElementHandle, Page } from 'puppeteer';

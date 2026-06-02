@@ -1,5 +1,4 @@
 import ansiColors from 'ansi-colors';
-import 'dotenv/config.js';
 import minimist from 'minimist';
 import moment from 'moment';
 import { Browser, Page } from 'puppeteer';

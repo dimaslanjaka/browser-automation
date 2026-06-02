@@ -1,6 +1,5 @@
 import axios from 'axios';
 import fs from 'fs-extra';
-import path from 'path';
 import { writefile, isEmpty } from 'sbg-utility';
 import { axiosConfigBuilder, getCacheFilePath } from './utils.js';
 
@@ -113,7 +112,6 @@ export function getGeoapifyKeys() {
 
 if (process.argv[1].includes('geoapify.js')) {
   (async function () {
-    (await import('dotenv')).config({ override: true, path: path.join(process.cwd(), '.env') });
     const apiKey = getGeoapifyKeys()[0];
     const keyword = 'LEBAK REJO UTARA 1/8 SURABAYA';
     const result = await geoCodeWithGeoapify(keyword, apiKey, { verbose: true, noCache: true });

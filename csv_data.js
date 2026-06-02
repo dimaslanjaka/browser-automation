@@ -1,5 +1,4 @@
 import csv from 'csv-parser';
-import dotenv from 'dotenv';
 import * as glob from 'glob';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,9 +7,6 @@ import { fileURLToPath } from 'url';
 // Get the absolute path of the current script
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load environment variables
-dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
 
 // Log file path
 const logFile = path.join(__dirname, 'tmp', 'csv-data.log');

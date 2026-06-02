@@ -1,5 +1,4 @@
 import { MysqlLogDatabase } from '../../src/database/MysqlLogDatabase.js';
-import 'dotenv/config';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
 

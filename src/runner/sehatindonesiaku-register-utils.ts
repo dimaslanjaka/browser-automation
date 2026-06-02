@@ -1,4 +1,3 @@
-import 'dotenv/config.js';
 import type { Page } from 'puppeteer';
 import { anyElementWithTextExists, waitForDomStable } from '../puppeteer_utils.js';
 import { DataItem } from './types.js';

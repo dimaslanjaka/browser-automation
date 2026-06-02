@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import MySQLHelper from '../../src/database/MySQLHelper.js';
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;

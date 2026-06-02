@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import fs from 'fs-extra';
 import nunjucks from 'nunjucks';
 import path from 'path';
@@ -6,9 +5,6 @@ import { loadCsvData } from '../data/index.js';
 import * as databaseModule from '../src/bundle/database/index.mjs';
 import { toValidMySQLDatabaseName } from '../src/database/db_utils.js';
 import { encryptJson } from '../src/utils/json-crypto.js';
-
-// Load .env from parent directory
-dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true, quiet: true });
 
 const templatesPath = path.join(process.cwd(), 'templates');
 nunjucks.configure(templatesPath, { autoescape: true, watch: false, noCache: true });

@@ -21,8 +21,18 @@ if (process.platform === 'win32') {
   childProcess.execSync('chcp 65001', { stdio: 'ignore' });
 }
 
-// Load environment variables from .env file in project root
-dotenv.config({ path: path.join(process.cwd(), '.env'), override: true, quiet: true });
+// Preserve DEBUG from the current environment (e.g. cross-env)
+// so it is not overridden by values from .env.
+const DEBUG = process.env.DEBUG || 'false';
+
+dotenv.config({
+  path: path.join(__dirname, '.env'),
+  override: true,
+  quiet: true
+});
+
+// Restore the original DEBUG value after loading .env.
+process.env.DEBUG = DEBUG;
 
 // Enhanced error handling: exit on unhandled errors
 process.on('unhandledRejection', (reason, promise) => {

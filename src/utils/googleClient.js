@@ -2,9 +2,6 @@ import { authenticate } from '@google-cloud/local-auth';
 import fs from 'fs-extra';
 import path from 'upath';
 import { OAuth2Client } from 'google-auth-library';
-import dotenv from 'dotenv';
-
-dotenv.config({ override: true, quiet: true });
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 const CREDENTIALS_PATH = path.join(process.cwd(), '.cache', 'credentials.json');
