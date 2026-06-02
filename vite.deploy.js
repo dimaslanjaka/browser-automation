@@ -1,5 +1,6 @@
 import { execFileSync } from 'child_process';
 import fs from 'fs-extra';
+import moment from 'moment-timezone';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { globSync } from 'glob';
@@ -62,7 +63,7 @@ function deploy() {
     return;
   }
 
-  git(['commit', '-m', `Deploying to GitHub Pages: ${new Date().toISOString()}`], deployDir);
+  git(['commit', '-m', `Deploying to GitHub Pages: ${moment().format('YYYY-MM-DDTHH:mm:ssZ')}`], deployDir);
   git(['push', '--set-upstream', 'origin', branch], deployDir);
 }
 
