@@ -3,7 +3,7 @@ import type { NikParseResult } from 'nik-parser-jurusid';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import path from 'path';
 import type { Browser, Page } from 'puppeteer';
-import { isEmpty } from 'sbg-utility';
+import { isEmpty, writefile } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
 import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
@@ -11,8 +11,8 @@ import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
 import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import { findInArray, normalizeAddressNameToIndonesian, ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
@@ -25,6 +25,7 @@ import { isNikErrorVisible } from './isNikErrorVisible.js';
 import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
+import removeDuplicateKeys from '../../utils/removeDuplicateKeys.cjs';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -382,7 +383,7 @@ export async function processData(
   }
 
   try {
-    console.log('Processing:', fixedData);
+    console.log('Processing:', removeDuplicateKeys(fixedData));
 
     const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
 
@@ -432,12 +433,11 @@ export async function processData(
     if (options?.skipCurrentMonthValidation) {
       console.warn('skipCurrentMonthValidation enabled — skipping current month validation for', tanggalEntry);
     } else if (parseTanggal.month() !== today.month()) {
+      const logFile = path.join(process.cwd(), `tmp/logs/invalid_month_entries/${fixedData.nik}.log`);
+      const logContent = `Invalid month entry: ${tanggalEntry}\nType tanggalEntry=${typeof tanggalEntry}\nData: ${JSON.stringify(fixedData, null, 2)}\n\n`;
+      writefile(logFile, logContent);
       throw new Error(
-        `MONTH NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
-          fixedData,
-          null,
-          2
-        )}`
+        `MONTH NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) logged to ${logFile}`
       );
     }
 
