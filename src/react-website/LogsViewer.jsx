@@ -16,7 +16,14 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' });
+  const [filters, setFilters] = useState({
+    status: '',
+    gender: '',
+    petugas: '',
+    provinsi: '',
+    kotakab: '',
+    kecamatan: ''
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [activeKeys, setActiveKeys] = useState([]); // [] means all collapsed
   const [filterOpen, setFilterOpen] = useState(false); // Collapsible filter state
@@ -87,6 +94,15 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
     return Array.from(set).sort();
   }, [logs]);
 
+  const petugasOptions = useMemo(() => {
+    const set = new Set();
+    logs.forEach((log) => {
+      const val = log.data?.petugas;
+      if (val) set.add(val);
+    });
+    return Array.from(set).sort();
+  }, [logs]);
+
   const filteredLogs = useMemo(() => {
     let result = logs;
     // Apply search
@@ -121,6 +137,9 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
         const filterGender = filters.gender.toUpperCase();
         return genderMain === filterGender || genderParsed === filterGender;
       });
+    }
+    if (filters.petugas) {
+      result = result.filter((log) => log.data?.petugas === filters.petugas);
     }
     if (filters.provinsi) {
       result = result.filter((log) => log.data?.parsed_nik?.data?.provinsi === filters.provinsi);
@@ -291,6 +310,28 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                   <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
                     <label
                       className="form-label mb-0 text-end pe-2"
+                      htmlFor="filter-petugas"
+                      style={{ whiteSpace: 'nowrap' }}>
+                      Petugas:
+                    </label>
+                    <select
+                      id="filter-petugas"
+                      className="form-select form-select-sm"
+                      value={filters.petugas}
+                      onChange={(e) => setFilters((f) => ({ ...f, petugas: e.target.value }))}>
+                      <option value="">All</option>
+                      {petugasOptions.map((petugas, i) => (
+                        <option value={petugas} key={i}>
+                          {petugas}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="d-grid" style={{ gridTemplateColumns: '110px 1fr', alignItems: 'center' }}>
+                    <label
+                      className="form-label mb-0 text-end pe-2"
                       htmlFor="filter-kecamatan"
                       style={{ whiteSpace: 'nowrap' }}>
                       Kecamatan:
@@ -314,7 +355,9 @@ export default function LogsViewer({ pageTitle = 'Log Viewer' }) {
                     type="button"
                     className="btn btn-sm btn-outline-danger w-100"
                     title="Clear Filters"
-                    onClick={() => setFilters({ status: '', gender: '', provinsi: '', kotakab: '', kecamatan: '' })}>
+                    onClick={() =>
+                      setFilters({ status: '', gender: '', petugas: '', provinsi: '', kotakab: '', kecamatan: '' })
+                    }>
                     <i className="fa fa-times" /> Clear Filters
                   </button>
                 </div>
