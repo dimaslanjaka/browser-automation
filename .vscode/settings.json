@@ -186,5 +186,8 @@
     "data/script": true
   },
   "search.useGlobalIgnoreFiles": false,
-  "python.terminal.activateEnvironment": false
+  "python.terminal.activateEnvironment": false,
+  "chat.agentFilesLocations": {
+    ".opencode/agent": true
+  }
 }
