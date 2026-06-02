@@ -24,7 +24,13 @@ if (process.platform === 'win32') {
 
 // Preserve DEBUG from the current environment (e.g. cross-env)
 // so it is not overridden by values from .env.
-const DEBUG = process.env.DEBUG || 'false';
+
+function toBoolean(value) {
+  if (typeof value === 'boolean') return value;
+  return value === 'true';
+}
+
+const DEBUG = toBoolean(process.env.DEBUG || 'false');
 
 dotenv.config({
   path: [path.join(__dirname, '..', '.env'), path.join(process.cwd(), '.env')].find((p) => fs.existsSync(p)),
@@ -32,8 +38,11 @@ dotenv.config({
   quiet: true
 });
 
-// Restore the original DEBUG value after loading .env.
-process.env.DEBUG = DEBUG;
+// Restore the original DEBUG value after loading .env (string for process.env compat).
+process.env.DEBUG = DEBUG ? 'true' : 'false';
+
+// Expose as boolean for downstream consumers (process.env only holds strings).
+globalThis.DEBUG = DEBUG;
 
 // Enhanced error handling: exit on unhandled errors
 process.on('unhandledRejection', (reason, promise) => {

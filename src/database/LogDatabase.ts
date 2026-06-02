@@ -5,6 +5,7 @@ import { MysqlLogDatabase } from './MysqlLogDatabase.js';
 import { getDatabaseFilePath, SQLiteLogDatabase } from './SQLiteLogDatabase.js';
 import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 import { MySQLConfig } from './MySQLHelper.js';
+import isDebug from '../utils/isDebug.cjs';
 
 type MySQL2Options = Partial<MySQLConfig>;
 export interface LogDatabaseOptions extends MySQL2Options {
@@ -103,7 +104,7 @@ export class LogDatabase<TDefault = any> implements BaseLogDatabase {
     const safeOptions = { ...this.options };
     if (safeOptions.password) safeOptions.password = '***';
     if (safeOptions.user) safeOptions.user = '***';
-    if (process.env.DEBUG) {
+    if (isDebug()) {
       console.log(`[LogDatabase] Initializing LogDatabase with dbName='${this.dbName}' and options:`, safeOptions);
     }
     // Decide which database to use based on options.type
