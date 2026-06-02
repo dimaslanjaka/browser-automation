@@ -3,18 +3,17 @@ import type { NikParseResult } from 'nik-parser-jurusid';
 import * as nikUtils from 'nik-parser-jurusid/index';
 import path from 'path';
 import type { Browser, Page } from 'puppeteer';
-import { isEmpty } from 'sbg-utility';
+import { isEmpty, writefile } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
 import { getStreetAddressInformation } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
-import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
-import { isElementExist, isElementVisible, typeAndTrigger } from '../../puppeteer_utils.js';
+import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
-import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
-import { normalizeAddressNameToIndonesian, ucwords } from '../../utils/string.js';
+import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
+import { findInArray, normalizeAddressNameToIndonesian, ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
 import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
@@ -26,6 +25,7 @@ import { isNikErrorVisible } from './isNikErrorVisible.js';
 import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
+import removeDuplicateKeys from '../../utils/removeDuplicateKeys.cjs';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -34,16 +34,260 @@ export type ProcessDataResult =
 type NormalizedFormValue = Awaited<ReturnType<typeof getNormalizedFormValues>>[number];
 
 /**
- * Re-evaluates the form by re-typing the "metode_id_input" field to trigger any dynamic changes on the page.
- *
- * This function is used to ensure that any dependent fields or validations that rely on the "metode_id_input" value are properly updated after changes to the form.
- *
- * @async
- * @param page Puppeteer page instance.
+ * Waits up to 5 minutes for the success notification to appear.
+ * Returns true if visible within the timeout, false otherwise.
  */
-async function reEvaluate(page: Page): Promise<void> {
-  // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
-  await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
+async function waitForSuccessNotification(page: Page): Promise<boolean> {
+  const waitStart = Date.now();
+  while (true) {
+    if (await isSuccessNotificationVisible(page)) {
+      console.log('✅ Success notification is visible');
+      return true;
+    }
+    const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
+    if (elapsedSeconds >= 300) {
+      process.stdout.write('\n');
+      process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
+      return false;
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+    process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
+  }
+}
+
+/**
+ * Resolves a patient's address via geocoding (with parsed-NIK fallback), validates all
+ * required components, then types them into the KTP address fields on the form.
+ *
+ * Mutates `fixedData._address` with the raw geocoder result when available.
+ *
+ * @param page Puppeteer page instance.
+ * @param fixedData The fixed/normalized row data (mutated to store `_address`).
+ * @param parsedNik Parsed NIK result used as fallback when geocoding is incomplete.
+ * @throws If address components cannot be resolved or required fields remain empty.
+ */
+async function resolveAndFillAddress(
+  page: Page,
+  fixedData: Awaited<ReturnType<typeof fixData>>,
+  parsedNik: NikParseResult
+): Promise<void> {
+  if (!fixedData.alamat || fixedData.alamat.length === 0) {
+    throw new Error("❌ Failed to take the patient's address");
+  }
+
+  let provinsi = '',
+    kabupatenOrKota = '',
+    kecamatan = '',
+    kelurahan = '';
+
+  const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
+  const geocodedAddress = await getStreetAddressInformation(keywordAddr);
+
+  if (geocodedAddress) {
+    fixedData._address = geocodedAddress.raw || geocodedAddress;
+    console.log(`Fetching address from geocoder for: ${keywordAddr}`);
+    console.log('Geocoder result:', geocodedAddress);
+
+    kelurahan = geocodedAddress.kelurahan || '';
+    kecamatan = geocodedAddress.kecamatan || '';
+    kabupatenOrKota = geocodedAddress.kabupaten || geocodedAddress.kota || '';
+    provinsi = geocodedAddress.provinsi || '';
+
+    if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
+      kabupatenOrKota = 'Kota Surabaya';
+    }
+  }
+
+  // Fallback to parsed NIK for any missing components
+  if ((isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) && parsedNik) {
+    const _parsedNikData = parsedNik.status === 'success' ? parsedNik.data : ({} as nikUtils.NikParseSuccess['data']);
+
+    if (isEmpty(kabupatenOrKota)) kabupatenOrKota = _parsedNikData.kotakab || '';
+    if (isEmpty(kecamatan)) kecamatan = (_parsedNikData as any).kecamatan || _parsedNikData.namaKec || '';
+    if (isEmpty(provinsi)) provinsi = _parsedNikData.provinsi || '';
+
+    if (isEmpty(kelurahan)) {
+      const parsedKelurahan = _parsedNikData.kelurahan != null ? _parsedNikData.kelurahan : null;
+      const selectedKelurahan = Array.isArray(parsedKelurahan)
+        ? parsedKelurahan.length > 0
+          ? parsedKelurahan[0]
+          : null
+        : parsedKelurahan || null;
+      kelurahan = selectedKelurahan
+        ? typeof selectedKelurahan === 'object' && 'name' in selectedKelurahan
+          ? String(selectedKelurahan.name || '')
+          : String(selectedKelurahan)
+        : '';
+    }
+
+    console.log(
+      `Using parsed NIK fallback for address: ${kelurahan || '<unknown kelurahan>'}, ` +
+        `${kecamatan || '<unknown kec>'}, ${kabupatenOrKota || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
+    );
+  }
+
+  if (!geocodedAddress && (!parsedNik || parsedNik.status !== 'success')) {
+    throw new Error(
+      `❌ Failed to determine address: no geocoder result and no parsed NIK data available ` +
+        `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+    );
+  }
+
+  const originalAddressParts = { provinsi, kabupatenOrKota, kecamatan, kelurahan };
+  provinsi = normalizeAddressNameToIndonesian(provinsi);
+  kabupatenOrKota = normalizeAddressNameToIndonesian(kabupatenOrKota);
+  kecamatan = normalizeAddressNameToIndonesian(kecamatan);
+  kelurahan = normalizeAddressNameToIndonesian(kelurahan);
+
+  if (
+    originalAddressParts.provinsi !== provinsi ||
+    originalAddressParts.kabupatenOrKota !== kabupatenOrKota ||
+    originalAddressParts.kecamatan !== kecamatan ||
+    originalAddressParts.kelurahan !== kelurahan
+  ) {
+    console.log('Normalized address parts to Indonesian format:', {
+      before: originalAddressParts,
+      after: { provinsi, kabupatenOrKota, kecamatan, kelurahan }
+    });
+  }
+
+  if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {
+    console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
+    throw new Error('kelurahan should be string');
+  }
+
+  if (isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) {
+    throw new Error(
+      `Missing required address fields: provinsi='${provinsi}', kotakab='${kabupatenOrKota}', ` +
+        `kecamatan='${kecamatan}', kelurahan='${kelurahan}'`
+    );
+  }
+
+  console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
+
+  for (const [selector, value] of [
+    ['#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi)],
+    ['#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota)],
+    ['#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan)],
+    ['#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan)],
+    ['#field_item_alamat_ktp textarea', fixedData.alamat]
+  ] as const) {
+    await page.waitForSelector(selector, { visible: true });
+    await page.type(selector, value, { delay: 100 });
+
+    // wait for dropdown to appear (important)
+    await sleep(300);
+
+    // move to first suggestion
+    await page.keyboard.press('ArrowDown');
+
+    // select it
+    await page.keyboard.press('Enter');
+
+    await sleep(200);
+  }
+
+  const invalidAlert = await isInvalidAlertVisible(page);
+  if (invalidAlert.result) {
+    const findAddressError = findInArray(invalidAlert.contents, /kabupaten/i);
+    if (findAddressError.length > 0) {
+      console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
+      throw new Error(`Address validation error: ${findAddressError.join('; ')}`);
+    }
+  }
+}
+
+/**
+ * Fills province and city fields with default Surabaya values if they are empty on the form.
+ * Called after identity confirmation to guard against blank location data.
+ *
+ * @param page Puppeteer page instance.
+ * @param province Current province value read from the page.
+ * @param city Current city value read from the page.
+ */
+async function fillFallbackLocationIfEmpty(page: Page, province: string, city: string): Promise<void> {
+  console.log(`Provinsi: ${province}`, province.length === 0 ? '(empty)' : '');
+  if (province.length === 0) {
+    await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', 'Jawa Timur');
+  }
+
+  console.log(`Kabupaten/Kota: ${city}`, city.length === 0 ? '(empty)' : '');
+  if (city.length === 0) {
+    await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', 'Kota Surabaya');
+  }
+}
+
+/**
+ * Fills all "Tidak" (No) fields in the skrining form, including gender-specific,
+ * age-specific (balita), diabetes, batuk, and CXR fields.
+ *
+ * @param page Puppeteer page instance.
+ * @param ctx Context derived from the patient record and page state.
+ */
+async function fillAllTidakFields(
+  page: Page,
+  ctx: { gender: string; age: number; hasDiabetes: boolean; hasBatuk: boolean }
+): Promise<void> {
+  // Always-Tidak fields
+  const alwaysTidakSelectors = [
+    '#field_item_riwayat_kontak_tb_id input[type="text"]',
+    '#field_item_risiko_1_id input[type="text"]',
+    '#field_item_risiko_4_id input[type="text"]',
+    '#field_item_risiko_5_id input[type="text"]',
+    '#field_item_risiko_7_id input[type="text"]',
+    '#field_item_risiko_10_id input[type="text"]',
+    '#field_item_risiko_11_id input[type="text"]',
+    '#field_item_gejala_2_3_id input[type="text"]',
+    '#field_item_gejala_2_4_id input[type="text"]',
+    '#field_item_gejala_2_5_id input[type="text"]',
+    '#field_item_gejala_6_id input[type="text"]'
+  ];
+
+  // Gender-specific: risiko kehamilan only applies to perempuan
+  if (ctx.gender.toLowerCase().trim() === 'perempuan') {
+    alwaysTidakSelectors.push('#field_item_risiko_9_id input[type="text"]');
+  }
+
+  for (const selector of alwaysTidakSelectors) {
+    await typeAndTrigger(page, selector, 'Tidak');
+  }
+
+  // Diabetes: Ya or Tidak
+  await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', ctx.hasDiabetes ? 'Ya' : 'Tidak');
+
+  // Age-specific: gejala balita fields are conditionally rendered
+  if (ctx.age < 18) {
+    console.log('Filling balita-specific fields with "Tidak" since age is under 18');
+    const gejalaBalitaSelectors = [
+      '#field_item_gejala_1_1_id input[type="text"]',
+      '#field_item_gejala_1_3_id input[type="text"]',
+      '#form_item_gejala_1_4_id input[type="text"]',
+      '#field_item_gejala_1_5_id input[type="text"]'
+    ];
+
+    for (const selector of gejalaBalitaSelectors) {
+      if (await isElementExist(page, selector)) {
+        const visible = await isElementVisible(page, selector);
+        console.log(`${selector} is visible: ${visible}`);
+        if (visible) {
+          await typeAndTrigger(page, selector, 'Tidak');
+          await sleep(200);
+        }
+      }
+    }
+  }
+
+  await page.keyboard.press('Tab');
+
+  // Batuk: Tidak if no cough, otherwise handled by caller via keterangan
+  if (!ctx.hasBatuk) {
+    await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
+  }
+
+  // CXR: always Tidak
+  for (const selector of ['#form_item_cxr_pemeriksaan_id input', '#form_item_cxr_alasan textarea']) {
+    await typeAndTrigger(page, selector, 'Tidak');
+  }
 }
 
 /**
@@ -69,8 +313,7 @@ export async function processData(
   }
 ): Promise<ProcessDataResult> {
   if (!page) {
-    const instance = await getPuppeteerWithParallel();
-    page = instance.page;
+    throw new Error('Puppeteer page instance is required');
   }
   if ('pages' in page) {
     const pages = await page.pages();
@@ -81,8 +324,8 @@ export async function processData(
 
   // Note: keep login early to ensure session available for locking checks/UI interactions.
   await autoLoginAndEnterSkriningPage(page);
+  await waitForDomStable(page, 3000, 60000);
   await page.waitForSelector('#nik', { visible: true });
-  await sleep(3000);
 
   if (!data) {
     throw new Error('No more data to process.');
@@ -140,11 +383,11 @@ export async function processData(
   }
 
   try {
-    console.log('Processing:', fixedData);
+    console.log('Processing:', removeDuplicateKeys(fixedData));
 
     const tanggalEntry = fixedData['TANGGAL ENTRY'] || fixedData.tanggal;
 
-    // Always validate the date format to ensure it's in DD/MM/YYYY format, which is required by the form. This prevents issues with incorrect date formats causing silent failures or incorrect data entry.
+    // Always validate the date format to ensure it's in DD/MM/YYYY format, which is required by the form.
     if (!`${tanggalEntry}`.includes('/') || !tanggalEntry || tanggalEntry.length < 8) {
       throw new Error(
         `INVALID DATE: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
@@ -157,7 +400,7 @@ export async function processData(
 
     const parseTanggal = moment(tanggalEntry, 'DD/MM/YYYY', true); // strict parsing
 
-    // Always validate the parsed date to ensure it's a valid calendar date. This prevents issues with invalid dates like 31/02/2023 being accepted and causing downstream errors in the form submission or data integrity.
+    // Always validate the parsed date to ensure it's a valid calendar date.
     if (!parseTanggal.isValid()) {
       throw new Error(
         `INVALID DATE (parse failed): tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
@@ -168,40 +411,34 @@ export async function processData(
       );
     }
 
-    // Always disallow Sunday dates as the system does not accept them and it can cause silent failures if entered. This check is important to ensure data integrity and prevent issues with form submission.
+    // Disallow Sunday dates as the system does not accept them.
     if (parseTanggal.day() === 0) {
       throw new Error(`SUNDAY DATE NOT ALLOWED: ${tanggalEntry}`);
     }
 
-    // Separate validations for year and month so callers can skip them independently
     const today = moment();
 
     if (options?.skipCurrentYearValidation) {
       console.warn('skipCurrentYearValidation enabled — skipping current year validation for', tanggalEntry);
-    } else {
-      if (parseTanggal.year() !== today.year()) {
-        throw new Error(
-          `YEAR NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
-            fixedData,
-            null,
-            2
-          )}`
-        );
-      }
+    } else if (parseTanggal.year() !== today.year()) {
+      throw new Error(
+        `YEAR NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
+          fixedData,
+          null,
+          2
+        )}`
+      );
     }
 
     if (options?.skipCurrentMonthValidation) {
       console.warn('skipCurrentMonthValidation enabled — skipping current month validation for', tanggalEntry);
-    } else {
-      if (parseTanggal.month() !== today.month()) {
-        throw new Error(
-          `MONTH NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) - data=${JSON.stringify(
-            fixedData,
-            null,
-            2
-          )}`
-        );
-      }
+    } else if (parseTanggal.month() !== today.month()) {
+      const logFile = path.join(process.cwd(), `tmp/logs/invalid_month_entries/${fixedData.nik}.log`);
+      const logContent = `Invalid month entry: ${tanggalEntry}\nType tanggalEntry=${typeof tanggalEntry}\nData: ${JSON.stringify(fixedData, null, 2)}\n\n`;
+      writefile(logFile, logContent);
+      throw new Error(
+        `MONTH NOT ALLOWED: tanggal=${String(tanggalEntry)} (type=${typeof tanggalEntry}) logged to ${logFile}`
+      );
     }
 
     try {
@@ -217,18 +454,15 @@ export async function processData(
       };
     }
 
-    // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
     await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
-
-    await sleep(5000);
+    await waitForDomStable(page, 5000, 60000);
 
     // Check if the ID modal appears
     try {
       await page.waitForSelector('.k-widget.k-window.k-window-maximized', { timeout: 5000 });
-      // console.log('Modal is visible');
     } catch (_e) {
-      // console.log('Modal did not appear');
+      //
     }
 
     try {
@@ -254,8 +488,6 @@ export async function processData(
     console.log('Is NIK not found modal visible:', isNikNotFound);
 
     if (isNikNotFound) {
-      // Input manual data from parsed NIK if available
-
       const shouldClickYes = await page.evaluate(() => {
         const dialog = document.querySelector('#dialogconfirm');
         if (!dialog) return false;
@@ -287,8 +519,6 @@ export async function processData(
 
         await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', fixedData.gender);
 
-        // Validate final birth date format to ensure it's in DD/MM/YYYY
-        // If invalid, throw an error with context for easier debugging
         const parsedLahir = moment(fixedData.tgl_lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
         if (!parsedLahir.isValid()) {
           throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${fixedData.tgl_lahir}`);
@@ -296,112 +526,7 @@ export async function processData(
 
         await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
 
-        if (!fixedData.alamat || fixedData.alamat.length === 0) {
-          throw new Error("❌ Failed to take the patient's address");
-        }
-
-        let kabupatenOrKota = '',
-          kecamatan = '',
-          provinsi = '',
-          kelurahan = '';
-
-        const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
-        const geocodedAddress = await getStreetAddressInformation(keywordAddr);
-
-        if (geocodedAddress) {
-          fixedData._address = geocodedAddress.raw || geocodedAddress;
-          console.log(`Fetching address from geocoder for: ${keywordAddr}`);
-          console.log('Geocoder result:', geocodedAddress);
-
-          kelurahan = geocodedAddress.kelurahan || '';
-          kecamatan = geocodedAddress.kecamatan || '';
-          kabupatenOrKota = geocodedAddress.kabupaten || geocodedAddress.kota || '';
-          provinsi = geocodedAddress.provinsi || '';
-
-          if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
-            kabupatenOrKota = 'Kota Surabaya';
-          }
-        }
-
-        // Fallback to parsed NIK only for missing fields
-        if ((isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(provinsi) || isEmpty(kelurahan)) && parsedNik) {
-          const _parsedNikData =
-            parsedNik && parsedNik.status === 'success' ? parsedNik.data : ({} as nikUtils.NikParseSuccess['data']);
-          if (isEmpty(kabupatenOrKota)) {
-            kabupatenOrKota = _parsedNikData.kotakab || '';
-          }
-          if (isEmpty(kecamatan)) {
-            kecamatan = (_parsedNikData as any).kecamatan || _parsedNikData.namaKec || '';
-          }
-          if (isEmpty(provinsi)) {
-            provinsi = _parsedNikData.provinsi || '';
-          }
-
-          if (isEmpty(kelurahan)) {
-            const parsedKelurahan = _parsedNikData.kelurahan != null ? _parsedNikData.kelurahan : null;
-            const selectedKelurahan = Array.isArray(parsedKelurahan)
-              ? parsedKelurahan.length > 0
-                ? parsedKelurahan[0]
-                : null
-              : parsedKelurahan || null;
-            kelurahan = selectedKelurahan
-              ? typeof selectedKelurahan === 'object' && 'name' in selectedKelurahan
-                ? String(selectedKelurahan.name || '')
-                : String(selectedKelurahan)
-              : '';
-          }
-
-          console.log(
-            `Using parsed NIK fallback for address: ${kelurahan || '<unknown kelurahan>'}, ${
-              kecamatan || '<unknown kec>'
-            }, ${kabupatenOrKota || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
-          );
-        }
-
-        if (!geocodedAddress && (!parsedNik || parsedNik.status !== 'success')) {
-          throw new Error(
-            `❌ Failed to determine address: no geocoder result and no parsed NIK data available (nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
-          );
-        }
-
-        const originalAddressParts = { provinsi, kabupatenOrKota, kecamatan, kelurahan };
-        provinsi = normalizeAddressNameToIndonesian(provinsi);
-        kabupatenOrKota = normalizeAddressNameToIndonesian(kabupatenOrKota);
-        kecamatan = normalizeAddressNameToIndonesian(kecamatan);
-        kelurahan = normalizeAddressNameToIndonesian(kelurahan);
-
-        if (
-          originalAddressParts.provinsi !== provinsi ||
-          originalAddressParts.kabupatenOrKota !== kabupatenOrKota ||
-          originalAddressParts.kecamatan !== kecamatan ||
-          originalAddressParts.kelurahan !== kelurahan
-        ) {
-          console.log('Normalized address parts to Indonesian format:', {
-            before: originalAddressParts,
-            after: { provinsi, kabupatenOrKota, kecamatan, kelurahan }
-          });
-        }
-
-        if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {
-          console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
-          throw new Error('kelurahan should be string');
-        }
-
-        // Ensure provinsi, kotakab, kecamatan, kelurahan not empty — throw descriptive error
-        if (isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) {
-          throw new Error(
-            `Missing required address fields: provinsi='${provinsi || ''}', kotakab='${kabupatenOrKota || ''}', kecamatan='${kecamatan || ''}', kelurahan='${kelurahan || ''}'`
-          );
-        } else {
-          console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
-        }
-
-        // Input provinsi -> kabupaten -> kecamatan -> kelurahan -> alamat
-        await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi));
-        await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota));
-        await typeAndTrigger(page, '#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan));
-        await typeAndTrigger(page, '#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan));
-        await typeAndTrigger(page, '#field_item_alamat_ktp textarea[type="text"]', fixedData.alamat);
+        await resolveAndFillAddress(page, fixedData, parsedNik);
       } else {
         return {
           status: 'error',
@@ -412,13 +537,24 @@ export async function processData(
     }
 
     // Get the patient's name from the form after confirming identity (or if no modal appeared)
-    const nama = await page.evaluate(
+    let nama = await page.evaluate(
       () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
     );
     fixedData.nama_from_page = `${nama}`.trim();
-    // re-check
     if (isEmpty(`${fixedData.nama_from_page}`)) {
-      throw new Error("❌ Failed to take the patient's name");
+      const NAMA = fixedData.nama || fixedData.NAMA || '';
+      if (!NAMA || NAMA.length === 0) {
+        throw new Error("❌ Failed to take the patient's name");
+      }
+      nama = await page.evaluate(
+        () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
+      );
+      fixedData.nama_from_page = `${nama}`.trim();
+      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
+    }
+
+    if (isEmpty(`${fixedData.nama_from_page}`)) {
+      throw new Error("❌ Patient's name is empty after confirmation");
     }
 
     const { gender, age, birthDate, location } = await getPersonInfo(page);
@@ -427,28 +563,16 @@ export async function processData(
     fixedData.tgl_lahir_from_page = birthDate;
     fixedData.umur_from_page = age;
     console.log('Jenis kelamin:', gender, 'Umur:', age, 'tahun');
-    if (!gender || isNaN(age)) {
+    if (!gender || !Number.isFinite(age)) {
       throw new Error('Invalid input: Gender or age is missing/invalid.');
     }
 
-    // Fix if location data is empty
-    console.log(`Provinsi: ${province}`, province.length == 0 ? '(empty)' : '');
-    if (province.length == 0) {
-      await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', 'Jawa Timur');
-    }
+    await fillFallbackLocationIfEmpty(page, province, city);
 
-    console.log(`Kabupaten/Kota: ${city}`, city.length == 0 ? '(empty)' : '');
-    if (city.length == 0) {
-      await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', 'Kota Surabaya');
-    }
-
-    // Fix job
     fixedData.pekerjaan_original = data.pekerjaan || '<empty>';
     console.log(`Pekerjaan: ${fixedData.pekerjaan}`);
-
     await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
 
-    // Input tinggi dan berat badan
     const bb = fixedData.bb || fixedData.BB || null;
     const tb = fixedData.tb || fixedData.TB || null;
     console.log(`Inputting berat badan (${bb}) dan tinggi badan (${tb}) untuk NIK: ${NIK}`);
@@ -458,127 +582,45 @@ export async function processData(
     await page.focus('#field_item_tinggi_badan input[type="text"]');
     await page.type('#field_item_tinggi_badan input[type="text"]', extractNumericWithComma(tb), { delay: 100 });
 
-    // Batch fill common "Tidak" selections to reduce repeated awaits
-    const defaultNoSelectors = [
-      '#field_item_riwayat_kontak_tb_id input[type="text"]',
-      '#field_item_risiko_1_id input[type="text"]',
-      '#field_item_risiko_4_id input[type="text"]',
-      '#field_item_risiko_5_id input[type="text"]',
-      '#field_item_risiko_7_id input[type="text"]',
-      '#field_item_risiko_10_id input[type="text"]',
-      '#field_item_risiko_11_id input[type="text"]',
-      '#field_item_gejala_2_3_id input[type="text"]',
-      '#field_item_gejala_2_4_id input[type="text"]',
-      '#field_item_gejala_2_5_id input[type="text"]',
-      '#field_item_gejala_6_id input[type="text"]',
-      '#field_item_cxr_pemeriksaan_id input[type="text"]'
-    ];
+    await fillAllTidakFields(page, { gender, age, hasDiabetes: !!fixedData.diabetes, hasBatuk: !!fixedData.batuk });
 
-    // Add gender-specific selector
-    if (gender.toLowerCase().trim() == 'perempuan') {
-      defaultNoSelectors.push('#field_item_risiko_9_id input[type="text"]');
-    }
-
-    for (const sel of defaultNoSelectors) {
-      await typeAndTrigger(page, sel, 'Tidak');
-    }
-
-    // Handle diabetes separately (Yes/No)
-    await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', fixedData.diabetes ? 'Ya' : 'Tidak');
-
-    if (age < 18) {
-      const gejalaBalitaSelectors = [
-        '#field_item_gejala_1_1_id input[type="text"]',
-        '#field_item_gejala_1_3_id input[type="text"]',
-        '#form_item_gejala_1_4_id input[type="text"]',
-        '#field_item_gejala_1_5_id input[type="text"]'
-      ];
-
-      for (const gejalaBalitaSelector of gejalaBalitaSelectors) {
-        if (await isElementExist(page, gejalaBalitaSelector)) {
-          const visible = await isElementVisible(page, gejalaBalitaSelector);
-          console.log(`Gejala balita ${gejalaBalitaSelector} is visible ${visible}`);
-
-          if (visible) {
-            await typeAndTrigger(page, gejalaBalitaSelector, 'Tidak');
-            await sleep(200);
-          }
-        }
-      }
-    }
-
-    await page.keyboard.press('Tab');
-
-    if (!fixedData.batuk) {
-      await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
-    } else {
+    // Batuk keterangan: only needed when batuk is present (hasBatuk=false is already handled inside fillAllTidakFields)
+    if (fixedData.batuk) {
       const keteranganBatuk = fixedData.batuk.replace(/ya,/, 'batuk');
       if (/\d/m.test(keteranganBatuk)) {
         await typeAndTrigger(page, '#field_item_keterangan textarea', keteranganBatuk);
         await waitEnter('Please fix data batuk/demam. Press Enter to continue...');
       } else {
-        // clear keterangan if no numeric info is present to avoid invalid alert
         await typeAndTrigger(page, '#field_item_keterangan textarea', '');
       }
     }
-
-    // CXR handle
-
-    await typeAndTrigger(page, '#form_item_cxr_pemeriksaan_id input', 'Tidak');
-
-    // <div id="form_item_cxr_pemeriksaan_id" class="form-item">
-    //     <div class="form-item-label">Dilakukan Pemeriksaan CXR<span class="required"> *</span></div>
-    //     <div class="form-item-separator">:</div>
-    //     <div id="field_item_cxr_pemeriksaan_id" class="form-item-field">
-    //         <span class="k-widget k-combobox k-header" style="width: 250px;"><span tabindex="-1" unselectable="on" class="k-dropdown-wrap k-state-default"><input name="cxr_pemeriksaan_id_input" class="k-input k-valid" type="text" autocomplete="off" title="" role="combobox" aria-expanded="false" tabindex="0" aria-disabled="false" aria-readonly="false" aria-autocomplete="list" aria-owns="cxr_pemeriksaan_id_listbox" aria-busy="false" aria-activedescendant="07c94f4a-bb67-4609-a169-0ca1f1adaab3" style="width: 100%;"><span tabindex="-1" unselectable="on" class="k-select"><span unselectable="on" class="k-icon k-i-arrow-s" role="button" tabindex="-1" aria-controls="cxr_pemeriksaan_id_listbox">select</span></span></span><input id="cxr_pemeriksaan_id" name="cxr_pemeriksaan_id" required="required" data-required-msg="Kolom Dilakukan Pemeriksaan CXR harus diisi" style="width: 250px; display: none;" data-role="combobox" aria-disabled="false" aria-readonly="false" class="k-valid"></span>
-    //         <span class="k-invalid-msg" data-for="cxr_pemeriksaan_id" style="display: none;"></span>
-    //     </div>
-    // </div>
-
-    await typeAndTrigger(page, '#form_item_cxr_alasan textarea', 'Tidak');
-
-    // <div id="field_item_cxr_alasan" class="form-item-field">
-    //     <textarea type="text" id="cxr_alasan" name="cxr_alasan" data-required-msg="Kolom Alasan Tidak CXR harus diisi" class="k-textbox k-invalid" maxlength="500" style="width:350px;" required="required" aria-invalid="true"></textarea>
-    //     <span class="k-widget k-tooltip k-tooltip-validation k-invalid-msg" data-for="cxr_alasan" role="alert"><span class="k-icon k-warning"> </span> Kolom Alasan Tidak CXR harus diisi</span>
-    // </div>
 
     await sleep(2000);
 
     // Re-check if the identity modal is visible
     while (await isIdentityModalVisible(page)) {
-      // Confirm identity modal
       await confirmIdentityModal(page);
       await sleep(1000);
-      // Re-check
       if (await isIdentityModalVisible(page)) {
         await waitEnter('Please check identity modal. Press Enter to continue...');
       }
     }
 
-    // Check if the invalid element alert is visible
+    // Resolve invalid alert — retry common fixes then wait for manual intervention
     let invalidAlert = await isInvalidAlertVisible(page);
     while (invalidAlert.result) {
-      // Solve common problems
-      // await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
       await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
-
-      // Re-check
-      invalidAlert = await isInvalidAlertVisible(page);
-      if (invalidAlert.result) await reEvaluate(page);
       invalidAlert = await isInvalidAlertVisible(page);
       if (invalidAlert.result) {
-        console.warn('⚠️ Invalid alert detected for the following data:');
-        console.warn(
-          `⚠️ Please review the alert and press Enter to continue...\n⚠️ Invalid alert contents: ${invalidAlert.contents.join(' | ')}`
-        );
         console.dir(fixedData, { depth: null });
+        console.warn('⚠️ Invalid alert detected for the following data:');
+        console.warn(`  ${invalidAlert.contents.join(' - ')}`);
         await waitEnter('Please review the alert and press Enter to continue...');
       }
     }
 
-    // Auto submit
-    let hasSubmitted = false;
+    // Pre-submission eligibility check
     const identityModalVisible = await isIdentityModalVisible(page);
     const invalidAlertState = await isInvalidAlertVisible(page);
     const invalidAlertVisible = invalidAlertState.result;
@@ -598,13 +640,10 @@ export async function processData(
       console.log(`Invalid alert contents: ${invalidAlertState.contents.join(' | ')}`);
     }
 
-    // Re-login if session expired
     if (sessionExpiredAlertVisible) {
       console.warn('⚠️ Session expired alert detected. Attempting to re-login...');
       await waitEnter('Session expired. Please log in again, then press Enter to continue...');
       await autoLoginAndEnterSkriningPage(page);
-      // After re-login, we should ideally re-fill the form with the same data before submitting
-      // For simplicity, we will just return an error here and let the user re-run the process for this entry
       return {
         status: 'error',
         reason: 'session_expired',
@@ -614,17 +653,14 @@ export async function processData(
     }
 
     if (isAllowedToSubmit) {
-      // get form values before submission
       console.log(`Getting form values for NIK: ${NIK} before submission...`);
       const formValues: NormalizedFormValue[] = await getNormalizedFormValues(page);
       fixedData.formValues = formValues;
-
       console.log(`Form values for NIK: ${NIK} (${formValues.length} items)`);
       for (const [index, formValue] of formValues.entries()) {
         console.log(`Form value #${index + 1} for NIK ${NIK}:`, formValue);
       }
 
-      // Clck the save button
       console.log('Clicking the save button...');
       await page.$eval('#save', (el) => el.scrollIntoView());
       await page.evaluate(() => {
@@ -636,86 +672,40 @@ export async function processData(
 
       await sleep(1000);
       try {
-        // Wait for the confirmation modal to appear
         await page.waitForSelector('#yesButton', { visible: true });
-        // Click the "Ya" button
         await page.click('#yesButton');
       } catch (_) {
-        // Fail sending data, press manually
         await waitEnter(
           'Failed to click #yesButton for confirmation modal. Please click the button manually, then press Enter to continue...'
         );
       }
 
       await sleep(1000);
-      const waitStart = Date.now();
-      while (true) {
-        const isSuccessVisible = await isSuccessNotificationVisible(page);
-        if (isSuccessVisible) {
-          console.log('✅ Success notification is visible');
-          break;
-        }
-        const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
-        if (elapsedSeconds >= 300) {
-          process.stdout.write('\n');
-          process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
-          return {
-            status: 'error',
-            reason: 'success_notification_timeout',
-            description: 'Timed out waiting for success notification after 5 minutes.'
-          };
-        }
-        // Optional: wait a bit to avoid tight loop
-        await new Promise((r) => setTimeout(r, 1000));
-        process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
-      }
-
-      hasSubmitted = true;
-    } else {
-      hasSubmitted = false;
-    }
-
-    if (hasSubmitted) {
-      console.log('✅\tData submitted successfully:', fixedData);
     } else {
       console.warn('⚠️\tData processed but not submitted:', fixedData, '\n');
-
-      // Waiting for user input to proceed in case of manual intervention needed
-      const waitStart = Date.now();
-      while (!hasSubmitted) {
-        const isSuccessVisible = await isSuccessNotificationVisible(page);
-        if (isSuccessVisible) {
-          console.log('✅ Success notification is visible');
-          hasSubmitted = true;
-          break;
-        }
-        const elapsedSeconds = Math.floor((Date.now() - waitStart) / 1000);
-        if (elapsedSeconds >= 300) {
-          process.stdout.write('\n');
-          process.stderr.write(`❌ Timed out waiting for success notification after ${elapsedSeconds} seconds.\n`);
-          return {
-            status: 'error',
-            reason: 'success_notification_timeout',
-            description:
-              'Timed out waiting for success notification after 5 minutes. (data was not submitted, likely due to manual intervention needed)'
-          };
-        }
-        // Optional: wait a bit to avoid tight loop
-        await new Promise((r) => setTimeout(r, 1000));
-        process.stdout.write(`\rWaiting for success notification modal to be visible... ${elapsedSeconds}s elapsed`);
-      }
+      await waitEnter('Please manually submit the form, then press Enter to continue...');
     }
 
-    // Get form values after submission (to capture any changes triggered by submission)
+    // Wait for success notification regardless of auto/manual submit path
+    const succeeded = await waitForSuccessNotification(page);
+    if (!succeeded) {
+      return {
+        status: 'error',
+        reason: 'success_notification_timeout',
+        description: 'Timed out waiting for success notification after 5 minutes.'
+      };
+    }
+
+    // Capture final form values after submission
     console.log(`Getting form values for NIK: ${NIK} after submission...`);
-    const afterSubmitFormValues = await getNormalizedFormValues(page);
-    fixedData.formValues = afterSubmitFormValues;
+    fixedData.formValues = await getNormalizedFormValues(page);
 
     await database.addLog({
       id: getNumbersOnly(NIK),
       data: { ...fixedData, status: 'success' },
       message: `Data for NIK: ${NIK} submitted successfully.`
     });
+    console.log('✅\tData submitted successfully:', fixedData);
     return {
       status: 'success',
       data: fixedData
@@ -728,5 +718,3 @@ export async function processData(
     }
   }
 }
-
-export const skrinProcessData = processData;

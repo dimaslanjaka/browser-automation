@@ -6,7 +6,7 @@ import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
-import { processData } from '../../runner/skrin/direct-process-data2.js';
+import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
