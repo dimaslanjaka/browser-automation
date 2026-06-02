@@ -1,9 +1,9 @@
 import ansiColors from 'ansi-colors';
 import csvParser from 'csv-parser';
-import fs from 'fs';
-import path from 'path';
+import fs from 'fs-extra';
+import path from 'upath';
 import { Transform } from 'stream';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import { parseBabyName } from '../src/runner/skrin-utils.js';
 import { parseDate } from '../src/utils/date.js';
 import { encryptJson } from '../src/utils/json-crypto.js';
@@ -126,9 +126,8 @@ export async function loadCsvData(customCsvPath) {
   return results;
 }
 
-// Direct run (unchanged)
-// -------------------------------------------------------------
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Direct run
+if (process.argv.some((arg) => path.toUnix(arg).endsWith('data/index.js'))) {
   (async () => {
     console.log('Loading CSV data...');
     const data = await loadCsvData();

@@ -62,6 +62,9 @@ function jsonParseWithCircularRefsBrowser(str) {
  * @returns {string} The encrypted string
  */
 export function encryptJson(data, secret) {
+  if (!secret) {
+    throw new Error('encryptJson: secret is required (check VITE_JSON_SECRET env variable)');
+  }
   const jsonString = jsonStringifyWithCircularRefsBrowser(data);
   // Use CryptoJS AES for both Node.js and browser
   return CryptoJS.AES.encrypt(jsonString, secret).toString();

@@ -1,8 +1,9 @@
 //
 // Core modules
-const path = require('node:path');
-const childProcess = require('node:child_process');
+const path = require('path');
+const childProcess = require('child_process');
 const dotenv = require('dotenv');
+const fs = require('fs');
 
 // Polyfill TextEncoder/TextDecoder if missing
 if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
@@ -26,7 +27,7 @@ if (process.platform === 'win32') {
 const DEBUG = process.env.DEBUG || 'false';
 
 dotenv.config({
-  path: path.join(__dirname, '.env'),
+  path: [path.join(__dirname, '..', '.env'), path.join(process.cwd(), '.env')].find((p) => fs.existsSync(p)),
   override: true,
   quiet: true
 });
