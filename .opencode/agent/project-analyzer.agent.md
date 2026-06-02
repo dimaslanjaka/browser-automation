@@ -5,8 +5,6 @@ description: "Expert in analyzing codebases, identifying patterns, and providing
 category: development
 mode: primary
 temperature: 0.2
-
-# Tags
 tags:
   - analysis
   - codebase
