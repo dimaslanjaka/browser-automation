@@ -7,7 +7,7 @@ import {
 
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
-  string: ['nik', 'limit'],
+  string: ['nik', 'limit', 'from-date', 'to-date'],
   boolean: ['force', 'help', 'open'],
   alias: {
     f: 'force',
@@ -16,7 +16,7 @@ const argv = minimist(process.argv.slice(2), {
     o: 'open',
     l: 'limit'
   },
-  default: { force: false, nik: '', open: false, limit: '' }
+  default: { force: false, nik: '', open: false, limit: '', 'from-date': '', 'to-date': '' }
 });
 
 if (argv.help) {
@@ -28,6 +28,8 @@ if (argv.help) {
     '  --force, -f        Process all data',
     '  --limit, -l <n>    Process only the first n matching items',
     '  --open, -o         Open saved screenshot(s) after capture',
+    '  --from-date        Override start date (format DD/MM/YYYY or MM/DD/YYYY depending on site)',
+    '  --to-date          Override end date (format DD/MM/YYYY or MM/DD/YYYY depending on site)',
     '  --help, -h         Show this help message',
     '',
     'Notes:',
@@ -62,8 +64,12 @@ const force = Boolean(argv.force);
 const openScreenshots = Boolean(argv.open);
 const parsedLimit = Number.parseInt(String(argv.limit), 10);
 const limit = Number.isFinite(parsedLimit) && parsedLimit >= 0 ? parsedLimit : undefined;
+const fromDateArg = argv['from-date'];
+const toDateArg = argv['to-date'];
+const fromDate = fromDateArg ? String(fromDateArg).trim() : undefined;
+const toDate = toDateArg ? String(toDateArg).trim() : undefined;
 
-parallelSkrinCheck({ specificNiks, force, openScreenshots, limit })
+parallelSkrinCheck({ specificNiks, force, openScreenshots, limit, fromDate, toDate })
   .catch((err) => {
     console.error(err);
     process.exit(1);

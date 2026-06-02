@@ -65,10 +65,12 @@ let lastLoginTime = 0;
 async function findData(
   data: ExcelRowData,
   page: import('puppeteer').Page,
-  options?: { normalizedTargets?: string[]; openScreenshots?: boolean }
+  options?: { normalizedTargets?: string[]; openScreenshots?: boolean; fromDate?: string; toDate?: string }
 ) {
   const now = Date.now();
-  if (!page || page.isClosed()) return;
+  if (!page || page.isClosed()) {
+    throw new Error('Puppeteer page is not available');
+  }
 
   // Reuse the tmp JPEG path for this NIK when taking a fresh screenshot.
   const tmpFilePath = getTmpScreenshotPath(data.nik);
@@ -94,8 +96,8 @@ async function findData(
     }
   }, data.nik);
 
-  const fromDate = `01/${String(moment().month() + 1).padStart(2, '0')}/${moment().year()}`;
-  const toDate = moment().format('DD/MM/YYYY');
+  const fromDate = options?.fromDate ?? `01/${String(moment().month() + 1).padStart(2, '0')}/${moment().year()}`;
+  const toDate = options?.toDate ?? moment().format('DD/MM/YYYY');
 
   await typeAndTrigger(page, '#from_tgl_skrining', fromDate);
   await typeAndTrigger(page, '#to_tgl_skrining', toDate);
@@ -157,15 +159,19 @@ export async function parallelSkrinCheck(options?: {
   force?: boolean;
   openScreenshots?: boolean;
   limit?: number;
+  fromDate?: string;
+  toDate?: string;
 }) {
   const opts = {
     specificNiks: [] as string[],
     force: false,
     openScreenshots: false,
+    fromDate: undefined as string | undefined,
+    toDate: undefined as string | undefined,
     ...options
   };
 
-  const { specificNiks, force, openScreenshots, limit } = opts;
+  const { specificNiks, force, openScreenshots, limit, fromDate, toDate } = opts;
 
   const normalizedTargets: string[] = specificNiks.map(getNumbersOnly);
   const tried = new Set<string>();
@@ -298,7 +304,9 @@ export async function parallelSkrinCheck(options?: {
     console.log(`Fetching new screenshot for NIK ${data.nik}.`);
     await findData(data, page, {
       normalizedTargets,
-      openScreenshots
+      openScreenshots,
+      fromDate,
+      toDate
     });
   }
 
