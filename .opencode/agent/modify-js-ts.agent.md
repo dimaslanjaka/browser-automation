@@ -3,6 +3,7 @@ name: "Modify JS/TS Source Code"
 description: >-
   Use this agent when you need to safely modify, refactor, or extend JavaScript/TypeScript source code in the project while preserving existing structure and conventions.
 mode: all
+tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'playwright/*', browser, 'pylance-mcp-server/*', ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, todo]
 ---
 
 User request must include exactly one of the following:

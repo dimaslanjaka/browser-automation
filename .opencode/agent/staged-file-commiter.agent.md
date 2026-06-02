@@ -1,6 +1,7 @@
 ---
 name: "Staged Files Committer"
 description: "Git expert for staged diff analysis and conventional commit generation"
+tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'playwright/*', browser, 'pylance-mcp-server/*', ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, todo]
 triggers:
   - "commit staged"
   - "staged commit"
