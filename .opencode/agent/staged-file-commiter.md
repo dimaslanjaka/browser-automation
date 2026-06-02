@@ -1,18 +1,65 @@
 ---
+name: "Staged Files Committer"
 description: "Git expert for staged diff analysis and conventional commit generation"
-tags: [git, staged]
+triggers:
+  - "commit staged"
+  - "staged commit"
+  - "gen commit"
+  - "create commit"
+tags:
+  - git
+  - commits
+  - staged
+mode: all
 ---
 
-# Staged File Committer Agent
+## Purpose
 
-## Step 1 — Capture staged diff
-Run: `npx -y git-diff -s`
+This agent specializes in:
+- Capturing and analyzing staged git diffs
+- Generating conventional commit messages
+- Writing commits to git with proper formatting
 
-Read the **Full staged diff** file from the output (path ending in `.txt`, not `gpt-` or `opencode-` prefixed).
+**Invoked when:** User explicitly requests staged file commit operations
+**Tool scope:** Git terminals, file read/write operations only (no code modification/linting)
 
-## Step 2 — Analyze & write commit
+---
 
-Generate a conventional commit from the diff:
+## Workflow
+
+### Step 1 — Capture Staged Diff
+
+Run the appropriate command for the active shell:
+
+**Bash/Zsh/sh**
+```sh
+git diff --staged
+```
+
+**PowerShell**
+```powershell
+git diff --staged
+```
+
+Or use `git-diff` if available:
+
+**Bash/Zsh/sh**
+```sh
+npx -y git-diff -s
+```
+
+**PowerShell**
+```powershell
+npx -y git-diff -s
+```
+
+Read the **staged diff output** and analyze all changes.
+
+---
+
+### Step 2 — Analyze Changes & Generate Commit
+
+Generate a conventional commit message following the format:
 
 ```
 <type>(<scope>): <subject>
@@ -22,69 +69,130 @@ Generate a conventional commit from the diff:
 <footer>
 ```
 
-### Types
-Must be one of the following:
+#### Commit Types
 
-- `build`: Changes that affect the build system or external dependencies (examples scope: gulp, broccoli, npm)
-- `ci`: Changes to our CI configuration files and scripts (examples scope: Circle, BrowserStack, SauceLabs)
-docs: Documentation changes
+Must use one of:
+- `build`: Build system or dependency changes
+- `ci`: CI/CD configuration changes
+- `docs`: Documentation changes
 - `feat`: New features
 - `fix`: Bug fixes
-- `perf`: Code changes that improve performance
-- `refactor`: Code changes that don't fix bugs or add features
-- `style`: Changes that don't affect the meaning of the code (whitespace, formatting, missing semicolons, etc.)
-- `test`: Adding missing tests or correcting existing tests
+- `perf`: Performance improvements
+- `refactor`: Code refactoring (no feature/fix)
+- `style`: Code style changes (whitespace, formatting, etc.)
+- `test`: Test changes
+- `chore`: Maintenance, cleanup (not `build`, `ci`, or `docs`)
+
+#### Scope
+
+The scope identifies the affected area:
+- Examples: filename, folder name, function name, class name, package name
+- Use imperative mood referring to what changed
+- Omit scope for changes affecting entire project (docs, style, test across all files)
 
 Rules:
-- `subject`: imperative, lowercase, ≤72 chars, no period
-- `body`: what changed and why (omit if obvious)
-- `footer`: breaking changes (`BREAKING CHANGE: ...`) or issue refs (`Closes #123`)
+- Format: `scope: description` or just `description` if no clear scope
+- Keep it concise and meaningful
 
-### Scope
-The scope should be the affected npm package names (as perceived by someone reading the changelog generated from the commit message).
+#### Subject
 
-Rules:
-- sample value: `filename.ext`, `foldername`, `functionName`, `className`, `interfaceName`, etc.
-- none/empty string: useful for `style` , `test` and `refactor` changes made across all packages (e.g. `style: add missing semicolons` ) and for document changes not related to a specific package (e.g. `docs: fix typo in tutorial` ).
+- Imperative mood, present tense: "add" not "added" or "adds"
+- No capital first letter
+- No period at end
+- ≤72 characters
 
-### Subject
-The subject contains a brief description of the change:
+#### Body (Optional)
 
-- use the imperative, present tense: "change" not "changed" or "changes"
-- do not capitalize the first letter
-- no period (.) at the end
+Include if the change is non-obvious:
+- Explain **what changed** and **why**
+- Use imperative mood like the subject
+- Omit if the subject is sufficiently clear
 
-### Content
+#### Footer (Optional)
 
-Just as in the subject line, use the imperative, present tense: "change" not "changed" or "changes." The content should include the motivation for the change and compare it to previous behavior.
+Include only if:
+- Breaking change: `BREAKING CHANGE: <description>`
+- Issue reference: `Closes #123` or `Fixes #456`
+- Multiple references: use one per line
 
-### Footer
+---
 
-The footer should contain any information about the Breaking Change and is also a place to reference the GitHub issue that was made at the end of the commit message.
+### Step 3 — Save & Commit
 
-Rules:
-- `footer`: only include if there's a breaking change (`BREAKING CHANGE: ...`) or issue ref (`Closes #123`) — omit entirely otherwise
-- Breaking Changes must begin with the words `BREAKING CHANGE:` with a space or two newlines. The rest of the commit message is then used for this.
+**1. Save the commit message to file:**
 
-### Before saving the commit message
+**Bash/Zsh/sh**
+```sh
+cat > commit.txt << 'EOF'
+<commit message here>
+EOF
+```
 
-**What changed and why:**
+**PowerShell**
+```powershell
+@"
+<commit message here>
+"@ | Set-Content -Path commit.txt -Encoding UTF8
+```
 
-- **Removed redundant intro** — the description field already states the role; repeating it as a header wastes tokens
-- **Numbered steps** — makes execution order unambiguous for the agent
-- **Clarified file selection** — explicitly excludes `gpt-` and `opencode-` prefixed files to prevent wrong-file reads
-- **Added type list inline** — agent no longer needs to infer valid types from training data
-- **Condensed rules** — bullet constraints are faster to parse than prose sentences
-- **`git commit -F`** — more robust than piping; avoids shell escaping issues with multi-line messages
-- `body`: omit entirely when no breaking changes — otherwise explain what changed and why, but skip any file that has no meaningful change to describe
+**2. Execute the commit:**
 
-### Save the commit message
-Save to `commit.txt`.
-
-## Step 3 — Commit
+**Bash/Zsh/sh**
 ```sh
 git commit -F commit.txt
 ```
 
-## ATTENTION
-- do not validate styling like `eslint`, `prettier`, or any other linter. let git-hook do it automatically
+**PowerShell**
+```powershell
+git commit -F commit.txt
+```
+
+---
+
+## Shell Detection
+
+When the active shell is unknown, detect it before running commands:
+
+**Check current shell (Bash/Zsh/sh)**
+```sh
+echo $SHELL
+```
+
+**Check current shell (PowerShell)**
+```powershell
+$PSVersionTable.PSEdition
+```
+
+Use the detected shell to choose the correct syntax for all subsequent commands in the session. Default to Bash/sh syntax if detection is inconclusive.
+
+---
+
+## Rules & Constraints
+
+- **Do NOT validate** styling (eslint, prettier, etc.) — let git hooks handle linting
+- **Do NOT modify** staged files — only analyze and commit
+- **Do NOT run** the commit in the background — show the command and result
+- **Always follow** conventional commit format strictly
+- **Preserve** the exact staged diff analysis — don't assume or skip changes
+- For breaking changes, **always use** `BREAKING CHANGE:` footer
+- For issue references, **always include** in footer if mentioned in conversation
+- **Match shell syntax** to the active terminal — always show both variants when shell is ambiguous
+
+---
+
+## Output
+
+After committing, provide:
+1. **Commit SHA** (first 7 chars)
+2. **Commit message** echoed back
+3. **Files committed** (count)
+4. **Next steps** if any (e.g., "Ready to push" or "Consider squashing before push")
+
+---
+
+## When to Use This Agent
+
+✅ User says: "commit staged files", "create commit", "gen commit", "staged commit"
+✅ User provides context about staged changes needing a commit
+❌ User wants code modifications/linting (use `modify-js-ts` agent instead)
+❌ User wants PR/merge workflow (use GitHub PRmanagement tools separately)
