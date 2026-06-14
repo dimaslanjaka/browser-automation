@@ -57,7 +57,7 @@
   "python.createEnvironment.contentButton": "show",
   "python.terminal.activateEnvInCurrentTerminal": false,
   "terminal.integrated.fontFamily": "MesloLGM Nerd Font",
-  "terminal.integrated.defaultProfile.windows": "Oh My Posh",
+  "terminal.integrated.defaultProfile.windows": "Short PowerShell 7",
   "terminal.integrated.env.linux": {
     "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${workspaceFolder}/bin:${workspaceFolder}/node_modules/.bin:${workspaceFolder}/vendor/bin",
     "NUITKA_CACHE_DIR": "${workspaceFolder}\\tmp\\nuitka-cache",
@@ -189,5 +189,22 @@
   "python.terminal.activateEnvironment": false,
   "chat.agentFilesLocations": {
     ".opencode/agent": true
-  }
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/tmp/**": true,
+    "**/.next/**": true,
+    "**/data/engine/**": true,
+    "**/data/logs/**": true,
+    "**/data/script/**": true
+  },
+  "editor.minimap.enabled": false,
+  "search.followSymlinks": false,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.maxTsServerMemory": 3072,
+  "extensions.autoUpdate": false,
+  "telemetry.telemetryLevel": "off"
 }
