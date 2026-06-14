@@ -7,7 +7,7 @@ import { BaseLogDatabase, LogEntry } from './BaseLogDatabase.js';
 import { MySQLConfig } from './MySQLHelper.js';
 import isDebug from '../utils/isDebug.cjs';
 
-type MySQL2Options = Partial<MySQLConfig>;
+export type MySQL2Options = Partial<MySQLConfig>;
 export interface LogDatabaseOptions extends MySQL2Options {
   [key: string]: any;
   type?: 'sqlite' | 'mysql';

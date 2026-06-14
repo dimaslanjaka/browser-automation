@@ -83,3 +83,7 @@ deobfuscate/
 # Ignore rollup bundle output
 /src/bundle/
 /lib
+
+.opencode/*
+!.opencode/opencode.*
+!.opencode/agents/
