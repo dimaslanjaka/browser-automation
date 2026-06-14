@@ -11,10 +11,12 @@ import { tsconfig, tsconfigPath, baseOutput } from './rollup.lib.js';
  *
  * @type {import('rollup').RollupOptions['input']}
  */
-const _runnerInputs = glob.globSync(['src/**/*.runner.*'], {
-  posix: true,
-  ignore: tsconfig.exclude.concat('**/_*')
-});
+const _runnerInputs = glob
+  .globSync(['src/**/*.runner.*'], {
+    posix: true,
+    ignore: tsconfig.exclude.concat('**/_*')
+  })
+  .filter((p) => p.includes('parallel'));
 
 console.log('_runnerInputs', _runnerInputs);
 
