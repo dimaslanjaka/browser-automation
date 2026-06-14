@@ -1,12 +1,14 @@
 ---
 name: "Staged Files Committer"
 description: "Git expert for staged diff analysis and conventional commit generation"
-tools: [vscode, execute, read, agent, edit, search, web, 'github/*', 'playwright/*', browser, 'pylance-mcp-server/*', ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, todo]
 triggers:
   - "commit staged"
   - "staged commit"
   - "gen commit"
   - "create commit"
+  - "generate commit staged files"
+  - "generate commit for staged changes"
+  - "commit staged files by group context"
 tags:
   - git
   - commits
@@ -14,186 +16,121 @@ tags:
 mode: all
 ---
 
-## Purpose
+# AI-Assisted Context-Aware Staged Commit Agent
 
-This agent specializes in:
-- Capturing and analyzing staged git diffs
-- Generating conventional commit messages
-- Writing commits to git with proper formatting
-
-**Invoked when:** User explicitly requests staged file commit operations
-**Tool scope:** Git terminals, file read/write operations only (no code modification/linting)
+**Purpose:** Automatically commit multiple staged files in batches by **AI-inferred context**, always using `commit.txt` for the commit message. Ensures clean, conventional commit history.
 
 ---
 
 ## Workflow
 
-### Step 1 — Capture Staged Diff
+### Step 1 — Detect Staged Files
 
-Run the appropriate command for the active shell:
-
-**Bash/Zsh/sh**
-```sh
-git diff --staged
+```bash
+git diff --name-only --staged
 ```
 
-**PowerShell**
-```powershell
-git diff --staged
-```
-
-Or use `git-diff` if available:
-
-**Bash/Zsh/sh**
-```sh
-npx -y git-diff -s
-```
-
-**PowerShell**
-```powershell
-npx -y git-diff -s
-```
-
-Read the **staged diff output** and analyze all changes.
+> Produces the list of currently staged files.
 
 ---
 
-### Step 2 — Analyze Changes & Generate Commit
+### Step 2 — Analyze Context Using AI
 
-Generate a conventional commit message following the format:
+* For each staged file or file group, **analyze the diff content** using AI.
+* AI determines:
 
-```
-<type>(<scope>): <subject>
+  * **Type**: `feat`, `fix`, `docs`, `chore`, `refactor`, etc.
+  * **Scope**: module, folder, or functional area
+  * **Subject**: short descriptive summary
+* Example AI instruction:
 
-<body>
-
-<footer>
-```
-
-#### Commit Types
-
-Must use one of:
-- `build`: Build system or dependency changes
-- `ci`: CI/CD configuration changes
-- `docs`: Documentation changes
-- `feat`: New features
-- `fix`: Bug fixes
-- `perf`: Performance improvements
-- `refactor`: Code refactoring (no feature/fix)
-- `style`: Code style changes (whitespace, formatting, etc.)
-- `test`: Test changes
-- `chore`: Maintenance, cleanup (not `build`, `ci`, or `docs`)
-
-#### Scope
-
-The scope identifies the affected area:
-- Examples: filename, folder name, function name, class name, package name
-- Use imperative mood referring to what changed
-- Omit scope for changes affecting entire project (docs, style, test across all files)
-
-Rules:
-- Format: `scope: description` or just `description` if no clear scope
-- Keep it concise and meaningful
-
-#### Subject
-
-- Imperative mood, present tense: "add" not "added" or "adds"
-- No capital first letter
-- No period at end
-- ≤72 characters
-
-#### Body (Optional)
-
-Include if the change is non-obvious:
-- Explain **what changed** and **why**
-- Use imperative mood like the subject
-- Omit if the subject is sufficiently clear
-
-#### Footer (Optional)
-
-Include only if:
-- Breaking change: `BREAKING CHANGE: <description>`
-- Issue reference: `Closes #123` or `Fixes #456`
-- Multiple references: use one per line
+> "Analyze this git diff and generate a conventional commit message in the form `type(scope): subject`. Focus on what changed, why it changed, and ensure it's concise."
 
 ---
 
-### Step 3 — Save & Commit
+### Step 3 — Group Files by AI-Inferred Context
 
-**1. Save the commit message to file:**
+* Files with similar context (type + scope) are **batched together**.
+* Each group will be **committed separately**.
+* Ensures no mixed-context commits.
 
-**Bash/Zsh/sh**
-```sh
+---
+
+### Step 4 — Unstage All Files
+
+```bash
+git reset
+```
+
+> Prepares for staging by context group.
+
+---
+
+### Step 5 — Stage and Commit Each Context Group Using `commit.txt`
+
+**Bash / Zsh / sh**
+
+```bash
+git add file1 file2 file3
 cat > commit.txt << 'EOF'
-<commit message here>
+feat(auth): implement AI-based login validation
 EOF
+git commit -F commit.txt
 ```
 
 **PowerShell**
+
 ```powershell
+git add file1,file2,file3
 @"
-<commit message here>
-"@ | Set-Content -Path commit.txt -Encoding UTF8
-```
-
-**2. Execute the commit:**
-
-**Bash/Zsh/sh**
-```sh
+feat(auth): implement AI-based login validation
+"@ | Set-Content commit.txt
 git commit -F commit.txt
 ```
 
-**PowerShell**
-```powershell
+**CMD**
+
+```cmd
+git add file1 file2 file3
+echo feat(auth): implement AI-based login validation > commit.txt
 git commit -F commit.txt
 ```
 
+> **⚠️ Rule:** Never use `git add -A` or `git add .`. Always stage files **explicitly by name** to ensure only the intended context group is committed.
+> Repeat for all context groups. `commit.txt` is **never deleted**, so it can be reused or modified for the next commit.
+
 ---
 
-## Shell Detection
+### Step 6 — Optional AI Enhancements
 
-When the active shell is unknown, detect it before running commands:
+* Generate **multi-line commit messages** with descriptions of changes or references.
+* Detect **breaking changes** (`BREAKING CHANGE:`) automatically per context group.
+* Suggest **scope names** based on folders, modules, or file patterns.
+* Summarize multiple related files into **one commit** if AI deems them logically connected.
 
-**Check current shell (Bash/Zsh/sh)**
-```sh
-echo $SHELL
+---
+
+### Step 7 — Verification and Output
+
+* Check the last commits:
+
+```bash
+git log --oneline --max-count=10
 ```
 
-**Check current shell (PowerShell)**
-```powershell
-$PSVersionTable.PSEdition
-```
-
-Use the detected shell to choose the correct syntax for all subsequent commands in the session. Default to Bash/sh syntax if detection is inconclusive.
+* Display files committed per AI-inferred context.
+* Suggest next step: `Ready to push`.
 
 ---
 
-## Rules & Constraints
+## Key Principles
 
-- **Do NOT validate** styling (eslint, prettier, etc.) — let git hooks handle linting
-- **Do NOT modify** staged files — only analyze and commit
-- **Do NOT run** the commit in the background — show the command and result
-- **Always follow** conventional commit format strictly
-- **Preserve** the exact staged diff analysis — don't assume or skip changes
-- For breaking changes, **always use** `BREAKING CHANGE:` footer
-- For issue references, **always include** in footer if mentioned in conversation
-- **Match shell syntax** to the active terminal — always show both variants when shell is ambiguous
+1. **Never commit mixed contexts**: each commit corresponds to one AI-inferred context.
+2. **Always use `commit.txt`**: ensures uniformity and cross-shell compatibility.
+3. **Never use `git add -A` or `git add .`**: always stage files **explicitly and individually** to prevent accidental inclusion of unrelated changes.
+4. **Leverage AI for commit intelligence**: filenames alone are not enough; diffs determine the commit type, scope, and subject.
+5. **Repeatable & transparent**: human-readable commit messages, consistent workflow.
 
 ---
 
-## Output
-
-After committing, provide:
-1. **Commit SHA** (first 7 chars)
-2. **Commit message** echoed back
-3. **Files committed** (count)
-4. **Next steps** if any (e.g., "Ready to push" or "Consider squashing before push")
-
----
-
-## When to Use This Agent
-
-✅ User says: "commit staged files", "create commit", "gen commit", "staged commit"
-✅ User provides context about staged changes needing a commit
-❌ User wants code modifications/linting (use `modify-js-ts` agent instead)
-❌ User wants PR/merge workflow (use GitHub PRmanagement tools separately)
+💡 This design allows the agent to **act like an AI-powered commit assistant** without relying on a script. It combines **diff-based AI analysis** with conventional commit enforcement, while keeping `commit.txt` as the universal commit interface.

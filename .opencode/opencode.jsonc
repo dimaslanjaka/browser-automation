@@ -1,9 +1,26 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "mode": {
+    "build": {
+      "disable": true
+    },
+    "plan": {
+      "disable": true
+    }
+  },
   "autoupdate": true,
+  "snapshot": true,
+  "formatter": false,
+  "lsp": true,
   "plugin": [
-    "opencode-mem",
-    "opencode-agent-memory@https://github.com/dimaslanjaka/opencode-file-memory/raw/refs/heads/main/release/opencode-agent-memory.tgz"
+    "opencode-helicone-session@latest",
+    "oh-my-opencode-slim@latest",
+    "envsitter-guard@latest",
+    "opencode-mem@latest",
+    "opencode-agent-memory@https://github.com/dimaslanjaka/opencode-file-memory/raw/refs/heads/main/release/opencode-agent-memory.tgz",
+    "@tarquinen/opencode-smart-title@latest",
+    "@tarquinen/opencode-dcp@latest",
+    "opencode-request-logger@https://github.com/Opencode-DCP/opencode-request-logger.git"
   ],
   "instructions": [
     "AGENTS.md",
@@ -11,4 +28,23 @@
     ".github/*.md",
     "packages/*/AGENTS.md"
   ],
+  "mcp": {
+    "context-compress": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "node",
+        "D:/Repositories/workspace/packages/ai-toolkit/src/mcp-server/context-compress/server.mjs"
+      ]
+    },
+    "playwright": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
 }
