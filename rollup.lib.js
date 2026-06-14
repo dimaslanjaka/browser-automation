@@ -19,8 +19,6 @@ const tsconfigPath = path.join(__dirname, 'tsconfig.build.json');
  */
 const tsconfig = jsonc.parse(fs.readFileSync(path.join(__dirname, 'tsconfig.json'), 'utf-8'));
 
-export { tsconfig };
-
 /**
  * Shared source exclusion patterns.
  * Used by glob input discovery and TypeScript compilation.
@@ -28,7 +26,6 @@ export { tsconfig };
  * @type {string[]}
  */
 const sourceIgnorePatterns = [
-  '**/*.runner.*',
   '**/*.explicit.*',
   '**/*.test.*',
   '**/*.builder.*',
@@ -43,13 +40,6 @@ const sourceIgnorePatterns = [
 const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index*.{ts,js,cjs,mjs}', 'src/index.ts'], {
   posix: true,
   ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
-});
-/**
- * @type {import('rollup').RollupOptions['input']}
- */
-const _runnerInputs = glob.globSync(['src/**/*.runner.*'], {
-  posix: true,
-  ignore: tsconfig.exclude.concat('**/_*')
 });
 
 const basePlugins = [
@@ -74,10 +64,8 @@ const baseOutput = {
 };
 
 const _partialsInput = [
-  ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs, ..._runnerInputs])
+  ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs])
 ];
-
-console.log('_partialsInput', _partialsInput);
 
 /**
  * @type {import('rollup').RollupOptions}
@@ -91,7 +79,6 @@ const _partials = {
       format: 'cjs',
       entryFileNames: entryFileNamesWithExt('cjs'),
       chunkFileNames: chunkFileNamesWithExt('cjs')
-      // exports: 'named'
     },
 
     // bundle mjs as ESM
@@ -100,11 +87,11 @@ const _partials = {
       format: 'esm',
       entryFileNames: entryFileNamesWithExt('mjs'),
       chunkFileNames: chunkFileNamesWithExt('mjs')
-      // exports: 'named'
     }
   ],
   plugins: basePlugins,
-  external: externalPackagesFilter // External dependencies package name to exclude from bundle
+  external: externalPackagesFilter,
+  maxParallelFileOps: 500
 };
 
 const dtsEntries = ['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts'];
@@ -132,5 +119,8 @@ const dtsConfigs = dtsEntries.map((entry) => {
     external: externalPackagesFilter
   };
 });
+
+// Export shared utilities for runner config
+export { tsconfig, tsconfigPath, basePlugins, baseOutput, sourceIgnorePatterns, externalPackagesFilter };
 
 export default [_partials, ...dtsConfigs];
