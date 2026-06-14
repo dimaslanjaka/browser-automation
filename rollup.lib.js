@@ -9,6 +9,7 @@ import _ from 'lodash';
 import path from 'upath';
 import { fileURLToPath } from 'url';
 import { dts } from 'rollup-plugin-dts';
+import esmShim from '@rollup/plugin-esm-shim';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -244,7 +245,8 @@ const basePlugins = [
     }
   }),
   resolve({ preferBuiltins: true }),
-  commonjs()
+  commonjs(),
+  esmShim()
 ];
 
 const baseOutput = {
@@ -254,13 +256,15 @@ const baseOutput = {
   preserveModulesRoot: 'src'
 };
 
+const _partialsInput = [
+  ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs, ..._runnerInputs])
+];
+
 /**
  * @type {import('rollup').RollupOptions}
  */
 const _partials = {
-  input: [
-    ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs, ..._runnerInputs])
-  ],
+  input: ['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts'],
   output: [
     // bundle CJS
     {
