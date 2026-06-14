@@ -6,7 +6,6 @@ import * as glob from 'glob';
 import jsonc from 'jsonc-parser';
 import path from 'upath';
 import { fileURLToPath } from 'url';
-import { dts } from 'rollup-plugin-dts';
 import esmShim from '@rollup/plugin-esm-shim';
 import { entryFileNamesWithExt, chunkFileNamesWithExt, externalPackagesFilter } from './rollup-utils.js';
 
@@ -37,7 +36,7 @@ const sourceIgnorePatterns = [
 /**
  * @type {import('rollup').RollupOptions['input']}
  */
-const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index*.{ts,js,cjs,mjs}', 'src/index.ts'], {
+const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index.{ts,js,cjs,mjs}', 'src/index.ts'], {
   posix: true,
   ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
 });
@@ -94,33 +93,7 @@ const _partials = {
   maxParallelFileOps: 500
 };
 
-const dtsEntries = ['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts'];
-
-/**
- * Declaration bundle
- *
- * @type {import('rollup').RollupOptions[]}
- */
-const dtsConfigs = dtsEntries.map((entry) => {
-  const rel = path.relative('src', entry);
-  const output = path.join('lib', rel).replace(/\.(ts|mts|cts)$/, '.d.ts');
-
-  return {
-    input: entry,
-    output: {
-      file: output,
-      format: 'es'
-    },
-    plugins: [
-      dts({
-        tsconfig: tsconfigPath
-      })
-    ],
-    external: externalPackagesFilter
-  };
-});
-
-// Export shared utilities for runner config
+// Export shared utilities for other configurations
 export { tsconfig, tsconfigPath, basePlugins, baseOutput, sourceIgnorePatterns, externalPackagesFilter };
 
-export default [_partials, ...dtsConfigs];
+export default _partials;
