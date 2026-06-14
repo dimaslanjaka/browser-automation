@@ -7,7 +7,6 @@
   "types": "lib/index.d.ts",
   "files": [
     "lib",
-    "dist",
     "bin/pp",
     "bin/pp.*",
     "bin/py",
