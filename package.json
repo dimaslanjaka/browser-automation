@@ -6,7 +6,8 @@
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/**/*",
+    "lib",
+    "dist",
     "bin/pp",
     "bin/pp.*",
     "bin/py",
@@ -37,7 +38,7 @@
     }
   },
   "scripts": {
-    "build": "npm run build:tsup",
+    "build": "npm run build:tsup && npm run build:lib",
     "build:all": "npm run clean && npm run build:packages && npm run build",
     "build:docs": "npm run vite:build && npm run vite:deploy",
     "build:packages": "yarn workspaces foreach --no-private --all run build",
@@ -175,7 +176,7 @@
     "husky": "^9.1.7",
     "jest": "^30",
     "jest-environment-jsdom": "^30",
-    "lint-staged": "^17.0.5",
+    "lint-staged": "16.2.7",
     "nodemon": "^3",
     "postcss": "^8",
     "postcss-nesting": "^14",
