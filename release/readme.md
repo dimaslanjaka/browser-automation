@@ -2,8 +2,10 @@
 ## Releases
 | version | tarball url |
 | :--- | :--- |
-| latest | https://github.com/dimaslanjaka/browser-automation/raw/a858c0e/release/ai-toolkit.tgz |
+| latest | https://github.com/dimaslanjaka/browser-automation/raw/d9b302a/release/ai-toolkit.tgz |
 | latest | https://github.com/dimaslanjaka/browser-automation/raw/master/release/ai-toolkit.tgz |
+| latest | https://github.com/dimaslanjaka/browser-automation/raw/d9b302a/release/browser-automation.tgz |
+| latest | https://github.com/dimaslanjaka/browser-automation/raw/master/release/browser-automation.tgz |
 
 use this tarball with `resolutions`:
 ```json
