@@ -1,8 +1,14 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { writefile } from 'sbg-utility';
 import md5 from '../utils/md5.js';
 import { toNumber } from '../utils/number.js';
+
+/**
+ * Global shared directory for fingerprint cache.
+ */
+const GLOBAL_FINGERPRINT_DIR = path.join(os.tmpdir(), 'browser-automation-puppeteer', 'fingerprints');
 
 /**
  * Options for filtering fingerprints by screen size.
@@ -22,7 +28,7 @@ import { toNumber } from '../utils/number.js';
  * @returns {string} Fingerprint cache directory path
  */
 export function getFingerprintCacheDir(tags = []) {
-  const baseCacheDir = path.join(process.cwd(), '.cache/fingerprints');
+  const baseCacheDir = GLOBAL_FINGERPRINT_DIR;
   if (!Array.isArray(tags) || tags.length === 0) {
     return baseCacheDir;
   }
@@ -134,7 +140,7 @@ export async function listCachedFingerprintFiles(tags = [], sizeOptions = {}) {
           try {
             const stats = fs.statSync(fullPath);
             collected.push({ path: fullPath, mtime: stats.mtimeMs });
-          } catch (e) {
+          } catch {
             // ignore entries we can't stat
           }
         }
@@ -163,13 +169,13 @@ export async function listCachedFingerprintFiles(tags = [], sizeOptions = {}) {
         let obj = null;
         try {
           obj = JSON.parse(content);
-        } catch (e) {
+        } catch {
           continue;
         }
         if (fingerprintMatchesSize(obj, sizeOptions)) {
           filtered.push(filePath);
         }
-      } catch (e) {
+      } catch {
         continue;
       }
     }

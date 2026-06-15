@@ -10,7 +10,10 @@ import {
   getLatestCachedFingerprint,
   getRandomCachedFingerprint
 } from './puppeteer/fingerprint_utils.js';
-import { getFallbackProfileDir as _getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
+import {
+  getFallbackProfileDir as _getFallbackProfileDir,
+  GLOBAL_PROFILES_DIR
+} from './puppeteer/getFallbackProfileDir.js';
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
 import { sleep } from './utils/browser.js';
 import { PuppeteerCookies } from './puppeteer/Cookies.js';
@@ -35,7 +38,7 @@ const __dirname = path.dirname(__filename);
  * The absolute path for the user data directory.
  * @constant {string} userDataDir - The path to store browser profile data.
  */
-export const userDataDir = path.resolve(process.cwd(), '.cache/profiles/profile1');
+export const userDataDir = path.join(GLOBAL_PROFILES_DIR, 'profile1');
 
 /**
  * @type {import('puppeteer').Browser | null}
@@ -467,7 +470,7 @@ export async function getPuppeteerCluster(options = {}) {
     const usesBrowserConcurrency = normalizedClusterLaunchOptions.concurrency === Cluster.CONCURRENCY_BROWSER;
     const reservedUserDataDirs = new Set();
 
-    const createProfileDir = (index) => path.resolve(process.cwd(), `.cache/profiles/profile${index + 1}`);
+    const createProfileDir = (index) => path.join(GLOBAL_PROFILES_DIR, `profile${index + 1}`);
 
     const resolvedInitialUserDataDir = puppeteerOptions.userDataDir ? path.resolve(puppeteerOptions.userDataDir) : '';
     puppeteerOptions.userDataDir = reserveClusterUserDataDir({
