@@ -5,6 +5,23 @@ import { endpointManager } from './utils.js';
 import { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
 import { noop } from 'sbg-utility';
 
+async function useHelper() {
+  const { browser, goto } = await getPuppeteer({
+    args: ['--start-maximized', '--disable-features=site-per-process'],
+    headless: false,
+    devtools: false,
+    userDataDir,
+    reuse: false,
+    autoSwitchProfileDir: true,
+    stealth: {
+      mode: 'stealth'
+    }
+  });
+  return { browser, goto };
+}
+
+function
+
 /**
  * Launches a Puppeteer browser instance in the background for parallel usage.
  *
@@ -23,17 +40,7 @@ import { noop } from 'sbg-utility';
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
-  const { browser, goto } = await getPuppeteer({
-    args: ['--start-maximized', '--disable-features=site-per-process'],
-    headless: false,
-    devtools: false,
-    userDataDir,
-    reuse: false,
-    autoSwitchProfileDir: true,
-    stealth: {
-      mode: 'stealth'
-    }
-  });
+  const { browser, goto } = await useHelper();
 
   await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(noop);
   await closeOtherTabs(browser, 1);
