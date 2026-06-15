@@ -3,6 +3,7 @@ import { writefile } from 'sbg-utility';
 import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import { endpointManager } from './utils.js';
 import { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
+import { noop } from '../../index-exports.js';
 
 /**
  * Launches a Puppeteer browser instance in the background for parallel usage.
@@ -34,7 +35,7 @@ export async function parallelLauncher() {
     }
   });
 
-  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' });
+  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(noop);
   await closeOtherTabs(browser, 1);
 
   // Detect when new targets (pages, workers, etc.) are created/destroyed/changed.
@@ -88,7 +89,7 @@ export async function parallelLauncher() {
   endpointManager.writeEndpoint(wsEndpoint);
 
   // Remove unavailable endpoints after registering the new one
-  const endpoints = await endpointManager.getAllActiveEndpoints();
+  const endpoints = await endpointManager.getAllActiveEndpoints().catch(() => []);
   for (const item of endpoints) {
     if (!item.puppeteerAvailable && item.endpoint !== wsEndpoint) {
       endpointManager.removeEndpoint(item.endpoint);
