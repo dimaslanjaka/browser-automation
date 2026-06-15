@@ -15,7 +15,7 @@
     "bin/*.mjs"
   ],
   "bin": {
-    "pp": "./bin/pp.mjs",
+    "ba-parallel": "./bin/pp.mjs",
     "py": "./bin/py.mjs"
   },
   "exports": {
