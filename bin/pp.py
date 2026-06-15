@@ -10,6 +10,8 @@ CWD = os.getcwd()
 CACHE_DIR = os.path.join("tmp", "build")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
+SCRIPT_ABS = os.path.abspath(__file__)
+
 _SOURCE_FILES = None
 _SRC_DIR = None  # resolved dynamically
 
@@ -268,8 +270,8 @@ def main():
         "  Providing `-h` or `--help` after the command will print this top-level help\n"
         "  and still forward the help flag to the bundled script so it can print its own help.\n\n"
         "Examples:\n"
-        "  python bin/parallel.py skrin -s -- -h\n"
-        "  python bin/parallel.py launch -k\n"
+        f"  python {SCRIPT_ABS} skrin -s -- -h\n"
+        f"  python {SCRIPT_ABS} launch -k\n"
     )
 
     help_parser = argparse.ArgumentParser(
@@ -335,7 +337,7 @@ def main():
 
     print(f"[DEBUG] same_terminal={same_terminal}, force={force}, args={args}")
 
-    # If the user requested help for the subcommand (e.g. `parallel.py skrin-check -h`),
+    # If the user requested help for the subcommand (e.g. `pp.py skrin-check -h`),
     # print the python help first, add a blank line, and force running the
     # underlying script in the same terminal so its help prints inline.
     forward_help = "-h" in args or "--help" in args
