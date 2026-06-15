@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/index.ts",
+    "src/index-exports.ts",
+    "src/database/index.ts",
+    "src/puppeteer/parallel/EndpointManager.ts",
+    "src/puppeteer/parallel/EndpointManager.connector.ts",
+    "src/puppeteer/parallel/check.runner.ts",
+    "src/puppeteer/parallel/launcher.runner.ts",
+    "src/puppeteer/parallel/skrin.runner.ts",
+    "src/puppeteer/parallel/skrin-check-data.runner.ts",
+    "src/puppeteer/parallel/EndpointManager.runner.ts",
+    "src/puppeteer/parallel/parallel-test.runner.ts",
+    "src/puppeteer/parallel/detached.runner.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tmp",
+    "packages"
+  ]
+}

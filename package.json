@@ -53,14 +53,13 @@
     }
   },
   "scripts": {
-    "build": "npm run build:tsup",
+    "build": "node build.exports.cjs && npm run build:tsup && tsc -p tsconfig.dts.json",
     "build:all": "npm run clean && npm run build:packages && npm run build",
     "build:docs": "npm run vite:build && npm run vite:deploy",
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "build:tsc": "npx tsc -p tsconfig.build.json",
     "build:tsup": "tsup",
     "build:logs": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs scripts/build-static-html-vite-plugin.js",
-    "build:dist": "node build.exports.cjs && tsc -p tsconfig.build.json",
     "clean": "rimraf node_modules/.vite tmp/vite tmp/.vite dist tmp/screenshot public/assets/data/screenshots tmp/puppeteer tmp/puppeteer-profile tmp/build lib",
     "clean:full": "npm run clean && rimraf node_modules && yarn install",
     "download:google-sheet": "node download-google-sheet.js",
