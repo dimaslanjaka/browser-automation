@@ -1,7 +1,7 @@
 @echo off
 
 
-python "%CD%\bin\parallel.py" %*
+python "%CD%\bin\pp.py" %*
 exit /b 1
 
 @rem cmd /k to keep the window open after execution

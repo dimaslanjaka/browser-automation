@@ -8,7 +8,7 @@ try {
 # Prefer running the Python wrapper if Python is available
 $py = Get-Command python -ErrorAction SilentlyContinue
 if ($py) {
-    & python "$PWD\bin\parallel.py" @args
+    & python "$PWD\bin\pp.py" @args
     exit $LASTEXITCODE
 }
 

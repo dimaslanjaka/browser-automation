@@ -6,12 +6,12 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 
 if command -v python >/dev/null 2>&1; then
-	python "$repo_root/bin/parallel.py" "$@"
+	python "$repo_root/bin/pp.py" "$@"
 	exit $?
 fi
 
 if command -v python3 >/dev/null 2>&1; then
-	python3 "$repo_root/bin/parallel.py" "$@"
+	python3 "$repo_root/bin/pp.py" "$@"
 	exit $?
 fi
 

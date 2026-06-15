@@ -8,7 +8,7 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
-const parallelScript = path.join(repoRoot, 'bin', 'parallel.py');
+const parallelScript = path.join(repoRoot, 'bin', 'pp.py');
 
 /**
  * Resolve the correct source directory: lib/ if present (bundled), else src/ (dev).
