@@ -158,7 +158,11 @@ function runBundledCommand(command, args) {
     }
   }
 
-  const nodeArgs = ['--no-warnings=ExperimentalWarning', '-r', './.vscode/js-hook.cjs', bundle.output, ...args];
+  // Resolve js-hook.cjs: check cwd first, fall back to repoRoot
+  const jsHookFromCwd = path.join(process.cwd(), '.vscode', 'js-hook.cjs');
+  const jsHookPath = fs.existsSync(jsHookFromCwd) ? jsHookFromCwd : path.join(repoRoot, '.vscode', 'js-hook.cjs');
+
+  const nodeArgs = ['--no-warnings=ExperimentalWarning', '-r', jsHookPath, bundle.output, ...args];
 
   if (command === 'launch') {
     const child = spawn(process.execPath, nodeArgs, {
@@ -199,6 +203,10 @@ function runCheckCommand(args) {
     process.exit(1);
   }
 
+  // Resolve js-hook.cjs: check cwd first, fall back to repoRoot
+  const jsHookFromCwd = path.join(process.cwd(), '.vscode', 'js-hook.cjs');
+  const jsHookPath = fs.existsSync(jsHookFromCwd) ? jsHookFromCwd : path.join(repoRoot, '.vscode', 'js-hook.cjs');
+
   const checkRunner = bundle.output ?? bundle.input;
   const useTsLoader = checkRunner.endsWith('.ts');
   const child = spawn(
@@ -207,7 +215,7 @@ function runCheckCommand(args) {
       '--no-warnings=ExperimentalWarning',
       ...(useTsLoader ? ['--loader', 'ts-node/esm'] : []),
       '-r',
-      './.vscode/js-hook.cjs',
+      jsHookPath,
       checkRunner,
       ...args
     ],
