@@ -3,7 +3,7 @@ import { writefile } from 'sbg-utility';
 import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import { endpointManager } from './utils.js';
 import { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
-import { noop } from '../../index-exports.js';
+import { noop } from 'sbg-utility';
 
 /**
  * Launches a Puppeteer browser instance in the background for parallel usage.
