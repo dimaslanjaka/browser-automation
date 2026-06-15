@@ -4,8 +4,11 @@ import path from 'upath';
 import fs from 'fs-extra';
 import puppeteer from 'puppeteer';
 
+/** Lock metadata attached to a claimed endpoint. */
 type EndpointLock = {
+  /** PID of the owning process. */
   ownerPid: number;
+  /** ISO timestamp when the claim was made. */
   claimedAt: string;
 };
 
@@ -22,8 +25,11 @@ export const GLOBAL_PUPPETEER_DIR = path.join(os.tmpdir(), 'browser-automation-p
 export const GLOBAL_ENDPOINT_MANAGER_PATH = path.join(GLOBAL_PUPPETEER_DIR, 'endpoints');
 
 export class EndpointManager {
+  /** Directory path for endpoint data. */
   basePath: string;
+  /** Path to the JSON file holding all registered endpoints. */
   endpointFile: string;
+  /** Directory path for per-endpoint lock files. */
   endpointLocksPath: string;
 
   /**
@@ -39,15 +45,28 @@ export class EndpointManager {
     fs.ensureDirSync(this.endpointLocksPath);
   }
 
+  /**
+   * Parse raw file content into an array of endpoint strings.
+   * @param content - Raw JSON string from the endpoint file.
+   */
   private parseEndpoints(content: string): string[] {
     if (!content) return [];
     return jsonParseWithCircularRefs<string[]>(content);
   }
 
+  /**
+   * Build the filesystem path for the lock file of a given endpoint.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   */
   private getEndpointLockPath(endpoint: string) {
     return path.join(this.endpointLocksPath, `${encodeURIComponent(endpoint)}.json`);
   }
 
+  /**
+   * Read and parse the lock file for an endpoint.
+   * Returns `undefined` if the file does not exist or is unreadable.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   */
   private readEndpointLock(endpoint: string): EndpointLock | undefined {
     const lockPath = this.getEndpointLockPath(endpoint);
     try {
@@ -59,6 +78,11 @@ export class EndpointManager {
     }
   }
 
+  /**
+   * Check whether a given PID is still alive.
+   * Uses `process.kill(pid, 0)` which tests existence without sending a signal.
+   * @param pid - Process ID to check.
+   */
   private isProcessRunning(pid: number): boolean {
     try {
       // signal 0 does not kill the process, only tests for existence
@@ -69,6 +93,11 @@ export class EndpointManager {
     }
   }
 
+  /**
+   * Return the lock for an endpoint if it exists and its owner is still alive.
+   * Stale locks are cleaned up automatically.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   */
   private getActiveEndpointLock(endpoint: string): EndpointLock | undefined {
     const lockPath = this.getEndpointLockPath(endpoint);
     const lock = this.readEndpointLock(endpoint);
@@ -85,10 +114,18 @@ export class EndpointManager {
     return lock;
   }
 
+  /**
+   * Check whether an endpoint has a live (non-stale) lock.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   */
   isEndpointLocked(endpoint: string): boolean {
     return Boolean(this.getActiveEndpointLock(endpoint));
   }
 
+  /**
+   * Read all registered endpoint URLs from the shared JSON file.
+   * Returns an empty array when the file does not exist yet or is unreadable.
+   */
   readEndpoints(): string[] {
     try {
       const content = fs.readFileSync(this.endpointFile, 'utf8').trim();
@@ -98,12 +135,20 @@ export class EndpointManager {
     }
   }
 
+  /**
+   * Register an endpoint URL in the shared JSON file (deduplicated).
+   * @param endpoint - The browser WebSocket endpoint URL to register.
+   */
   writeEndpoint(endpoint: string) {
     const endpoints = this.readEndpoints();
     const uniqueEndpoints = Array.from(new Set([...endpoints, endpoint]));
     writefile(this.endpointFile, jsonStringifyWithCircularRefs(uniqueEndpoints));
   }
 
+  /**
+   * Remove an endpoint URL from the shared registry and delete its lock file.
+   * @param endpoint - The browser WebSocket endpoint URL to remove.
+   */
   removeEndpoint(endpoint: string) {
     const endpoints = this.readEndpoints().filter((item) => item !== endpoint);
     writefile(this.endpointFile, jsonStringifyWithCircularRefs(endpoints));
@@ -185,6 +230,13 @@ export class EndpointManager {
     return results;
   }
 
+  /**
+   * Atomically claim an endpoint lock for a given process.
+   * Fails if the endpoint is already locked by a different alive process.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   * @param ownerPid - PID of the claiming process.
+   * @returns `true` when the lock was acquired, `false` if already claimed.
+   */
   tryClaimEndpoint(endpoint: string, ownerPid: number): boolean {
     fs.ensureDirSync(this.endpointLocksPath);
     const lockPath = this.getEndpointLockPath(endpoint);
@@ -210,6 +262,12 @@ export class EndpointManager {
     }
   }
 
+  /**
+   * Release a claim on an endpoint. Only succeeds if the caller is the
+   * current owner or the owning process is no longer alive.
+   * @param endpoint - The browser WebSocket endpoint URL.
+   * @param ownerPid - PID that originally claimed the endpoint.
+   */
   releaseEndpointClaim(endpoint: string, ownerPid: number) {
     const lockPath = this.getEndpointLockPath(endpoint);
     const lock = this.readEndpointLock(endpoint);
@@ -225,6 +283,10 @@ export class EndpointManager {
     fs.removeSync(lockPath);
   }
 
+  /**
+   * Return the current lock status for every registered endpoint.
+   * Does not perform a Puppeteer reachability check.
+   */
   readEndpointStatus() {
     return this.readEndpoints().map((endpoint) => {
       const lock = this.getActiveEndpointLock(endpoint);
