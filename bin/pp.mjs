@@ -11,19 +11,19 @@ const repoRoot = path.resolve(__dirname, '..');
 const parallelScript = path.join(repoRoot, 'bin', 'pp.py');
 
 /**
- * Resolve the correct source directory: lib/ if present (bundled), else src/ (dev).
+ * Resolve the correct source directory: src/ if present (dev), else lib/ (bundled).
  * Falls back to repoRoot if neither exists.
  * @returns {string} Absolute path to the active source directory.
  */
 function findSourceDir() {
-  const bundled = path.join(repoRoot, 'lib');
-  if (fs.existsSync(bundled) && fs.statSync(bundled).isDirectory()) {
-    return bundled;
-  }
-
   const dev = path.join(repoRoot, 'src');
   if (fs.existsSync(dev) && fs.statSync(dev).isDirectory()) {
     return dev;
+  }
+
+  const bundled = path.join(repoRoot, 'lib');
+  if (fs.existsSync(bundled) && fs.statSync(bundled).isDirectory()) {
+    return bundled;
   }
 
   return repoRoot;

@@ -15,26 +15,34 @@ _SRC_DIR = None  # resolved dynamically
 
 
 def find_source_dir():
-    """Return the correct source directory: lib/ if present (bundled), else src/."""
+    """Return the correct source directory: src/ if present (dev), else lib/ (bundled)."""
     global _SRC_DIR
     if _SRC_DIR is not None:
         return _SRC_DIR
 
-    # Bundled package takes precedence
-    bundled = os.path.join(CWD, "lib")
-    if os.path.isdir(bundled):
-        _SRC_DIR = bundled
-        return _SRC_DIR
-
-    # Development fallback
+    # Development source takes precedence when both are present
     dev = os.path.join(CWD, "src")
     if os.path.isdir(dev):
         _SRC_DIR = dev
         return _SRC_DIR
 
+    # Bundled package fallback
+    bundled = os.path.join(CWD, "lib")
+    if os.path.isdir(bundled):
+        _SRC_DIR = bundled
+        return _SRC_DIR
+
     # Last resort: current working directory
     _SRC_DIR = CWD
     return _SRC_DIR
+
+
+def find_src_dir():
+    """Return the src/ directory for Rollup builds."""
+    src = os.path.join(CWD, "src")
+    if os.path.isdir(src):
+        return src
+    return find_source_dir()
 
 
 def get_all_source_files():
@@ -204,7 +212,7 @@ def run_bundle(command, args, keep_open=False, same_terminal=False, force=False)
     cfg = COMMANDS[command]
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
-        find_source_dir(), "puppeteer", "parallel", cfg["input"]
+        find_src_dir(), "puppeteer", "parallel", cfg["input"]
     )
     os.environ["BUNDLE_OUTPUT"] = os.path.join(CWD, "dist", "parallel", cfg["output"])
 
