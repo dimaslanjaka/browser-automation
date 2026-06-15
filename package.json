@@ -2,11 +2,10 @@
   "name": "browser-automation",
   "version": "1.0.0",
   "description": "",
-  "main": "lib/index.cjs",
-  "module": "lib/index.mjs",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib",
     "dist",
     "bin/pp",
     "bin/pp.*",
@@ -16,52 +15,52 @@
     "bin/*.mjs"
   ],
   "bin": {
-    "ba-check": "./lib/puppeteer/parallel/check.runner.cjs",
-    "ba-launch": "./lib/puppeteer/parallel/launcher.runner.cjs",
+    "ba-check": "./dist/puppeteer/parallel/check.runner.cjs",
+    "ba-launch": "./dist/puppeteer/parallel/launcher.runner.cjs",
     "ba-parallel": "./bin/pp.mjs",
     "py": "./bin/py.mjs"
   },
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.cjs",
-      "types": "./lib/index.d.ts"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
     },
     "./dist": {
       "require": "./dist/bundle.cjs",
-      "types": "./lib/index.d.ts"
+      "types": "./dist/index.d.ts"
     },
     "./*": {
-      "import": "./lib/*.mjs",
-      "require": "./lib/*.cjs",
-      "types": "./lib/*.d.ts"
+      "import": "./dist/*.mjs",
+      "require": "./dist/*.cjs",
+      "types": "./dist/*.d.ts"
     },
     "./package.json": "./package.json",
     "./database": {
-      "import": "./lib/database/index.mjs",
-      "require": "./lib/database/index.cjs",
-      "types": "./lib/database/index.d.ts"
+      "import": "./dist/database/index.mjs",
+      "require": "./dist/database/index.cjs",
+      "types": "./dist/database/index.d.ts"
     },
     "./puppeteer/EndpointManager": {
-      "import": "./lib/puppeteer/parallel/EndpointManager.mjs",
-      "require": "./lib/puppeteer/EndpointManager.cjs",
-      "types": "./lib/puppeteer/EndpointManager.d.ts"
+      "import": "./dist/puppeteer/parallel/EndpointManager.mjs",
+      "require": "./dist/puppeteer/EndpointManager.cjs",
+      "types": "./dist/puppeteer/EndpointManager.d.ts"
     },
     "./puppeteer/EndpointManager.connector": {
-      "import": "./lib/puppeteer/parallel/EndpointManager.connector.mjs",
-      "require": "./lib/puppeteer/EndpointManager.connector.cjs",
-      "types": "./lib/puppeteer/EndpointManager.connector.d.ts"
+      "import": "./dist/puppeteer/parallel/EndpointManager.connector.mjs",
+      "require": "./dist/puppeteer/EndpointManager.connector.cjs",
+      "types": "./dist/puppeteer/EndpointManager.connector.d.ts"
     }
   },
   "scripts": {
-    "build": "npm run build:tsup && npm run build:lib",
+    "build": "npm run build:tsup",
     "build:all": "npm run clean && npm run build:packages && npm run build",
     "build:docs": "npm run vite:build && npm run vite:deploy",
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "build:tsc": "npx tsc -p tsconfig.build.json",
     "build:tsup": "tsup",
     "build:logs": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs scripts/build-static-html-vite-plugin.js",
-    "build:lib": "node build.exports.cjs && tsc -p tsconfig.build.json && rollup -c rollup.lib.js && rollup -c rollup.lib-dts.js",
+    "build:dist": "node build.exports.cjs && tsc -p tsconfig.build.json",
     "clean": "rimraf node_modules/.vite tmp/vite tmp/.vite dist tmp/screenshot public/assets/data/screenshots tmp/puppeteer tmp/puppeteer-profile tmp/build lib",
     "clean:full": "npm run clean && rimraf node_modules && yarn install",
     "download:google-sheet": "node download-google-sheet.js",
@@ -190,6 +189,7 @@
     "autoprefixer": "^10",
     "babel-jest": "^30",
     "binary-collections": "^2",
+    "eslint": "^9",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "jest": "^30",
