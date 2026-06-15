@@ -16,6 +16,8 @@
     "bin/*.mjs"
   ],
   "bin": {
+    "ba-check": "./lib/puppeteer/parallel/check.runner.cjs",
+    "ba-launch": "./lib/puppeteer/parallel/launcher.runner.cjs",
     "ba-parallel": "./bin/pp.mjs",
     "py": "./bin/py.mjs"
   },

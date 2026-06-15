@@ -63,7 +63,11 @@ const _runnerInputs = glob
 
 console.log('_runnerInputs', _runnerInputs);
 
-const customInput = ['tmp/dist/src/puppeteer/parallel/EndpointManager.js'];
+const customInput = [
+  'tmp/dist/src/puppeteer/parallel/EndpointManager.js',
+  'tmp/dist/src/puppeteer/parallel/check.runner.js',
+  'tmp/dist/src/puppeteer/parallel/launcher.runner.js'
+];
 
 console.log('customInput', customInput);
 
