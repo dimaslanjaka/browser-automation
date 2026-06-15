@@ -136,7 +136,7 @@ function runParallelPython(args) {
  * @param {string} command - The subcommand name.
  * @param {string[]} args - Remaining arguments to forward.
  */
-function runBundledCommand(command, args) {
+function runBundledCommand(command, args, sameTerminal = false) {
   const bundle = resolveRunner(command);
   if (!bundle) {
     console.error(`Unknown command: ${command}`);
@@ -169,7 +169,7 @@ function runBundledCommand(command, args) {
 
   const nodeArgs = ['--no-warnings=ExperimentalWarning', '-r', jsHookPath, bundle.output, ...args];
 
-  if (command === 'launch') {
+  if (command === 'launch' && !sameTerminal) {
     const child = spawn(process.execPath, nodeArgs, {
       cwd: repoRoot,
       detached: true,
@@ -240,35 +240,160 @@ function runCheckCommand(args) {
 }
 
 /**
+ * Print help text matching pp.py's output.
+ */
+function printHelp() {
+  const help = `usage: pp.mjs [-h] [-k] [-s] [-f] {launch,skrin,check,skrin-check}
+
+Wrapper to build and run parallel bundles (launcher, skrin, etc.).
+This script will build the requested bundle if missing and then run it with Node.
+
+positional arguments:
+  {launch,skrin,check,skrin-check}
+                        Which parallel command to build/run (see Commands section).
+
+options:
+  -h, --help            show this help message and exit
+  -k, --keep-open       Keep the launched process console open after it exits.
+  -s, --same-terminal   Run the process in the same terminal (blocking).
+  -f, --force           Force rebuild and bypass cache check (useful for debugging).
+
+Commands:
+  launch       Build & run the launcher bundle.
+  skrin        Build & run the skrin bundle.
+  skrin-check  Build & run the skrin-check-data bundle.
+  check        Run the local TypeScript check script (no bundling).
+
+Options:
+  -k, --keep-open     Keep the launched process console open after it exits.
+  -s, --same-terminal Run the process in the same terminal (blocking).
+
+Notes:
+  Any remaining arguments are forwarded to the underlying script.
+  Providing \`-h\` or \`--help\` after the command will print this top-level help
+  and still forward the help flag to the bundled script so it can print its own help.
+
+Examples:
+  node ${__filename} skrin -s -- -h
+  node ${__filename} launch -k
+`;
+  console.log(help);
+}
+
+/**
+ * Extract the subcommand from args (it can appear anywhere among flags,
+ * like argparse allows). Returns { subcommand, rest } where rest are the
+ * remaining args with the subcommand removed.
+ *
+ * @param {string[]} args
+ * @returns {{ subcommand: string|null, rest: string[] }}
+ */
+function extractSubcommand(args) {
+  const validCommands = new Set(['launch', 'skrin', 'check', 'skrin-check']);
+  const flags = new Set(['-h', '--help', '-k', '--keep-open', '-s', '--same-terminal', '-f', '--force']);
+
+  for (let i = 0; i < args.length; i++) {
+    // Skip flags and their possible values
+    if (flags.has(args[i]) || args[i].startsWith('-')) {
+      continue;
+    }
+    // Found a positional arg — check if it's a valid command
+    if (validCommands.has(args[i].toLowerCase())) {
+      const rest = [...args];
+      rest.splice(i, 1);
+      return { subcommand: args[i].toLowerCase(), rest };
+    }
+  }
+
+  return { subcommand: null, rest: args };
+}
+
+/**
  * Entry point — parses CLI args and dispatches to the appropriate runner.
+ * Mirrors pp.py's argument parsing and behavior.
  */
 function main() {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
 
-  if (args.length === 0) {
-    console.log('Usage: pp <launch|skrin|check|skrin-check> [options] [-- args]');
+  // No args → show help
+  if (rawArgs.length === 0) {
+    printHelp();
     process.exit(0);
   }
 
-  const maybePythonExitCode = runParallelPython(args);
+  // Top-level --help — mirror pp.py: exit immediately if first arg is -h/--help
+  if (rawArgs[0] === '-h' || rawArgs[0] === '--help') {
+    printHelp();
+    process.exit(0);
+  }
+
+  // Extract subcommand (it may be anywhere among flags, like argparse)
+  const { subcommand, rest: argsWithoutCommand } = extractSubcommand(rawArgs);
+
+  if (!subcommand) {
+    console.error(`Unknown command: ${rawArgs[0]}`);
+    console.error('Valid commands: launch, skrin, skrin-check, check');
+    process.exit(1);
+  }
+
+  // Parse known flags from remaining args; everything else is forwarded
+  const forwardedArgs = [];
+  let sameTerminal = false;
+
+  for (let i = 0; i < argsWithoutCommand.length; i++) {
+    const arg = argsWithoutCommand[i];
+    switch (arg) {
+      case '-k':
+      case '--keep-open':
+        // keep_open — consumed, not used in native fallback
+        break;
+      case '-s':
+      case '--same-terminal':
+        sameTerminal = true;
+        break;
+      case '-f':
+      case '--force':
+        // force — consumed, not used in native fallback
+        break;
+      case '--':
+        // Everything after -- is forwarded as-is
+        forwardedArgs.push(...argsWithoutCommand.slice(i + 1));
+        i = argsWithoutCommand.length; // break loop
+        break;
+      default:
+        forwardedArgs.push(arg);
+    }
+  }
+
+  // If -h/--help is among forwarded args, print help first
+  const forwardHelp = forwardedArgs.includes('-h') || forwardedArgs.includes('--help');
+  if (forwardHelp) {
+    printHelp();
+    console.log();
+    sameTerminal = true;
+  }
+
+  // Reconstruct args for python delegation (including flags for fidelity)
+  const pythonArgs = [subcommand, ...argsWithoutCommand];
+
+  // Try delegating to python first (dev mode convenience)
+  const maybePythonExitCode = runParallelPython(pythonArgs);
   if (maybePythonExitCode !== null) {
     process.exit(maybePythonExitCode);
   }
 
-  const subcommand = String(args[0]).toLowerCase();
-  const remainingArgs = args.slice(1);
-
+  // Fallback: native JS handling
   if (subcommand === 'check') {
-    runCheckCommand(remainingArgs);
+    runCheckCommand(forwardedArgs);
     return;
   }
 
   if (subcommand === 'launch' || subcommand === 'skrin' || subcommand === 'skrin-check') {
-    runBundledCommand(subcommand, remainingArgs);
+    runBundledCommand(subcommand, forwardedArgs, sameTerminal);
     return;
   }
 
-  console.error(`Unknown command: ${args[0]}`);
+  console.error(`Unknown command: ${subcommand}`);
   process.exit(1);
 }
 
