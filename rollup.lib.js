@@ -36,7 +36,7 @@ const sourceIgnorePatterns = [
 /**
  * @type {import('rollup').RollupOptions['input']}
  */
-const _partialsInput = glob
+const _nodeInputs = glob
   .globSync(['**/index.{js,cjs,mjs}'], {
     posix: true,
     // ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
@@ -45,7 +45,23 @@ const _partialsInput = glob
   })
   .map((p) => path.join('tmp/dist', p));
 
-console.log('_partialsInput', _partialsInput);
+console.log('_nodeInput', _nodeInputs);
+
+/**
+ * Runner-specific input files
+ *
+ * @type {import('rollup').RollupOptions['input']}
+ */
+const _runnerInputs = glob
+  .globSync(['**/*runner.{js,cjs,mjs}'], {
+    posix: true,
+    // ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
+    ignore: ['**/_*', '**/skrin/**'],
+    cwd: 'tmp/dist'
+  })
+  .map((p) => path.join('tmp/dist', p));
+
+console.log('_runnerInputs', _runnerInputs);
 
 const basePlugins = [
   json(),
@@ -67,7 +83,7 @@ const baseOutput = {
  * @type {import('rollup').RollupOptions}
  */
 const _partials = {
-  input: _partialsInput,
+  input: [...new Set(_nodeInputs.concat(_runnerInputs))],
   output: [
     // bundle CJS
     {
