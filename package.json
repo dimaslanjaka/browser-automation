@@ -66,7 +66,7 @@
     "xlsx-to-html": "node xlsx-to-html.js | tee tmp/xlsx-to-html.log",
     "unused": "npx -y depcheck --ignore-dirs=packages,dist,tmp --ignores=eslint,prettier,typescript,ts-node,ts-jest,@types/\\* > tmp/depcheck-unused.txt",
     "verify": "tsc -p tsconfig.build.json --noEmit",
-    "pack": "npx -y tarball-packer --yarn --filename ai-toolkit --normalize-resolutions"
+    "pack": "npx -y tarball-packer --yarn --filename browser-automation --normalize-resolutions"
   },
   "keywords": [],
   "author": "",
