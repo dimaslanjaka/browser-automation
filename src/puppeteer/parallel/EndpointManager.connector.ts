@@ -6,11 +6,10 @@ import { EndpointManager } from './EndpointManager.js';
  * Finds a free endpoint, claims it exclusively for the current process,
  * connects to it, performs a sample navigation, and then releases the claim.
  *
- * @param puppeteerTempPath - Path to the directory where endpoint files and locks are stored. Defaults to 'tmp/puppeteer'.
  * @returns Resolves when the connection and operations complete, or returns undefined if an endpoint could not be claimed.
  */
-async function connectEndpoint(puppeteerTempPath = 'tmp/puppeteer') {
-  const manager = new EndpointManager(puppeteerTempPath);
+async function connectEndpoint() {
+  const manager = new EndpointManager();
   const pid = process.pid;
 
   // 1️⃣ Find a free endpoint (or create a new one internally)

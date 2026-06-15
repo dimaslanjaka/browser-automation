@@ -1,3 +1,4 @@
+import os from 'os';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
 import path from 'upath';
 import fs from 'fs-extra';
@@ -8,12 +9,29 @@ type EndpointLock = {
   claimedAt: string;
 };
 
+/**
+ * Global shared temp directory for all puppeteer parallel data, using the
+ * OS temp folder so that all processes (regardless of working directory)
+ * share the same state.
+ */
+export const GLOBAL_PUPPETEER_DIR = path.join(os.tmpdir(), 'browser-automation-puppeteer');
+
+/**
+ * Global shared directory for endpoint data, nested under {@link GLOBAL_PUPPETEER_DIR}.
+ */
+export const GLOBAL_ENDPOINT_MANAGER_PATH = path.join(GLOBAL_PUPPETEER_DIR, 'endpoints');
+
 export class EndpointManager {
   basePath: string;
   endpointFile: string;
   endpointLocksPath: string;
 
-  constructor(basePath: string) {
+  /**
+   * @param basePath - Directory to store endpoint data. Defaults to a
+   *   fixed path under `os.tmpdir()` so all processes share the same
+   *   endpoint registry regardless of their working directory.
+   */
+  constructor(basePath: string = GLOBAL_ENDPOINT_MANAGER_PATH) {
     this.basePath = basePath;
     this.endpointFile = path.join(this.basePath, 'endpoint.json');
     this.endpointLocksPath = path.join(this.basePath, 'endpoint-locks');

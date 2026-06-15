@@ -7,12 +7,11 @@ import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { fixData } from '../../xlsx-helper.js';
 import { selectDateWithUI } from './datePicker.js';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 
 scheduler.register();
 
 async function main() {
-  const endpointManager = new EndpointManager(puppeteerTempPath);
+  const endpointManager = new EndpointManager();
   const endpoint = await endpointManager.getAvailableEndpoint();
   await endpointManager.tryClaimEndpoint(endpoint, process.pid);
   const { page, browser } = await getPuppeteer({ autoSwitchProfileDir: true, browserWSEndpoint: endpoint });

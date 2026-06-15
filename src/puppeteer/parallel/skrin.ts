@@ -1,7 +1,6 @@
 import Bluebird from 'bluebird';
 import puppeteer from 'puppeteer';
 import { array_shuffle } from 'sbg-utility';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
@@ -16,7 +15,7 @@ import EndpointManager from './EndpointManager.js';
  * and returns a ready-to-use page.
  */
 async function getPage(): Promise<import('puppeteer').Page> {
-  const endpointManager = new EndpointManager(puppeteerTempPath);
+  const endpointManager = new EndpointManager();
   const tried = new Set<string>();
 
   while (true) {

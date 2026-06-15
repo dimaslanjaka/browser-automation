@@ -1,8 +1,8 @@
 import path from 'path';
 import { writefile } from 'sbg-utility';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
 import { endpointManager } from './utils.js';
+import { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
 
 /**
  * Launches a Puppeteer browser instance in the background for parallel usage.
@@ -15,7 +15,7 @@ import { endpointManager } from './utils.js';
  * After the browser is ready the function:
  * - Writes the browser's WebSocket endpoint so other processes can connect
  * - Removes stale/unavailable endpoints from the registry
- * - Creates a PID-based running-indicator file under `puppeteerTempPath`
+ * - Creates a PID-based running-indicator file under `GLOBAL_PUPPETEER_DIR`
  *
  * The returned promise never resolves — it keeps the process alive until the
  * browser disconnects or the process receives `SIGINT`, `SIGTERM`, or `exit`,
@@ -97,7 +97,7 @@ export async function parallelLauncher() {
   }
 
   // Write indicator file to signal that the browser is running
-  const runningIndicatorPath = path.join(puppeteerTempPath, 'browser-running', process.pid.toString());
+  const runningIndicatorPath = path.join(GLOBAL_PUPPETEER_DIR, 'browser-running', process.pid.toString());
   writefile(runningIndicatorPath, 'Browser is running');
   console.log(`Browser running indicator created at: ${runningIndicatorPath}`);
 

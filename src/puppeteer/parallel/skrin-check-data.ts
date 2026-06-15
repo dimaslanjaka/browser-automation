@@ -2,7 +2,6 @@ import Bluebird from 'bluebird';
 import moment from 'moment';
 import { fs, writefile } from 'sbg-utility';
 import path from 'upath';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import puppeteer from 'puppeteer';
@@ -146,7 +145,7 @@ async function findData(
   fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
 }
 
-const endpointManager = new EndpointManager(puppeteerTempPath);
+const endpointManager = new EndpointManager();
 
 let claimedEndpoint: string | undefined;
 let browser: import('puppeteer').Browser;

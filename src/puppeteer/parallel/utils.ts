@@ -4,13 +4,12 @@ import puppeteer, { Browser } from 'puppeteer';
 import { delay } from 'sbg-utility';
 import path from 'upath';
 import { fileURLToPath } from 'url';
-import EndpointManager from './EndpointManager.js';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
+import EndpointManager, { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const launcherLogPath = path.join(puppeteerTempPath, 'launcher.log');
+const launcherLogPath = path.join(GLOBAL_PUPPETEER_DIR, 'launcher.log');
 const launchTimeoutMs = 60_000;
-export const endpointManager = new EndpointManager(puppeteerTempPath);
+export const endpointManager = new EndpointManager();
 
 /**
  * Check whether a process with the given PID is currently running.
@@ -35,7 +34,7 @@ function isProcessRunning(pid: number): boolean {
  * (`launcher.runner.ts` or its compiled `.js` counterpart).
  *
  * Waits up to 60 seconds for a running-indicator file to appear under
- * `puppeteerTempPath`. Throws if the child exits prematurely or the
+ * `GLOBAL_PUPPETEER_DIR`. Throws if the child exits prematurely or the
  * timeout is exceeded.
  *
  * @returns A promise that resolves once the browser process signals it is ready
@@ -50,7 +49,7 @@ export async function launch() {
     ? [launcherPath]
     : ['--no-warnings=ExperimentalWarning', '--loader', 'ts-node/esm', launcherPath];
 
-  fs.ensureDirSync(puppeteerTempPath);
+  fs.ensureDirSync(GLOBAL_PUPPETEER_DIR);
   const logFd = fs.openSync(launcherLogPath, 'a');
 
   const child = cp.spawn(process.execPath, args, {
@@ -66,7 +65,7 @@ export async function launch() {
   }
 
   fs.closeSync(logFd);
-  const runningIndicatorPath = path.join(puppeteerTempPath, 'browser-running', pid.toString());
+  const runningIndicatorPath = path.join(GLOBAL_PUPPETEER_DIR, 'browser-running', pid.toString());
   child.unref();
   const waitStart = Date.now();
   console.log(''); // add a line break before the waiting message

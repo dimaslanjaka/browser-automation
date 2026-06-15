@@ -1,5 +1,4 @@
 import { bindProcessExit, scheduler } from 'sbg-utility';
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import { closeOtherTabs, getPuppeteer } from '../../puppeteer_utils.js';
 import { noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
@@ -24,7 +23,7 @@ export async function getPuppeteerWithParallel(options = {}) {
     registered = true;
   }
 
-  const endpointManager = new EndpointManager(puppeteerTempPath);
+  const endpointManager = new EndpointManager();
   let claimedEndpoint: string | undefined;
   let browser: import('puppeteer').Browser;
 

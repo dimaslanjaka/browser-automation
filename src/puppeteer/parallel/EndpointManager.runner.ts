@@ -5,9 +5,8 @@ import { Browser } from 'puppeteer';
 import puppeteer from 'puppeteer';
 import { EndpointManager } from './EndpointManager.js';
 
-// Path where the temporary endpoint files are stored. Adjust if needed.
-async function main(puppeteerTempPath = 'tmp/puppeteer') {
-  const manager = new EndpointManager(puppeteerTempPath);
+async function main() {
+  const manager = new EndpointManager();
   const pid = process.pid;
 
   // 1️⃣ Find a free endpoint (or create a new one internally)

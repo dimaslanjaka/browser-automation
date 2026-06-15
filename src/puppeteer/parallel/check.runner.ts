@@ -1,8 +1,7 @@
-import { puppeteerTempPath } from '../../../.puppeteerrc.cjs';
 import EndpointManager from './EndpointManager.js';
 
 (async () => {
-  const endpointManager = new EndpointManager(puppeteerTempPath);
+  const endpointManager = new EndpointManager();
   const endpoints = await endpointManager.getAllActiveEndpoints();
   console.log('Active browser endpoints:');
   endpoints.forEach((item, index) => {
