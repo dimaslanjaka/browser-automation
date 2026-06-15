@@ -145,7 +145,16 @@ export class EndpointManager {
   /**
    * Returns all endpoints with their lock status, inactive status, and Puppeteer availability
    */
-  async getAllActiveEndpoints() {
+  async getAllActiveEndpoints(): Promise<
+    Array<{
+      endpoint: string;
+      locked: boolean;
+      inactive: boolean;
+      ownerPid: number | null;
+      claimedAt: string | null;
+      puppeteerAvailable: boolean;
+    }>
+  > {
     const endpoints = this.readEndpoints();
     const results = [];
     for (const endpoint of endpoints) {
