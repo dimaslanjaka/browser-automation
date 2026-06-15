@@ -1,13 +1,13 @@
 import commonjs from '@rollup/plugin-commonjs';
+import esmShim from '@rollup/plugin-esm-shim';
+import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
-import typescript from '@rollup/plugin-typescript';
 import fs from 'fs';
 import * as glob from 'glob';
 import jsonc from 'jsonc-parser';
 import path from 'upath';
 import { fileURLToPath } from 'url';
-import esmShim from '@rollup/plugin-esm-shim';
-import { entryFileNamesWithExt, chunkFileNamesWithExt, externalPackagesFilter } from './rollup-utils.js';
+import { chunkFileNamesWithExt, entryFileNamesWithExt, externalPackagesFilter } from './rollup-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,22 +36,23 @@ const sourceIgnorePatterns = [
 /**
  * @type {import('rollup').RollupOptions['input']}
  */
-const _nodeInputs = glob.globSync(['src/{puppeteer,database,utils}/**/index.{ts,js,cjs,mjs}', 'src/index.ts'], {
-  posix: true,
-  ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
-});
+const _partialsInput = glob
+  .globSync(['**/index.{js,cjs,mjs}'], {
+    posix: true,
+    // ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
+    ignore: sourceIgnorePatterns,
+    cwd: 'tmp/dist'
+  })
+  .map((p) => path.join('tmp/dist', p));
+
+console.log('_partialsInput', _partialsInput);
 
 const basePlugins = [
-  typescript({
-    tsconfig: tsconfigPath,
-    compilerOptions: {
-      outDir: 'lib',
-      declaration: false,
-      declarationMap: false
-    }
+  json(),
+  resolve({ extensions: ['.js', '.cjs', '.mjs', '.json', '.node'], preferBuiltins: true }),
+  commonjs({
+    transformMixedEsModules: true
   }),
-  resolve({ preferBuiltins: true }),
-  commonjs(),
   esmShim()
 ];
 
@@ -59,12 +60,8 @@ const baseOutput = {
   dir: 'lib',
   sourcemap: false,
   preserveModules: true,
-  preserveModulesRoot: 'src'
+  preserveModulesRoot: 'tmp/dist/src'
 };
-
-const _partialsInput = [
-  ...new Set(['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts', ..._nodeInputs])
-];
 
 /**
  * @type {import('rollup').RollupOptions}
@@ -94,6 +91,6 @@ const _partials = {
 };
 
 // Export shared utilities for other configurations
-export { tsconfig, tsconfigPath, basePlugins, baseOutput, sourceIgnorePatterns, externalPackagesFilter };
+export { baseOutput, basePlugins, externalPackagesFilter, sourceIgnorePatterns, tsconfig, tsconfigPath };
 
 export default _partials;
