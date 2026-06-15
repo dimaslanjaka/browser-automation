@@ -7,6 +7,7 @@
   "types": "lib/index.d.ts",
   "files": [
     "lib",
+    "dist",
     "bin/pp",
     "bin/pp.*",
     "bin/py",
@@ -22,6 +23,10 @@
     ".": {
       "import": "./lib/index.mjs",
       "require": "./lib/index.cjs",
+      "types": "./lib/index.d.ts"
+    },
+    "./dist": {
+      "require": "./dist/bundle.cjs",
       "types": "./lib/index.d.ts"
     },
     "./*": {
