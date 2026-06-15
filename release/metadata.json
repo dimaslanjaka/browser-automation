@@ -7,5 +7,14 @@
       "sha512": "we+0/muxumPDkBbEq6RUMszJDb1h6EA/xN8N+hZIEhubasI4BK1l53YdaMuluWqVdVkK1gsRwyDp8+iWfTpIGQ=="
     },
     "size": "209.30 KB"
+  },
+  "/release/browser-automation.tgz": {
+    "integrity": {
+      "sha1": "bfedf7e10f0b8c6e6bfb7b81164b3b0bef7b0ce7",
+      "sha256": "k/l9NOAsKZg6cKjghh/AyqLfsz7wCHr2xkD8lQ+ySjU=",
+      "md5": "81e381ef68e85ff8db7cae2cd500ca81",
+      "sha512": "zaKL6WAUcsuuT4gYBTXyp8hkBR/EpiUhkCH0QBk2jqWN10qcqpS/XAI+lW8P3NnNdz+wAbncAzMQYCP62YQx0A=="
+    },
+    "size": "209.29 KB"
   }
 }
