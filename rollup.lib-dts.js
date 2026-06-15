@@ -2,7 +2,12 @@ import path from 'upath';
 import { dts } from 'rollup-plugin-dts';
 import { tsconfigPath, externalPackagesFilter } from './rollup.lib.js';
 
-const dtsEntries = ['src/index.ts', 'src/database/index.ts', 'src/puppeteer/index.ts'];
+const dtsEntries = [
+  'src/index.ts',
+  'src/database/index.ts',
+  'src/puppeteer/index.ts',
+  'src/puppeteer/parallel/EndpointManager.ts'
+];
 
 /**
  * Declaration bundle

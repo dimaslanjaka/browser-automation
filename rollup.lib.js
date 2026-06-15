@@ -63,6 +63,10 @@ const _runnerInputs = glob
 
 console.log('_runnerInputs', _runnerInputs);
 
+const customInput = ['tmp/dist/src/puppeteer/parallel/EndpointManager.js'];
+
+console.log('customInput', customInput);
+
 const basePlugins = [
   json(),
   resolve({ extensions: ['.js', '.cjs', '.mjs', '.json', '.node'], preferBuiltins: true }),
@@ -79,11 +83,15 @@ const baseOutput = {
   preserveModulesRoot: 'tmp/dist/src'
 };
 
+const mergedInput = _nodeInputs.concat(_runnerInputs, customInput);
+
+console.log('mergedInput', mergedInput);
+
 /**
  * @type {import('rollup').RollupOptions}
  */
 const _partials = {
-  input: [...new Set(_nodeInputs.concat(_runnerInputs))],
+  input: mergedInput,
   output: [
     // bundle CJS
     {

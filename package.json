@@ -39,6 +39,11 @@
       "import": "./lib/database/index.mjs",
       "require": "./lib/database/index.cjs",
       "types": "./lib/database/index.d.ts"
+    },
+    "./puppeteer/EndpointManager": {
+      "import": "./lib/puppeteer/parallel/EndpointManager.mjs",
+      "require": "./lib/puppeteer/EndpointManager.cjs",
+      "types": "./lib/puppeteer/EndpointManager.d.ts"
     }
   },
   "scripts": {
