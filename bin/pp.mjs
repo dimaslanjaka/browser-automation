@@ -11,69 +11,74 @@ const repoRoot = path.resolve(__dirname, '..');
 const parallelScript = path.join(repoRoot, 'bin', 'parallel.py');
 
 /**
+ * Resolve the correct source directory: lib/ if present (bundled), else src/ (dev).
+ * Falls back to repoRoot if neither exists.
+ * @returns {string} Absolute path to the active source directory.
+ */
+function findSourceDir() {
+  const bundled = path.join(repoRoot, 'lib');
+  if (fs.existsSync(bundled) && fs.statSync(bundled).isDirectory()) {
+    return bundled;
+  }
+
+  const dev = path.join(repoRoot, 'src');
+  if (fs.existsSync(dev) && fs.statSync(dev).isDirectory()) {
+    return dev;
+  }
+
+  return repoRoot;
+}
+
+/**
  * Resolve a runner command to its source or built mode configuration.
  * @param {string} command - The subcommand name (launch, skrin, skrin-check, check).
  * @returns {{mode: string, input: string, output: string|null}|null} Runner config or null if unknown.
  */
 function resolveRunner(command) {
-  const sourceMap = {
-    launch: {
-      input: path.join(repoRoot, 'src', 'puppeteer', 'parallel', 'launcher.runner.ts'),
-      output: path.join(repoRoot, 'dist', 'parallel', 'launcher.cjs')
-    },
-    skrin: {
-      input: path.join(repoRoot, 'src', 'puppeteer', 'parallel', 'skrin.runner.ts'),
-      output: path.join(repoRoot, 'dist', 'parallel', 'skrin.cjs')
-    },
-    'skrin-check': {
-      input: path.join(repoRoot, 'src', 'puppeteer', 'parallel', 'skrin-check-data.runner.ts'),
-      output: path.join(repoRoot, 'dist', 'parallel', 'skrin-check-data.cjs')
-    },
-    check: {
-      input: path.join(repoRoot, 'src', 'puppeteer', 'parallel', 'check.runner.ts'),
-      output: null
-    }
+  const srcDir = findSourceDir();
+  const isBundled = path.basename(srcDir) === 'lib';
+
+  const runners = {
+    launch: { name: 'launcher', hasOutput: true },
+    skrin: { name: 'skrin', hasOutput: true },
+    'skrin-check': { name: 'skrin-check-data', hasOutput: true },
+    check: { name: 'check', hasOutput: false }
   };
 
-  const source = sourceMap[command];
-  if (!source) {
+  const runner = runners[command];
+  if (!runner) {
     return null;
   }
 
-  if (fs.existsSync(source.input)) {
+  const subDir = path.join(srcDir, 'puppeteer', 'parallel');
+
+  if (isBundled) {
+    const input = path.join(subDir, `${runner.name}.runner.mjs`);
+    const output = runner.hasOutput ? path.join(subDir, `${runner.name}.mjs`) : null;
+
+    if (!fs.existsSync(input)) {
+      return null;
+    }
+
     return {
-      mode: 'source',
-      ...source
+      mode: 'built',
+      input,
+      output
     };
   }
 
-  const builtMap = {
-    launch: {
-      input: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'launcher.runner.mjs'),
-      output: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'launcher.mjs')
-    },
-    skrin: {
-      input: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'skrin.runner.mjs'),
-      output: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'skrin.mjs')
-    },
-    'skrin-check': {
-      input: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'skrin-check-data.runner.mjs'),
-      output: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'skrin-check-data.mjs')
-    },
-    check: {
-      input: path.join(repoRoot, 'lib', 'puppeteer', 'parallel', 'check.runner.mjs'),
-      output: null
-    }
-  };
+  // Development mode (src/)
+  const input = path.join(subDir, `${runner.name}.runner.ts`);
+  const output = runner.hasOutput ? path.join(repoRoot, 'dist', 'parallel', `${runner.name}.cjs`) : null;
 
-  const built = builtMap[command];
-  if (!built || !fs.existsSync(built.input)) {
+  if (!fs.existsSync(input)) {
     return null;
   }
 
   return {
-    mode: 'built',
-    ...built
+    mode: 'source',
+    input,
+    output
   };
 }
 

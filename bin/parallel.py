@@ -7,11 +7,34 @@ import json
 import argparse
 
 CWD = os.getcwd()
-SRC_DIR = os.path.join(CWD, "src")
 CACHE_DIR = os.path.join("tmp", "build")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
 _SOURCE_FILES = None
+_SRC_DIR = None  # resolved dynamically
+
+
+def find_source_dir():
+    """Return the correct source directory: lib/ if present (bundled), else src/."""
+    global _SRC_DIR
+    if _SRC_DIR is not None:
+        return _SRC_DIR
+
+    # Bundled package takes precedence
+    bundled = os.path.join(CWD, "lib")
+    if os.path.isdir(bundled):
+        _SRC_DIR = bundled
+        return _SRC_DIR
+
+    # Development fallback
+    dev = os.path.join(CWD, "src")
+    if os.path.isdir(dev):
+        _SRC_DIR = dev
+        return _SRC_DIR
+
+    # Last resort: current working directory
+    _SRC_DIR = CWD
+    return _SRC_DIR
 
 
 def get_all_source_files():
@@ -19,8 +42,9 @@ def get_all_source_files():
     if _SOURCE_FILES is not None:
         return _SOURCE_FILES
 
+    src_dir = find_source_dir()
     files = []
-    for root, _, filenames in os.walk(SRC_DIR):
+    for root, _, filenames in os.walk(src_dir):
         for f in filenames:
             if os.path.splitext(f)[1] in EXTENSIONS:
                 files.append(os.path.join(root, f))
@@ -150,7 +174,7 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
 
 
 def check(args, keep_open=False, same_terminal=False):
-    script = os.path.join(CWD, "src", "puppeteer", "parallel", "check.runner.ts")
+    script = os.path.join(find_source_dir(), "puppeteer", "parallel", "check.runner.ts")
     return run_node(script, args, keep_open, same_terminal)
 
 
@@ -180,7 +204,7 @@ def run_bundle(command, args, keep_open=False, same_terminal=False, force=False)
     cfg = COMMANDS[command]
 
     os.environ["BUNDLE_INPUT"] = os.path.join(
-        CWD, "src", "puppeteer", "parallel", cfg["input"]
+        find_source_dir(), "puppeteer", "parallel", cfg["input"]
     )
     os.environ["BUNDLE_OUTPUT"] = os.path.join(CWD, "dist", "parallel", cfg["output"])
 
