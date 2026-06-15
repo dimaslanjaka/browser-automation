@@ -1,10 +1,11 @@
 import commonjs from '@rollup/plugin-commonjs';
+import esmShim from '@rollup/plugin-esm-shim';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import * as glob from 'glob';
-import esmShim from '@rollup/plugin-esm-shim';
-import { entryFileNamesWithExt, chunkFileNamesWithExt, externalPackagesFilter } from './rollup-utils.js';
-import { tsconfig, tsconfigPath, baseOutput } from './rollup.lib.js';
+import path from 'upath';
+import { chunkFileNamesWithExt, entryFileNamesWithExt, externalPackagesFilter } from './rollup-utils.js';
+import { baseOutput, tsconfigPath } from './rollup.lib.js';
 
 /**
  * Runner-specific input files
@@ -12,11 +13,13 @@ import { tsconfig, tsconfigPath, baseOutput } from './rollup.lib.js';
  * @type {import('rollup').RollupOptions['input']}
  */
 const _runnerInputs = glob
-  .globSync(['src/**/*.runner.*'], {
+  .globSync(['**/*runner.{js,cjs,mjs}'], {
     posix: true,
-    ignore: tsconfig.exclude.concat('**/_*')
+    // ignore: tsconfig.exclude.concat(sourceIgnorePatterns)
+    ignore: ['**/_*', '**/skrin/**'],
+    cwd: 'tmp/dist'
   })
-  .filter((p) => p.includes('parallel'));
+  .map((p) => path.join('tmp/dist', p));
 
 console.log('_runnerInputs', _runnerInputs);
 
