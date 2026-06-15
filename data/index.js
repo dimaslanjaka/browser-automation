@@ -7,15 +7,12 @@ import { fileURLToPath } from 'url';
 import { parseBabyName } from '../src/runner/skrin-utils.js';
 import { parseDate } from '../src/utils/date.js';
 import { encryptJson } from '../src/utils/json-crypto.js';
+import { writefile } from 'sbg-utility';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const csvFilePath = path.join(process.cwd(), 'data/data.csv');
-
-if (!fs.existsSync(csvFilePath)) {
-  fs.writeFileSync(csvFilePath, '');
-}
 
 const keyMap = {
   TANGGAL: 'tanggal',
@@ -87,6 +84,13 @@ function createCommentFilter(commentChar = '#') {
 export async function loadCsvData(customCsvPath) {
   // Use custom path if provided, otherwise use default
   const targetCsvPath = customCsvPath ? path.resolve(customCsvPath) : csvFilePath;
+  if (!fs.existsSync(targetCsvPath)) {
+    writefile(
+      targetCsvPath,
+      `# Comment
+TANGGAL ENTRY,NAMA,ALAMAT,NIK,TGL LAHIR,PETUGAS ENTRY`
+    );
+  }
 
   // Ensure the file exists before processing
   if (!fs.existsSync(targetCsvPath)) {
