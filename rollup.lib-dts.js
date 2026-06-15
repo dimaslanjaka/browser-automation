@@ -6,7 +6,8 @@ const dtsEntries = [
   'src/index.ts',
   'src/database/index.ts',
   'src/puppeteer/index.ts',
-  'src/puppeteer/parallel/EndpointManager.ts'
+  'src/puppeteer/parallel/EndpointManager.ts',
+  'src/puppeteer/parallel/EndpointManager.connector.ts'
 ];
 
 /**

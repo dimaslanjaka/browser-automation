@@ -46,6 +46,11 @@
       "import": "./lib/puppeteer/parallel/EndpointManager.mjs",
       "require": "./lib/puppeteer/EndpointManager.cjs",
       "types": "./lib/puppeteer/EndpointManager.d.ts"
+    },
+    "./puppeteer/EndpointManager.connector": {
+      "import": "./lib/puppeteer/parallel/EndpointManager.connector.mjs",
+      "require": "./lib/puppeteer/EndpointManager.connector.cjs",
+      "types": "./lib/puppeteer/EndpointManager.connector.d.ts"
     }
   },
   "scripts": {
