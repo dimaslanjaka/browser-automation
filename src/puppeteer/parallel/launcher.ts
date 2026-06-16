@@ -5,7 +5,7 @@ import { writefile } from 'sbg-utility';
 import { fileURLToPath } from 'url';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
 import goWithRetry from '../goWithRetry.js';
-import { GLOBAL_PROFILES_DIR, GLOBAL_PUPPETEER_DIR } from '../profile-manager.js';
+import { GLOBAL_PROFILES_DIR, GLOBAL_PUPPETEER_DIR, reserveClusterUserDataDir } from '../profile-manager.js';
 import { endpointManager } from './utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,13 +21,20 @@ export interface GotoOptions {
 }
 
 export async function useDefault() {
+  const userDataDir = reserveClusterUserDataDir({
+    preferredUserDataDir: path.resolve(GLOBAL_PROFILES_DIR, 'profile1'),
+    reservedUserDataDirs: new Set(),
+    autoSwitchProfileDir: true
+  });
+  console.log("User Data Dir", userDataDir)
+
   const { browser } = await connect({
     headless: false,
     turnstile: true,
     disableXvfb: false,
     ignoreAllFlags: false,
     customConfig: {
-      userDataDir: path.resolve(GLOBAL_PROFILES_DIR, 'profile1')
+      userDataDir: userDataDir
     }
   });
 

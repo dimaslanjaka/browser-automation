@@ -1,5 +1,6 @@
-import puppeteer from 'puppeteer-extra';
+import { connect } from 'puppeteer-real-browser';
 import { EndpointManager } from './EndpointManager.js';
+import { bindProcessExit } from 'sbg-utility';
 
 /**
  * Connects to a Puppeteer endpoint using EndpointManager.
@@ -25,7 +26,21 @@ async function connectEndpoint() {
   }
 
   // 3️⃣ Connect to the browser via the endpoint using standard puppeteer.connect()
-  let browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+  const { browser } = await connect({ connectOption: { browserWSEndpoint: endpoint } });
+
+  browser.once('disconnected', () => {
+    // release claim when the browser disconnects
+    manager.releaseEndpointClaim(endpoint, process.pid);
+    console.log('Browser disconnected, exiting.');
+    process.exit(0);
+  });
+
+  bindProcessExit('browser-close', async () => {
+    if (endpoint) manager.releaseEndpointClaim(endpoint, process.pid);
+    console.log('Browser disconnected, exiting.');
+    await browser.close();
+    process.exit(0);
+  });
 
   return {
     release: () => manager.releaseEndpointClaim(endpoint, pid),
