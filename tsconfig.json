@@ -5,8 +5,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "outDir": "dist",
-    "rootDir": "./",
+    "outDir": "tmp/dist",
     "strict": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
@@ -19,19 +18,6 @@
     "typeRoots": ["./types", "./node_modules/@types"],
     "lib": ["ESNext", "ES2020", "DOM", "DOM.Iterable", "WebWorker", "WebWorker.Iterable"]
   },
-  "include": [
-    "src/**/*",
-    "test/**/*",
-    "data/**/*",
-    "scripts/**/*",
-    "**/*.ts",
-    "**/*.js",
-    "**/*.cjs",
-    "**/*.mjs",
-    "tsup.config.ts",
-    "./types/**/*",
-    "./.puppeteerrc.cjs"
-  ],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
