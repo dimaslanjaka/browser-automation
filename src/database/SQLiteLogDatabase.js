@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import cp from 'cross-spawn';
+import { spawn } from 'cross-spawn';
 import fs from 'fs-extra';
 import * as LogDatabaseHelper from './LogDatabaseHelper.cjs';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs } from 'sbg-utility';
@@ -97,7 +97,7 @@ export class SQLiteLogDatabase {
     const env = { ...process.env };
     const binPath = path.join(process.cwd(), 'bin');
     env.PATH = `${binPath};${env.PATH}`;
-    const child = cp('sqlite3', dumpArgs, { stdio: ['ignore', 'pipe', 'inherit'], env });
+    const child = spawn('sqlite3', dumpArgs, { stdio: ['ignore', 'pipe', 'inherit'], env });
     child.stdout.pipe(outStream);
     await new Promise((resolve, reject) => {
       child.on('error', (err) => {
@@ -222,9 +222,6 @@ export class SQLiteLogDatabase {
 
 // Backward compatibility
 
-// Default singleton instance (similar to old behavior)
-const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
-
 /**
  * Create a new LogDatabase instance at a custom path.
  * @param {string} dbPath - Custom database filename without extension.
@@ -235,49 +232,74 @@ export function createLogDatabase(dbPath) {
 }
 
 /**
- * Backup the singleton log database to a specified destination.
+ * Backup the log database to a specified destination.
  * @param {string} destPath - The destination file path for the backup.
  * @returns {Promise<void>} Resolves when backup is complete.
  */
-export function backupLogDatabase(destPath) {
-  return db.backup(destPath);
+export async function backupLogDatabase(destPath) {
+  const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
+  try {
+    return await db.backup(destPath);
+  } finally {
+    db.close();
+  }
 }
 
 /* === Re-export old functions for backward compatibility === */
 
 /**
- * Add a log entry (singleton DB).
+ * Add a log entry.
  * @param {Object} params
  * @param {string} params.id
  * @param {any} params.data
  * @param {string} params.message
  */
 export function addLog(params) {
-  db.addLog(params);
+  const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
+  try {
+    db.addLog(params);
+  } finally {
+    db.close();
+  }
 }
 
 /**
- * Remove a log entry by id (singleton DB).
+ * Remove a log entry by id.
  * @param {string} id
  * @returns {boolean}
  */
 export function removeLog(id) {
-  return db.removeLog(id);
+  const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
+  try {
+    return db.removeLog(id);
+  } finally {
+    db.close();
+  }
 }
 
 /**
- * Get a log entry by id (singleton DB).
+ * Get a log entry by id.
  * @param {string} id
  * @returns {import('./BaseLogDatabase').LogEntry | undefined} Log object or undefined if not found.
  */
 export function getLogById(id) {
-  return db.getLogById(id);
+  const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
+  try {
+    return db.getLogById(id);
+  } finally {
+    db.close();
+  }
 }
 
 /**
- * Get all logs (singleton DB) with optional filter.
+ * Get all logs with optional filter.
  * @param {function({ id: string, data: any, message: string, timestamp: string }): boolean} [filterFn]
  */
 export function getLogs(filterFn) {
-  return db.getLogs(filterFn);
+  const db = new SQLiteLogDatabase(process.env.DATABASE_FILENAME || 'default');
+  try {
+    return db.getLogs(filterFn);
+  } finally {
+    db.close();
+  }
 }
