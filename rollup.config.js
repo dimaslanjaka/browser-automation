@@ -1,10 +1,10 @@
+import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import alias from '@rollup/plugin-alias';
-import fs from 'fs';
 import path from 'path';
+import pkg from './package.json' with { type: 'json' };
 
 function stripWrappingQuotes(value) {
   return typeof value === 'string' ? value.replace(/^(["'])(.*)\1$/, '$2') : value;
@@ -57,8 +57,6 @@ export default {
   // Mark all installed dependencies and devDependencies as external
   external: [
     ...(() => {
-      const pkgPath = path.join(process.cwd(), 'package.json');
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
       return [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.devDependencies || {})];
     })()
   ]
