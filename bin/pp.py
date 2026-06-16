@@ -6,8 +6,9 @@ import subprocess
 import json
 import argparse
 
-CWD = os.getcwd()
-CACHE_DIR = os.path.join("tmp", "build")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CWD = REPO_ROOT
+CACHE_DIR = os.path.join(REPO_ROOT, "tmp", "build")
 EXTENSIONS = {".js", ".ts", ".mjs", ".cjs"}
 
 SCRIPT_ABS = os.path.abspath(__file__)
@@ -23,25 +24,25 @@ def find_source_dir():
         return _SRC_DIR
 
     # Development source takes precedence when both are present
-    dev = os.path.join(CWD, "src")
+    dev = os.path.join(REPO_ROOT, "src")
     if os.path.isdir(dev):
         _SRC_DIR = dev
         return _SRC_DIR
 
     # Bundled package fallback
-    bundled = os.path.join(CWD, "lib")
+    bundled = os.path.join(REPO_ROOT, "lib")
     if os.path.isdir(bundled):
         _SRC_DIR = bundled
         return _SRC_DIR
 
-    # Last resort: current working directory
-    _SRC_DIR = CWD
+    # Last resort: repository root
+    _SRC_DIR = REPO_ROOT
     return _SRC_DIR
 
 
 def find_src_dir():
     """Return the src/ directory for Rollup builds."""
-    src = os.path.join(CWD, "src")
+    src = os.path.join(REPO_ROOT, "src")
     if os.path.isdir(src):
         return src
     return find_source_dir()
@@ -160,7 +161,7 @@ def run_node(script_path, args, keep_open=False, same_terminal=False):
     if is_ts:
         node_cmd += ["--loader", "ts-node/esm"]
 
-    node_cmd += ["-r", "./.vscode/js-hook.cjs", script_path] + args
+    node_cmd += [script_path] + args
 
     print(f"[DEBUG] CMD: {' '.join(node_cmd)}")
 
@@ -188,24 +189,27 @@ def check(args, keep_open=False, same_terminal=False):
     return run_node(script, args, keep_open, same_terminal)
 
 
+# Cache directory relative to REPO_ROOT
+_BUILD_CACHE = os.path.join(REPO_ROOT, "tmp", "build")
+
 COMMANDS = {
     "launch": {
         "input": "launcher.runner.ts",
         "output": "launcher.cjs",
         "entry": "launcher",
-        "cache": os.path.join(CACHE_DIR, ".rcl.json"),
+        "cache": os.path.join(_BUILD_CACHE, ".rcl.json"),
     },
     "skrin": {
         "input": "skrin.runner.ts",
         "output": "skrin.cjs",
         "entry": "skrin",
-        "cache": os.path.join(CACHE_DIR, ".rcs.json"),
+        "cache": os.path.join(_BUILD_CACHE, ".rcs.json"),
     },
     "skrin-check": {
         "input": "skrin-check-data.runner.ts",
         "output": "skrin-check-data.cjs",
         "entry": "skrin-check-data",
-        "cache": os.path.join(CACHE_DIR, ".rcsc.json"),
+        "cache": os.path.join(_BUILD_CACHE, ".rcsc.json"),
     },
 }
 
@@ -216,9 +220,11 @@ def run_bundle(command, args, keep_open=False, same_terminal=False, force=False)
     os.environ["BUNDLE_INPUT"] = os.path.join(
         find_src_dir(), "puppeteer", "parallel", cfg["input"]
     )
-    os.environ["BUNDLE_OUTPUT"] = os.path.join(CWD, "dist", "parallel", cfg["output"])
+    os.environ["BUNDLE_OUTPUT"] = os.path.join(
+        REPO_ROOT, "dist", "parallel", cfg["output"]
+    )
 
-    script = os.path.join(CWD, "dist", "parallel", cfg["output"])
+    script = os.path.join(REPO_ROOT, "dist", "parallel", cfg["output"])
 
     # ensure build exists
     if not os.path.exists(script):
