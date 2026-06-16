@@ -1,4 +1,4 @@
-const browserUtility = require('../');
+import browserUtility from 'browser-automation';
 
 console.log(browserUtility);
 
