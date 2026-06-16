@@ -26,7 +26,7 @@ export async function useDefault() {
     reservedUserDataDirs: new Set(),
     autoSwitchProfileDir: true
   });
-  console.log("User Data Dir", userDataDir)
+  console.log('User Data Dir', userDataDir);
 
   const { browser } = await connect({
     headless: false,
@@ -73,7 +73,7 @@ export async function parallelLauncher() {
   await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(console.log);
   await closeOtherTabs(browser as any, 1);
 
-  // Detect when new targets (pages, workers, etc.) are created/destroyed/changed.
+  // Log target lifecycle events (no need to re-write endpoint — it's already registered).
   browser.on('targetcreated', async (target) => {
     try {
       console.log('Target created:', target.type(), target.url());
@@ -84,12 +84,6 @@ export async function parallelLauncher() {
     } catch (err) {
       console.error('Error handling targetcreated:', err);
     }
-    // refresh endpoint file when targets change
-    try {
-      endpointManager.writeEndpoint(browser.wsEndpoint());
-    } catch (e) {
-      console.error('Failed to refresh endpoint on targetcreated:', e);
-    }
   });
 
   browser.on('targetdestroyed', (target) => {
@@ -98,11 +92,6 @@ export async function parallelLauncher() {
     } catch (err) {
       console.error('Error handling targetdestroyed:', err);
     }
-    try {
-      endpointManager.writeEndpoint(browser.wsEndpoint());
-    } catch (e) {
-      console.error('Failed to refresh endpoint on targetdestroyed:', e);
-    }
   });
 
   browser.on('targetchanged', (target) => {
@@ -110,11 +99,6 @@ export async function parallelLauncher() {
       console.log('Target changed:', target.type(), target.url());
     } catch (err) {
       console.error('Error handling targetchanged:', err);
-    }
-    try {
-      endpointManager.writeEndpoint(browser.wsEndpoint());
-    } catch (e) {
-      console.error('Failed to refresh endpoint on targetchanged:', e);
     }
   });
 

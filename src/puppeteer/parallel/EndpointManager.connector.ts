@@ -1,4 +1,5 @@
-import { connect } from 'puppeteer-real-browser';
+import puppeteer from 'puppeteer-extra';
+import { launch } from './utils.js';
 import { EndpointManager } from './EndpointManager.js';
 import { bindProcessExit } from 'sbg-utility';
 
@@ -14,20 +15,27 @@ async function connectEndpoint() {
   const pid = process.pid;
 
   // 1️⃣ Find a free endpoint (or create a new one internally)
-  const endpoint = await manager.getAvailableEndpoint();
+  let endpoint = await manager.getAvailableEndpoint();
   if (!endpoint) {
-    throw new Error('No available endpoint found');
+    // spawn browser then retry
+    await launch();
+    endpoint = await manager.getAvailableEndpoint();
+    if (!endpoint) {
+      throw new Error('No available endpoint found after launch');
+    } else {
+      console.log('endpoint available', endpoint);
+    }
   }
 
   // 2️⃣ Claim the endpoint exclusively for this process
   const claimed = manager.tryClaimEndpoint(endpoint, pid);
   if (!claimed) {
-    throw new Error(`Failed to claim endpoint ${endpoint}`);
+    throw new Error(`Failed to claim endpoint ${endpoint} - already in use by another process`);
   }
 
-  // 3️⃣ Connect to the browser via the endpoint using standard puppeteer.connect()
-  const { browser } = await connect({ connectOption: { browserWSEndpoint: endpoint } });
-
+  console.log('endpoint claimed', claimed);
+  // 3️⃣ Connect to the browser via the endpoint
+  const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
   browser.once('disconnected', () => {
     // release claim when the browser disconnects
     manager.releaseEndpointClaim(endpoint, process.pid);

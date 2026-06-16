@@ -30,12 +30,19 @@ export class EndpointManager {
    *   fixed path under `os.tmpdir()` so all processes share the same
    *   endpoint registry regardless of their working directory.
    */
+  private endpointAvailabilityCache: Map<string, boolean> = new Map();
+
   constructor(basePath: string = GLOBAL_ENDPOINT_MANAGER_PATH) {
     this.basePath = basePath;
     this.endpointFile = path.join(this.basePath, 'endpoint.json');
     this.endpointLocksPath = path.join(this.basePath, 'endpoint-locks');
     fs.ensureDirSync(this.basePath);
     fs.ensureDirSync(this.endpointLocksPath);
+  }
+
+  // Clear the cache periodically or on certain events if needed
+  clearAvailabilityCache() {
+    this.endpointAvailabilityCache.clear();
   }
 
   /**
@@ -154,11 +161,16 @@ export class EndpointManager {
    * Checks if a Puppeteer endpoint is available by attempting Puppeteer.connect.
    */
   private async isPuppeteerEndpointAvailable(endpoint: string): Promise<boolean> {
+    if (this.endpointAvailabilityCache.has(endpoint)) {
+      return this.endpointAvailabilityCache.get(endpoint)!;
+    }
     try {
       const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
       await browser.disconnect();
+      this.endpointAvailabilityCache.set(endpoint, true);
       return true;
     } catch {
+      this.endpointAvailabilityCache.set(endpoint, false);
       return false;
     }
   }
@@ -171,12 +183,18 @@ export class EndpointManager {
     if (!endpoints.length) return undefined;
     for (const endpoint of endpoints) {
       const lock = this.readEndpointLock(endpoint);
-      if (lock && this.isProcessRunning(lock.ownerPid)) continue;
+      if (lock && this.isProcessRunning(lock.ownerPid)) {
+        console.log(`Endpoint ${endpoint} is currently locked by PID ${lock.ownerPid}. Skipping.`);
+        continue;
+      }
       const available = await this.isPuppeteerEndpointAvailable(endpoint);
       if (available) {
         return endpoint;
+      } else {
+        console.log(`Endpoint ${endpoint} is not responding to Puppeteer. Skipping.`);
       }
     }
+    console.log('No available endpoints found in registry.');
     return undefined;
   }
 
@@ -234,11 +252,6 @@ export class EndpointManager {
     fs.ensureDirSync(this.endpointLocksPath);
     const lockPath = this.getEndpointLockPath(endpoint);
 
-    const existingLock = this.getActiveEndpointLock(endpoint);
-    if (existingLock?.ownerPid && existingLock.ownerPid !== ownerPid) {
-      return false;
-    }
-
     const payload: EndpointLock = {
       ownerPid,
       claimedAt: new Date().toISOString()
@@ -250,7 +263,26 @@ export class EndpointManager {
       fs.closeSync(fd);
       return true;
     } catch (error: any) {
-      if (error?.code === 'EEXIST') return false;
+      // If the file exists, check if it's a stale lock. If it is, we can retry. Otherwise, it's already in use.
+      if (error?.code === 'EEXIST') {
+        console.log(`Endpoint lock for ${endpoint} already exists.`);
+        const existingLock = this.getActiveEndpointLock(endpoint);
+        if (!existingLock) {
+          // Stale lock was cleaned up inside getActiveEndpointLock. Let's retry!
+          console.log(`Stale lock detected for ${endpoint}. Retrying...`);
+          try {
+            const fd = fs.openSync(lockPath, 'wx');
+            fs.writeFileSync(fd, jsonStringifyWithCircularRefs(payload));
+            fs.closeSync(fd);
+            return true;
+          } catch (retryError: any) {
+            if (retryError?.code === 'EEXIST') return false;
+            throw retryError;
+          }
+        }
+        console.log(`Endpoint ${endpoint} is already locked by active process ${existingLock.ownerPid}. Claim failed.`);
+        return false;
+      }
       throw error;
     }
   }
