@@ -3,10 +3,17 @@ import os from 'os';
 import path from 'path';
 
 /**
+ * Global shared temp directory for all puppeteer parallel data, using the
+ * OS temp folder so that all processes (regardless of working directory)
+ * share the same state.
+ */
+export const GLOBAL_PUPPETEER_DIR = path.join(os.tmpdir(), 'browser-automation-puppeteer');
+
+/**
  * Global shared directory for browser profile data, using the OS temp folder so
  * that all processes (regardless of working directory) share the same profiles.
  */
-export const GLOBAL_PROFILES_DIR = path.join(os.tmpdir(), 'browser-automation-puppeteer', 'profiles');
+export const GLOBAL_PROFILES_DIR = path.join(GLOBAL_PUPPETEER_DIR, 'profiles');
 
 /**
  * Checks whether a Chromium user data directory appears to be in use.
@@ -72,9 +79,9 @@ function reserveNextFallbackProfileDir(excludedUserDataDirs, startIndex = 1) {
 
 /**
  * @param {Object} params
- * @param {Object} params.launchOptions
- * @param {boolean} params.autoSwitchProfileDir
- * @returns {{ currentLaunchOptions: Object, excludedUserDataDirs: Set<string> }}
+ * @param {{ userDataDir?: string }} params.launchOptions - Puppeteer launch options object.
+ * @param {boolean} params.autoSwitchProfileDir - Whether to fall back to another profile dir if preferred is busy.
+ * @returns {{ currentLaunchOptions: { userDataDir?: string }, excludedUserDataDirs: Set<string> }}
  */
 function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProfileDir }) {
   const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
@@ -96,11 +103,11 @@ function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProf
 
 /**
  * @param {Object} params
- * @param {(launchOptions: Object) => Promise<any>} params.launchFn
- * @param {Object} params.launchOptions
- * @param {boolean} params.autoSwitchProfileDir
- * @param {string} params.launcherName
- * @param {number} [params.maxFallbackLaunchAttempts=10]
+ * @param {(launchOptions: { userDataDir?: string }) => Promise<any>} params.launchFn - Function that performs the actual browser launch.
+ * @param {{ userDataDir?: string }} params.launchOptions - Puppeteer launch options object.
+ * @param {boolean} params.autoSwitchProfileDir - Whether to fall back to another profile dir if preferred is busy.
+ * @param {string} params.launcherName - Name of the launcher (for logging).
+ * @param {number} [params.maxFallbackLaunchAttempts=10] - Max retries if profile dir is in use.
  * @returns {Promise<any>}
  */
 async function launchWithProfileFallback({

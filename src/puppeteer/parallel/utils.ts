@@ -5,7 +5,8 @@ import type { Browser } from 'puppeteer';
 import { delay } from 'sbg-utility';
 import path from 'upath';
 import { fileURLToPath } from 'url';
-import EndpointManager, { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
+import EndpointManager from './EndpointManager.js';
+import { GLOBAL_PUPPETEER_DIR } from '../profile-manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const launcherLogPath = path.join(GLOBAL_PUPPETEER_DIR, 'launcher.log');

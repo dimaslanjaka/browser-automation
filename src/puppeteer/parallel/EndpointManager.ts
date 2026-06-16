@@ -1,8 +1,8 @@
-import os from 'os';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
 import path from 'upath';
 import fs from 'fs-extra';
 import puppeteer from 'puppeteer-extra';
+import { GLOBAL_PUPPETEER_DIR } from '../profile-manager.js';
 
 /** Lock metadata attached to a claimed endpoint. */
 type EndpointLock = {
@@ -11,13 +11,6 @@ type EndpointLock = {
   /** ISO timestamp when the claim was made. */
   claimedAt: string;
 };
-
-/**
- * Global shared temp directory for all puppeteer parallel data, using the
- * OS temp folder so that all processes (regardless of working directory)
- * share the same state.
- */
-export const GLOBAL_PUPPETEER_DIR = path.join(os.tmpdir(), 'browser-automation-puppeteer');
 
 /**
  * Global shared directory for endpoint data, nested under {@link GLOBAL_PUPPETEER_DIR}.
