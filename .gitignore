@@ -89,3 +89,4 @@ deobfuscate/
 !.opencode/agents/
 *.txt
 *.bak*
+.eslintcache

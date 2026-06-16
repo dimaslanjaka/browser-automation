@@ -3,8 +3,8 @@
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "./tmp/dist",
+    "rootDir": ".",
     "skipLibCheck": true
   },
   "include": [
@@ -21,10 +21,5 @@
     "src/puppeteer/parallel/parallel-test.runner.ts",
     "src/puppeteer/parallel/detached.runner.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "tmp",
-    "packages"
-  ]
+  "exclude": ["node_modules", "dist", "packages", "src/bundle"]
 }

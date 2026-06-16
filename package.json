@@ -53,7 +53,7 @@
     }
   },
   "scripts": {
-    "build": "node build.exports.cjs && npm run build:tsup && tsc -p tsconfig.dts.json",
+    "build": "node build.exports.cjs && npm run build:tsup && rollup -c rollup.dts.js",
     "build:docs": "npm run vite:build && npm run vite:deploy",
     "build:packages": "yarn workspaces foreach --no-private --all run build",
     "build:tsup": "tsup",
