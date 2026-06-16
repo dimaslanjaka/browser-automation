@@ -1,6 +1,7 @@
 import cp from 'child_process';
 import fs from 'fs-extra';
-import puppeteer, { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import type { Browser } from 'puppeteer';
 import { delay } from 'sbg-utility';
 import path from 'upath';
 import { fileURLToPath } from 'url';

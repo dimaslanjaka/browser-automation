@@ -5,25 +5,27 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { array_unique, isEmpty } from 'sbg-utility';
 import { fileURLToPath } from 'url';
+import { PuppeteerCookies } from './puppeteer/Cookies.js';
 import {
   fetchAndSaveFingerprintToCache,
   getLatestCachedFingerprint,
   getRandomCachedFingerprint
 } from './puppeteer/fingerprint_utils.js';
-import {
-  getFallbackProfileDir as _getFallbackProfileDir,
-  GLOBAL_PROFILES_DIR
-} from './puppeteer/getFallbackProfileDir.js';
 import { extractFormValues } from './puppeteer/getFormValuesFromFrame.js';
-import { sleep } from './utils/browser.js';
-import { PuppeteerCookies } from './puppeteer/Cookies.js';
 import goWithRetry from './puppeteer/goWithRetry.js';
+import {
+  GLOBAL_PROFILES_DIR,
+  launchWithProfileFallback,
+  reserveClusterUserDataDir,
+  reserveNextFallbackProfileDir
+} from './puppeteer/profile-manager.js';
+import { sleep } from './utils/browser.js';
 export { elementExists } from './puppeteer/elementExists.js';
 export { elementsContainText } from './puppeteer/elementsContainText.js';
 export { elementWithTextExists } from './puppeteer/elementWithTextExists.js';
 export { getActivePage } from './puppeteer/getActivePage.js';
-export { getFallbackProfileDir } from './puppeteer/getFallbackProfileDir.js';
 export { getFormValuesFromFrame } from './puppeteer/getFormValuesFromFrame.js';
+export { getFallbackProfileDir } from './puppeteer/profile-manager.js';
 export { triggerInputChange } from './puppeteer/triggerInputChange.js';
 
 /**
@@ -59,14 +61,6 @@ let puppeteer_cluster = null;
  * @param {string} targetUserDataDir - User data directory path to check.
  * @returns {boolean}
  */
-export function isUserDataDirInUse(targetUserDataDir) {
-  if (!targetUserDataDir) return false;
-
-  const resolvedUserDataDir = path.resolve(targetUserDataDir);
-  const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'LOCK'];
-
-  return lockFiles.some((fileName) => fs.existsSync(path.join(resolvedUserDataDir, fileName)));
-}
 
 /**
  * Returns the first available fallback profile directory path.
@@ -77,142 +71,7 @@ export function isUserDataDirInUse(targetUserDataDir) {
  */
 // `getFallbackProfileDir` is re-exported from `src/puppeteer/getFallbackProfileDir.js`
 
-/**
- * @param {unknown} error
- * @returns {boolean}
- */
-function isProfileInUseLaunchError(error) {
-  const errorMessage = String(error?.message || error || '').toLowerCase();
-  return (
-    errorMessage.includes('already running for') ||
-    errorMessage.includes('userdatadir') ||
-    errorMessage.includes('user data dir')
-  );
-}
-
-/**
- * @param {Set<string>} excludedUserDataDirs
- * @param {number} [startIndex=1]
- * @returns {string}
- */
-function reserveNextFallbackProfileDir(excludedUserDataDirs, startIndex = 1) {
-  const fallbackUserDataDir = _getFallbackProfileDir(startIndex, [...excludedUserDataDirs]);
-  const resolvedFallbackUserDataDir = path.resolve(fallbackUserDataDir);
-  fs.mkdirSync(resolvedFallbackUserDataDir, { recursive: true });
-  excludedUserDataDirs.add(resolvedFallbackUserDataDir);
-  return resolvedFallbackUserDataDir;
-}
-
-/**
- * @param {Object} params
- * @param {Object} params.launchOptions
- * @param {boolean} params.autoSwitchProfileDir
- * @returns {{ currentLaunchOptions: Object, excludedUserDataDirs: Set<string> }}
- */
-function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProfileDir }) {
-  const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
-  const excludedUserDataDirs = new Set();
-
-  if (launchUserDataDirPath) {
-    excludedUserDataDirs.add(launchUserDataDirPath);
-  }
-
-  const currentLaunchOptions = { ...launchOptions };
-  if (autoSwitchProfileDir && isUserDataDirInUse(launchUserDataDirPath)) {
-    const fallbackUserDataDir = reserveNextFallbackProfileDir(excludedUserDataDirs, 1);
-    console.warn(`userDataDir is currently in use by another process, switching to profile: ${fallbackUserDataDir}`);
-    currentLaunchOptions.userDataDir = fallbackUserDataDir;
-  }
-
-  return { currentLaunchOptions, excludedUserDataDirs };
-}
-
-/**
- * @param {Object} params
- * @param {(launchOptions: Object) => Promise<any>} params.launchFn
- * @param {Object} params.launchOptions
- * @param {boolean} params.autoSwitchProfileDir
- * @param {string} params.launcherName
- * @param {number} [params.maxFallbackLaunchAttempts=10]
- * @returns {Promise<any>}
- */
-async function launchWithProfileFallback({
-  launchFn,
-  launchOptions,
-  autoSwitchProfileDir,
-  launcherName,
-  maxFallbackLaunchAttempts = 10
-}) {
-  const { currentLaunchOptions: initialLaunchOptions, excludedUserDataDirs } = prepareLaunchOptionsWithProfileFallback({
-    launchOptions,
-    autoSwitchProfileDir
-  });
-
-  let launchAttempt = 0;
-  let currentLaunchOptions = { ...initialLaunchOptions };
-
-  while (true) {
-    try {
-      return await launchFn(currentLaunchOptions);
-    } catch (error) {
-      if (!autoSwitchProfileDir || !isProfileInUseLaunchError(error) || launchAttempt >= maxFallbackLaunchAttempts) {
-        throw error;
-      }
-
-      if (currentLaunchOptions.userDataDir) {
-        excludedUserDataDirs.add(path.resolve(currentLaunchOptions.userDataDir));
-      }
-
-      const fallbackUserDataDir = reserveNextFallbackProfileDir(excludedUserDataDirs, 1);
-      launchAttempt += 1;
-
-      console.warn(
-        `${launcherName} launch failed because userDataDir is busy, retrying with profile: ${fallbackUserDataDir}`
-      );
-
-      currentLaunchOptions = {
-        ...currentLaunchOptions,
-        userDataDir: fallbackUserDataDir
-      };
-    }
-  }
-}
-
-/**
- * @param {Object} params
- * @param {string} params.preferredUserDataDir
- * @param {Set<string>} params.reservedUserDataDirs
- * @param {boolean} params.autoSwitchProfileDir
- * @param {number} [params.fallbackProfileStartIndex=1]
- * @returns {string}
- */
-function reserveClusterUserDataDir({
-  preferredUserDataDir,
-  reservedUserDataDirs,
-  autoSwitchProfileDir,
-  fallbackProfileStartIndex = 1
-}) {
-  const resolvedPreferredPath = preferredUserDataDir ? path.resolve(preferredUserDataDir) : '';
-
-  if (!autoSwitchProfileDir) {
-    if (resolvedPreferredPath) {
-      reservedUserDataDirs.add(resolvedPreferredPath);
-      return resolvedPreferredPath;
-    }
-    return resolvedPreferredPath;
-  }
-
-  if (
-    resolvedPreferredPath &&
-    !reservedUserDataDirs.has(resolvedPreferredPath) &&
-    !isUserDataDirInUse(resolvedPreferredPath)
-  ) {
-    reservedUserDataDirs.add(resolvedPreferredPath);
-    return resolvedPreferredPath;
-  }
-
-  return reserveNextFallbackProfileDir(reservedUserDataDirs, fallbackProfileStartIndex);
-}
+// Functions moved to ./puppeteer/profile-manager.js
 
 /**
  * Launches or reuses a Puppeteer browser instance using `puppeteer-extra` with optional stealth plugin.

@@ -1,26 +1,63 @@
 import path from 'path';
+import type { Page } from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { writefile } from 'sbg-utility';
-import { closeOtherTabs, getPuppeteer, userDataDir } from '../../puppeteer_utils.js';
-import { endpointManager } from './utils.js';
+import { fileURLToPath } from 'url';
+import { closeOtherTabs } from '../../puppeteer_utils.js';
+import goWithRetry from '../goWithRetry.js';
+import { GLOBAL_PROFILES_DIR, launchWithProfileFallback } from '../profile-manager.js';
 import { GLOBAL_PUPPETEER_DIR } from './EndpointManager.js';
-import { noop } from 'sbg-utility';
+import { endpointManager } from './utils.js';
 
-async function useHelper() {
-  const { browser, goto } = await getPuppeteer({
-    args: ['--start-maximized', '--disable-features=site-per-process'],
-    headless: false,
-    devtools: false,
-    userDataDir,
-    reuse: false,
-    autoSwitchProfileDir: true,
-    stealth: {
-      mode: 'stealth'
-    }
-  });
-  return { browser, goto };
+puppeteer.use(StealthPlugin());
+puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export interface GotoOptions {
+  retries?: number;
+  timeout?: number;
+  waitUntil?: string | string[];
+  cookie?: import('../Cookies.js').PuppeteerCookies;
+  retryDelay?: number;
+  onRetry?: Function;
 }
 
-function
+export async function useDefault() {
+  const baseOptions = {
+    headless: false, // Must be false for the initial manual sign-in
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // Use real Chrome
+    userDataDir: path.resolve(GLOBAL_PROFILES_DIR, 'profile1'), // Stores cookies/sessions
+    ignoreDefaultArgs: ['--enable-automation'], // Removes the automated control banner
+    args: ['--disable-blink-features=AutomationControlled', '--start-maximized', '--disable-features=site-per-process']
+  };
+  const browser = await launchWithProfileFallback({
+    launchFn: (launchOptions) => puppeteer.launch(launchOptions),
+    launchOptions: baseOptions,
+    autoSwitchProfileDir: true,
+    launcherName: 'parallel-launcher'
+  });
+
+  const goto = async (pageOrUrl: string | Page, url: string | GotoOptions, options?: GotoOptions) => {
+    if (typeof pageOrUrl === 'string') {
+      // (url, options)
+      const page = await browser.newPage();
+      return await goWithRetry(page, pageOrUrl, { ...(typeof url === 'object' ? url : {}) });
+    } else {
+      // (page, url, options)
+      return goWithRetry(
+        pageOrUrl,
+        typeof url === 'string' ? url : 'https://sh.webmanajemen.com?reason=url+is+not+string',
+        { ...options }
+      );
+    }
+  };
+
+  return { browser, goto };
+}
 
 /**
  * Launches a Puppeteer browser instance in the background for parallel usage.
@@ -40,9 +77,9 @@ function
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
-  const { browser, goto } = await useHelper();
+  const { browser, goto } = await useDefault();
 
-  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(noop);
+  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(console.log);
   await closeOtherTabs(browser, 1);
 
   // Detect when new targets (pages, workers, etc.) are created/destroyed/changed.

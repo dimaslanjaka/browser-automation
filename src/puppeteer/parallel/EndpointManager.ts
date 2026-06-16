@@ -2,7 +2,7 @@ import os from 'os';
 import { jsonParseWithCircularRefs, jsonStringifyWithCircularRefs, writefile } from 'sbg-utility';
 import path from 'upath';
 import fs from 'fs-extra';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 
 /** Lock metadata attached to a claimed endpoint. */
 type EndpointLock = {

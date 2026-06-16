@@ -1,5 +1,5 @@
 import Bluebird from 'bluebird';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';

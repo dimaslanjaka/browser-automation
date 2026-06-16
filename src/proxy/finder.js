@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { proxyGrabber } from 'proxies-grabber';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 import { fileURLToPath } from 'url';
 
 const target = 'https://sehatindonesiaku.kemkes.go.id';

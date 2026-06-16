@@ -4,7 +4,7 @@ import { fs, writefile } from 'sbg-utility';
 import path from 'upath';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 import { closeOtherTabs, maximizeWindow, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';

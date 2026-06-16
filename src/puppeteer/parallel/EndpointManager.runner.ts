@@ -1,8 +1,8 @@
 // Example usage of EndpointManager
 // This file demonstrates the basic workflow for acquiring, using, and releasing a Puppeteer endpoint.
 
-import { Browser } from 'puppeteer';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import type { Browser } from 'puppeteer';
 import { EndpointManager } from './EndpointManager.js';
 
 async function main() {
