@@ -1,6 +1,6 @@
 import cp from 'child_process';
 import fs from 'fs-extra';
-import puppeteer from 'puppeteer-extra';
+import { connect as connectRealBrowser } from 'puppeteer-real-browser';
 import type { Browser } from 'puppeteer';
 import { delay } from 'sbg-utility';
 import path from 'upath';
@@ -149,12 +149,12 @@ export async function connect(): Promise<Browser> {
     }
 
     try {
-      const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+      const { browser } = await connectRealBrowser({ connectOption: { browserWSEndpoint: endpoint } });
       browser.once('disconnected', () => {
         endpointManager.releaseEndpointClaim(endpoint, ownerPid);
       });
       console.log('Successfully connected to browser with endpoint:', browser.wsEndpoint());
-      return browser;
+      return browser as any;
     } catch (error: any) {
       endpointManager.releaseEndpointClaim(endpoint, ownerPid);
       const err = error?.error || error;

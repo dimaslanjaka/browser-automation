@@ -18,6 +18,7 @@ async function connectEndpoint() {
   let endpoint = await manager.getAvailableEndpoint();
   if (!endpoint) {
     // spawn browser then retry
+    console.log('No available endpoint found. Launching a new browser instance...');
     await launch();
     endpoint = await manager.getAvailableEndpoint();
     if (!endpoint) {
