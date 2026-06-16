@@ -128,7 +128,7 @@
     "playwright": "^1",
     "playwright-extra": "^4",
     "proxies-grabber": "^1",
-    "puppeteer": "^25.1.0",
+    "puppeteer": "25",
     "puppeteer-cluster": "^0.25.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
