@@ -10,11 +10,11 @@
   },
   "/release/browser-automation.tgz": {
     "integrity": {
-      "sha1": "6270c5447621a0745752199ab5cc97d3e9062c6e",
-      "sha256": "Fa+KrYWHwuiW6USmH0sjxFd74ixRIKC9THnTyx0cw3U=",
-      "md5": "1ebf443ff938792a9990457c06717803",
-      "sha512": "kJWN3eq+lEhxVtv1UpChn51pMBzKGhwFvm9wYynDv64K95Zc83jaIiWY5tklOVoXDyOQZn0910I5kAYWTbQBfQ=="
+      "sha1": "00703fd496049e01554ac9f13b1cda3acdecf98c",
+      "sha256": "QyPvFIU+iQsrX+fic1IFVj+P+0QDrwnuirEXfZj6Vj4=",
+      "md5": "1b75640965a57dba03c504eb97f04ad7",
+      "sha512": "J+bXFmrmoNLLitKmq4Q5gMPqKbBuIhzfmQQP24LyvXfQRZSxRTmeGDnfPcY+2sTOeF0/BF/CecckRp98T5hkGw=="
     },
-    "size": "411.87 KB"
+    "size": "412.01 KB"
   }
 }
