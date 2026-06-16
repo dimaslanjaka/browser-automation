@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import pkg from './package.json' with { type: 'json' };
 
 export default defineConfig({
   entry: {
@@ -27,6 +28,10 @@ export default defineConfig({
       js: format === 'esm' ? '.mjs' : '.cjs'
     };
   },
+  external: ['child_process', 'fs', 'path', 'os', 'util', 'readline', 'node:*'].concat(
+    ...Object.keys(pkg.dependencies),
+    ...Object.keys(pkg.devDependencies)
+  ),
   splitting: true,
   sourcemap: true,
   clean: true,
