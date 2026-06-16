@@ -21,6 +21,12 @@ export default defineConfig({
   },
   outDir: 'dist',
   format: ['esm', 'cjs'],
+  // Customizing output extensions
+  outExtension({ format }) {
+    return {
+      js: format === 'esm' ? '.mjs' : '.cjs'
+    };
+  },
   splitting: true,
   sourcemap: true,
   clean: true,
