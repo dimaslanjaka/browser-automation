@@ -1,5 +1,5 @@
 // Load the JavaScript hook
-import '../.vscode/js-hook.cjs';
+// import '../.vscode/js-hook.cjs';
 
 // Re-export all modules
 
