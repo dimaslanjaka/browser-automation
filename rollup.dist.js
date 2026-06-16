@@ -3,6 +3,7 @@ import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import pkg from './package.json' with { type: 'json' };
 import { chunkFileNamesWithExt, entryFileNamesWithExt } from './rollup-utils.js';
+import esmShim from '@rollup/plugin-esm-shim';
 
 const entries = {
   index: 'tmp/dist/src/index.js',
@@ -47,7 +48,8 @@ const plugins = [
   nodeResolve({
     preferBuiltins: true
   }),
-  commonjs()
+  commonjs(),
+  esmShim()
 ];
 
 export default [
