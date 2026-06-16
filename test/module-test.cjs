@@ -1,4 +1,4 @@
-const browserUtility = require('../');
+const browserUtility = require('../dist/index.cjs');
 
 console.log(browserUtility);
 

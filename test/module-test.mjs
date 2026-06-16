@@ -1,4 +1,4 @@
-import browserUtility from 'browser-automation';
+import browserUtility from '../dist/index.mjs';
 
 console.log(browserUtility);
 
