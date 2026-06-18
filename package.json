@@ -12,7 +12,8 @@
     "bin/py",
     "bin/py.*",
     "bin/*.py",
-    "bin/*.mjs"
+    "bin/*.mjs",
+    "scripts"
   ],
   "bin": {
     "ba-check": "./dist/puppeteer/parallel/check.runner.cjs",
