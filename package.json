@@ -221,5 +221,5 @@
     "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/6d4f527670a0ec5e462fda4a1c9777613c477c84/release/dimaslanjaka-eslint-base-config.tgz",
     "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/8943b030320624b4df82766241b7e1bef4a78957/release/proxies-grabber.tgz"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.13.0"
 }
