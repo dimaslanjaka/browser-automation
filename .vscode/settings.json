@@ -14,30 +14,26 @@
   "[twig]": {
     "editor.defaultFormatter": "vscode.html-language-features"
   },
-  "code-runner.clearPreviousOutput": true,
+  "code-runner.executorMap": {
+    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs",
+    "typescript": "node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs",
+    "python": "py -u"
+  },
   "code-runner.executorMapByGlob": {
     "electron-*.ts": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
-    "*.py": "py -u",
     "*.electron.js": "cross-env-shell NODE_ENV=development electron -r ts-node/register",
-    "*.mjs": "node --no-warnings=ExperimentalWarning",
     "*Test.php": "phpunit --verbose --debug --testdox --colors=always",
     "*.php": "php -d display_errors=1 -d error_reporting=E_ALL -d xdebug.mode=coverage -d xdebug.start_with_request=yes -d xdebug.client_port=9003 -d xdebug.log=$workspaceRoot/tmp/logs/xdebug.log $fullFileName",
     "rollup.*.{js,cjs,mjs,ts}": "rollup -c",
-    "*.test.{js,ts,cjs,mjs,jsx}": "npm test --",
+    "**/*.test.{js,ts}": "npx -y jest --testPathPatterns=$fileName",
+    "**/*.test.cjs": "npm test -- -- --testPathPatterns=$fileName",
+    "**/*.test.mjs": "npm test -- -- --testPathPatterns=$fileName",
     "*.sh": "bash -c",
     "*.bat": "cmd /c",
     "*.cmd": "cmd /c",
-    "*.ps1": "powershell -ExecutionPolicy ByPass -File"
+    "*.ps1": "powershell -ExecutionPolicy ByPass -File",
+    "tsup.*": "tsup --config"
   },
-  "code-runner.executorMap": {
-    "javascript": "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs",
-    "typescript": "node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs"
-  },
-  "code-runner.ignoreSelection": true,
-  "code-runner.respectShebang": true,
-  "code-runner.runInTerminal": true,
-  "code-runner.saveAllFilesBeforeRun": true,
-  "code-runner.saveFileBeforeRun": true,
   "debug.terminal.clearBeforeReusing": true,
   "editor.codeActionsOnSave": {
     "source.fixAll": "never",
@@ -200,11 +196,5 @@
     "**/data/engine/**": true,
     "**/data/logs/**": true,
     "**/data/script/**": true
-  },
-  "editor.minimap.enabled": false,
-  "search.followSymlinks": false,
-  "typescript.disableAutomaticTypeAcquisition": true,
-  "typescript.tsserver.maxTsServerMemory": 3072,
-  "extensions.autoUpdate": false,
-  "telemetry.telemetryLevel": "off"
+  }
 }

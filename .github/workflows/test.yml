@@ -1,0 +1,271 @@
+name: Node.js Package Test
+concurrency:
+  group: test-${{ github.event_name }}
+  cancel-in-progress: true
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - '**/test*/**'
+      - '**/test*'
+      - '**/src/**'
+env:
+  CI_NODE_VERSION: 24.16.0
+  CI_PYTHON_VERSION: '3.11'
+  ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+  GH_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+jobs:
+  ci:
+    name: 🔨 Build, Pack & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout workflow repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: ⬇️ Setup CI Environment
+        uses: ./.github/actions/setup-environments
+        with:
+          node-version: ${{ env.CI_NODE_VERSION }}
+          python-version: ${{ env.CI_PYTHON_VERSION }}
+          token: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+          prefix-cache-key: ${{ runner.os }}-${{ github.event.repository.name }}-
+      - name: 🔨 Build project
+        run: corepack yarn build
+      - name: 📦 Pack project
+        run: corepack yarn pack
+      - name: 🧹 Clean GitHub Actions Cache
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+        shell: bash
+        run: npx --legacy-peer-deps -y
+          binary-collections@https://raw.githubusercontent.com/dimaslanjaka/bin/master/releases/bin.tgz
+          clean-github-actions-caches --repo "${{ github.repository }}" --sha
+          "${{ github.sha }}"
+      - name: 🧪 Run tests in test/address/geocodeWithNominatim.test.js
+        id: run-test-address-geocodeWithNominatim-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/address/geocodeWithNominatim.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="address/geocodeWithNominatim.test.js"
+          else
+            echo "Skipping missing test file: test/address/geocodeWithNominatim.test.js"
+          fi
+      - name: 🧪 Run tests in test/data-index.test.js
+        id: run-test-data-index-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/data-index.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="data-index.test.js"
+          else
+            echo "Skipping missing test file: test/data-index.test.js"
+          fi
+      - name: 🧪 Run tests in test/database/LogDatabase-MySQL.test.ts
+        id: run-test-database-LogDatabase-MySQL-test-ts
+        shell: bash
+        run: >-
+          if [ -f "test/database/LogDatabase-MySQL.test.ts" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/LogDatabase-MySQL.test.ts"
+          else
+            echo "Skipping missing test file: test/database/LogDatabase-MySQL.test.ts"
+          fi
+      - name: 🧪 Run tests in test/database/LogDatabase-SQLite.test.ts
+        id: run-test-database-LogDatabase-SQLite-test-ts
+        shell: bash
+        run: >-
+          if [ -f "test/database/LogDatabase-SQLite.test.ts" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/LogDatabase-SQLite.test.ts"
+          else
+            echo "Skipping missing test file: test/database/LogDatabase-SQLite.test.ts"
+          fi
+      - name: 🧪 Run tests in test/database/LogDatabase.test.ts
+        id: run-test-database-LogDatabase-test-ts
+        shell: bash
+        run: >-
+          if [ -f "test/database/LogDatabase.test.ts" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/LogDatabase.test.ts"
+          else
+            echo "Skipping missing test file: test/database/LogDatabase.test.ts"
+          fi
+      - name: 🧪 Run tests in test/database/MySQLHelper.test.ts
+        id: run-test-database-MySQLHelper-test-ts
+        shell: bash
+        run: >-
+          if [ -f "test/database/MySQLHelper.test.ts" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/MySQLHelper.test.ts"
+          else
+            echo "Skipping missing test file: test/database/MySQLHelper.test.ts"
+          fi
+      - name: 🧪 Run tests in test/database/MysqlLogDatabase.test.ts
+        id: run-test-database-MysqlLogDatabase-test-ts
+        shell: bash
+        run: >-
+          if [ -f "test/database/MysqlLogDatabase.test.ts" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/MysqlLogDatabase.test.ts"
+          else
+            echo "Skipping missing test file: test/database/MysqlLogDatabase.test.ts"
+          fi
+      - name: 🧪 Run tests in test/database/SQLiteLogHelper.test.js
+        id: run-test-database-SQLiteLogHelper-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/database/SQLiteLogHelper.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="database/SQLiteLogHelper.test.js"
+          else
+            echo "Skipping missing test file: test/database/SQLiteLogHelper.test.js"
+          fi
+      - name: 🧪 Run tests in test/enforceDateFormat.test.js
+        id: run-test-enforceDateFormat-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/enforceDateFormat.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="enforceDateFormat.test.js"
+          else
+            echo "Skipping missing test file: test/enforceDateFormat.test.js"
+          fi
+      - name: 🧪 Run tests in test/fetchXlsxData3.test.js
+        id: run-test-fetchXlsxData3-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/fetchXlsxData3.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="fetchXlsxData3.test.js"
+          else
+            echo "Skipping missing test file: test/fetchXlsxData3.test.js"
+          fi
+      - name: 🧪 Run tests in test/fetchXlsxData4.test.js
+        id: run-test-fetchXlsxData4-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/fetchXlsxData4.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="fetchXlsxData4.test.js"
+          else
+            echo "Skipping missing test file: test/fetchXlsxData4.test.js"
+          fi
+      - name: 🧪 Run tests in test/fixData.test.js
+        id: run-test-fixData-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/fixData.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="fixData.test.js"
+          else
+            echo "Skipping missing test file: test/fixData.test.js"
+          fi
+      - name: 🧪 Run tests in test/getDataRange.test.js
+        id: run-test-getDataRange-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/getDataRange.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="getDataRange.test.js"
+          else
+            echo "Skipping missing test file: test/getDataRange.test.js"
+          fi
+      - name: 🧪 Run tests in test/json-crypto.test.js
+        id: run-test-json-crypto-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/json-crypto.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="json-crypto.test.js"
+          else
+            echo "Skipping missing test file: test/json-crypto.test.js"
+          fi
+      - name: 🧪 Run tests in test/logLineInline.test.js
+        id: run-test-logLineInline-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/logLineInline.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="logLineInline.test.js"
+          else
+            echo "Skipping missing test file: test/logLineInline.test.js"
+          fi
+      - name: 🧪 Run tests in test/nik-parse.test.js
+        id: run-test-nik-parse-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/nik-parse.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="nik-parse.test.js"
+          else
+            echo "Skipping missing test file: test/nik-parse.test.js"
+          fi
+      - name: 🧪 Run tests in test/parseBabyName.test.js
+        id: run-test-parseBabyName-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/parseBabyName.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="parseBabyName.test.js"
+          else
+            echo "Skipping missing test file: test/parseBabyName.test.js"
+          fi
+      - name: 🧪 Run tests in test/prevent-sleep.test.js
+        id: run-test-prevent-sleep-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/prevent-sleep.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="prevent-sleep.test.js"
+          else
+            echo "Skipping missing test file: test/prevent-sleep.test.js"
+          fi
+      - name: 🧪 Run tests in test/tb-bb.test.js
+        id: run-test-tb-bb-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/tb-bb.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="tb-bb.test.js"
+          else
+            echo "Skipping missing test file: test/tb-bb.test.js"
+          fi
+      - name: 🧪 Run tests in test/ucwords.test.js
+        id: run-test-ucwords-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/ucwords.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="ucwords.test.js"
+          else
+            echo "Skipping missing test file: test/ucwords.test.js"
+          fi
+      - name: 🧪 Run tests in test/utils/FileLockHelper.test.js
+        id: run-test-utils-FileLockHelper-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/utils/FileLockHelper.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="utils/FileLockHelper.test.js"
+          else
+            echo "Skipping missing test file: test/utils/FileLockHelper.test.js"
+          fi
+      - name: 🧪 Run tests in test/utils/date.test.js
+        id: run-test-utils-date-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/utils/date.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="utils/date.test.js"
+          else
+            echo "Skipping missing test file: test/utils/date.test.js"
+          fi
+      - name: 🧪 Run tests in test/utils/getAge.test.js
+        id: run-test-utils-getAge-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/utils/getAge.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="utils/getAge.test.js"
+          else
+            echo "Skipping missing test file: test/utils/getAge.test.js"
+          fi
+      - name: 🧪 Run tests in test/utils/getAgeFromDateString.test.js
+        id: run-test-utils-getAgeFromDateString-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/utils/getAgeFromDateString.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="utils/getAgeFromDateString.test.js"
+          else
+            echo "Skipping missing test file: test/utils/getAgeFromDateString.test.js"
+          fi
+      - name: 🧪 Run tests in test/utils/googleSheet.test.js
+        id: run-test-utils-googleSheet-test-js
+        shell: bash
+        run: >-
+          if [ -f "test/utils/googleSheet.test.js" ]; then
+            node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=120000 --detectOpenHandles --bail=1 --testPathPatterns="utils/googleSheet.test.js"
+          else
+            echo "Skipping missing test file: test/utils/googleSheet.test.js"
+          fi

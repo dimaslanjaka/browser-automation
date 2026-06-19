@@ -3,10 +3,14 @@
  * Jest configuration for browser-automation project.
  */
 export default {
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   roots: ['<rootDir>/test'],
+  testMatch: [
+    '<rootDir>/test/**/*.(test|spec).(js|ts|cjs|mjs)',
+    '**/__tests__/**/*.?([mc])[jt]s?(x), **/?(*.)+(spec|test).?([mc])[jt]s?(x)'
+  ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
-  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'cjs', 'mjs', 'json', 'node'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
