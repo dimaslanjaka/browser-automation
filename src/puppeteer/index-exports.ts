@@ -19,6 +19,5 @@ export * from './parallel/utils.js';
 export * from './profile-manager.js';
 export * from './triggerInputChange.js';
 export * from './xhr/capture-xhr.js';
-export * from './xhr/capture-xhr.sample.js';
 
 //

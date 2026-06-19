@@ -5,11 +5,9 @@
 
 export * from './utils/index.js';
 export * from './database/index.js';
+export * from './puppeteer/index-exports.js';
 
 // Export EndpointManager (puppeteer utility, loaded lazily on access)
-export {
-  EndpointManager,
-  GLOBAL_ENDPOINT_MANAGER_PATH
-} from './puppeteer/parallel/EndpointManager.js';
+export { EndpointManager, GLOBAL_ENDPOINT_MANAGER_PATH } from './puppeteer/parallel/EndpointManager.js';
 export { GLOBAL_PUPPETEER_DIR } from './puppeteer/profile-manager.js';
 export { connectEndpoint } from './puppeteer/parallel/EndpointManager.connector.js';
