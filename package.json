@@ -219,11 +219,11 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/6f958b2af5c41e68d68e718dbafbf5addaadd290/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/09a1a1dfee36ebf0cc040fdb039f10c47bccffb5/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/f3f4bde1887798c308928fc76dc590b23de992ea/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/1ca385787f7287155b547c5b97d5ffd5bcfab482/packages/sbg-utility/release/sbg-utility.tgz",
     "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/6d4f527670a0ec5e462fda4a1c9777613c477c84/release/dimaslanjaka-eslint-base-config.tgz",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/8943b030320624b4df82766241b7e1bef4a78957/release/proxies-grabber.tgz"
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/f43e03d1c6f5e66b193ad8c394a0b0a91c64b083/release/proxies-grabber.tgz"
   },
   "packageManager": "yarn@4.13.0"
 }
