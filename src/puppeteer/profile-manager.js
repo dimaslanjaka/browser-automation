@@ -25,7 +25,7 @@ export function isUserDataDirInUse(targetUserDataDir) {
   if (!targetUserDataDir) return false;
 
   const resolvedUserDataDir = path.resolve(targetUserDataDir);
-  const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'LOCK'];
+  const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket', 'LOCK', 'lockfile'];
 
   return lockFiles.some((fileName) => fs.existsSync(path.join(resolvedUserDataDir, fileName)));
 }
@@ -83,7 +83,7 @@ function reserveNextFallbackProfileDir(excludedUserDataDirs, startIndex = 1) {
  * @param {boolean} params.autoSwitchProfileDir - Whether to fall back to another profile dir if preferred is busy.
  * @returns {{ currentLaunchOptions: { userDataDir?: string }, excludedUserDataDirs: Set<string> }}
  */
-function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProfileDir }) {
+function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProfileDir = true }) {
   const launchUserDataDirPath = launchOptions.userDataDir ? path.resolve(launchOptions.userDataDir) : '';
   const excludedUserDataDirs = new Set();
 
@@ -113,7 +113,7 @@ function prepareLaunchOptionsWithProfileFallback({ launchOptions, autoSwitchProf
 async function launchWithProfileFallback({
   launchFn,
   launchOptions,
-  autoSwitchProfileDir,
+  autoSwitchProfileDir = true,
   launcherName,
   maxFallbackLaunchAttempts = 10
 }) {
@@ -163,7 +163,7 @@ async function launchWithProfileFallback({
 function reserveClusterUserDataDir({
   preferredUserDataDir,
   reservedUserDataDirs,
-  autoSwitchProfileDir,
+  autoSwitchProfileDir = true,
   fallbackProfileStartIndex = 1
 }) {
   const resolvedPreferredPath = preferredUserDataDir ? path.resolve(preferredUserDataDir) : '';
