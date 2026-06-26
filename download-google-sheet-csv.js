@@ -114,7 +114,7 @@ export async function downloadSheetsCsv(spreadsheetId) {
     const auth = await authorize();
     return await downloadSheetsCsvWithAuth(spreadsheetId, auth);
   } catch (err) {
-    console.warn('CSV API download failed, using public fallback.');
+    console.warn('CSV API download failed, using public fallback.', err);
     return await downloadSheetsCsvFallback(spreadsheetId);
   }
 }
