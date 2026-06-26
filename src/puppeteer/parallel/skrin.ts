@@ -72,7 +72,12 @@ async function getPage(): Promise<import('puppeteer').Page> {
   }
 }
 
-export async function parallelSkrin(opts: { loop?: boolean; max?: number; argv: Record<string, any> }) {
+export async function parallelSkrin(opts: {
+  loop?: boolean;
+  randomize?: boolean;
+  max?: number;
+  argv: Record<string, any>;
+}) {
   const page = await getPage();
   const argv = opts.argv;
   const cliSkipValidateDb =
@@ -142,7 +147,9 @@ export async function parallelSkrin(opts: { loop?: boolean; max?: number; argv: 
 
     exitWorker(0);
   } else {
-    const data = dataKunto.shift();
+    // Apply randomization if requested
+    const dataToProcess = opts.randomize ? array_shuffle(dataKunto) : dataKunto;
+    const data = dataToProcess.shift();
 
     if (!data) {
       console.warn('No item to process.');
