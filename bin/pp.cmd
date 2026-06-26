@@ -1,27 +1,6 @@
 @echo off
+setlocal
 
-
-python "%CD%\bin\pp.py" %*
-exit /b 1
-
-@rem cmd /k to keep the window open after execution
-@rem cmd /c to execute the command and then close the window
-
-if /I "%~1"=="launch" goto :launch
-if /I "%~1"=="skrin" goto :skrin
-
-:launch
-shift
-set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\launcher.runner.ts"
-set "BUNDLE_OUTPUT=%CD%\dist\parallel\launcher.runner.cjs"
-call npx rollup -c rollup.config.js
-start "" cmd /c "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs %CD%\dist\parallel\launcher.runner.cjs %*"
-exit /b %ERRORLEVEL%
-
-:skrin
-shift
-set "BUNDLE_INPUT=%CD%\src\puppeteer\parallel\skrin.runner.ts"
-set "BUNDLE_OUTPUT=%CD%\dist\parallel\skrin.runner.cjs"
-call npx rollup -c rollup.config.js
-start "" cmd /k "node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs %CD%\dist\parallel\skrin.runner.cjs %*"
+set "SCRIPT_DIR=%~dp0"
+node "%SCRIPT_DIR%pp.mjs" %*
 exit /b %ERRORLEVEL%

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn, spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -8,7 +8,9 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
-const parallelScript = path.join(repoRoot, 'bin', 'pp.py');
+const jsHookPath = path.join(repoRoot, '.vscode', 'js-hook.cjs');
+const sourceExtensions = ['.ts', '.js', '.mjs', '.cjs'];
+const builtExtensions = ['.mjs', '.js', '.cjs'];
 
 /**
  * Resolve the correct source directory: src/ if present (dev), else lib/ (bundled).
@@ -27,6 +29,36 @@ function findSourceDir() {
   }
 
   return repoRoot;
+}
+
+/**
+ * Resolve the first existing file from a base path and extension list.
+ * @param {string} basePath - Absolute path without extension.
+ * @param {string[]} extensions - Extensions to try in order.
+ * @returns {string|null} First existing file path or null.
+ */
+function resolveFileWithExtensions(basePath, extensions) {
+  for (const extension of extensions) {
+    const candidate = `${basePath}${extension}`;
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Build Node arguments for a runner file.
+ * The js-hook is only loaded when present (development); it is skipped in production.
+ * @param {string} runnerPath - Absolute runner file path.
+ * @param {string[]} args - Arguments to forward.
+ * @returns {string[]} Node process arguments.
+ */
+function createNodeArgs(runnerPath, args) {
+  const tsLoader = runnerPath.endsWith('.ts') ? ['--loader', 'ts-node/esm'] : [];
+  const jsHook = fs.existsSync(jsHookPath) ? ['-r', jsHookPath] : [];
+  return ['--no-warnings=ExperimentalWarning', ...tsLoader, ...jsHook, runnerPath, ...args];
 }
 
 /**
@@ -53,10 +85,12 @@ function resolveRunner(command) {
   const subDir = path.join(srcDir, 'puppeteer', 'parallel');
 
   if (isBundled) {
-    const input = path.join(subDir, `${runner.name}.runner.mjs`);
-    const output = runner.hasOutput ? path.join(subDir, `${runner.name}.mjs`) : null;
+    const input = resolveFileWithExtensions(path.join(subDir, `${runner.name}.runner`), builtExtensions);
+    const output = runner.hasOutput
+      ? resolveFileWithExtensions(path.join(subDir, runner.name), builtExtensions)
+      : input;
 
-    if (!fs.existsSync(input)) {
+    if (!input || !output) {
       return null;
     }
 
@@ -67,74 +101,25 @@ function resolveRunner(command) {
     };
   }
 
-  // Development mode (src/)
-  const input = path.join(subDir, `${runner.name}.runner.ts`);
-  const output = runner.hasOutput ? path.join(repoRoot, 'dist', 'parallel', `${runner.name}.cjs`) : null;
+  // Development mode (src/) runs the source runner directly.
+  const input = resolveFileWithExtensions(path.join(subDir, `${runner.name}.runner`), sourceExtensions);
 
-  if (!fs.existsSync(input)) {
+  if (!input) {
     return null;
   }
 
   return {
     mode: 'source',
     input,
-    output
+    output: input
   };
 }
 
 /**
- * Check if a command-line tool is available on the system.
- * @param {string} command - The command name to check.
- * @param {string[]} [args=['--version']] - Arguments to test the command.
- * @returns {boolean} Whether the command is available.
- */
-function hasCommand(command, args = ['--version']) {
-  const result = spawnSync(command, args, {
-    stdio: 'ignore',
-    shell: false
-  });
-  return !result.error;
-}
-
-/**
- * Try to run a command via the Python parallel script when source files are present.
- * @param {string[]} args - CLI arguments.
- * @returns {number|null} The exit code if Python ran, or null to fall back to JS bundling.
- */
-function runParallelPython(args) {
-  const command = String(args[0] || '').toLowerCase();
-  const runner = resolveRunner(command);
-
-  if (!runner || runner.mode !== 'source') {
-    return null;
-  }
-
-  const candidates = process.platform === 'win32' ? [['python'], ['python3'], ['py', '-3']] : [['python'], ['python3']];
-
-  for (const candidate of candidates) {
-    const [command, ...commandArgs] = candidate;
-    if (!hasCommand(command, commandArgs.length > 0 ? commandArgs : ['--version'])) {
-      continue;
-    }
-
-    const result = spawnSync(command, [parallelScript, ...args], {
-      cwd: repoRoot,
-      stdio: 'inherit',
-      shell: false
-    });
-
-    if (!result.error) {
-      return result.status ?? 0;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Build (if needed) and run a bundled JS command via Node, with rollup for source mode.
+ * Run a runner command via Node.
  * @param {string} command - The subcommand name.
  * @param {string[]} args - Remaining arguments to forward.
+ * @param {boolean} sameTerminal - Whether to run in the current terminal.
  */
 function runBundledCommand(command, args, sameTerminal = false) {
   const bundle = resolveRunner(command);
@@ -143,27 +128,8 @@ function runBundledCommand(command, args, sameTerminal = false) {
     process.exit(1);
   }
 
-  if (bundle.mode === 'source') {
-    process.env.BUNDLE_INPUT = bundle.input;
-    process.env.BUNDLE_OUTPUT = bundle.output;
-
-    const rollupCommand =
-      process.platform === 'win32'
-        ? { command: 'cmd', args: ['/c', 'npx', 'rollup', '-c', 'rollup.config.js'] }
-        : { command: 'npx', args: ['rollup', '-c', 'rollup.config.js'] };
-
-    const rollupResult = spawnSync(rollupCommand.command, rollupCommand.args, {
-      cwd: repoRoot,
-      stdio: 'inherit',
-      shell: false
-    });
-
-    if (rollupResult.status !== 0) {
-      process.exit(rollupResult.status ?? 1);
-    }
-  }
-
-  const nodeArgs = ['--no-warnings=ExperimentalWarning', bundle.output, ...args];
+  const runnerPath = bundle.output ?? bundle.input;
+  const nodeArgs = createNodeArgs(runnerPath, args);
 
   if (command === 'launch' && !sameTerminal) {
     const child = spawn(process.execPath, nodeArgs, {
@@ -205,17 +171,12 @@ function runCheckCommand(args) {
   }
 
   const checkRunner = bundle.output ?? bundle.input;
-  const useTsLoader = checkRunner.endsWith('.ts');
-  const child = spawn(
-    process.execPath,
-    ['--no-warnings=ExperimentalWarning', ...(useTsLoader ? ['--loader', 'ts-node/esm'] : []), checkRunner, ...args],
-    {
-      cwd: repoRoot,
-      stdio: 'inherit',
-      shell: false,
-      windowsHide: true
-    }
-  );
+  const child = spawn(process.execPath, createNodeArgs(checkRunner, args), {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    shell: false,
+    windowsHide: true
+  });
 
   child.on('exit', (code) => process.exit(code ?? 0));
   child.on('error', (error) => {
@@ -225,13 +186,13 @@ function runCheckCommand(args) {
 }
 
 /**
- * Print help text matching pp.py's output.
+ * Print help text.
  */
 function printHelp() {
   const help = `usage: pp.mjs [-h] [-k] [-s] [-f] {launch,skrin,check,skrin-check}
 
-Wrapper to build and run parallel bundles (launcher, skrin, etc.).
-This script will build the requested bundle if missing and then run it with Node.
+Wrapper to run parallel runners (launcher, skrin, etc.).
+When src/ is available, this script runs the source runner directly with Node.
 
 positional arguments:
   {launch,skrin,check,skrin-check}
@@ -244,10 +205,10 @@ options:
   -f, --force           Force rebuild and bypass cache check (useful for debugging).
 
 Commands:
-  launch       Build & run the launcher bundle.
-  skrin        Build & run the skrin bundle.
-  skrin-check  Build & run the skrin-check-data bundle.
-  check        Run the local TypeScript check script (no bundling).
+  launch       Run the launcher runner.
+  skrin        Run the skrin runner.
+  skrin-check  Run the skrin-check-data runner.
+  check        Run the local TypeScript check runner.
 
 Options:
   -k, --keep-open     Keep the launched process console open after it exits.
@@ -295,7 +256,6 @@ function extractSubcommand(args) {
 
 /**
  * Entry point — parses CLI args and dispatches to the appropriate runner.
- * Mirrors pp.py's argument parsing and behavior.
  */
 function main() {
   const rawArgs = process.argv.slice(2);
@@ -306,7 +266,7 @@ function main() {
     process.exit(0);
   }
 
-  // Top-level --help — mirror pp.py: exit immediately if first arg is -h/--help
+  // Top-level --help exits immediately if first arg is -h/--help
   if (rawArgs[0] === '-h' || rawArgs[0] === '--help') {
     printHelp();
     process.exit(0);
@@ -358,16 +318,6 @@ function main() {
     sameTerminal = true;
   }
 
-  // Reconstruct args for python delegation (including flags for fidelity)
-  const pythonArgs = [subcommand, ...argsWithoutCommand];
-
-  // Try delegating to python first (dev mode convenience)
-  const maybePythonExitCode = runParallelPython(pythonArgs);
-  if (maybePythonExitCode !== null) {
-    process.exit(maybePythonExitCode);
-  }
-
-  // Fallback: native JS handling
   if (subcommand === 'check') {
     runCheckCommand(forwardedArgs);
     return;
