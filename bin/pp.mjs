@@ -120,8 +120,9 @@ function resolveRunner(command) {
  * @param {string} command - The subcommand name.
  * @param {string[]} args - Remaining arguments to forward.
  * @param {boolean} sameTerminal - Whether to run in the current terminal.
+ * @param {boolean} keepOpen - Whether to keep the terminal open after exit.
  */
-function runBundledCommand(command, args, sameTerminal = false) {
+function runBundledCommand(command, args, sameTerminal = false, keepOpen = false) {
   const bundle = resolveRunner(command);
   if (!bundle) {
     console.error(`Unknown command: ${command}`);
@@ -131,19 +132,39 @@ function runBundledCommand(command, args, sameTerminal = false) {
   const runnerPath = bundle.output ?? bundle.input;
   const nodeArgs = createNodeArgs(runnerPath, args);
 
-  if (command === 'launch' && !sameTerminal) {
-    const child = spawn(process.execPath, nodeArgs, {
-      cwd: repoRoot,
-      detached: true,
-      stdio: 'ignore',
-      shell: false,
-      windowsHide: true
-    });
+  // Open in new terminal window for all commands unless -s/--same-terminal is specified
+  const needsNewWindow = !sameTerminal;
 
-    child.unref();
-    process.exit(0);
+  if (needsNewWindow) {
+    if (process.platform === 'win32') {
+      // Windows: open a new cmd window.
+      // Use /k (keep open) for skrin or when -k flag is set, otherwise /c (close after)
+      const cmdFlag = keepOpen || command === 'skrin' ? '/k' : '/c';
+      const child = spawn('cmd', ['/c', 'start', '', 'cmd', cmdFlag, 'node', ...nodeArgs], {
+        cwd: repoRoot,
+        detached: true,
+        stdio: 'ignore',
+        shell: false,
+        windowsHide: true
+      });
+
+      child.unref();
+      process.exit(0);
+    } else {
+      // Unix: detached process (no persistent terminal emulation)
+      const child = spawn(process.execPath, nodeArgs, {
+        cwd: repoRoot,
+        detached: true,
+        stdio: 'ignore',
+        shell: false
+      });
+
+      child.unref();
+      process.exit(0);
+    }
   }
 
+  // Run in current terminal
   const child = spawn(process.execPath, nodeArgs, {
     cwd: repoRoot,
     stdio: 'inherit',
@@ -284,13 +305,14 @@ function main() {
   // Parse known flags from remaining args; everything else is forwarded
   const forwardedArgs = [];
   let sameTerminal = false;
+  let keepOpen = false;
 
   for (let i = 0; i < argsWithoutCommand.length; i++) {
     const arg = argsWithoutCommand[i];
     switch (arg) {
       case '-k':
       case '--keep-open':
-        // keep_open — consumed, not used in native fallback
+        keepOpen = true;
         break;
       case '-s':
       case '--same-terminal':
@@ -324,7 +346,7 @@ function main() {
   }
 
   if (subcommand === 'launch' || subcommand === 'skrin' || subcommand === 'skrin-check') {
-    runBundledCommand(subcommand, forwardedArgs, sameTerminal);
+    runBundledCommand(subcommand, forwardedArgs, sameTerminal, keepOpen);
     return;
   }
 
