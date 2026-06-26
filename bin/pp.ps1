@@ -29,7 +29,7 @@ function QuoteArg([string]$s) {
 switch ($command) {
     'launch' {
         $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\launcher.runner.ts'
-        $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\launcher.cjs'
+        $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\launcher.runner.cjs'
 
         # Run rollup (will print output to this terminal)
         & npx rollup -c rollup.config.js
@@ -42,7 +42,7 @@ switch ($command) {
     }
     'skrin' {
         $env:BUNDLE_INPUT = Join-Path $PWD 'src\puppeteer\parallel\skrin.runner.ts'
-        $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\skrin.cjs'
+        $env:BUNDLE_OUTPUT = Join-Path $PWD 'dist\parallel\skrin.runner.cjs'
 
         & npx rollup -c rollup.config.js
         $nodeArgs = @("--no-warnings=ExperimentalWarning", "-r", "./.vscode/js-hook.cjs", $env:BUNDLE_OUTPUT) + $remaining

@@ -195,19 +195,19 @@ _BUILD_CACHE = os.path.join(REPO_ROOT, "tmp", "build")
 COMMANDS = {
     "launch": {
         "input": "launcher.runner.ts",
-        "output": "launcher.cjs",
+        "output": "launcher.runner.cjs",
         "entry": "launcher",
         "cache": os.path.join(_BUILD_CACHE, ".rcl.json"),
     },
     "skrin": {
         "input": "skrin.runner.ts",
-        "output": "skrin.cjs",
+        "output": "skrin.runner.cjs",
         "entry": "skrin",
         "cache": os.path.join(_BUILD_CACHE, ".rcs.json"),
     },
     "skrin-check": {
         "input": "skrin-check-data.runner.ts",
-        "output": "skrin-check-data.cjs",
+        "output": "skrin-check-data.runner.cjs",
         "entry": "skrin-check-data",
         "cache": os.path.join(_BUILD_CACHE, ".rcsc.json"),
     },

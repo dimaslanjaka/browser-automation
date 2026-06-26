@@ -26,7 +26,7 @@ shift || true
 case "$subcommand" in
 	launch)
 		export BUNDLE_INPUT="$repo_root/src/puppeteer/parallel/launcher.runner.ts"
-		export BUNDLE_OUTPUT="$repo_root/dist/parallel/launcher.cjs"
+		export BUNDLE_OUTPUT="$repo_root/dist/parallel/launcher.runner.cjs"
 
 		npx rollup -c rollup.config.js
 
@@ -36,7 +36,7 @@ case "$subcommand" in
 		;;
 	skrin)
 		export BUNDLE_INPUT="$repo_root/src/puppeteer/parallel/skrin.runner.ts"
-		export BUNDLE_OUTPUT="$repo_root/dist/parallel/skrin.cjs"
+		export BUNDLE_OUTPUT="$repo_root/dist/parallel/skrin.runner.cjs"
 
 		npx rollup -c rollup.config.js
 
