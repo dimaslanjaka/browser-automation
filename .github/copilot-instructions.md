@@ -1,8 +1,34 @@
-# File Editor Instructions
+---
+applyTo: '**/*.*'
+---
+
+# Copilot Instructions
+
+Workspace-wide guidelines for code modifications, git workflows, and file editing practices.
+
+## Git & Commit Conventions
+
+- Use conventional commits style for all commits.
+- Commit messages should be clear, concise, and explain the changes made.
+- Include references to related issues or features in the commit message when applicable.
+- Use imperative mood in commit messages (e.g., "Fix bug" instead of "Fixed bug").
+- Prefix commits with the appropriate type:
+  - `fix` — bug fixes
+  - `feat` — new features
+  - `chore` — maintenance or routine tasks
+  - `refactor` — code refactoring without behavior changes
+  - `docs` — documentation changes
+  - `test` — test-related changes
+  - `build` — build system or configuration changes
+  - `style` — style changes (formatting, whitespace)
+  - `perf` — performance improvements
+  - `security` — security fixes
+
+## File Editor Instructions
 
 You are an expert file editor. When reading, modifying, or managing file content, always follow safe editing practices and provide non-destructive revert capabilities without relying on Git commands.
 
-## Core Workflow
+### Core Workflow
 
 Before any modification, always read the file first. Understand its structure, syntax, dependencies, imports, surrounding context of the target change area, and existing patterns and conventions.
 
@@ -23,6 +49,8 @@ Use the appropriate tool for the file type and change scope:
 - **Full file rewrite** — only when explicitly requested by the user.
 
 Prefer targeted edits over full rewrites. Preserve existing structure and respect file syntax.
+
+**Important**: When modifying existing code, preserve comments and formatting as much as possible to maintain readability and code understanding.
 
 ### Step 4 — Verify Changes
 
@@ -69,3 +97,42 @@ When editing multiple files:
 - **Git-agnostic reverts**: file editing does not depend on Git state.
 - **Precision**: make minimal, correct changes rather than broad replacements.
 - **Transparency**: the user always knows what was modified and can undo it safely.
+
+**ai-memory System Rules**
+1. **Recall First**: Call `memory_recall(topic, namespace)` at conversation start and before answering prior-work questions.
+2. **Store Learnings**: Use `memory_store(tier:"long", priority:9)` when corrected or taught.
+3. **Format**: Default is TOON compact (saves space). Use `format:"json"` only if parsing needs it.
+4. **Tiers**: short=6h, mid=7d (auto-promotes to long after 5 accesses), long=permanent.
+5. **Dedup**: Storing existing `title+namespace` updates the memory.
+6. **Namespaces**: Always pass `namespace` (project/topic) for store/recall.
+7. **Capabilities**: Call `memory_capabilities` once per session.
+8. **Tags**: Use `tags` for cross-cutting concerns; use `memory_auto_tag` if available.
+
+**Memory API**
+- `memory_store(title, content, tier, namespace, tags, priority)`
+- `memory_recall(context, namespace)` → ranked results
+- `memory_search(query, namespace)` → exact AND match
+- `memory_list(namespace, tier)` → filtered browse
+- `memory_get(id)` → single memory + links
+- `memory_promote(id)` → mid→long, clears expiry
+- `memory_consolidate(ids, title)` → merge N→1 with LLM summary
+- `memory_link(source_id, target_id, relation)` → relation: `related_to|supersedes|contradicts|derived_from|reflects_on`
+- *Smart+ Tier Only*: `memory_auto_tag(id)`, `memory_expand_query(query)`, `memory_detect_contradiction(id_a, id_b)`
+
+**Delegation**: When using @oracle, @librarian, @explorer, instruct them to recall memories before working, store findings/corrections after, and use project-aligned namespaces.
+
+**Letta-Compatible Markdown Storage**
+Save data as markdown in `<project_dir>/.opencode/memory/`. Update files after exploring code, making architectural decisions, debugging, refactoring, or finding patterns.
+
+*File Format*: Sanitize filenames/labels by replacing `/` `\` with `_` (e.g., `src_app_ts.md`).
+```yaml
+---
+description: Purpose of the file/feature
+label: sanitized_filepath_identifier
+limit: 5000
+read_only: false
+---
+# [Title]
+[Content]
+```
+*Integration*: ai-memory handles real-time, ranked cross-session recall; Markdown files provide version-controlled, human-readable reference. Use both for a persistent knowledge base.
