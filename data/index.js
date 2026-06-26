@@ -43,6 +43,38 @@ export function normalizeCsvKey(key) {
   return keyMap[normalizedKey] || key.trim();
 }
 
+/**
+ * Normalize empty keys in CSV row data
+ * - Remove keys with empty names and empty values
+ * - Rename keys with empty names but non-empty values to unknown1, unknown2, etc.
+ *
+ * @param {Object} row - CSV row object
+ * @returns {Object} Normalized row object
+ */
+export function normalizeEmptyKeys(row) {
+  const result = {};
+  let unknownCounter = 1;
+
+  for (const [key, value] of Object.entries(row)) {
+    const trimmedKey = key.trim();
+
+    // Empty key
+    if (trimmedKey === '') {
+      // Empty value: skip this field entirely
+      if (value === '' || value == null) {
+        continue;
+      }
+      // Non-empty value: rename to unknownN
+      result[`unknown${unknownCounter++}`] = value;
+    } else {
+      // Normal key: keep as-is
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
 // -------------------------------------------------------------
 // ADD: comment filter stream (simple, safe, chunk-aware)
 // -------------------------------------------------------------
@@ -109,8 +141,9 @@ TANGGAL ENTRY,NAMA,ALAMAT,NIK,TGL LAHIR,PETUGAS ENTRY`
           const mappedKey = normalizeCsvKey(key);
           mappedRow[mappedKey] = row[key];
         }
-        mappedRow.rowIndex = mappedRecords.length;
-        mappedRecords.push(mappedRow);
+        const normalizedRow = normalizeEmptyKeys(mappedRow);
+        normalizedRow.rowIndex = mappedRecords.length;
+        mappedRecords.push(normalizedRow);
       })
       .on('end', () => {
         const dataKunto = mappedRecords.map((row) => {
@@ -131,7 +164,10 @@ TANGGAL ENTRY,NAMA,ALAMAT,NIK,TGL LAHIR,PETUGAS ENTRY`
 }
 
 // Direct run
-if (process.argv.some((arg) => path.toUnix(arg).endsWith('data/index.js'))) {
+if (
+  process.argv.some((arg) => path.toUnix(arg).endsWith('data/index.js')) &&
+  process.cwd().endsWith('browser-automation')
+) {
   (async () => {
     console.log('Loading CSV data...');
     const data = await loadCsvData();
