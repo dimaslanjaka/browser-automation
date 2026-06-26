@@ -8,21 +8,13 @@ Workspace-wide guidelines for code modifications, git workflows, and file editin
 
 ## Git & Commit Conventions
 
-- Use conventional commits style for all commits.
-- Commit messages should be clear, concise, and explain the changes made.
-- Include references to related issues or features in the commit message when applicable.
-- Use imperative mood in commit messages (e.g., "Fix bug" instead of "Fixed bug").
-- Prefix commits with the appropriate type:
-  - `fix` — bug fixes
-  - `feat` — new features
-  - `chore` — maintenance or routine tasks
-  - `refactor` — code refactoring without behavior changes
-  - `docs` — documentation changes
-  - `test` — test-related changes
-  - `build` — build system or configuration changes
-  - `style` — style changes (formatting, whitespace)
-  - `perf` — performance improvements
-  - `security` — security fixes
+For comprehensive guidance on git workflows, commit standards, and staging strategies, refer to [`.opencode/agents/git-commiter.agent.md`](../.opencode/agents/git-commiter.agent.md).
+
+This includes:
+- Conventional commit message format with examples
+- Multiline commit message templates and patterns
+- Context grouping logic and staging strategies
+- Commit validation checklist and best practices
 
 ## File Editor Instructions
 
