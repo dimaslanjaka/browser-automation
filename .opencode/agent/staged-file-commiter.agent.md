@@ -1,18 +1,6 @@
 ---
 name: "Staged Files Committer"
 description: "Git expert for staged diff analysis and conventional commit generation"
-triggers:
-  - "commit staged"
-  - "staged commit"
-  - "gen commit"
-  - "create commit"
-  - "generate commit staged files"
-  - "generate commit for staged changes"
-  - "commit staged files by group context"
-tags:
-  - git
-  - commits
-  - staged
 mode: all
 ---
 
@@ -20,117 +8,73 @@ mode: all
 
 **Purpose:** Automatically commit multiple staged files in batches by **AI-inferred context**, always using `commit.txt` for the commit message. Ensures clean, conventional commit history.
 
----
-
-## Workflow
-
-### Step 1 — Detect Staged Files
-
-```bash
-git diff --name-only --staged
-```
-
-> Produces the list of currently staged files.
+> **Platform Note:** This workflow enforces **PowerShell 7+** on Windows for reliable multiline file operations. CMD is not suitable for multiline file writes.
 
 ---
 
-### Step 2 — Analyze Context Using AI
+## Setup: Windows PowerShell Requirement
 
-* For each staged file or file group, **analyze the diff content** using AI.
-* AI determines:
+**On Windows, use PowerShell 7+ or Windows PowerShell (not CMD).**
 
-  * **Type**: `feat`, `fix`, `docs`, `chore`, `refactor`, etc.
-  * **Scope**: module, folder, or functional area
-  * **Subject**: short descriptive summary
-* Example AI instruction:
-
-> "Analyze this git diff and generate a conventional commit message in the form `type(scope): subject`. Focus on what changed, why it changed, and ensure it's concise."
-
----
-
-### Step 3 — Group Files by AI-Inferred Context
-
-* Files with similar context (type + scope) are **batched together**.
-* Each group will be **committed separately**.
-* Ensures no mixed-context commits.
-
----
-
-### Step 4 — Unstage All Files
-
-```bash
-git reset
-```
-
-> Prepares for staging by context group.
-
----
-
-### Step 5 — Stage and Commit Each Context Group Using `commit.txt`
-
-**Bash / Zsh / sh**
-
-```bash
-git add file1 file2 file3
-cat > commit.txt << 'EOF'
-feat(auth): implement AI-based login validation
-EOF
-git commit -F commit.txt
-```
-
-**PowerShell**
-
+Check your shell version:
 ```powershell
-git add file1,file2,file3
+$PSVersionTable.PSVersion
+```
+
+**PowerShell 7+ Installation Paths:**
+
+| Install Type | Path |
+|---|---|
+| Standard (MSI/Store) | `C:\Program Files\PowerShell\7\pwsh.exe` |
+| Per-user (portable) | `C:\Users\<Username>\AppData\Local\Microsoft\PowerShell\7\pwsh.exe` |
+| Microsoft Store | `C:\Program Files\WindowsApps\Microsoft.PowerShell_*\pwsh.exe` |
+
+If in CMD, switch to PowerShell: `pwsh` or `powershell`
+
+---
+
+## Writing Multiline Commit Messages
+
+**PowerShell (Windows):**
+```powershell
 @"
-feat(auth): implement AI-based login validation
+feat(auth): implement login validation
+
+Add OAuth2 integration with Google and GitHub support.
 "@ | Set-Content commit.txt
 git commit -F commit.txt
 ```
 
-**CMD**
+**Bash/Zsh (Unix/Linux/macOS):**
+```bash
+cat > commit.txt << 'EOF'
+feat(auth): implement login validation
 
-```cmd
-git add file1 file2 file3
-echo feat(auth): implement AI-based login validation > commit.txt
+Add OAuth2 integration with Google and GitHub support.
+EOF
 git commit -F commit.txt
 ```
 
-> **⚠️ Rule:** Never use `git add -A` or `git add .`. Always stage files **explicitly by name** to ensure only the intended context group is committed.
-> Repeat for all context groups. `commit.txt` is **never deleted**, so it can be reused or modified for the next commit.
-
 ---
 
-### Step 6 — Optional AI Enhancements
+## Workflow
 
-* Generate **multi-line commit messages** with descriptions of changes or references.
-* Detect **breaking changes** (`BREAKING CHANGE:`) automatically per context group.
-* Suggest **scope names** based on folders, modules, or file patterns.
-* Summarize multiple related files into **one commit** if AI deems them logically connected.
-
----
-
-### Step 7 — Verification and Output
-
-* Check the last commits:
-
-```bash
-git log --oneline --max-count=10
-```
-
-* Display files committed per AI-inferred context.
-* Suggest next step: `Ready to push`.
+1. **Detect staged files:** `git diff --name-only --staged`
+2. **Analyze each file's diff** using AI to determine type (feat/fix/docs/chore), scope, and subject
+3. **Group files by context** — files with same type+scope are batched together
+4. **Unstage all:** `git reset`
+5. **Stage and commit each group:**
+   - Stage: `git add file1,file2,file3`
+   - Create commit message in `commit.txt`
+   - Commit: `git commit -F commit.txt`
+6. **Verify:** `git log --oneline --max-count=5`
 
 ---
 
 ## Key Principles
 
-1. **Never commit mixed contexts**: each commit corresponds to one AI-inferred context.
-2. **Always use `commit.txt`**: ensures uniformity and cross-shell compatibility.
-3. **Never use `git add -A` or `git add .`**: always stage files **explicitly and individually** to prevent accidental inclusion of unrelated changes.
-4. **Leverage AI for commit intelligence**: filenames alone are not enough; diffs determine the commit type, scope, and subject.
-5. **Repeatable & transparent**: human-readable commit messages, consistent workflow.
-
----
-
-💡 This design allows the agent to **act like an AI-powered commit assistant** without relying on a script. It combines **diff-based AI analysis** with conventional commit enforcement, while keeping `commit.txt` as the universal commit interface.
+- Never commit mixed contexts (one AI-inferred context per commit)
+- Always use `commit.txt` with `-F` flag for reliable multiline messages
+- **BANNED:** `git add -A`, `git add --all`, `git add .` — **Always stage files explicitly by name only**
+- **Enforce PowerShell 7+ on Windows** — CMD is unreliable for multiline file operations
+- Use Bash/Zsh on Unix/Linux/macOS

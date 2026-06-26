@@ -86,7 +86,7 @@ deobfuscate/
 
 .opencode/*
 !.opencode/opencode.*
-!.opencode/agents/
+!.opencode/agent*/
 *.txt
 *.bak*
 .eslintcache
