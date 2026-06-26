@@ -25,7 +25,7 @@
     "*Test.php": "phpunit --verbose --debug --testdox --colors=always",
     "*.php": "php -d display_errors=1 -d error_reporting=E_ALL -d xdebug.mode=coverage -d xdebug.start_with_request=yes -d xdebug.client_port=9003 -d xdebug.log=$workspaceRoot/tmp/logs/xdebug.log $fullFileName",
     "rollup.*.{js,cjs,mjs,ts}": "rollup -c",
-    "**/*.test.{js,ts}": "npx -y jest --testPathPatterns=$fileName",
+    "**/*.test.{js,ts}": "node --no-warnings --experimental-vm-modules -r ./.vscode/js-hook.cjs ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose --testPathPatterns=$fileName",
     "**/*.test.cjs": "npm test -- -- --testPathPatterns=$fileName",
     "**/*.test.mjs": "npm test -- -- --testPathPatterns=$fileName",
     "*.sh": "bash -c",
