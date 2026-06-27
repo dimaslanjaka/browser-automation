@@ -138,8 +138,8 @@ function runBundledCommand(command, args, sameTerminal = false, keepOpen = false
   if (needsNewWindow) {
     if (process.platform === 'win32') {
       // Windows: open a new cmd window.
-      // Use /k (keep open) for skrin or when -k flag is set, otherwise /c (close after)
-      const cmdFlag = keepOpen || command === 'skrin' ? '/k' : '/c';
+      // Use /k (keep open) when -k flag is set, otherwise /c (close after)
+      const cmdFlag = keepOpen ? '/k' : '/c';
       const child = spawn('cmd', ['/c', 'start', '', 'cmd', cmdFlag, 'node', ...nodeArgs], {
         cwd: repoRoot,
         detached: true,
