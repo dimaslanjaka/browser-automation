@@ -5,7 +5,7 @@ import path from 'path';
 import type { Browser, Page } from 'puppeteer';
 import { isEmpty, writefile } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
-import { getStreetAddressInformation } from '../../address/index.js';
+import { findExactKelurahanFromAddress, normalizeAddressNameToIndonesian } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
@@ -13,7 +13,7 @@ import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } fr
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
-import { findInArray, normalizeAddressNameToIndonesian, ucwords } from '../../utils/string.js';
+import { findInArray, ucwords } from '../../utils/string.js';
 import { fixData } from '../../xlsx-helper.js';
 import { confirmIdentityModal } from './confirmIdentityModal.js';
 import { selectDateWithUI, setDatepickerValue } from './datePicker.js';
@@ -80,57 +80,49 @@ async function resolveAndFillAddress(
     kecamatan = '',
     kelurahan = '';
 
-  const keywordAddr = `${fixedData.alamat} Surabaya, Jawa Timur`.trim();
-  const geocodedAddress = await getStreetAddressInformation(keywordAddr);
-
-  if (geocodedAddress) {
-    fixedData._address = geocodedAddress.raw || geocodedAddress;
-    console.log(`Fetching address from geocoder for: ${keywordAddr}`);
-    console.log('Geocoder result:', geocodedAddress);
-
-    kelurahan = geocodedAddress.kelurahan || '';
-    kecamatan = geocodedAddress.kecamatan || '';
-    kabupatenOrKota = geocodedAddress.kabupaten || geocodedAddress.kota || '';
-    provinsi = geocodedAddress.provinsi || '';
-
-    if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
-      kabupatenOrKota = 'Kota Surabaya';
-    }
-  }
-
-  // Fallback to parsed NIK for any missing components
-  if ((isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) && parsedNik) {
-    const _parsedNikData = parsedNik.status === 'success' ? parsedNik.data : ({} as nikUtils.NikParseSuccess['data']);
-
-    if (isEmpty(kabupatenOrKota)) kabupatenOrKota = _parsedNikData.kotakab || '';
-    if (isEmpty(kecamatan)) kecamatan = (_parsedNikData as any).kecamatan || _parsedNikData.namaKec || '';
-    if (isEmpty(provinsi)) provinsi = _parsedNikData.provinsi || '';
-
-    if (isEmpty(kelurahan)) {
-      const parsedKelurahan = _parsedNikData.kelurahan != null ? _parsedNikData.kelurahan : null;
-      const selectedKelurahan = Array.isArray(parsedKelurahan)
-        ? parsedKelurahan.length > 0
-          ? parsedKelurahan[0]
-          : null
-        : parsedKelurahan || null;
-      kelurahan = selectedKelurahan
-        ? typeof selectedKelurahan === 'object' && 'name' in selectedKelurahan
-          ? String(selectedKelurahan.name || '')
-          : String(selectedKelurahan)
-        : '';
-    }
-
-    console.log(
-      `Using parsed NIK fallback for address: ${kelurahan || '<unknown kelurahan>'}, ` +
-        `${kecamatan || '<unknown kec>'}, ${kabupatenOrKota || '<unknown kota>'}, ${provinsi || '<unknown provinsi>'}`
-    );
-  }
-
-  if (!geocodedAddress && (!parsedNik || parsedNik.status !== 'success')) {
+  const parsedNikData = parsedNik?.status === 'success' ? parsedNik.data : null;
+  if (!parsedNikData) {
     throw new Error(
-      `❌ Failed to determine address: no geocoder result and no parsed NIK data available ` +
+      `❌ Failed to determine address: parsed NIK data is not available ` +
         `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
     );
+  }
+
+  console.log(`Resolving exact kelurahan for address: ${fixedData.alamat}`);
+  const resolvedAddress = await findExactKelurahanFromAddress(parsedNikData, fixedData.alamat);
+
+  if (!resolvedAddress) {
+    throw new Error(
+      `❌ Failed to determine address: resolver returned no result ` +
+        `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+    );
+  }
+
+  if (resolvedAddress.geocoded) {
+    fixedData._address = resolvedAddress.geocoded.raw || resolvedAddress.geocoded;
+    console.log('Geocoder result:', resolvedAddress.geocoded);
+  }
+
+  console.log('Exact kelurahan resolver result:', {
+    source: resolvedAddress.source,
+    name: resolvedAddress.name,
+    id: resolvedAddress.id
+  });
+
+  provinsi = resolvedAddress.result?.provinsi || parsedNikData.provinsi || '';
+  kabupatenOrKota = resolvedAddress.result?.kotakab || parsedNikData.kotakab || '';
+  kecamatan = resolvedAddress.result?.kecamatan || (parsedNikData as any).kecamatan || parsedNikData.namaKec || '';
+  kelurahan = resolvedAddress.result?.kelurahan || resolvedAddress.name || '';
+
+  if (isEmpty(kelurahan)) {
+    throw new Error(
+      `❌ Failed to determine kelurahan: resolver returned no kelurahan ` +
+        `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+    );
+  }
+
+  if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
+    kabupatenOrKota = 'Kota Surabaya';
   }
 
   const originalAddressParts = { provinsi, kabupatenOrKota, kecamatan, kelurahan };
