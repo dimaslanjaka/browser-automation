@@ -5,7 +5,7 @@ import path from 'path';
 import type { Browser, Page } from 'puppeteer';
 import { isEmpty, writefile } from 'sbg-utility';
 import type { ExcelRowData, fixDataResult } from '../../../globals.js';
-import { findExactKelurahanFromAddress, normalizeAddressNameToIndonesian } from '../../address/index.js';
+import { findExactKelurahanFromAddress } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
@@ -119,28 +119,6 @@ async function resolveAndFillAddress(
       `❌ Failed to determine kelurahan: resolver returned no kelurahan ` +
         `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
     );
-  }
-
-  if (kabupatenOrKota.toLowerCase().includes('surabaya')) {
-    kabupatenOrKota = 'Kota Surabaya';
-  }
-
-  const originalAddressParts = { provinsi, kabupatenOrKota, kecamatan, kelurahan };
-  provinsi = normalizeAddressNameToIndonesian(provinsi);
-  kabupatenOrKota = normalizeAddressNameToIndonesian(kabupatenOrKota);
-  kecamatan = normalizeAddressNameToIndonesian(kecamatan);
-  kelurahan = normalizeAddressNameToIndonesian(kelurahan);
-
-  if (
-    originalAddressParts.provinsi !== provinsi ||
-    originalAddressParts.kabupatenOrKota !== kabupatenOrKota ||
-    originalAddressParts.kecamatan !== kecamatan ||
-    originalAddressParts.kelurahan !== kelurahan
-  ) {
-    console.log('Normalized address parts to Indonesian format:', {
-      before: originalAddressParts,
-      after: { provinsi, kabupatenOrKota, kecamatan, kelurahan }
-    });
   }
 
   if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {

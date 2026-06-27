@@ -1,4 +1,67 @@
-import { getStreetAddressInformation } from './index.js';
+import { getStreetAddressInformation } from './getStreetAddressInformation.js';
+import { normalizeAddressNameToIndonesian } from './normalizeAddressNameToIndonesian.js';
+
+const normalizeAddressPart = (value) => normalizeAddressNameToIndonesian(value);
+
+const normalizeKabupatenKota = (value) => {
+  const normalized = normalizeAddressPart(value);
+  return normalized.toLowerCase().includes('surabaya') ? 'Kota Surabaya' : normalized;
+};
+
+const normalizeGeocodedAddress = (geocoded) => {
+  if (!geocoded) {
+    return geocoded;
+  }
+
+  return {
+    ...geocoded,
+    provinsi: normalizeAddressPart(geocoded.provinsi),
+    kabupaten: normalizeKabupatenKota(geocoded.kabupaten),
+    kota: normalizeKabupatenKota(geocoded.kota),
+    kecamatan: normalizeAddressPart(geocoded.kecamatan),
+    kelurahan: normalizeAddressPart(geocoded.kelurahan)
+  };
+};
+
+const createKelurahanResult = ({
+  nik,
+  provinsi,
+  kotakab,
+  namaKec,
+  kelurahanName,
+  address,
+  geocoded,
+  source,
+  id,
+  error,
+  available
+}) => {
+  const normalizedKelurahan = kelurahanName ? normalizeAddressPart(kelurahanName) : null;
+  const response = {
+    name: normalizedKelurahan,
+    id: id || null,
+    result: {
+      nik,
+      provinsi: normalizeAddressPart(provinsi),
+      kotakab: normalizeKabupatenKota(kotakab),
+      kecamatan: normalizeAddressPart(namaKec),
+      kelurahan: normalizedKelurahan,
+      alamat: address
+    },
+    geocoded: normalizeGeocodedAddress(geocoded),
+    source
+  };
+
+  if (error != null) {
+    response.error = error;
+  }
+
+  if (available !== undefined) {
+    response.available = available;
+  }
+
+  return response;
+};
 
 /**
  * Find exact kelurahan from NIK data and address using geocoding and fuzzy matching.
@@ -39,17 +102,13 @@ export async function findExactKelurahanFromAddress(nikData, address, options = 
       exactMatch = kelurahan.find((k) => normalizeKelurahan(k.name) === geocodedNormalized);
 
       if (exactMatch) {
-        return {
-          name: exactMatch.name,
-          id: exactMatch.id,
-          result: {
-            nik,
-            provinsi,
-            kotakab,
-            kecamatan: namaKec,
-            kelurahan: exactMatch.name,
-            alamat: address
-          },
+        return createKelurahanResult({
+          nik,
+          provinsi,
+          kotakab,
+          namaKec,
+          kelurahanName: exactMatch.name,
+          address,
           geocoded: {
             kelurahan: geocoded.kelurahan,
             kecamatan: geocoded.kecamatan,
@@ -58,8 +117,9 @@ export async function findExactKelurahanFromAddress(nikData, address, options = 
             fullAddress: geocoded.fullAddress,
             provider: geocoded.provider
           },
-          source: 'geocoder'
-        };
+          source: 'geocoder',
+          id: exactMatch.id
+        });
       }
     }
 
@@ -74,97 +134,80 @@ export async function findExactKelurahanFromAddress(nikData, address, options = 
     });
 
     if (exactMatch) {
-      return {
-        name: exactMatch.name,
-        id: exactMatch.id,
-        result: {
-          nik,
-          provinsi,
-          kotakab,
-          kecamatan: namaKec,
-          kelurahan: exactMatch.name,
-          alamat: address
-        },
-        geocoded: geocoded,
-        source: 'address'
-      };
+      return createKelurahanResult({
+        nik,
+        provinsi,
+        kotakab,
+        namaKec,
+        kelurahanName: exactMatch.name,
+        address,
+        geocoded,
+        source: 'address',
+        id: exactMatch.id
+      });
     }
 
     // No match found - fallback to first kelurahan from NIK district
     const fallbackKelurahan = Array.isArray(kelurahan) && kelurahan.length > 0 ? kelurahan[0] : null;
 
     if (fallbackKelurahan) {
-      return {
-        name: fallbackKelurahan.name,
-        id: fallbackKelurahan.id,
-        result: {
-          nik,
-          provinsi,
-          kotakab,
-          kecamatan: namaKec,
-          kelurahan: fallbackKelurahan.name,
-          alamat: address
-        },
-        geocoded: geocoded,
-        source: 'nik-fallback',
-        available: kelurahan
-      };
-    }
-
-    // No kelurahan data available at all
-    return {
-      name: null,
-      id: null,
-      result: {
+      return createKelurahanResult({
         nik,
         provinsi,
         kotakab,
-        kecamatan: namaKec,
-        kelurahan: null,
-        alamat: address
-      },
-      geocoded: geocoded,
+        namaKec,
+        kelurahanName: fallbackKelurahan.name,
+        address,
+        geocoded,
+        source: 'nik-fallback',
+        id: fallbackKelurahan.id,
+        available: kelurahan
+      });
+    }
+
+    // No kelurahan data available at all
+    return createKelurahanResult({
+      nik,
+      provinsi,
+      kotakab,
+      namaKec,
+      kelurahanName: null,
+      address,
+      geocoded,
       source: 'none',
       available: kelurahan
-    };
+    });
   } catch (error) {
     // Error during geocoding - fallback to first kelurahan from NIK district
     const fallbackKelurahan = Array.isArray(kelurahan) && kelurahan.length > 0 ? kelurahan[0] : null;
 
     if (fallbackKelurahan) {
-      return {
-        name: fallbackKelurahan.name,
-        id: fallbackKelurahan.id,
-        result: {
-          nik,
-          provinsi,
-          kotakab,
-          kecamatan: namaKec,
-          kelurahan: fallbackKelurahan.name,
-          alamat: address
-        },
-        geocoded: null,
-        source: 'nik-fallback',
-        error: error.message,
-        available: kelurahan
-      };
-    }
-
-    return {
-      name: null,
-      id: null,
-      result: {
+      return createKelurahanResult({
         nik,
         provinsi,
         kotakab,
-        kecamatan: namaKec,
-        kelurahan: null,
-        alamat: address
-      },
+        namaKec,
+        kelurahanName: fallbackKelurahan.name,
+        address,
+        geocoded: null,
+        source: 'nik-fallback',
+        id: fallbackKelurahan.id,
+        error: error.message,
+        available: kelurahan
+      });
+    }
+
+    return createKelurahanResult({
+      nik,
+      provinsi,
+      kotakab,
+      namaKec,
+      kelurahanName: null,
+      address,
       geocoded: null,
       source: 'none',
       error: error.message,
       available: kelurahan
-    };
+    });
   }
 }
