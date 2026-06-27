@@ -197,7 +197,8 @@ export async function parallelSkrinCheck(options?: {
 
     try {
       browser = await puppeteer.connect({
-        browserWSEndpoint: endpoint
+        browserWSEndpoint: endpoint,
+        protocolTimeout: 180_000
       });
 
       claimedEndpoint = endpoint;

@@ -36,7 +36,10 @@ async function connectEndpoint() {
 
   console.log('endpoint claimed', claimed);
   // 3️⃣ Connect to the browser via the endpoint
-  const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: endpoint,
+    protocolTimeout: 180_000
+  });
   browser.once('disconnected', () => {
     // release claim when the browser disconnects
     manager.releaseEndpointClaim(endpoint, process.pid);

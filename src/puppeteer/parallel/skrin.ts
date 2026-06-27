@@ -47,7 +47,10 @@ async function getPage(): Promise<import('puppeteer').Page> {
     process.on('exit', release);
 
     try {
-      const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+      const browser = await puppeteer.connect({
+        browserWSEndpoint: endpoint,
+        protocolTimeout: 180_000
+      });
 
       browser.once('disconnected', async () => {
         release();

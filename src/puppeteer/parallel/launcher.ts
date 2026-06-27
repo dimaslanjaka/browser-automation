@@ -35,6 +35,9 @@ export async function useDefault() {
     ignoreAllFlags: false,
     customConfig: {
       userDataDir: userDataDir
+    },
+    connectOption: {
+      protocolTimeout: 180_000
     }
   });
 

@@ -149,7 +149,9 @@ export async function connect(): Promise<Browser> {
     }
 
     try {
-      const { browser } = await connectRealBrowser({ connectOption: { browserWSEndpoint: endpoint } });
+      const { browser } = await connectRealBrowser({
+        connectOption: { browserWSEndpoint: endpoint, protocolTimeout: 180_000 }
+      });
       browser.once('disconnected', () => {
         endpointManager.releaseEndpointClaim(endpoint, ownerPid);
       });
