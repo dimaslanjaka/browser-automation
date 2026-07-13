@@ -181,6 +181,9 @@ function reserveClusterUserDataDir({
     !reservedUserDataDirs.has(resolvedPreferredPath) &&
     !isUserDataDirInUse(resolvedPreferredPath)
   ) {
+    if (!fs.existsSync(resolvedPreferredPath)) {
+      fs.mkdirSync(resolvedPreferredPath, { recursive: true });
+    }
     reservedUserDataDirs.add(resolvedPreferredPath);
     return resolvedPreferredPath;
   }
