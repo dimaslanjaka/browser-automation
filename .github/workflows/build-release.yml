@@ -41,6 +41,9 @@ jobs:
       GH_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     steps:
+      - name: 🔑 Configure git credentials for GitLab submodules
+        run: |
+          git config --global url."https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/".insteadOf "https://gitlab.com/"
       - name: ⬇️ Checkout workflow repository
         uses: actions/checkout@v6
         with:
