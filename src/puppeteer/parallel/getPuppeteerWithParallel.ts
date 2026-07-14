@@ -52,7 +52,7 @@ export async function getPuppeteerWithParallel(options = {}) {
       // connect using existing helper which will use puppeteer.connect when browserWSEndpoint is provided
       const res = await getPuppeteer({ ...options, autoSwitchProfileDir: true, browserWSEndpoint: endpoint });
       browser = res.browser;
-      res.page.goto('http://sh.webmanajemen.com').catch(noop);
+      res.page.goto('http://www.webmanajemen.com').catch(noop);
       claimedEndpoint = endpoint;
       break;
     } catch (err: any) {
@@ -77,7 +77,7 @@ export async function getPuppeteerWithParallel(options = {}) {
 
   // open a new page and bring it to front (sometimes the connected browser doesn't have a page or the page is not focused)
   const page = await browser.newPage();
-  page.goto('http://sh.webmanajemen.com').catch(noop);
+  page.goto('http://www.webmanajemen.com').catch(noop);
   await page.bringToFront();
 
   // close extra tabs if more than 2 are open (sometimes puppeteer.connect opens an extra blank tab)

@@ -61,7 +61,10 @@ async function getPage(): Promise<import('puppeteer').Page> {
 
       await closeOtherTabs(browser, 2);
       const page = await browser.newPage();
-      page.goto('http://sh.webmanajemen.com').catch(noop);
+      await goWithRetry(page, 'http://www.webmanajemen.com', {
+        timeout: 10000,
+        waitUntil: 'networkidle2'
+      }).catch(noop);
       await page.bringToFront();
 
       return page;
