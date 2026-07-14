@@ -134,7 +134,16 @@ TANGGAL ENTRY,NAMA,ALAMAT,NIK,TGL LAHIR,PETUGAS ENTRY`
 
     fs.createReadStream(targetCsvPath)
       .pipe(createCommentFilter('#'))
-      .pipe(csvParser())
+      .pipe(
+        csvParser({
+          mapValues: ({ header, value }) => {
+            if (header.toLowerCase() === 'nik') {
+              return String(value).trim();
+            }
+            return value;
+          }
+        })
+      )
       .on('data', (row) => {
         const mappedRow = {};
         for (const key in row) {

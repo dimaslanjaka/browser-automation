@@ -1,6 +1,7 @@
-*.csv
+/*.csv
 /script
 /engine
 /*.json
 /logs
 /not_*
+/*.xlsx
