@@ -9,6 +9,7 @@ import { processData } from '../../runner/skrin/direct-process-data.js';
 import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
+import goWithRetry from '../goWithRetry.js';
 
 /**
  * Connects to an available browser endpoint, registers cleanup handlers,

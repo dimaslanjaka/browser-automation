@@ -1,5 +1,4 @@
 import path from 'path';
-import type { Page } from 'puppeteer';
 import { connect } from 'puppeteer-real-browser';
 import { writefile } from 'sbg-utility';
 import { fileURLToPath } from 'url';
@@ -18,6 +17,7 @@ export interface GotoOptions {
   cookie?: import('../Cookies.js').PuppeteerCookies;
   retryDelay?: number;
   onRetry?: Function;
+  url?: string;
 }
 
 export async function useDefault() {
@@ -33,20 +33,15 @@ export async function useDefault() {
     turnstile: true,
     disableXvfb: false,
     ignoreAllFlags: false,
-    customConfig: {
-      userDataDir: userDataDir
-    },
-    connectOption: {
-      protocolTimeout: 180_000
-    }
+    customConfig: { userDataDir },
+    connectOption: { protocolTimeout: 180_000 }
   });
 
-  const goto = async (pageOrUrl: string | Page, url?: string | GotoOptions, options?: GotoOptions) => {
+  const goto = async (pageOrUrl: any, url?: string | GotoOptions, options?: GotoOptions) => {
     if (typeof pageOrUrl === 'string') {
       const page = await browser.newPage();
       return goWithRetry(page as any, pageOrUrl, typeof url === 'object' ? url : {});
     }
-
     return goWithRetry(pageOrUrl, typeof url === 'string' ? url : '', options);
   };
 
@@ -71,46 +66,47 @@ export async function useDefault() {
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
-  const { browser, goto } = await useDefault();
+  const { browser } = await useDefault();
 
-  await goto('http://sh.webmanajemen.com', { timeout: 10000, waitUntil: 'networkidle2' }).catch(console.log);
   await closeOtherTabs(browser as any, 1);
 
-  // Log target lifecycle events (no need to re-write endpoint — it's already registered).
-  browser.on('targetcreated', async (target) => {
+  const [initialPage] = await browser.pages();
+
+  const warmupUrls = [
+    { url: 'http://www.webmanajemen.com', page: initialPage },
+    { url: 'https://www.apivoid.com/tools/bot-detection-test/' },
+    { url: 'https://www.scrapingcourse.com/antibot-challenge' },
+    { url: 'https://bot.sannysoft.com' }
+  ];
+
+  for (const { url, page } of warmupUrls) {
+    const target = page ?? (await browser.newPage());
+    await goWithRetry(target as any, url, {
+      waitUntil: 'networkidle2',
+      timeout: 10000
+    }).catch(console.log);
+  }
+
+  const logTarget = (event: string) => async (target: any) => {
     try {
-      console.log('Target created:', target.type(), target.url());
-      if (target.type() === 'page') {
+      console.log(`Target ${event}:`, target.type(), target.url());
+      if (event === 'created' && target.type() === 'page') {
         const pageFromTarget = await target.page();
         if (pageFromTarget) console.log('New page target URL:', pageFromTarget.url());
       }
     } catch (err) {
-      console.error('Error handling targetcreated:', err);
+      console.error(`Error handling target${event}:`, err);
     }
-  });
+  };
 
-  browser.on('targetdestroyed', (target) => {
-    try {
-      console.log('Target destroyed:', target.type(), target.url());
-    } catch (err) {
-      console.error('Error handling targetdestroyed:', err);
-    }
-  });
+  browser.on('targetcreated', logTarget('created'));
+  browser.on('targetdestroyed', logTarget('destroyed'));
+  browser.on('targetchanged', logTarget('changed'));
 
-  browser.on('targetchanged', (target) => {
-    try {
-      console.log('Target changed:', target.type(), target.url());
-    } catch (err) {
-      console.error('Error handling targetchanged:', err);
-    }
-  });
-
-  // Write the WebSocket endpoint to a file for other processes to connect
   const wsEndpoint = browser.wsEndpoint();
   console.log('WebSocket Endpoint:', wsEndpoint);
   endpointManager.writeEndpoint(wsEndpoint);
 
-  // Remove unavailable endpoints after registering the new one
   const endpoints = await endpointManager.getAllActiveEndpoints().catch(() => []);
   for (const item of endpoints) {
     if (!item.puppeteerAvailable && item.endpoint !== wsEndpoint) {
@@ -119,32 +115,20 @@ export async function parallelLauncher() {
     }
   }
 
-  // Write indicator file to signal that the browser is running
   const runningIndicatorPath = path.join(GLOBAL_PUPPETEER_DIR, 'browser-running', process.pid.toString());
   writefile(runningIndicatorPath, 'Browser is running');
   console.log(`Browser running indicator created at: ${runningIndicatorPath}`);
 
-  // Keep the process alive until the browser is closed
-  await new Promise((resolve) => {
-    browser?.on('disconnected', () => {
+  await new Promise<void>((resolve) => {
+    const release = (reason: string) => () => {
       endpointManager.removeEndpoint(wsEndpoint);
-      resolve(true);
-    });
-    // Listen for process disconnects from clients (e.g., skrin.runner.ts)
-    process.on('SIGINT', () => {
-      endpointManager.removeEndpoint(wsEndpoint);
-      console.log('SIGINT received, released endpoint:', wsEndpoint);
-      resolve(true);
-    });
-    process.on('SIGTERM', () => {
-      endpointManager.removeEndpoint(wsEndpoint);
-      console.log('SIGTERM received, released endpoint:', wsEndpoint);
-      resolve(true);
-    });
-    process.on('exit', () => {
-      endpointManager.removeEndpoint(wsEndpoint);
-      console.log('Process exit, released endpoint:', wsEndpoint);
-      resolve(true);
-    });
+      console.log(`${reason}, released endpoint:`, wsEndpoint);
+      resolve();
+    };
+
+    browser.on('disconnected', release('Browser disconnected'));
+    process.once('SIGINT', release('SIGINT'));
+    process.once('SIGTERM', release('SIGTERM'));
+    process.once('exit', release('Process exit'));
   });
 }
