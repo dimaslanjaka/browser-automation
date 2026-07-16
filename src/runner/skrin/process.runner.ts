@@ -2,8 +2,7 @@ import Bluebird from 'bluebird';
 import { array_shuffle, scheduler } from 'sbg-utility';
 import path from 'upath';
 import { loadCsvData } from '../../../data/index.js';
-import { LogDatabase } from '../../database/LogDatabase.js';
-import { toValidMySQLDatabaseName } from '../../database/db_utils.js';
+import { createSkrinDatabase } from '../../database/shared.js';
 import getPuppeteerWithParallel from '../../puppeteer/parallel/getPuppeteerWithParallel.js';
 import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
 import { getNumbersOnly } from '../../utils/browser.js';
@@ -12,17 +11,7 @@ import { ExcelRowData } from '../../../globals.js';
 
 scheduler.register();
 
-const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
-const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
-  connectTimeout: 60000,
-  connectionLimit: 10,
-  host: MYSQL_HOST || 'localhost',
-  user: MYSQL_USER || 'root',
-  password: MYSQL_PASS || '',
-  port: Number(MYSQL_PORT) || 3306,
-  type: MYSQL_HOST ? 'mysql' : 'sqlite'
-});
-export { database as skrinDatabase };
+const database = createSkrinDatabase();
 
 async function main() {
   const { page, release } = await getPuppeteerWithParallel();

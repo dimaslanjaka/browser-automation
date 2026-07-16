@@ -6,7 +6,7 @@ import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import puppeteer from 'puppeteer-extra';
 import { closeOtherTabs, maximizeWindow, pageScreenshot, typeAndTrigger } from '../../puppeteer_utils.js';
-import { skrinDatabase } from '../../runner/skrin/process.runner.js';
+import { createSkrinDatabase } from '../../database/shared.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import { getNumbersOnly, sleep } from '../../utils/browser.js';
 import { imageFileToDataUrl, openImageExternally } from '../../utils/image.js';
@@ -222,7 +222,7 @@ export async function parallelSkrinCheck(options?: {
   const page = await browser.newPage();
   await page.bringToFront();
 
-  const database = skrinDatabase;
+  const database = createSkrinDatabase();
 
   const csvData = (await loadCsvData<ExcelRowData>()) as ExcelRowData[];
 

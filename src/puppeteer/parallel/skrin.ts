@@ -4,9 +4,9 @@ import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
+import { createSkrinDatabase } from '../../database/shared.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
-import { skrinDatabase } from '../../runner/skrin/process.runner.js';
 import { getNumbersOnly, noop } from '../../utils/browser.js';
 import EndpointManager from './EndpointManager.js';
 import goWithRetry from '../goWithRetry.js';
@@ -93,6 +93,8 @@ export async function parallelSkrin(opts: {
     typeof argv['skip-current-month-validation'] !== 'undefined'
       ? Boolean(argv['skip-current-month-validation'])
       : undefined;
+
+  const database = createSkrinDatabase();
   const cliSkipYear =
     typeof argv['skip-current-year-validation'] !== 'undefined'
       ? Boolean(argv['skip-current-year-validation'])
@@ -103,7 +105,7 @@ export async function parallelSkrin(opts: {
     dataKunto = await loadCsvData<ExcelRowData>();
   } else {
     dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
-      const existing = await skrinDatabase.getLogById(getNumbersOnly(data.nik));
+      const existing = await database.getLogById(getNumbersOnly(data.nik));
       return !(existing && existing.data);
     });
   }
@@ -128,7 +130,7 @@ export async function parallelSkrin(opts: {
   };
 
   async function processOne(data: ExcelRowData): Promise<ProcessDataResult> {
-    return processData(page, data, skrinDatabase, options).catch((err) => ({
+    return processData(page, data, database, options).catch((err) => ({
       status: 'error' as const,
       reason: 'process_data_exception',
       description: err instanceof Error ? err.message : String(err)

@@ -4,8 +4,7 @@ import type { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
 import { loadCsvData } from '../../data/index.js';
 import type { ExcelRowData } from '../../globals.js';
-import { LogDatabase } from '../database/LogDatabase.js';
-import { toValidMySQLDatabaseName } from '../database/db_utils.js';
+import { createSkrinDatabase } from '../database/shared.js';
 import { closeOtherTabs, getPuppeteerCluster } from '../puppeteer_utils.js';
 import { getNumbersOnly } from '../utils/index.js';
 import { processData } from './skrin/direct-process-data.js';
@@ -20,16 +19,7 @@ const cliArgs = minimist(process.argv.slice(2), {
   }
 });
 
-const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
-const database = new LogDatabase(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
-  connectTimeout: 60000,
-  connectionLimit: 10,
-  host: MYSQL_HOST || 'localhost',
-  user: MYSQL_USER || 'root',
-  password: MYSQL_PASS || '',
-  port: Number(MYSQL_PORT) || 3306,
-  type: MYSQL_HOST ? 'mysql' : 'sqlite'
-});
+const database = createSkrinDatabase();
 
 async function main() {
   const defaultMaxConcurrency = 2;

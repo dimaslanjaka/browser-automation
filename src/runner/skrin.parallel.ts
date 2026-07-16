@@ -5,27 +5,12 @@ import type { Browser } from 'puppeteer';
 import { loadCsvData } from '../../data/index.js';
 import { ExcelRowData } from '../../globals.js';
 import { getNumbersOnly } from '../utils/browser.js';
-import { toValidMySQLDatabaseName } from '../database/db_utils.js';
-import { LogDatabase } from '../database/LogDatabase.js';
+import { createSkrinDatabase } from '../database/shared.js';
 import { processData } from './skrin/direct-process-data.js';
 import { closeOtherTabs } from '../puppeteer_utils.js';
 import { array_shuffle } from 'sbg-utility';
 
-type DatabaseData = {
-  id: string;
-  data: any;
-  message: string;
-};
-const { MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_PORT } = process.env;
-const database = new LogDatabase<DatabaseData>(toValidMySQLDatabaseName('skrin_' + process.env.DATABASE_FILENAME), {
-  connectTimeout: 60000,
-  connectionLimit: 10,
-  host: MYSQL_HOST || 'localhost',
-  user: MYSQL_USER || 'root',
-  password: MYSQL_PASS || '',
-  port: Number(MYSQL_PORT) || 3306,
-  type: MYSQL_HOST ? 'mysql' : 'sqlite'
-});
+const database = createSkrinDatabase();
 
 const parallelRunsFromEnv = Number(process.env.SKRIN_PARALLEL_RUNS);
 const retryAttemptsFromEnv = Number(process.env.SKRIN_RETRY_ATTEMPTS);
