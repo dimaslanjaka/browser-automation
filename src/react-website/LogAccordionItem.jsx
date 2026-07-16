@@ -8,6 +8,8 @@ import { ucwords } from '../utils/string.js';
 import styles from './LogsViewer.module.scss';
 
 export default function LogAccordionItem({ log, idx, imageUrl }) {
+  const [loadedImageSrc, setLoadedImageSrc] = useState(null);
+
   let indicatorCLass = '';
   if (log.data?.status === 'invalid') {
     indicatorCLass = styles.textInvalid;
@@ -20,7 +22,9 @@ export default function LogAccordionItem({ log, idx, imageUrl }) {
     <Accordion.Item eventKey={String(idx)} className={styles.accordionItem}>
       <Accordion.Header className={styles.accordionHeader}>
         <span className="d-block w-100">
-          {imageUrl && <i className="fa-duotone fa-solid fa-image me-2" title="Image available" aria-hidden="true"></i>}
+          {loadedImageSrc && (
+            <i className="fa-duotone fa-solid fa-image me-2" title="Image available" aria-hidden="true"></i>
+          )}
           <span className={`fw-bold ${indicatorCLass}`}>{log.data?.nik || ''}</span> -{' '}
           {
             // On mobile, trim nama to fit smaller screens
@@ -42,7 +46,7 @@ export default function LogAccordionItem({ log, idx, imageUrl }) {
       </Accordion.Header>
       <Accordion.Body className={styles.accordionBody}>
         {/* Screenshot image if available */}
-        {imageUrl && <ImageBlock imageUrl={imageUrl} nik={log.data?.nik} />}
+        {imageUrl && <ImageBlock imageUrl={imageUrl} nik={log.data?.nik} onImageLoad={setLoadedImageSrc} />}
         {/* NIK with copy button */}
         <div className={`d-flex align-items-center mb-2 ${styles.nikRow}`}>
           <span className="fw-bold me-2">NIK:</span>
@@ -273,11 +277,13 @@ export default function LogAccordionItem({ log, idx, imageUrl }) {
   );
 }
 
-function ImageBlock({ imageUrl, nik }) {
+function ImageBlock({ imageUrl, nik, onImageLoad }) {
   const [src, setSrc] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    let img = null;
+
     async function load() {
       if (!imageUrl) return;
       try {
@@ -286,23 +292,42 @@ function ImageBlock({ imageUrl, nik }) {
           try {
             const res = await axios.get(imageUrl, { responseType: 'text' });
             const uri = decryptJson(res.data, import.meta.env.VITE_JSON_SECRET);
-            if (!cancelled) setSrc(uri);
+            if (!cancelled) {
+              setSrc(uri);
+              onImageLoad?.(uri);
+            }
           } catch (err) {
-            // per instruction: on error don't display, just log
             console.warn('Failed to fetch/decrypt image bin for', nik, err);
+            if (!cancelled) onImageLoad?.(null);
           }
         } else {
-          if (!cancelled) setSrc(imageUrl);
+          // For regular image URLs, verify the image actually loads
+          img = new Image();
+          img.src = imageUrl;
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          if (!cancelled) {
+            setSrc(imageUrl);
+            onImageLoad?.(imageUrl);
+          }
         }
       } catch (err) {
         console.warn('Failed to load image for', nik, err);
+        if (!cancelled) onImageLoad?.(null);
       }
     }
+
     load();
     return () => {
       cancelled = true;
+      if (img) {
+        img.onload = null;
+        img.onerror = null;
+      }
     };
-  }, [imageUrl, nik]);
+  }, [imageUrl, nik, onImageLoad]);
 
   if (!src) return null;
   const Thumb = (
