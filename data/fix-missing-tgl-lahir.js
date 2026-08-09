@@ -137,11 +137,15 @@ async function main() {
       if (nikKey) {
         // NIK present but not found in lookup
         invalidNikCount++;
+      } else {
+        // MISSING NIK handler - implement here
+        console.log(ansiColors.magenta(`Missing NIK: ${row.nama || 'unknown'}`));
       }
     }
 
-    if (!row.tgl_lahir) {
+    if (!row.tgl_lahir && nikKey && nikToXlsxDataMap.has(nikKey)) {
       missingCount++;
+      console.log(ansiColors.magenta(`Missing tgl_lahir for NIK: ${nikKey}`));
     }
 
     return row;
