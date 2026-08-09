@@ -117,6 +117,7 @@ async function main() {
   // Match and enrich data
   console.log(ansiColors.cyan('\nMatching NIKs and enriching data...'));
   let matchCount = 0;
+  let invalidNikCount = 0;
   let missingCount = 0;
 
   const enrichedData = driveCsvData.map((row) => {
@@ -132,7 +133,14 @@ async function main() {
       row.umur = xlsxInfo.umur;
 
       matchCount++;
-    } else if (nikKey && !row.tgl_lahir) {
+    } else {
+      if (nikKey) {
+        // NIK present but not found in lookup
+        invalidNikCount++;
+      }
+    }
+
+    if (!row.tgl_lahir) {
       missingCount++;
     }
 
@@ -140,7 +148,8 @@ async function main() {
   });
 
   console.log(ansiColors.green(`  Matched: ${matchCount}`));
-  console.log(ansiColors.yellow(`  Missing: ${missingCount}`));
+  console.log(ansiColors.yellow(`  Invalid NIK: ${invalidNikCount}`));
+  console.log(ansiColors.red(`  Missing Tgl Lahir: ${missingCount}`));
   console.log(ansiColors.gray(`  Total processed: ${enrichedData.length}`));
 
   // Write enriched data to output CSV
