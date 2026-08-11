@@ -226,6 +226,8 @@ export async function parallelSkrinCheck(options?: {
 
   const csvData = (await loadCsvData<ExcelRowData>()) as ExcelRowData[];
 
+  console.log(`Loaded ${csvData.length} rows from CSV data.`);
+
   const dataKunto = await Bluebird.filter(csvData, async (data: ExcelRowData) => {
     // Only consider rows that already exist in the screening log database.
     const existing = await database.getLogById(getNumbersOnly(data.nik));

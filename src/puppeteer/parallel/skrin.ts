@@ -3,13 +3,13 @@ import puppeteer from 'puppeteer-extra';
 import { array_shuffle } from 'sbg-utility';
 import { loadCsvData } from '../../../data/index.js';
 import { ExcelRowData } from '../../../globals.js';
-import { closeOtherTabs } from '../../puppeteer_utils.js';
 import { createSkrinDatabase } from '../../database/shared.js';
+import { closeOtherTabs } from '../../puppeteer_utils.js';
 import type { ProcessDataResult } from '../../runner/skrin/direct-process-data.js';
 import { processData } from '../../runner/skrin/direct-process-data.js';
-import { getNumbersOnly, noop } from '../../utils/browser.js';
-import EndpointManager from './EndpointManager.js';
+import { noop } from '../../utils/browser.js';
 import goWithRetry from '../goWithRetry.js';
+import EndpointManager from './EndpointManager.js';
 
 /**
  * Connects to an available browser endpoint, registers cleanup handlers,
@@ -105,7 +105,7 @@ export async function parallelSkrin(opts: {
     dataKunto = await loadCsvData<ExcelRowData>();
   } else {
     dataKunto = await Bluebird.filter(await loadCsvData<ExcelRowData>(), async (data) => {
-      const existing = await database.getLogById(getNumbersOnly(data.nik));
+      const existing = await database.getLogById(String(data.nik));
       return !(existing && existing.data);
     });
   }

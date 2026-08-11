@@ -304,7 +304,7 @@ export async function processData(
   const NIK = data.nik;
   if (!nikUtils.isValidNIK(NIK)) {
     await database.addLog({
-      id: getNumbersOnly(NIK),
+      id: String(NIK),
       data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
     });
