@@ -1,0 +1,170 @@
+import ansiColors from 'ansi-colors';
+import csvParser from 'csv-parser';
+import fs from 'fs-extra';
+import path from 'upath';
+import { Transform } from 'stream';
+import { fileURLToPath } from 'url';
+import { parseBabyName } from '../src/runner/skrin-utils.mjs';
+import { dateStringToDDMMYYYY as parseDate } from '../src/utils/date.mjs';
+import { encryptJson } from '../src/utils/json-crypto.mjs';
+import { writefile } from 'sbg-utility';
+
+const __filename$1 = fileURLToPath(import.meta.url);
+path.dirname(__filename$1);
+const csvFilePath = path.join(process.cwd(), 'data/data.csv');
+const keyMap = {
+    TANGGAL: 'tanggal',
+    'TANGGAL ENTRY': 'tanggal',
+    NAMA: 'nama',
+    'NAMA PASIEN': 'nama',
+    NIK: 'nik',
+    'NIK PASIEN': 'nik',
+    PEKERJAAN: 'pekerjaan',
+    'BERAT BADAN': 'bb',
+    BB: 'bb',
+    'TINGGI BADAN': 'tb',
+    TB: 'tb',
+    BATUK: 'batuk',
+    DM: 'diabetes',
+    'TGL LAHIR': 'tgl_lahir',
+    'TANGGAL LAHIR': 'tgl_lahir',
+    'TANGGAL LAHIR PASIEN': 'tgl_lahir',
+    ALAMAT: 'alamat',
+    'ALAMAT PASIEN': 'alamat',
+    'JENIS KELAMIN': 'jenis_kelamin',
+    'PETUGAS YG MENG ENTRY': 'petugas',
+    'PETUGAS ENTRY': 'petugas'
+};
+function normalizeCsvKey(key) {
+    const normalizedKey = key.trim().toUpperCase();
+    return keyMap[normalizedKey] || key.trim();
+}
+/**
+ * Normalize empty keys in CSV row data
+ * - Remove keys with empty names and empty values
+ * - Rename keys with empty names but non-empty values to unknown1, unknown2, etc.
+ *
+ * @param {Object} row - CSV row object
+ * @returns {Object} Normalized row object
+ */
+function normalizeEmptyKeys(row) {
+    const result = {};
+    let unknownCounter = 1;
+    for (const [key, value] of Object.entries(row)) {
+        const trimmedKey = key.trim();
+        // Empty key
+        if (trimmedKey === '') {
+            // Empty value: skip this field entirely
+            if (value === '' || value == null) {
+                continue;
+            }
+            // Non-empty value: rename to unknownN
+            result[`unknown${unknownCounter++}`] = value;
+        }
+        else {
+            // Normal key: keep as-is
+            result[key] = value;
+        }
+    }
+    return result;
+}
+// -------------------------------------------------------------
+// ADD: comment filter stream (simple, safe, chunk-aware)
+// -------------------------------------------------------------
+function createCommentFilter(commentChar = '#') {
+    let leftover = '';
+    return new Transform({
+        transform(chunk, enc, cb) {
+            const text = leftover + chunk.toString();
+            const lines = text.split(/\r?\n/);
+            leftover = lines.pop(); // last line may be partial
+            const filtered = lines.filter((line) => !line.trim().startsWith(commentChar)).join('\n');
+            cb(null, filtered + '\n');
+        },
+        flush(cb) {
+            if (leftover && !leftover.trim().startsWith('#')) {
+                cb(null, leftover + '\n');
+            }
+            else {
+                cb();
+            }
+        }
+    });
+}
+/**
+ * Load and parse CSV data from a specified CSV file
+ * Filters out comments (lines starting with #) before parsing
+ * Maps column names to standardized keys (e.g., 'NAMA' -> 'nama')
+ * Parses dates and adds rowIndex to each record
+ * Encrypts and saves output as dataKunto.bin
+ *
+ * @async
+ * @param {string} [customCsvPath] - Optional custom path to CSV file. Defaults to './data.csv'
+ * @template T
+ * @returns {Promise<Array<T>>} Array of mapped and parsed CSV records
+ */
+async function loadCsvData(customCsvPath) {
+    // Use custom path if provided, otherwise use default
+    const targetCsvPath = csvFilePath;
+    if (!fs.existsSync(targetCsvPath)) {
+        writefile(targetCsvPath, `# Comment
+TANGGAL ENTRY,NAMA,ALAMAT,NIK,TGL LAHIR,PETUGAS ENTRY`);
+    }
+    // Ensure the file exists before processing
+    if (!fs.existsSync(targetCsvPath)) {
+        throw new Error(`CSV file not found: ${targetCsvPath}`);
+    }
+    const results = await new Promise((resolve, reject) => {
+        const mappedRecords = [];
+        fs.createReadStream(targetCsvPath)
+            .pipe(createCommentFilter('#'))
+            .pipe(csvParser({
+            mapValues: ({ header, value }) => {
+                if (header.toLowerCase() === 'nik') {
+                    return String(value).trim();
+                }
+                return value;
+            }
+        }))
+            .on('data', (row) => {
+            const mappedRow = {};
+            for (const key in row) {
+                const mappedKey = normalizeCsvKey(key);
+                mappedRow[mappedKey] = row[key];
+            }
+            const normalizedRow = normalizeEmptyKeys(mappedRow);
+            normalizedRow.rowIndex = mappedRecords.length;
+            mappedRecords.push(normalizedRow);
+        })
+            .on('end', () => {
+            const dataKunto = mappedRecords.map((row) => {
+                row.originalTglLahir = row.tgl_lahir;
+                row.tgl_lahir = parseDate(row.tgl_lahir);
+                return row;
+            });
+            const outputDir = path.join(process.cwd(), 'public/assets/data');
+            fs.mkdirSync(outputDir, { recursive: true });
+            fs.writeFileSync(path.join(outputDir, 'dataKunto.bin'), encryptJson(dataKunto, process.env.VITE_JSON_SECRET));
+            resolve(dataKunto);
+        })
+            .on('error', reject);
+    });
+    return results;
+}
+// Direct run
+if (process.argv.some((arg) => path.toUnix(arg).endsWith('data/index.js')) &&
+    process.cwd().endsWith('browser-automation')) {
+    (async () => {
+        console.log('Loading CSV data...');
+        const data = await loadCsvData();
+        console.log(`Loaded ${data.length} records from CSV.`);
+        console.log(data.at(0));
+        console.log(data.at(-1));
+        const aneh = data.filter((item) => /bayi/i.test(item.nama));
+        console.log(aneh
+            .map((item) => `${item.nama} -> ${parseBabyName(item.nama) ? ansiColors.greenBright(parseBabyName(item.nama)) : ansiColors.gray('undefined')}`)
+            .join('\n'));
+    })();
+}
+
+export { loadCsvData, normalizeCsvKey, normalizeEmptyKeys };

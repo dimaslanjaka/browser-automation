@@ -1,0 +1,303 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var require$$4 = require('sbg-utility');
+var path = require('upath');
+var fs = require('fs-extra');
+var puppeteer = require('puppeteer-extra');
+var profileManager = require('../../src/puppeteer/profile-manager.cjs');
+
+/**
+ * Global shared directory for endpoint data, nested under {@link GLOBAL_PUPPETEER_DIR}.
+ */
+const GLOBAL_ENDPOINT_MANAGER_PATH = path.join(profileManager.GLOBAL_PUPPETEER_DIR, 'endpoints');
+class EndpointManager {
+    /** Directory path for endpoint data. */
+    basePath;
+    /** Path to the JSON file holding all registered endpoints. */
+    endpointFile;
+    /** Directory path for per-endpoint lock files. */
+    endpointLocksPath;
+    /**
+     * @param basePath - Directory to store endpoint data. Defaults to a
+     *   fixed path under `os.tmpdir()` so all processes share the same
+     *   endpoint registry regardless of their working directory.
+     */
+    endpointAvailabilityCache = new Map();
+    constructor(basePath = GLOBAL_ENDPOINT_MANAGER_PATH) {
+        this.basePath = basePath;
+        this.endpointFile = path.join(this.basePath, 'endpoint.json');
+        this.endpointLocksPath = path.join(this.basePath, 'endpoint-locks');
+        fs.ensureDirSync(this.basePath);
+        fs.ensureDirSync(this.endpointLocksPath);
+    }
+    // Clear the cache periodically or on certain events if needed
+    clearAvailabilityCache() {
+        this.endpointAvailabilityCache.clear();
+    }
+    /**
+     * Parse raw file content into an array of endpoint strings.
+     * @param content - Raw JSON string from the endpoint file.
+     */
+    parseEndpoints(content) {
+        if (!content)
+            return [];
+        return require$$4.jsonParseWithCircularRefs(content);
+    }
+    /**
+     * Build the filesystem path for the lock file of a given endpoint.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     */
+    getEndpointLockPath(endpoint) {
+        return path.join(this.endpointLocksPath, `${encodeURIComponent(endpoint)}.json`);
+    }
+    /**
+     * Read and parse the lock file for an endpoint.
+     * Returns `undefined` if the file does not exist or is unreadable.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     */
+    readEndpointLock(endpoint) {
+        const lockPath = this.getEndpointLockPath(endpoint);
+        try {
+            const content = fs.readFileSync(lockPath, 'utf8').trim();
+            if (!content)
+                return undefined;
+            return require$$4.jsonParseWithCircularRefs(content);
+        }
+        catch {
+            return undefined;
+        }
+    }
+    /**
+     * Check whether a given PID is still alive.
+     * Uses `process.kill(pid, 0)` which tests existence without sending a signal.
+     * @param pid - Process ID to check.
+     */
+    isProcessRunning(pid) {
+        try {
+            // signal 0 does not kill the process, only tests for existence
+            process.kill(pid, 0);
+            return true;
+        }
+        catch {
+            return false;
+        }
+    }
+    /**
+     * Return the lock for an endpoint if it exists and its owner is still alive.
+     * Stale locks are cleaned up automatically.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     */
+    getActiveEndpointLock(endpoint) {
+        const lockPath = this.getEndpointLockPath(endpoint);
+        const lock = this.readEndpointLock(endpoint);
+        if (!lock?.ownerPid) {
+            fs.removeSync(lockPath);
+            return undefined;
+        }
+        if (!this.isProcessRunning(lock.ownerPid)) {
+            fs.removeSync(lockPath);
+            return undefined;
+        }
+        return lock;
+    }
+    /**
+     * Check whether an endpoint has a live (non-stale) lock.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     */
+    isEndpointLocked(endpoint) {
+        return Boolean(this.getActiveEndpointLock(endpoint));
+    }
+    /**
+     * Read all registered endpoint URLs from the shared JSON file.
+     * Returns an empty array when the file does not exist yet or is unreadable.
+     */
+    readEndpoints() {
+        try {
+            const content = fs.readFileSync(this.endpointFile, 'utf8').trim();
+            return this.parseEndpoints(content);
+        }
+        catch {
+            return [];
+        }
+    }
+    /**
+     * Register an endpoint URL in the shared JSON file (deduplicated).
+     * @param endpoint - The browser WebSocket endpoint URL to register.
+     */
+    writeEndpoint(endpoint) {
+        const endpoints = this.readEndpoints();
+        const uniqueEndpoints = Array.from(new Set([...endpoints, endpoint]));
+        require$$4.writefile(this.endpointFile, require$$4.jsonStringifyWithCircularRefs(uniqueEndpoints));
+    }
+    /**
+     * Remove an endpoint URL from the shared registry and delete its lock file.
+     * @param endpoint - The browser WebSocket endpoint URL to remove.
+     */
+    removeEndpoint(endpoint) {
+        const endpoints = this.readEndpoints().filter((item) => item !== endpoint);
+        require$$4.writefile(this.endpointFile, require$$4.jsonStringifyWithCircularRefs(endpoints));
+        // remove any lock file
+        const lockPath = this.getEndpointLockPath(endpoint);
+        fs.removeSync(lockPath);
+    }
+    /**
+     * Checks if a Puppeteer endpoint is available by attempting Puppeteer.connect.
+     */
+    async isPuppeteerEndpointAvailable(endpoint) {
+        if (this.endpointAvailabilityCache.has(endpoint)) {
+            return this.endpointAvailabilityCache.get(endpoint);
+        }
+        try {
+            const browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
+            await browser.disconnect();
+            this.endpointAvailabilityCache.set(endpoint, true);
+            return true;
+        }
+        catch {
+            this.endpointAvailabilityCache.set(endpoint, false);
+            return false;
+        }
+    }
+    /**
+     * Returns the first available endpoint (not locked, not stale, and Puppeteer responds)
+     */
+    async getAvailableEndpoint() {
+        const endpoints = this.readEndpoints();
+        if (!endpoints.length)
+            return undefined;
+        for (const endpoint of endpoints) {
+            const lock = this.readEndpointLock(endpoint);
+            if (lock && this.isProcessRunning(lock.ownerPid)) {
+                console.log(`Endpoint ${endpoint} is currently locked by PID ${lock.ownerPid}. Skipping.`);
+                continue;
+            }
+            const available = await this.isPuppeteerEndpointAvailable(endpoint);
+            if (available) {
+                return endpoint;
+            }
+            else {
+                console.log(`Endpoint ${endpoint} is not responding to Puppeteer. Skipping.`);
+            }
+        }
+        console.log('No available endpoints found in registry.');
+        return undefined;
+    }
+    /**
+     * Returns all endpoints with their lock status, inactive status, and Puppeteer availability
+     */
+    async getAllActiveEndpoints() {
+        const endpoints = this.readEndpoints();
+        const results = [];
+        for (const endpoint of endpoints) {
+            const lock = this.readEndpointLock(endpoint);
+            let locked = false;
+            let inactive = false;
+            let ownerPid = null;
+            let claimedAt = null;
+            if (lock) {
+                ownerPid = lock.ownerPid;
+                claimedAt = lock.claimedAt;
+                if (this.isProcessRunning(lock.ownerPid)) {
+                    locked = true;
+                }
+                else {
+                    inactive = true;
+                }
+            }
+            const puppeteerAvailable = await this.isPuppeteerEndpointAvailable(endpoint);
+            results.push({
+                endpoint,
+                locked,
+                inactive,
+                ownerPid,
+                claimedAt,
+                puppeteerAvailable
+            });
+        }
+        return results;
+    }
+    /**
+     * Atomically claim an endpoint lock for a given process.
+     * Fails if the endpoint is already locked by a different alive process.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     * @param ownerPid - PID of the claiming process.
+     * @returns `true` when the lock was acquired, `false` if already claimed.
+     */
+    tryClaimEndpoint(endpoint, ownerPid) {
+        fs.ensureDirSync(this.endpointLocksPath);
+        const lockPath = this.getEndpointLockPath(endpoint);
+        const payload = {
+            ownerPid,
+            claimedAt: new Date().toISOString()
+        };
+        try {
+            const fd = fs.openSync(lockPath, 'wx');
+            fs.writeFileSync(fd, require$$4.jsonStringifyWithCircularRefs(payload));
+            fs.closeSync(fd);
+            return true;
+        }
+        catch (error) {
+            // If the file exists, check if it's a stale lock. If it is, we can retry. Otherwise, it's already in use.
+            if (error?.code === 'EEXIST') {
+                console.log(`Endpoint lock for ${endpoint} already exists.`);
+                const existingLock = this.getActiveEndpointLock(endpoint);
+                if (!existingLock) {
+                    // Stale lock was cleaned up inside getActiveEndpointLock. Let's retry!
+                    console.log(`Stale lock detected for ${endpoint}. Retrying...`);
+                    try {
+                        const fd = fs.openSync(lockPath, 'wx');
+                        fs.writeFileSync(fd, require$$4.jsonStringifyWithCircularRefs(payload));
+                        fs.closeSync(fd);
+                        return true;
+                    }
+                    catch (retryError) {
+                        if (retryError?.code === 'EEXIST')
+                            return false;
+                        throw retryError;
+                    }
+                }
+                console.log(`Endpoint ${endpoint} is already locked by active process ${existingLock.ownerPid}. Claim failed.`);
+                return false;
+            }
+            throw error;
+        }
+    }
+    /**
+     * Release a claim on an endpoint. Only succeeds if the caller is the
+     * current owner or the owning process is no longer alive.
+     * @param endpoint - The browser WebSocket endpoint URL.
+     * @param ownerPid - PID that originally claimed the endpoint.
+     */
+    releaseEndpointClaim(endpoint, ownerPid) {
+        const lockPath = this.getEndpointLockPath(endpoint);
+        const lock = this.readEndpointLock(endpoint);
+        if (!lock?.ownerPid) {
+            fs.removeSync(lockPath);
+            return;
+        }
+        if (lock.ownerPid !== ownerPid && this.isProcessRunning(lock.ownerPid)) {
+            return;
+        }
+        fs.removeSync(lockPath);
+    }
+    /**
+     * Return the current lock status for every registered endpoint.
+     * Does not perform a Puppeteer reachability check.
+     */
+    readEndpointStatus() {
+        return this.readEndpoints().map((endpoint) => {
+            const lock = this.getActiveEndpointLock(endpoint);
+            return {
+                endpoint,
+                inUse: Boolean(lock),
+                ownerPid: lock?.ownerPid
+            };
+        });
+    }
+}
+
+exports.EndpointManager = EndpointManager;
+exports.GLOBAL_ENDPOINT_MANAGER_PATH = GLOBAL_ENDPOINT_MANAGER_PATH;
+exports.default = EndpointManager;

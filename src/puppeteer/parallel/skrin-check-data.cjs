@@ -1,0 +1,265 @@
+'use strict';
+
+var Bluebird = require('bluebird');
+var moment = require('moment');
+var require$$4 = require('sbg-utility');
+var path = require('upath');
+var index = require('../../../data/index.cjs');
+var puppeteer = require('puppeteer-extra');
+var puppeteer_utils = require('../../puppeteer_utils.cjs');
+var shared = require('../../database/shared.cjs');
+var skrin_puppeteer = require('../../skrin_puppeteer.cjs');
+var browser$1 = require('../../utils/browser.cjs');
+var image = require('../../utils/image.cjs');
+var jsonCrypto = require('../../utils/json-crypto.cjs');
+var md5 = require('../../utils/md5.cjs');
+var fixData = require('../../utils/xlsx/fixData.cjs');
+var puppeteer_parallel_EndpointManager = require('../../../puppeteer/parallel/EndpointManager.cjs');
+
+const IMAGE_DATABASE_PATH = 'tmp/screenshot/metadata.bin';
+const IMAGE_DATABASE = require$$4.fs.existsSync(IMAGE_DATABASE_PATH)
+    ? jsonCrypto.decryptJson(require$$4.fs.readFileSync(IMAGE_DATABASE_PATH, 'utf-8'), process.env.VITE_JSON_SECRET)
+    : {};
+// Build the local JPEG path from the NIK so tmp screenshots can be reused.
+function getTmpScreenshotPath(nik) {
+    return path.join(process.cwd(), 'tmp', 'screenshot', `${md5(nik)}.jpg`);
+}
+// Resolve the published encrypted asset path stored in IMAGE_DATABASE.
+function getPublishedScreenshotPath(nik) {
+    const imagePath = IMAGE_DATABASE[nik];
+    if (!imagePath || !imagePath.startsWith('/assets/data/screenshots/'))
+        return undefined;
+    return path.join(process.cwd(), 'public', imagePath);
+}
+// Convert a tmp JPEG to an encrypted public .bin asset and update the in-memory index.
+function publishScreenshotFromTmp(data, tmpFilePath) {
+    const outDir = path.join(process.cwd(), 'public', 'assets', 'data', 'screenshots');
+    if (!require$$4.fs.existsSync(outDir))
+        require$$4.fs.mkdirSync(outDir, { recursive: true });
+    const outFilename = `${md5(data.nik)}.bin`;
+    const outPath = path.join(outDir, outFilename);
+    const tmpOut = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.bin`);
+    const uri = image.imageFileToDataUrl(tmpFilePath);
+    require$$4.writefile(tmpOut, jsonCrypto.encryptJson(uri, process.env.VITE_JSON_SECRET));
+    require$$4.fs.renameSync(tmpOut, outPath);
+    IMAGE_DATABASE[data.nik] = `/assets/data/screenshots/${outFilename}`;
+}
+/**
+ * Core scraping function
+ */
+let lastLoginTime = 0;
+/**
+ * Fetches and saves a screening screenshot for a single NIK.
+ *
+ * @param data The row to process.
+ * @param page The active Puppeteer page.
+ * @param options Processing options for custom NIKs and opening screenshots.
+ * @returns A promise that resolves when the screenshot has been captured and persisted.
+ */
+async function findData(data, page, options) {
+    const now = Date.now();
+    if (!page || page.isClosed()) {
+        throw new Error('Puppeteer page is not available');
+    }
+    // Reuse the tmp JPEG path for this NIK when taking a fresh screenshot.
+    const tmpFilePath = getTmpScreenshotPath(data.nik);
+    // Refresh login if the page is stale or the session is old.
+    if (!page.url().includes('/skrining') || now - lastLoginTime > 10 * 60 * 1000) {
+        await skrin_puppeteer.autoLoginAndEnterSkriningPage(page);
+        lastLoginTime = now;
+    }
+    // Navigate to the screening page and fill the NIK and date range fields.
+    await page.goto('https://sumatera.sitb.id/sitb2024/skrining', {
+        waitUntil: 'networkidle0'
+    });
+    await page.waitForSelector('#nik_peserta', { visible: true });
+    await page.evaluate((nik) => {
+        const input = document.getElementById('nik_peserta');
+        if (input) {
+            input.value = nik;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }, data.nik);
+    const fromDate = options?.fromDate ?? `01/${String(moment().month() + 1).padStart(2, '0')}/${moment().year()}`;
+    const toDate = options?.toDate ?? moment().format('DD/MM/YYYY');
+    await puppeteer_utils.typeAndTrigger(page, '#from_tgl_skrining', fromDate);
+    await puppeteer_utils.typeAndTrigger(page, '#to_tgl_skrining', toDate);
+    await page.click('#btnCari');
+    await page.waitForSelector('#grid_ta_skrining', { visible: true });
+    await page.waitForFunction(() => {
+        const tbody = document.querySelector('#grid_ta_skrining tbody');
+        return tbody && tbody.querySelectorAll('tr').length > 0;
+    });
+    await puppeteer_utils.maximizeWindow(page);
+    await browser$1.sleep(1000);
+    await puppeteer_utils.pageScreenshot(page, {
+        path: tmpFilePath,
+        selector: '#grid_ta_skrining',
+        type: 'jpeg',
+        quality: 70
+    });
+    await browser$1.sleep(500);
+    console.log(`Screenshot saved: ${path.relative(process.cwd(), tmpFilePath)}`);
+    const { normalizedTargets = [], openScreenshots = false } = options || {};
+    if (openScreenshots) {
+        await image.openImageExternally(tmpFilePath);
+    }
+    if (normalizedTargets.length > 0 && normalizedTargets.includes(browser$1.getNumbersOnly(data.nik))) {
+        delete IMAGE_DATABASE[data.nik];
+    }
+    try {
+        publishScreenshotFromTmp(data, tmpFilePath);
+    }
+    catch {
+        IMAGE_DATABASE[data.nik] = `/tmp/screenshot/${path.basename(tmpFilePath)}`;
+    }
+    const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);
+    require$$4.writefile(tmpPath, jsonCrypto.encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
+    require$$4.fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
+}
+const endpointManager = new puppeteer_parallel_EndpointManager.EndpointManager();
+let claimedEndpoint;
+let browser;
+/**
+ * Processes screening data, reusing existing screenshots when possible and fetching new ones when needed.
+ */
+async function parallelSkrinCheck(options) {
+    const opts = {
+        specificNiks: [],
+        force: false,
+        openScreenshots: false,
+        fromDate: undefined,
+        toDate: undefined,
+        ...options
+    };
+    const { specificNiks, force, openScreenshots, limit, fromDate, toDate } = opts;
+    const normalizedTargets = specificNiks.map(browser$1.getNumbersOnly);
+    const tried = new Set();
+    if (normalizedTargets.length > 0) {
+        console.log('Specific NIK mode:', normalizedTargets.join(', '));
+    }
+    if (force) {
+        console.log('Force mode enabled: all data will be processed.');
+    }
+    while (true) {
+        const endpoint = await endpointManager.getAvailableEndpoint();
+        if (!endpoint)
+            process.exit(1);
+        if (tried.has(endpoint))
+            process.exit(1);
+        const claimed = endpointManager.tryClaimEndpoint(endpoint, process.pid);
+        if (!claimed) {
+            tried.add(endpoint);
+            continue;
+        }
+        try {
+            browser = await puppeteer.connect({
+                browserWSEndpoint: endpoint,
+                protocolTimeout: 180_000
+            });
+            claimedEndpoint = endpoint;
+            break;
+        }
+        catch {
+            endpointManager.releaseEndpointClaim(endpoint, process.pid);
+            tried.add(endpoint);
+        }
+    }
+    browser.once('disconnected', async () => {
+        if (claimedEndpoint) {
+            endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+        }
+        await puppeteer_utils.closeOtherTabs(browser, 2);
+        process.exit(0);
+    });
+    await puppeteer_utils.closeOtherTabs(browser, 2);
+    const page = await browser.newPage();
+    await page.bringToFront();
+    const database = shared.createSkrinDatabase();
+    const csvData = (await index.loadCsvData());
+    console.log(`Loaded ${csvData.length} rows from CSV data.`);
+    const dataKunto = await Bluebird.filter(csvData, async (data) => {
+        // Only consider rows that already exist in the screening log database.
+        const existing = await database.getLogById(browser$1.getNumbersOnly(data.nik));
+        if (!existing)
+            return false;
+        // Custom NIK mode should keep the row even if screenshots already exist.
+        if (normalizedTargets.length > 0)
+            return true;
+        // Force mode processes the row without tmp/public screenshot checks.
+        if (force)
+            return true;
+        // Reuse tmp/public state only in the default flow.
+        const tmpFilePath = getTmpScreenshotPath(data.nik);
+        const publishedFilePath = getPublishedScreenshotPath(data.nik);
+        // If no tmp screenshot exists yet, fetch a new one.
+        if (!require$$4.fs.existsSync(tmpFilePath))
+            return true;
+        // Keep the row when tmp exists but the published asset is missing.
+        return !publishedFilePath || !require$$4.fs.existsSync(publishedFilePath);
+    });
+    let toProcess;
+    if (normalizedTargets.length > 0) {
+        toProcess = dataKunto.filter((d) => normalizedTargets.includes(browser$1.getNumbersOnly(d.nik)));
+        const foundSet = new Set(toProcess.map((d) => browser$1.getNumbersOnly(d.nik)));
+        const missing = normalizedTargets.filter((n) => !foundSet.has(n));
+        if (missing.length > 0) {
+            const fallback = dataKunto[0];
+            for (const nik of missing) {
+                toProcess.push({ ...fallback, nik: String(nik) });
+            }
+        }
+    }
+    else if (force) {
+        toProcess = dataKunto;
+    }
+    else {
+        const valid = dataKunto.filter((d) => fixData.isValidNik(d.nik));
+        toProcess = valid.filter((data) => {
+            if (!data.nik)
+                return false;
+            const published = getPublishedScreenshotPath(data.nik);
+            return !published || !require$$4.fs.existsSync(published);
+        });
+    }
+    console.log(`Total data to process: ${toProcess.length}`);
+    const limited = typeof limit === 'number' ? toProcess.slice(0, limit) : toProcess;
+    // Limit the work set when requested from the CLI.
+    if (limited !== toProcess) {
+        console.log(`Applying limit: ${limit}, processing ${limited.length} item(s).`);
+    }
+    for (const data of limited) {
+        const tmpFilePath = getTmpScreenshotPath(data.nik);
+        const publishedFilePath = getPublishedScreenshotPath(data.nik);
+        // If the public asset is gone but tmp exists, rebuild the encrypted asset without fetching again.
+        if (publishedFilePath && !require$$4.fs.existsSync(publishedFilePath) && require$$4.fs.existsSync(tmpFilePath)) {
+            console.log(`Reusing tmp screenshot for NIK ${data.nik} to republish encrypted asset.`);
+            publishScreenshotFromTmp(data, tmpFilePath);
+            const tmpPath = path.join(process.cwd(), 'tmp', `${md5(data.nik)}-${process.pid}.json`);
+            require$$4.writefile(tmpPath, jsonCrypto.encryptJson(IMAGE_DATABASE, process.env.VITE_JSON_SECRET));
+            require$$4.fs.renameSync(tmpPath, IMAGE_DATABASE_PATH);
+            continue;
+        }
+        // Otherwise fetch a new screenshot from the site.
+        console.log(`Fetching new screenshot for NIK ${data.nik}.`);
+        await findData(data, page, {
+            normalizedTargets,
+            openScreenshots,
+            fromDate,
+            toDate
+        });
+    }
+    if (claimedEndpoint) {
+        endpointManager.releaseEndpointClaim(claimedEndpoint, process.pid);
+    }
+    process.exit(0);
+}
+// stable public API layer
+const parallelSkrinCheckEndpointManager = endpointManager;
+function getParallelSkrinCheckClaimedEndpoint() {
+    return claimedEndpoint;
+}
+
+exports.getParallelSkrinCheckClaimedEndpoint = getParallelSkrinCheckClaimedEndpoint;
+exports.parallelSkrinCheck = parallelSkrinCheck;
+exports.parallelSkrinCheckEndpointManager = parallelSkrinCheckEndpointManager;
