@@ -6,9 +6,37 @@ import { closeOtherTabs } from '../../puppeteer_utils.js';
 import goWithRetry from '../goWithRetry.js';
 import { GLOBAL_PROFILES_DIR, GLOBAL_PUPPETEER_DIR, reserveClusterUserDataDir } from '../profile-manager.js';
 import { endpointManager } from './utils.js';
+import minimist from 'minimist';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// CLI parsing
+const argv = minimist(process.argv.slice(2), {
+  boolean: ['help'],
+  alias: {
+    h: 'help'
+  },
+  default: { help: false }
+});
+
+function printHelp() {
+  const helpLines = [
+    'Usage: node launcher [options]',
+    '',
+    'Options:',
+    '  --help, -h         Show this help message',
+    '',
+    'Notes:',
+    '  - This script launches a Puppeteer browser instance in the background for parallel usage.',
+    '  - The browser will remain running until it is disconnected or the process receives SIGINT, SIGTERM, or exit.',
+    '',
+    'Examples:',
+    '  node launcher',
+    '  node launcher --help'
+  ];
+  helpLines.forEach(console.log);
+}
 
 export interface GotoOptions {
   retries?: number;
@@ -66,6 +94,11 @@ export async function useDefault() {
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
+  if (argv.help) {
+    printHelp();
+    process.exit(0);
+  }
+
   const { browser } = await useDefault();
 
   await closeOtherTabs(browser as any, 1);
