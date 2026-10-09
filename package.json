@@ -201,6 +201,8 @@
     "nodemon": "^3",
     "postcss": "^8",
     "postcss-nesting": "^14",
+    "prettier": "^3.9.9",
+    "prettier-plugin-sql": "^0.20.0",
     "react": "^19",
     "react-dom": "^19",
     "rollup": "^4.62.0",
