@@ -221,11 +221,12 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/09a1a1dfee36ebf0cc040fdb039f10c47bccffb5/releases/bin.tgz",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/c2b5937461be63b9e214404a41ee3fe2b8c45043/releases/bin.tgz",
     "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/f3f4bde1887798c308928fc76dc590b23de992ea/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/1ca385787f7287155b547c5b97d5ffd5bcfab482/packages/sbg-utility/release/sbg-utility.tgz",
-    "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/6d4f527670a0ec5e462fda4a1c9777613c477c84/release/dimaslanjaka-eslint-base-config.tgz",
-    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/f43e03d1c6f5e66b193ad8c394a0b0a91c64b083/release/proxies-grabber.tgz"
+    "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/29e36df3c0de2ff67697d65fe8631eb7b689f4c9/release/dimaslanjaka-eslint-base-config.tgz",
+    "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/04c1ad11f3f9764f6af552213cc125a44335f050/release/proxies-grabber.tgz",
+    "got": "11.8.2"
   },
   "packageManager": "yarn@4.13.0"
 }
