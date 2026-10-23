@@ -21,8 +21,18 @@ const argv = minimist(process.argv.slice(2), {
 });
 
 function printHelp() {
+  const examples = ['Examples:'];
+  const ext = path.extname(__filename);
+  if (ext === '.ts' || ext === '.tsx') {
+    examples.push(
+      `  node --no-warnings=ExperimentalWarning --loader ts-node/esm -r ./.vscode/js-hook.cjs "${__filename}" --help`,
+      `  npx -y tsx -r ./.vscode/js-hook.cjs "${__filename}" --help`
+    );
+  } else {
+    examples.push(`  node "${__filename}" --help`);
+  }
   const helpLines = [
-    'Usage: node launcher [options]',
+    `Usage: node "${__filename}" [options]`,
     '',
     'Options:',
     '  --help, -h         Show this help message',
@@ -30,12 +40,16 @@ function printHelp() {
     'Notes:',
     '  - This script launches a Puppeteer browser instance in the background for parallel usage.',
     '  - The browser will remain running until it is disconnected or the process receives SIGINT, SIGTERM, or exit.',
+    '  - The browser will be closed when the process exits.',
     '',
-    'Examples:',
-    '  node launcher',
-    '  node launcher --help'
+    ...examples
   ];
-  helpLines.forEach(console.log);
+  console.log(helpLines.join('\n'));
+}
+
+if (argv.help) {
+  printHelp();
+  process.exit(0);
 }
 
 export interface GotoOptions {
@@ -94,11 +108,6 @@ export async function useDefault() {
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
-  if (argv.help) {
-    printHelp();
-    process.exit(0);
-  }
-
   const { browser } = await useDefault();
 
   await closeOtherTabs(browser as any, 1);

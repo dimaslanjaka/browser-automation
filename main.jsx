@@ -17,7 +17,6 @@ const FullTimezoneListPage = React.lazy(() =>
   }))
 );
 const DateFormatWeb = React.lazy(() => import('./src/react-website/DateFormatWeb.jsx'));
-const KemkesIndonesiaKuLogs = React.lazy(() => import('./src/react-website/KemkesIndonesiaKuLogs.jsx'));
 
 const container = document.getElementById('root');
 
@@ -88,7 +87,6 @@ root.render(
             <Route path="/moment/timezones" element={<FullTimezoneListPage />} />
             <Route path="/moment" element={<DateFormatWeb />} />
             <Route path="/outbound" element={<Outbound />} />
-            <Route path="/sehatindonesiaku-logs" element={<KemkesIndonesiaKuLogs />} />
           </Routes>
         </React.Suspense>
       </BrowserRouter>

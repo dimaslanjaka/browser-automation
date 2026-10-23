@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-# This script now delegates to kemkes.mjs (Node.js)
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-node --no-warnings=ExperimentalWarning -r ./.vscode/js-hook.cjs "$SCRIPT_DIR/kemkes.mjs" "$@"

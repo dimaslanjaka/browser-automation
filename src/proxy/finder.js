@@ -4,7 +4,7 @@ import { proxyGrabber } from 'proxies-grabber';
 import puppeteer from 'puppeteer-extra';
 import { fileURLToPath } from 'url';
 
-const target = 'https://sehatindonesiaku.kemkes.go.id';
+const target = 'https://google.com';
 const proxyFile = path.join(process.cwd(), 'proxies.txt');
 const proxyInstance = new proxyGrabber();
 const __filename = fileURLToPath(import.meta.url);

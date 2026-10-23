@@ -7,31 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function generateDataDisplay(force = false) {
-  const lockFile = path.join(__dirname, 'tmp/sehatindonesiaku-data-display.lock');
-  // Skip if lock file exists (another process is running)
-  if (fs.existsSync(lockFile) && !force) {
-    console.log('Data generation already in progress, skipping...');
-    return;
-  }
-  // Create lock file to indicate process is running
-  fs.ensureDirSync(path.dirname(lockFile));
-  fs.writeFileSync(lockFile, 'lock');
-  try {
-    const scriptPath = path.resolve(__dirname, '../src/runner/sehatindonesiaku-data-display.ts');
-    await spawnAsync('node', ['--no-warnings=ExperimentalWarning', '--loader', 'ts-node/esm', scriptPath], {
-      stdio: 'inherit'
-    });
-  } catch (error) {
-    console.error('Execution failed:', error);
-    throw error;
-  } finally {
-    // Remove lock file after a delay to allow subsequent runs
-    setTimeout(() => {
-      if (fs.existsSync(lockFile)) {
-        fs.removeSync(lockFile);
-      }
-    }, 5000); // 5 seconds delay
-  }
+  // Data generation logic removed
+  return;
 }
 
 /**
