@@ -6,10 +6,17 @@ import { getAge, parseDate } from '../../utils/date.js';
  * @returns {Promise<{gender: string, age: number, birthDate: string, location: {province: string, city: string}, occupation: string, bodyWeight: string, bodyHeight: string}>} Patient information object.
  */
 export async function getPersonInfo(page) {
+  const nama = await page.evaluate(() => document.querySelector('input[name="nama_peserta"]')?.value);
   const gender = await page.evaluate(() => document.querySelector('input[name="jenis_kelamin_id_input"]')?.value);
   const rawBirthDate = await page.evaluate(() => document.querySelector('input[name="dt_tgl_lahir"]')?.value);
   const birthDate = parseDate(rawBirthDate);
-  const age = getAge(birthDate);
+  let age;
+  try {
+    age = getAge(birthDate);
+  } catch (_e) {
+    console.error(`Error calculating age from birth date "${birthDate}":`);
+    age = undefined; // Set age to undefined if there's an error
+  }
   const province = await page.$eval('#field_item_provinsi_ktp_id input[type="text"]', (input) => input.value.trim());
   const city = await page.$eval('#field_item_kabupaten_ktp_id input[type="text"]', (input) => input.value.trim());
   const occupation = await page.evaluate(() => document.querySelector('input[name="pekerjaan_id_input"]')?.value);
@@ -19,5 +26,5 @@ export async function getPersonInfo(page) {
   const bodyHeight = await page.evaluate(
     () => document.querySelector('#field_item_tinggi_badan input[type="text"]')?.value
   );
-  return { gender, age, birthDate, location: { province, city }, occupation, bodyWeight, bodyHeight };
+  return { nama, gender, age, birthDate, location: { province, city }, occupation, bodyWeight, bodyHeight };
 }
