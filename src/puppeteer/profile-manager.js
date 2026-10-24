@@ -35,10 +35,10 @@ export function isUserDataDirInUse(targetUserDataDir) {
  *
  * @param {number} [startIndex=1] - First profile index to probe.
  * @param {string[]} [excludedDirs=[]] - Directories to skip when selecting fallback profile.
+ * @param {string} [profilesRootDir=GLOBAL_PROFILES_DIR] - Root directory for profile directories.
  * @returns {string}
  */
-export function getFallbackProfileDir(startIndex = 1, excludedDirs = []) {
-  const profilesRootDir = GLOBAL_PROFILES_DIR;
+export function getFallbackProfileDir(startIndex = 1, excludedDirs = [], profilesRootDir = GLOBAL_PROFILES_DIR) {
   let index = Math.max(1, Number(startIndex) || 1);
   const excludedDirSet = new Set(excludedDirs.map((dir) => path.resolve(dir)));
 
