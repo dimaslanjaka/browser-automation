@@ -2,6 +2,7 @@ import path from 'path';
 import { connect } from 'puppeteer-real-browser';
 import { writefile } from 'sbg-utility';
 import { fileURLToPath } from 'url';
+import net from 'node:net';
 import { closeOtherTabs } from '../../puppeteer_utils.js';
 import goWithRetry from '../goWithRetry.js';
 import { GLOBAL_PROFILES_DIR, GLOBAL_PUPPETEER_DIR, reserveClusterUserDataDir } from '../profile-manager.js';
@@ -62,20 +63,34 @@ export interface GotoOptions {
   url?: string;
 }
 
+function getFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.listen(0, '127.0.0.1', () => {
+      const { port } = srv.address() as net.AddressInfo;
+      srv.close(() => resolve(port));
+    });
+    srv.on('error', reject);
+  });
+}
+
 export async function useDefault() {
-  const userDataDir = reserveClusterUserDataDir({
+  const rawUserDataDir = reserveClusterUserDataDir({
     preferredUserDataDir: path.resolve(GLOBAL_PROFILES_DIR, 'profile1'),
     reservedUserDataDirs: new Set(),
     autoSwitchProfileDir: true
   });
+  const userDataDir = path.resolve(rawUserDataDir).replace(/\\/g, '/');
   console.log('User Data Dir', userDataDir);
+  const port = await getFreePort();
+  console.log('Free Port', port);
 
   const { browser } = await connect({
     headless: false,
     turnstile: true,
     disableXvfb: false,
     ignoreAllFlags: false,
-    customConfig: { userDataDir },
+    customConfig: { userDataDir, port },
     connectOption: { protocolTimeout: 180_000 }
   });
 
@@ -129,7 +144,7 @@ export async function parallelLauncher() {
     }).catch(console.log);
   }
 
-  const logTarget = (event: string) => async (target: any) => {
+  const _logTarget = (event: string) => async (target: any) => {
     try {
       console.log(`Target ${event}:`, target.type(), target.url());
       if (event === 'created' && target.type() === 'page') {
@@ -141,9 +156,9 @@ export async function parallelLauncher() {
     }
   };
 
-  browser.on('targetcreated', logTarget('created'));
-  browser.on('targetdestroyed', logTarget('destroyed'));
-  browser.on('targetchanged', logTarget('changed'));
+  // browser.on('targetcreated', _logTarget('created'));
+  // browser.on('targetdestroyed', _logTarget('destroyed'));
+  // browser.on('targetchanged', _logTarget('changed'));
 
   const wsEndpoint = browser.wsEndpoint();
   console.log('WebSocket Endpoint:', wsEndpoint);
