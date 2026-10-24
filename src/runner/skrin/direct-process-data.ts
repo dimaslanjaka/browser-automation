@@ -26,6 +26,7 @@ import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
 import removeDuplicateKeys from '../../utils/removeDuplicateKeys.cjs';
+import isValidName from './isValidName.cjs';
 
 export type ProcessDataResult =
   | { status: 'success'; data: fixDataResult }
@@ -457,6 +458,32 @@ export async function processData(
     const isNikNotFound = await isNIKNotFoundModalVisible(page);
     console.log('Is NIK not found modal visible:', isNikNotFound);
 
+    /**
+     * input required fields: nama, gender, tgl_lahir, alamat, provinsi, kabupaten/kota, kecamatan, kelurahan
+     */
+    const inputRequiredFields = async function ({
+      nama,
+      gender,
+      tgl_lahir,
+      fixedData,
+      parsedNik
+    }: {
+      nama: string;
+      gender: string;
+      tgl_lahir: string;
+      fixedData: Awaited<ReturnType<typeof fixData>>;
+      parsedNik: NikParseResult;
+    }) {
+      if (!nama || nama.length === 0) {
+        throw new Error("❌ Failed to take the patient's name");
+      }
+      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', nama);
+      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', gender);
+      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', tgl_lahir);
+      await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
+      await resolveAndFillAddress(page, fixedData, parsedNik);
+    };
+
     if (isNikNotFound) {
       const shouldClickYes = await page.evaluate(() => {
         const dialog = document.querySelector('#dialogconfirm');
@@ -478,25 +505,23 @@ export async function processData(
         await page.click('#yesButton');
 
         const NAMA = fixedData.nama || fixedData.NAMA || '';
-        if (!NAMA || NAMA.length === 0) {
-          throw new Error("❌ Failed to take the patient's name");
-        }
-        await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
 
         if (!fixedData.genderInitial) {
           throw new Error("❌ Failed to determine patient's gender from NIK");
         }
-
-        await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', fixedData.gender);
 
         const parsedLahir = moment(fixedData.tgl_lahir, ['DD/MM/YYYY', 'YYYY-MM-DD'], true);
         if (!parsedLahir.isValid()) {
           throw new Error(`❌ Invalid birth date format from NIK, expected DD/MM/YYYY, got: ${fixedData.tgl_lahir}`);
         }
 
-        await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', parsedLahir.format('DD/MM/YYYY'));
-
-        await resolveAndFillAddress(page, fixedData, parsedNik);
+        await inputRequiredFields({
+          tgl_lahir: parsedLahir.format('DD/MM/YYYY'),
+          nama: NAMA,
+          gender: fixedData.genderInitial,
+          fixedData,
+          parsedNik
+        });
       } else {
         return {
           status: 'error',
@@ -506,25 +531,73 @@ export async function processData(
       }
     }
 
-    // Get the patient's name from the form after confirming identity (or if no modal appeared)
-    let nama = await page.evaluate(
-      () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
-    );
-    fixedData.nama_from_page = `${nama}`.trim();
-    if (isEmpty(`${fixedData.nama_from_page}`)) {
-      const NAMA = fixedData.nama || fixedData.NAMA || '';
-      if (!NAMA || NAMA.length === 0) {
-        throw new Error("❌ Failed to take the patient's name");
-      }
-      nama = await page.evaluate(
+    const validateAfterNikNotFound = async function (fixedData: Awaited<ReturnType<typeof fixData>>) {
+      // Get the patient's name from the form after confirming identity (or if no modal appeared)
+      let nama = await page.evaluate(
         () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
       );
       fixedData.nama_from_page = `${nama}`.trim();
-      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
+      if (!isValidName(`${fixedData.nama_from_page}`, true)) {
+        const NAMA = fixedData.nama || fixedData.NAMA || '';
+        if (!NAMA || NAMA.length === 0) {
+          console.error("❌ Failed to take the patient's name");
+          return false;
+        }
+        nama = await page.evaluate(
+          () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
+        );
+        fixedData.nama_from_page = `${nama}`.trim();
+        await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
+      }
+      // 2nd check after typing the name if it was empty
+      if (!isValidName(`${fixedData.nama_from_page}`, true)) {
+        console.error("❌ Patient's name is still empty after confirmation and typing");
+        return false;
+      }
+
+      // Validate jenis_kelamin (gender) is not empty
+      let jenisKelamin = await page.evaluate(
+        () => (document.querySelector('input[name="jenis_kelamin_id_input"]') as HTMLInputElement)?.value
+      );
+      fixedData.jenis_kelamin_from_page = `${jenisKelamin}`.trim();
+      if (!fixedData.jenis_kelamin_from_page) {
+        console.warn('Jenis Kelamin is empty, attempting to fill from fixedData...');
+        if (!fixedData.genderInitial) {
+          console.error("❌ Failed to determine patient's gender from NIK");
+          return false;
+        }
+        await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', fixedData.genderInitial);
+        await sleep(300);
+        await page.keyboard.press('ArrowDown');
+        await page.keyboard.press('Enter');
+        await sleep(200);
+        jenisKelamin = await page.evaluate(
+          () => (document.querySelector('input[name="jenis_kelamin_id_input"]') as HTMLInputElement)?.value
+        );
+        fixedData.jenis_kelamin_from_page = `${jenisKelamin}`.trim();
+      }
+      // Validate gender was successfully filled
+      if (!fixedData.jenis_kelamin_from_page) {
+        console.error("❌ Patient's gender is still empty after validation");
+        return false;
+      }
+      return true;
+    };
+
+    // 1st attemp manual input required fields if identity modal was visible and displayed invalid data
+    if ((await validateAfterNikNotFound(fixedData)) === false) {
+      await inputRequiredFields({
+        tgl_lahir: fixedData.tgl_lahir || '',
+        nama: fixedData.nama || fixedData.NAMA || '',
+        gender: fixedData.genderInitial || '',
+        fixedData,
+        parsedNik
+      });
     }
 
-    if (isEmpty(`${fixedData.nama_from_page}`)) {
-      throw new Error("❌ Patient's name is empty after confirmation");
+    // 2nd attempt to validate after manual input
+    if ((await validateAfterNikNotFound(fixedData)) === false) {
+      throw new Error('❌ Failed to validate required fields after manual input');
     }
 
     const { gender, age, birthDate, location } = await getPersonInfo(page);
