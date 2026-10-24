@@ -601,6 +601,34 @@ export async function typeAndTrigger(page, selector, value) {
   }, selector);
   await page.keyboard.press('Tab');
   await sleep(300);
+
+  // Validate that the value was set correctly
+  let currentValue = await page.$eval(selector, (el) => el.value);
+  if (currentValue !== value) {
+    // Retry typing the value if it wasn't set correctly
+    // Handle gender combobox properly (wait for dropdown and select)
+    await page.waitForSelector(selector, { visible: true });
+    await page.type(selector, value, { delay: 100 });
+
+    // wait for dropdown to appear (important)
+    await sleep(300);
+
+    // move to first suggestion
+    await page.keyboard.press('ArrowDown');
+
+    // select it
+    await page.keyboard.press('Enter');
+
+    await sleep(200);
+
+    // Validate again
+    currentValue = await page.$eval(selector, (el) => el.value);
+    if (currentValue !== value) {
+      throw new Error(
+        `[typeAndTrigger ] Failed to set value for selector "${selector}". Expected: "${value}", but got: "${currentValue}"`
+      );
+    }
+  }
 }
 
 /**
