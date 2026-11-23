@@ -9,7 +9,13 @@ import { findExactKelurahanFromAddress } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
-import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
+import {
+  isElementExist,
+  isElementVisible,
+  typeAndTrigger,
+  typeAndTriggerKendo,
+  waitForDomStable
+} from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
@@ -136,25 +142,19 @@ async function resolveAndFillAddress(
 
   console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
 
-  for (const [selector, value] of [
-    ['#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi)],
-    ['#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota)],
-    ['#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan)],
-    ['#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan)],
+  for (const [containerSelector, value] of [
+    ['#field_item_provinsi_ktp_id', ucwords(provinsi)],
+    ['#field_item_kabupaten_ktp_id', ucwords(kabupatenOrKota)],
+    ['#field_item_kecamatan_ktp_id', ucwords(kecamatan)],
+    ['#field_item_kelurahan_ktp_id', ucwords(kelurahan)],
     ['#field_item_alamat_ktp textarea', fixedData.alamat]
   ] as const) {
-    await page.waitForSelector(selector, { visible: true });
-    await page.type(selector, value, { delay: 100 });
-
-    // wait for dropdown to appear (important)
-    await sleep(300);
-
-    // move to first suggestion
-    await page.keyboard.press('ArrowDown');
-
-    // select it
-    await page.keyboard.press('Enter');
-
+    if (containerSelector.endsWith('textarea')) {
+      await page.waitForSelector(containerSelector, { visible: true });
+      await page.type(containerSelector, value, { delay: 100 });
+    } else {
+      await typeAndTriggerKendo(page, containerSelector, value, true);
+    }
     await sleep(200);
   }
 
@@ -179,12 +179,12 @@ async function resolveAndFillAddress(
 async function fillFallbackLocationIfEmpty(page: Page, province: string, city: string): Promise<void> {
   console.log(`Provinsi: ${province}`, province.length === 0 ? '(empty)' : '');
   if (province.length === 0) {
-    await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', 'Jawa Timur');
+    await typeAndTriggerKendo(page, '#field_item_provinsi_ktp_id', 'Jawa Timur', true);
   }
 
   console.log(`Kabupaten/Kota: ${city}`, city.length === 0 ? '(empty)' : '');
   if (city.length === 0) {
-    await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', 'Kota Surabaya');
+    await typeAndTriggerKendo(page, '#field_item_kabupaten_ktp_id', 'Kota Surabaya', true);
   }
 }
 
@@ -199,41 +199,41 @@ async function fillAllTidakFields(
   page: Page,
   ctx: { gender: string; age: number; hasDiabetes: boolean; hasBatuk: boolean }
 ): Promise<void> {
-  // Always-Tidak fields
+  // Always-Tidak fields - Kendo UI comboboxes use container selectors
   const alwaysTidakSelectors = [
-    '#field_item_riwayat_kontak_tb_id input[type="text"]',
-    '#field_item_risiko_1_id input[type="text"]',
-    '#field_item_risiko_4_id input[type="text"]',
-    '#field_item_risiko_5_id input[type="text"]',
-    '#field_item_risiko_7_id input[type="text"]',
-    '#field_item_risiko_10_id input[type="text"]',
-    '#field_item_risiko_11_id input[type="text"]',
-    '#field_item_gejala_2_3_id input[type="text"]',
-    '#field_item_gejala_2_4_id input[type="text"]',
-    '#field_item_gejala_2_5_id input[type="text"]',
-    '#field_item_gejala_6_id input[type="text"]'
+    '#field_item_riwayat_kontak_tb_id',
+    '#field_item_risiko_1_id',
+    '#field_item_risiko_4_id',
+    '#field_item_risiko_5_id',
+    '#field_item_risiko_7_id',
+    '#field_item_risiko_10_id',
+    '#field_item_risiko_11_id',
+    '#field_item_gejala_2_3_id',
+    '#field_item_gejala_2_4_id',
+    '#field_item_gejala_2_5_id',
+    '#field_item_gejala_6_id'
   ];
 
   // Gender-specific: risiko kehamilan only applies to perempuan
   if (ctx.gender.toLowerCase().trim() === 'perempuan') {
-    alwaysTidakSelectors.push('#field_item_risiko_9_id input[type="text"]');
+    alwaysTidakSelectors.push('#field_item_risiko_9_id');
   }
 
   for (const selector of alwaysTidakSelectors) {
-    await typeAndTrigger(page, selector, 'Tidak');
+    await typeAndTriggerKendo(page, selector, 'Tidak', true);
   }
 
   // Diabetes: Ya or Tidak
-  await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', ctx.hasDiabetes ? 'Ya' : 'Tidak');
+  await typeAndTriggerKendo(page, '#field_item_risiko_6_id', ctx.hasDiabetes ? 'Ya' : 'Tidak', true);
 
   // Age-specific: gejala balita fields are conditionally rendered
   if (ctx.age < 18) {
     console.log('Filling balita-specific fields with "Tidak" since age is under 18');
     const gejalaBalitaSelectors = [
-      '#field_item_gejala_1_1_id input[type="text"]',
-      '#field_item_gejala_1_3_id input[type="text"]',
-      '#form_item_gejala_1_4_id input[type="text"]',
-      '#field_item_gejala_1_5_id input[type="text"]'
+      '#field_item_gejala_1_1_id',
+      '#field_item_gejala_1_3_id',
+      '#form_item_gejala_1_4_id',
+      '#field_item_gejala_1_5_id'
     ];
 
     for (const selector of gejalaBalitaSelectors) {
@@ -241,7 +241,7 @@ async function fillAllTidakFields(
         const visible = await isElementVisible(page, selector);
         console.log(`${selector} is visible: ${visible}`);
         if (visible) {
-          await typeAndTrigger(page, selector, 'Tidak');
+          await typeAndTriggerKendo(page, selector, 'Tidak', true);
           await sleep(200);
         }
       }
@@ -252,7 +252,7 @@ async function fillAllTidakFields(
 
   // Batuk: Tidak if no cough, otherwise handled by caller via keterangan
   if (!ctx.hasBatuk) {
-    await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
+    await typeAndTriggerKendo(page, '#field_item_gejala_2_1_id', 'Tidak', true);
   }
 
   // CXR: always Tidak
@@ -477,9 +477,9 @@ export async function processData(
       if (!nama || nama.length === 0) {
         throw new Error("❌ Failed to take the patient's name");
       }
-      await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', nama);
-      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', gender);
-      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', tgl_lahir);
+      await typeAndTriggerKendo(page, '#field_item_nama_peserta', nama, true);
+      await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', gender, true);
+      await typeAndTriggerKendo(page, '#field_item_tgl_lahir', tgl_lahir, true);
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
       await resolveAndFillAddress(page, fixedData, parsedNik);
     };
@@ -547,7 +547,7 @@ export async function processData(
           () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
         );
         fixedData.nama_from_page = `${nama}`.trim();
-        await typeAndTrigger(page, '#field_item_nama_peserta input[type="text"]', NAMA);
+        await typeAndTriggerKendo(page, '#field_item_nama_peserta', NAMA, true);
       }
       // 2nd check after typing the name if it was empty
       if (!isValidName(`${fixedData.nama_from_page}`, true)) {
@@ -566,7 +566,7 @@ export async function processData(
           console.error("❌ Failed to determine patient's gender from NIK");
           return false;
         }
-        await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', fixedData.genderInitial);
+        await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', fixedData.genderInitial, true);
         await sleep(300);
         await page.keyboard.press('ArrowDown');
         await page.keyboard.press('Enter');
