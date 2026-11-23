@@ -1,22 +1,20 @@
 import { fileURLToPath } from 'node:url';
-import { getPuppeteer, typeAndTrigger } from '../src/puppeteer_utils.js';
 import path from 'node:path';
-import { getNumbersOnly, sleep } from '../src/utils/index.js';
+import { getPuppeteer, typeAndTrigger } from '../src/puppeteer_utils.js';
+import { getNumbersOnly, sleep } from '../src/utils/browser.js';
 import { isNikErrorVisible } from '../src/runner/skrin/isNikErrorVisible.js';
+import type { Page, Browser } from 'puppeteer';
+import { autoLoginAndEnterSkriningPage } from '../src/skrin_puppeteer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function main() {
+async function main(): Promise<void> {
   const puppeteer = await getPuppeteer();
-  let page = puppeteer.page;
-  const browser = puppeteer.browser;
+  let page: Page = puppeteer.page;
+  const browser: Browser = puppeteer.browser;
 
-  await page.goto('https://sumatera.sitb.id/sitb2024/app', { waitUntil: 'networkidle2' });
-  await page.type('input[name="username"]', process.env.skrin_username);
-  await page.type('input[name="password"]', process.env.skrin_password);
-  await Promise.all([page.click('button[type="submit"]'), page.waitForNavigation({ waitUntil: 'networkidle2' })]);
-  console.log('Login successful');
+  await autoLoginAndEnterSkriningPage(page);
 
   page = await browser.newPage(); // Open new tab
 
@@ -33,9 +31,9 @@ async function main() {
     nik: '12345'
   };
 
-  await page.$eval('#dt_tgl_skrining', (el) => el.removeAttribute('readonly'));
+  await page.$eval('#dt_tgl_skrining', (el: Element) => el.removeAttribute('readonly'));
   await typeAndTrigger(page, '#dt_tgl_skrining', data.tanggal);
-  await page.$eval('#dt_tgl_skrining', (el) => el.setAttribute('readonly', 'true'));
+  await page.$eval('#dt_tgl_skrining', (el: Element) => el.setAttribute('readonly', 'true'));
   await typeAndTrigger(page, 'input[name="metode_id_input"]', 'Tunggal');
   await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
   await typeAndTrigger(page, '#nik', getNumbersOnly(data.nik));
@@ -43,4 +41,4 @@ async function main() {
   console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
 }
 
-main();
+main().catch(console.error);
