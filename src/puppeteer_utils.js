@@ -29,6 +29,90 @@ export { getFallbackProfileDir } from './puppeteer/profile-manager.js';
 export { triggerInputChange } from './puppeteer/triggerInputChange.js';
 
 /**
+ * Types into a Kendo UI combobox and validates the visible input value.
+ * Kendo UI comboboxes have a visible .k-input wrapper and a hidden actual input.
+ * The hidden input stores internal IDs, so we validate against the visible .k-input.
+ *
+ * @param {import('puppeteer').Page} page - The Puppeteer page instance.
+ * @param {string} containerSelector - The CSS selector for the Kendo UI combobox container (e.g., '#field_item_risiko_5_id')
+ * @param {string} value - The value to type/select.
+ * @param {boolean} [debug=false] - Enable debug logging for each step.
+ * @returns {Promise<void>} - A promise that resolves after typing and triggering events.
+ */
+export async function typeAndTriggerKendo(page, containerSelector, value, debug = false) {
+  const log = debug ? (...args) => console.log('[typeAndTriggerKendo]', ...args) : () => {};
+
+  // First check if the container element exists and is visible
+  // Some fields may be hidden (display: none) depending on previous selections
+  log('Checking if container exists and is visible:', containerSelector);
+  const containerVisible = await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return { exists: false, visible: false };
+    const style = window.getComputedStyle(el);
+    return {
+      exists: true,
+      visible: style.display !== 'none' && style.visibility !== 'hidden' && el.offsetWidth > 0 && el.offsetHeight > 0
+    };
+  }, containerSelector);
+
+  if (!containerVisible.exists) {
+    log('Container does not exist, skipping:', containerSelector);
+    return;
+  }
+
+  if (!containerVisible.visible) {
+    log('Container is hidden (display: none or similar), skipping:', containerSelector);
+    return;
+  }
+
+  // Find the visible .k-input inside the container
+  const visibleSelector = `${containerSelector} .k-input`;
+
+  log('Waiting for visible selector:', visibleSelector);
+  await page.waitForSelector(visibleSelector, { visible: true });
+  log('Found visible selector, focusing...');
+  await page.focus(visibleSelector);
+
+  // Clear and type into visible input
+  log('Clearing input...');
+  await page.evaluate((sel) => {
+    const input = document.querySelector(sel);
+    if (input) {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, visibleSelector);
+
+  log('Typing value:', value);
+  await page.type(visibleSelector, value, { delay: 100 });
+
+  // wait for dropdown to appear
+  log('Waiting for dropdown...');
+  await sleep(300);
+
+  // move to first suggestion
+  log('Pressing ArrowDown...');
+  await page.keyboard.press('ArrowDown');
+
+  // select it
+  log('Pressing Enter...');
+  await page.keyboard.press('Enter');
+
+  await sleep(200);
+
+  // Validate the value on the visible .k-input (not the hidden input, which stores internal IDs)
+  log('Validating value...');
+  const currentValue = await page.$eval(visibleSelector, (el) => el.value);
+  if (currentValue !== value) {
+    log('Validation failed. Expected:', value, 'Got:', currentValue);
+    throw new Error(
+      `[typeAndTriggerKendo] Failed to set value for selector "${containerSelector}". Expected: "${value}", but got: "${currentValue}"`
+    );
+  }
+  log('Success! Value set to:', currentValue);
+}
+
+/**
  * Get the absolute path of the current script.
  * @constant {string} __filename - The file path of the current module.
  * @constant {string} __dirname - The directory path of the current module.
