@@ -74,8 +74,10 @@ async function findData(
   // Reuse the tmp JPEG path for this NIK when taking a fresh screenshot.
   const tmpFilePath = getTmpScreenshotPath(data.nik);
 
-  // Refresh login if the page is stale or the session is old.
-  if (!page.url().includes('/skrining') || now - lastLoginTime > 10 * 60 * 1000) {
+  // Refresh login if the page is stale, the session is old, or not logged in (title doesn't contain "SITB welcome panel").
+  const title = await page.title();
+  const isLoggedIn = /SITB welcome panel/i.test(title);
+  if (!page.url().includes('/skrining') || now - lastLoginTime > 10 * 60 * 1000 || !isLoggedIn) {
     await autoLoginAndEnterSkriningPage(page);
     lastLoginTime = now;
   }
