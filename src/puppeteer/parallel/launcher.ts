@@ -15,10 +15,12 @@ const __dirname = path.dirname(__filename);
 // CLI parsing
 const argv = minimist(process.argv.slice(2), {
   boolean: ['help'],
+  string: ['port'],
   alias: {
-    h: 'help'
+    h: 'help',
+    p: 'port'
   },
-  default: { help: false }
+  default: { help: false, port: undefined }
 });
 
 function printHelp() {
@@ -37,6 +39,7 @@ function printHelp() {
     '',
     'Options:',
     '  --help, -h         Show this help message',
+    '  --port, -p <port>  Custom debugging port (default: auto-assigned free port)',
     '',
     'Notes:',
     '  - This script launches a Puppeteer browser instance in the background for parallel usage.',
@@ -51,6 +54,13 @@ function printHelp() {
 if (argv.help) {
   printHelp();
   process.exit(0);
+}
+
+// Custom port from CLI
+const customPort = argv.port ? parseInt(argv.port, 10) : undefined;
+if (customPort !== undefined && (isNaN(customPort) || customPort < 1 || customPort > 65535)) {
+  console.error('Invalid port:', argv.port);
+  process.exit(1);
 }
 
 export interface GotoOptions {
@@ -74,7 +84,7 @@ function getFreePort(): Promise<number> {
   });
 }
 
-export async function useDefault() {
+export async function useDefault(customPort?: number) {
   const rawUserDataDir = reserveClusterUserDataDir({
     preferredUserDataDir: path.resolve(GLOBAL_PROFILES_DIR, 'profile1'),
     reservedUserDataDirs: new Set(),
@@ -82,8 +92,8 @@ export async function useDefault() {
   });
   const userDataDir = path.resolve(rawUserDataDir).replace(/\\/g, '/');
   console.log('User Data Dir', userDataDir);
-  const port = await getFreePort();
-  console.log('Free Port', port);
+  const port = customPort ?? (await getFreePort());
+  console.log('Port', port);
 
   const { browser } = await connect({
     headless: false,
@@ -123,7 +133,7 @@ export async function useDefault() {
  * at which point the endpoint is cleaned up.
  */
 export async function parallelLauncher() {
-  const { browser } = await useDefault();
+  const { browser } = await useDefault(customPort);
 
   await closeOtherTabs(browser as any, 1);
 
