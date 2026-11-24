@@ -72,6 +72,7 @@ function resolveRunner(command) {
 
   const runners = {
     launch: { name: 'launcher', hasOutput: true },
+    'launch-browser-agent': { name: 'launcher-agent', hasOutput: true },
     skrin: { name: 'skrin', hasOutput: true },
     'skrin-check': { name: 'skrin-check-data', hasOutput: true },
     check: { name: 'check', hasOutput: false }
@@ -216,7 +217,7 @@ Wrapper to run parallel runners (launcher, skrin, etc.).
 When src/ is available, this script runs the source runner directly with Node.
 
 positional arguments:
-  {launch,skrin,check,skrin-check}
+  {launch,launch-browser-agent,skrin,check,skrin-check}
                         Which parallel command to build/run (see Commands section).
 
 options:
@@ -226,10 +227,11 @@ options:
   -f, --force           Force rebuild and bypass cache check (useful for debugging).
 
 Commands:
-  launch       Run the launcher runner.
-  skrin        Run the skrin runner.
-  skrin-check  Run the skrin-check-data runner.
-  check        Run the local TypeScript check runner.
+  launch                Run the launcher runner.
+  launch-browser-agent  Run the launcher agent runner (fixed port for MCP).
+  skrin                 Run the skrin runner.
+  skrin-check           Run the skrin-check-data runner.
+  check                 Run the local TypeScript check runner.
 
 Options:
   -k, --keep-open     Keep the launched process console open after it exits.
@@ -241,8 +243,8 @@ Notes:
   and still forward the help flag to the bundled script so it can print its own help.
 
 Examples:
-  node ${__filename} skrin -s -- -h
-  node ${__filename} launch -k
+  node ${__filename} -s skrin -- -h
+  node ${__filename} -k launch -h
 `;
   console.log(help);
 }
@@ -256,7 +258,7 @@ Examples:
  * @returns {{ subcommand: string|null, rest: string[] }}
  */
 function extractSubcommand(args) {
-  const validCommands = new Set(['launch', 'skrin', 'check', 'skrin-check']);
+  const validCommands = new Set(['launch', 'launch-browser-agent', 'skrin', 'check', 'skrin-check']);
   const flags = new Set(['-h', '--help', '-k', '--keep-open', '-s', '--same-terminal', '-f', '--force']);
 
   for (let i = 0; i < args.length; i++) {
@@ -298,7 +300,7 @@ function main() {
 
   if (!subcommand) {
     console.error(`Unknown command: ${rawArgs[0]}`);
-    console.error('Valid commands: launch, skrin, skrin-check, check');
+    console.error('Valid commands: launch, launch-browser-agent, skrin, skrin-check, check');
     process.exit(1);
   }
 
@@ -345,7 +347,12 @@ function main() {
     return;
   }
 
-  if (subcommand === 'launch' || subcommand === 'skrin' || subcommand === 'skrin-check') {
+  if (
+    subcommand === 'launch' ||
+    subcommand === 'launch-browser-agent' ||
+    subcommand === 'skrin' ||
+    subcommand === 'skrin-check'
+  ) {
     runBundledCommand(subcommand, forwardedArgs, sameTerminal, keepOpen);
     return;
   }

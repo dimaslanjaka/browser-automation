@@ -133,7 +133,7 @@ export function getAge(dateString, dateFormat = 'DD/MM/YYYY') {
   let birthDate = moment(dateString, dateFormat, true); // Strict parsing
 
   if (!birthDate.isValid()) {
-    throw new Error(`Invalid date format: "${dateString}". Expected format: ${dateFormat}`);
+    throw new Error(`[getAge] Invalid date format: "${dateString}". Expected format: ${dateFormat}`);
   }
 
   let age = moment().diff(birthDate, 'years');

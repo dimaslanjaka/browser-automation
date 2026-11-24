@@ -12,6 +12,7 @@ export * from './parallel/EndpointManager.connector.js';
 export * from './parallel/EndpointManager.js';
 export * from './parallel/getPuppeteerWithParallel.js';
 export * from './parallel/index.js';
+export * from './parallel/launcher-agent.js';
 export * from './parallel/launcher.js';
 export * from './parallel/skrin-check-data.js';
 export * from './parallel/skrin.js';

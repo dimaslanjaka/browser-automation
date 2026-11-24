@@ -18,6 +18,7 @@
   "bin": {
     "ba-check": "./dist/puppeteer/parallel/check.runner.cjs",
     "ba-launch": "./dist/puppeteer/parallel/launcher.runner.cjs",
+    "ba-launch-agent": "./dist/puppeteer/parallel/launcher-agent.runner.cjs",
     "ba-parallel": "./bin/pp.mjs",
     "py": "./bin/py.mjs"
   },

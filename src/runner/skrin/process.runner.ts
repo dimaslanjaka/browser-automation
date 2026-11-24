@@ -8,6 +8,7 @@ import setupXhrCapture from '../../puppeteer/xhr/capture-xhr.js';
 import { getNumbersOnly } from '../../utils/browser.js';
 import { processData } from './direct-process-data.js';
 import { ExcelRowData } from '../../../globals.js';
+import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
 
 scheduler.register();
 
@@ -44,6 +45,13 @@ async function main() {
     process.exit(1); // exit on unexpected status to avoid silent failures
   } else {
     console.log(result);
+  }
+
+  // verify success modal shows up
+  const isSuccessModalVisible = await isSuccessNotificationVisible(page);
+  if (!isSuccessModalVisible) {
+    console.warn('Success notification modal did not appear as expected.');
+    process.exit(1); // exit on unexpected status to avoid silent failures
   }
 
   _stopCapture();
