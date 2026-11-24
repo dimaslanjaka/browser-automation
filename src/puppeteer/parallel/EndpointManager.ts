@@ -48,10 +48,16 @@ export class EndpointManager {
   /**
    * Parse raw file content into an array of endpoint strings.
    * @param content - Raw JSON string from the endpoint file.
+   * @returns Array of endpoint strings, or empty array if parsing fails.
    */
   private parseEndpoints(content: string): string[] {
     if (!content) return [];
-    return jsonParseWithCircularRefs<string[]>(content);
+    try {
+      return jsonParseWithCircularRefs<string[]>(content);
+    } catch {
+      // Silently return empty array on invalid JSON
+      return [];
+    }
   }
 
   /**
@@ -64,7 +70,7 @@ export class EndpointManager {
 
   /**
    * Read and parse the lock file for an endpoint.
-   * Returns `undefined` if the file does not exist or is unreadable.
+   * Returns `undefined` if the file does not exist, is unreadable, or contains invalid JSON.
    * @param endpoint - The browser WebSocket endpoint URL.
    */
   private readEndpointLock(endpoint: string): EndpointLock | undefined {
@@ -74,6 +80,7 @@ export class EndpointManager {
       if (!content) return undefined;
       return jsonParseWithCircularRefs<EndpointLock>(content);
     } catch {
+      // Silently handle any error: file missing, unreadable, or corrupted JSON
       return undefined;
     }
   }
@@ -102,12 +109,20 @@ export class EndpointManager {
     const lockPath = this.getEndpointLockPath(endpoint);
     const lock = this.readEndpointLock(endpoint);
     if (!lock?.ownerPid) {
-      fs.removeSync(lockPath);
+      try {
+        fs.removeSync(lockPath);
+      } catch {
+        // Ignore removal errors (file may not exist, be in use, etc.)
+      }
       return undefined;
     }
 
     if (!this.isProcessRunning(lock.ownerPid)) {
-      fs.removeSync(lockPath);
+      try {
+        fs.removeSync(lockPath);
+      } catch {
+        // Ignore removal errors
+      }
       return undefined;
     }
 
