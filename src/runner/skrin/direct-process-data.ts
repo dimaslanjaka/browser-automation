@@ -29,7 +29,9 @@ import { isIdentityModalVisible } from './isIdentityModalVisible.js';
 import { isInvalidAlertVisible } from './isInvalidAlertVisible.js';
 import { isNikErrorVisible } from './isNikErrorVisible.js';
 import { isNIKNotFoundModalVisible } from './isNIKNotFoundModalVisible.js';
+import { isSaveConfirmationModalVisible } from './isSaveConfirmationModalVisible.js';
 import { isSessionExpiredAlertVisible } from './isSessionExpiredAlertVisible.js';
+import { isSubmitModalConfirmationVisible } from './isSubmitModalConfirmationVisible.js';
 import { isSuccessNotificationVisible } from './isSuccessNotificationVisible.js';
 import removeDuplicateKeys from '../../utils/removeDuplicateKeys.cjs';
 import isValidName from './isValidName.cjs';
@@ -256,9 +258,8 @@ async function fillAllTidakFields(
   }
 
   // CXR: always Tidak
-  for (const selector of ['#form_item_cxr_pemeriksaan_id input', '#form_item_cxr_alasan textarea']) {
-    await typeAndTrigger(page, selector, 'Tidak');
-  }
+  await typeAndTrigger(page, '#form_item_cxr_pemeriksaan_id input', 'Tidak');
+  await typeAndTrigger(page, '#form_item_cxr_alasan textarea', 'Tidak tahu');
 }
 
 /**
@@ -502,7 +503,23 @@ export async function processData(
       console.log('Should click Yes on NIK not found modal:', shouldClickYes);
 
       if (shouldClickYes) {
-        await page.click('#yesButton');
+        // Wait for modal title to be visible for robust detection
+        await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
+        await sleep(500);
+
+        // Verify it's the submit confirmation modal
+        const isSubmitModal = await isSubmitModalConfirmationVisible(page);
+        if (!isSubmitModal) {
+          throw new Error('❌ Submit confirmation modal not found or text mismatch');
+        }
+
+        // Click "Ya" button scoped inside the modal
+        const yesButton = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
+        await yesButton.click();
+
+        // Wait for modal to close
+        await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
+        await sleep(1000);
 
         const NAMA = fixedData.nama || fixedData.NAMA || '';
 
@@ -713,17 +730,60 @@ export async function processData(
         }
       });
 
+      // First: Wait for pre-save confirmation modal ("Apakah Anda yakin telah mengisi data dengan benar?")
+      console.log('Waiting for pre-save confirmation modal...');
+      await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
       await sleep(1000);
-      try {
-        await page.waitForSelector('#yesButton', { visible: true });
-        await page.click('#yesButton');
-      } catch (_) {
-        await waitEnter(
-          'Failed to click #yesButton for confirmation modal. Please click the button manually, then press Enter to continue...'
-        );
+
+      // Verify it's the pre-save confirmation modal
+      const isSubmitModal = await isSubmitModalConfirmationVisible(page);
+      if (!isSubmitModal) {
+        throw new Error('❌ Pre-save confirmation modal not found or text mismatch');
       }
 
+      // Click "Ya" button on pre-save modal (needs double-click due to bug)
+      console.log('Clicking "Ya" on pre-save confirmation modal (first click)...');
+      const yesButton1 = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
+      await yesButton1.click();
+
+      // Wait a bit and re-check if modal is still visible before second click
+      // (bug workaround - if bug fixed in future, single click will close modal)
+      await sleep(500);
+      const modalStillVisible = await page
+        .$eval('#dialogconfirm_wnd_title', (el) => (el as HTMLElement).offsetParent !== null)
+        .catch(() => false);
+      if (modalStillVisible) {
+        console.log('Clicking "Ya" on pre-save confirmation modal (second click - modal still open)...');
+        const yesButton1b = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
+        await yesButton1b.click();
+      } else {
+        console.log('Modal already closed after first click (bug may be fixed)');
+      }
+
+      // Wait for pre-save modal to close
+      await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
       await sleep(1000);
+
+      // Second: Wait for post-save confirmation modal ("Validasi NIK dan Tanggal Skrining")
+      // This modal asks if you want to save anyway because NIK was already registered on a different date
+      console.log('Waiting for post-save confirmation modal...');
+      await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
+      await sleep(1000);
+
+      // Verify it's the save confirmation modal
+      const isSaveModal = await isSaveConfirmationModalVisible(page);
+      if (!isSaveModal) {
+        throw new Error('❌ Save confirmation modal not found or text mismatch');
+      }
+
+      // Click "Ya" button to confirm saving
+      console.log('Clicking "Ya" on post-save confirmation modal...');
+      const yesButton2 = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
+      await yesButton2.click();
+
+      // Wait for modal title to disappear (modal closed)
+      await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
+      await sleep(1500);
     } else {
       console.warn('⚠️\tData processed but not submitted:', fixedData, '\n');
       await waitEnter('Please manually submit the form, then press Enter to continue...');

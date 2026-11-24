@@ -86,17 +86,37 @@ export async function typeAndTriggerKendo(page, containerSelector, value, debug 
   log('Typing value:', value);
   await page.type(visibleSelector, value, { delay: 100 });
 
-  // wait for dropdown to appear
-  log('Waiting for dropdown...');
-  await sleep(300);
+  // wait for dropdown to appear and filter
+  log('Waiting for dropdown to filter...');
+  await sleep(500);
 
-  // move to first suggestion
-  log('Pressing ArrowDown...');
-  await page.keyboard.press('ArrowDown');
+  // Try to find and click the exact matching option in the dropdown
+  // This is more reliable than ArrowDown+Enter which might select the wrong item
+  log('Searching for exact match in dropdown...');
+  const selected = await page.evaluate((sel, targetValue) => {
+    // Kendo UI dropdown list items
+    const listItems = document.querySelectorAll('.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item');
+    for (const item of listItems) {
+      const text = item.textContent?.trim();
+      if (text === targetValue) {
+        item.click();
+        return true;
+      }
+    }
+    return false;
+  }, visibleSelector, value);
 
-  // select it
-  log('Pressing Enter...');
-  await page.keyboard.press('Enter');
+  if (!selected) {
+    log('Exact match not found in dropdown, falling back to ArrowDown+Enter...');
+    // move to first suggestion
+    log('Pressing ArrowDown...');
+    await page.keyboard.press('ArrowDown');
+    // select it
+    log('Pressing Enter...');
+    await page.keyboard.press('Enter');
+  } else {
+    log('Selected exact match from dropdown');
+  }
 
   await sleep(200);
 

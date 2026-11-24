@@ -18,7 +18,10 @@ export async function isSuccessNotificationVisible(page) {
         rect.width > 0 &&
         rect.height > 0;
 
-      if (isVisible) return true;
+      if (isVisible) {
+        const text = el.innerText || el.textContent || '';
+        if (/data berhasil ditambahkan/i.test(text)) return true;
+      }
     }
     return false;
   });
