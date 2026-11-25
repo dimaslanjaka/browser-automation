@@ -222,10 +222,20 @@
     "packages/*"
   ],
   "resolutions": {
-    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/c2b5937461be63b9e214404a41ee3fe2b8c45043/releases/bin.tgz",
-    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/f3f4bde1887798c308928fc76dc590b23de992ea/release/cross-spawn.tgz",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
+    "@typescript-eslint/parser": "8.74.0",
+    "@typescript-eslint/eslint-plugin": "8.74.0",
+    "@typescript-eslint/scope-manager": "8.74.0",
+    "@typescript-eslint/type-utils": "8.74.0",
+    "@typescript-eslint/types": "8.74.0",
+    "@typescript-eslint/typescript-estree": "8.74.0",
+    "@typescript-eslint/utils": "8.74.0",
+    "typescript-eslint": "8.74.0",
+    "binary-collections": "https://github.com/dimaslanjaka/bin/raw/515e99f12dfbeaeec4e1485631a14826845b299b/releases/bin.tgz",
+    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/85a5399f99298c761dcd4b4aaf802dcfec502088/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/1ca385787f7287155b547c5b97d5ffd5bcfab482/packages/sbg-utility/release/sbg-utility.tgz",
-    "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/29e36df3c0de2ff67697d65fe8631eb7b689f4c9/release/dimaslanjaka-eslint-base-config.tgz",
+    "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/71d034a675f5c31c8e4d367e10be378f95b1ae4a/release/dimaslanjaka-eslint-base-config.tgz",
     "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/04c1ad11f3f9764f6af552213cc125a44335f050/release/proxies-grabber.tgz",
     "got": "11.8.2"
   },
