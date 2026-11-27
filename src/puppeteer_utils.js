@@ -94,54 +94,34 @@ export async function typeAndTriggerKendo(page, containerSelector, value, debug 
 
   // wait for dropdown to appear and filter
   log('Waiting for dropdown to filter...');
-  await sleep(800);
+  await sleep(1000);
 
-  // Try exact match click first (type to filter, then click exact match)
-  log('Searching for exact match in dropdown...');
-  const selected = await page.evaluate((sel, targetValue) => {
-    // Kendo UI dropdown list items
+  // Use ArrowDown+Enter after filtering - more reliable than click which drops first char
+  // First verify the dropdown has filtered to our value
+  log('Verifying dropdown filtered...');
+  const dropdownFiltered = await page.evaluate((sel, targetValue) => {
     const listItems = document.querySelectorAll('.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item');
     for (const item of listItems) {
       const text = item.textContent?.trim();
-      if (text === targetValue) {
-        item.click();
+      if (text === targetValue || text?.toLowerCase() === targetValue.toLowerCase()) {
         return true;
       }
     }
     return false;
   }, visibleSelector, value);
 
-  if (!selected) {
-    log('Exact match not found, trying case-insensitive match...');
-    const selectedCI = await page.evaluate((sel, targetValue) => {
-      const listItems = document.querySelectorAll('.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item');
-      const targetLower = targetValue.toLowerCase();
-      for (const item of listItems) {
-        const text = item.textContent?.trim().toLowerCase();
-        if (text === targetLower) {
-          item.click();
-          return true;
-        }
-      }
-      return false;
-    }, visibleSelector, value);
-
-    if (!selectedCI) {
-      log('Exact match not found in dropdown, falling back to ArrowDown+Enter...');
-      // move to first suggestion
-      log('Pressing ArrowDown...');
-      await page.keyboard.press('ArrowDown');
-      // select it
-      log('Pressing Enter...');
-      await page.keyboard.press('Enter');
-    } else {
-      log('Selected case-insensitive match from dropdown');
-    }
-  } else {
-    log('Selected exact match from dropdown');
+  if (!dropdownFiltered) {
+    log('WARNING: Dropdown may not have filtered to expected value, continuing anyway...');
   }
 
-  await sleep(300);
+  // Use keyboard navigation - select first (filtered) item
+  log('Pressing ArrowDown to select filtered item...');
+  await page.keyboard.press('ArrowDown');
+  await sleep(100);
+  log('Pressing Enter to confirm...');
+  await page.keyboard.press('Enter');
+
+  await sleep(400);
 
   // Validate the value on the visible .k-input (not the hidden input, which stores internal IDs)
   // Retry once if validation fails due to timing
