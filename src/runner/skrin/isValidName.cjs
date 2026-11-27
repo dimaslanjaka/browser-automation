@@ -22,8 +22,8 @@ function isValidName(name, debug = false) {
     return false;
   }
 
-  // Check for invalid characters (only allow letters, spaces, hyphens, and apostrophes)
-  const validNamePattern = /^[a-zA-Z\s'-]+$/;
+  // Check for invalid characters (allow letters, spaces, hyphens, apostrophes, commas, periods)
+  const validNamePattern = /^[a-zA-Z\s'.,-]+$/;
   if (!validNamePattern.test(name)) {
     if (debug) {
       console.error('isValidName: name contains invalid characters');
