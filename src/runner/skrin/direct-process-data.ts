@@ -153,6 +153,11 @@ async function resolveAndFillAddress(
   ] as const) {
     if (containerSelector.endsWith('textarea')) {
       await page.waitForSelector(containerSelector, { visible: true });
+      // Clear textarea first to prevent duplicate addresses
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) (el as HTMLTextAreaElement).value = '';
+      }, containerSelector);
       await page.type(containerSelector, value, { delay: 100 });
     } else {
       await typeAndTriggerKendo(page, containerSelector, value, true);
@@ -305,11 +310,13 @@ export async function processData(
 
   const NIK = data.nik;
   if (!nikUtils.isValidNIK(NIK)) {
+    console.log(`📝 [DB] Writing invalid NIK log for NIK: ${NIK}`);
     await database.addLog({
       id: String(NIK),
       data: { ...data, status: 'invalid' },
       message: 'Invalid NIK format'
     });
+    console.log(`✅ [DB] Invalid NIK log written for NIK: ${NIK}`);
     console.error(`Skipping due to invalid NIK format: ${NIK}`);
     return {
       status: 'error',
@@ -426,6 +433,10 @@ export async function processData(
       };
     }
 
+    // Wait for nik field to be ready after date selection
+    await page.waitForSelector('#nik', { visible: true });
+    await sleep(500);
+
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
     await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
     await waitForDomStable(page, 5000, 60000);
@@ -478,8 +489,10 @@ export async function processData(
       if (!nama || nama.length === 0) {
         throw new Error("❌ Failed to take the patient's name");
       }
+      // Map gender initial to full text for dropdown
+      const genderFull = gender === 'L' ? 'Laki-laki' : gender === 'P' ? 'Perempuan' : gender;
       await typeAndTrigger(page, '#field_item_nama_peserta input[name="nama_peserta"]', nama);
-      await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', gender, true);
+      await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', genderFull, true);
       await typeAndTriggerKendo(page, '#field_item_tgl_lahir', tgl_lahir, true);
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
       await resolveAndFillAddress(page, fixedData, parsedNik);
@@ -583,7 +596,9 @@ export async function processData(
           console.error("❌ Failed to determine patient's gender from NIK");
           return false;
         }
-        await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', fixedData.genderInitial, true);
+        // Map gender initial to full text for dropdown
+        const genderFull = fixedData.genderInitial === 'L' ? 'Laki-laki' : fixedData.genderInitial === 'P' ? 'Perempuan' : fixedData.genderInitial;
+        await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', genderFull, true);
         await sleep(300);
         await page.keyboard.press('ArrowDown');
         await page.keyboard.press('Enter');
@@ -739,7 +754,11 @@ export async function processData(
 
         // Check for domicile address validation errors and auto-fill if found
         const domicileErrors = invalidAlertState.contents.filter(
-          (msg) => msg.includes('Kabupaten/Kota Domisili') || msg.includes('Provinsi Domisili') || msg.includes('Kecamatan Domisili') || msg.includes('Kelurahan Domisili')
+          (msg) =>
+            msg.includes('Kabupaten/Kota Domisili') ||
+            msg.includes('Provinsi Domisili') ||
+            msg.includes('Kecamatan Domisili') ||
+            msg.includes('Kelurahan Domisili')
         );
 
         if (domicileErrors.length > 0) {
@@ -783,7 +802,8 @@ export async function processData(
 
             provinsi = resolvedAddress.result?.provinsi || parsedNikData.provinsi || '';
             kabupatenOrKota = resolvedAddress.result?.kotakab || parsedNikData.kotakab || '';
-            kecamatan = resolvedAddress.result?.kecamatan || (parsedNikData as any).kecamatan || parsedNikData.namaKec || '';
+            kecamatan =
+              resolvedAddress.result?.kecamatan || (parsedNikData as any).kecamatan || parsedNikData.namaKec || '';
             kelurahan = resolvedAddress.result?.kelurahan || resolvedAddress.name || '';
 
             if (isEmpty(kelurahan)) {
@@ -953,11 +973,13 @@ export async function processData(
     console.log(`Getting form values for NIK: ${NIK} after submission...`);
     fixedData.formValues = await getNormalizedFormValues(page);
 
+    console.log(`📝 [DB] Writing success log for NIK: ${NIK}`);
     await database.addLog({
       id: getNumbersOnly(NIK),
       data: { ...fixedData, status: 'success' },
       message: `Data for NIK: ${NIK} submitted successfully.`
     });
+    console.log(`✅ [DB] Success log written for NIK: ${NIK}`);
     console.log('✅\tData submitted successfully:', fixedData);
     return {
       status: 'success',
