@@ -478,7 +478,7 @@ export async function processData(
       if (!nama || nama.length === 0) {
         throw new Error("❌ Failed to take the patient's name");
       }
-      await typeAndTriggerKendo(page, '#field_item_nama_peserta', nama, true);
+      await typeAndTrigger(page, '#field_item_nama_peserta input[name="nama_peserta"]', nama);
       await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', gender, true);
       await typeAndTriggerKendo(page, '#field_item_tgl_lahir', tgl_lahir, true);
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
@@ -564,7 +564,7 @@ export async function processData(
           () => (document.querySelector('input[name="nama_peserta"]') as HTMLInputElement)?.value
         );
         fixedData.nama_from_page = `${nama}`.trim();
-        await typeAndTriggerKendo(page, '#field_item_nama_peserta', NAMA, true);
+        await typeAndTrigger(page, '#field_item_nama_peserta input[name="nama_peserta"]', NAMA);
       }
       // 2nd check after typing the name if it was empty
       if (!isValidName(`${fixedData.nama_from_page}`, true)) {
@@ -730,6 +730,143 @@ export async function processData(
         }
       });
 
+      // Check for validation errors (Kendo UI validation tooltips) before waiting for modal
+      // If required fields are not filled, validation tooltips appear instead of the confirmation modal
+      await sleep(500); // Brief wait for validation to appear
+      const invalidAlertState = await isInvalidAlertVisible(page);
+      if (invalidAlertState.result) {
+        console.log(`⚠️ Validation errors detected after save click: ${invalidAlertState.contents.join(' | ')}`);
+
+        // Check for domicile address validation errors and auto-fill if found
+        const domicileErrors = invalidAlertState.contents.filter(
+          (msg) => msg.includes('Kabupaten/Kota Domisili') || msg.includes('Provinsi Domisili') || msg.includes('Kecamatan Domisili') || msg.includes('Kelurahan Domisili')
+        );
+
+        if (domicileErrors.length > 0) {
+          console.log('🏠 Domicile address validation errors detected, attempting to auto-fill...');
+          try {
+            // Fill domicile address fields using the same resolved address data
+            // Use the same address components we resolved for KTP
+            let provinsi = '',
+              kabupatenOrKota = '',
+              kecamatan = '',
+              kelurahan = '';
+
+            const parsedNikData = parsedNik?.status === 'success' ? parsedNik.data : null;
+            if (!parsedNikData) {
+              throw new Error(
+                `❌ Failed to determine address: parsed NIK data is not available ` +
+                  `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+              );
+            }
+
+            console.log(`Resolving exact kelurahan for address: ${fixedData.alamat}`);
+            const resolvedAddress = await findExactKelurahanFromAddress(parsedNikData, fixedData.alamat);
+
+            if (!resolvedAddress) {
+              throw new Error(
+                `❌ Failed to determine address: resolver returned no result ` +
+                  `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+              );
+            }
+
+            if (resolvedAddress.geocoded) {
+              fixedData._address = resolvedAddress.geocoded.raw || resolvedAddress.geocoded;
+              console.log('Geocoder result:', resolvedAddress.geocoded);
+            }
+
+            console.log('Exact kelurahan resolver result:', {
+              source: resolvedAddress.source,
+              name: resolvedAddress.name,
+              id: resolvedAddress.id
+            });
+
+            provinsi = resolvedAddress.result?.provinsi || parsedNikData.provinsi || '';
+            kabupatenOrKota = resolvedAddress.result?.kotakab || parsedNikData.kotakab || '';
+            kecamatan = resolvedAddress.result?.kecamatan || (parsedNikData as any).kecamatan || parsedNikData.namaKec || '';
+            kelurahan = resolvedAddress.result?.kelurahan || resolvedAddress.name || '';
+
+            if (isEmpty(kelurahan)) {
+              throw new Error(
+                `❌ Failed to determine kelurahan: resolver returned no kelurahan ` +
+                  `(nik=${fixedData.nik || '<unknown>'}, alamat=${fixedData.alamat || '<unknown>'})`
+              );
+            }
+
+            if (typeof kelurahan !== 'string' || isEmpty(kelurahan)) {
+              console.log({ provinsi, kotakab: kabupatenOrKota, kecamatan, kelurahan });
+              throw new Error('kelurahan should be string');
+            }
+
+            if (isEmpty(provinsi) || isEmpty(kabupatenOrKota) || isEmpty(kecamatan) || isEmpty(kelurahan)) {
+              throw new Error(
+                `Missing required address fields: provinsi='${provinsi}', kotakab='${kabupatenOrKota}', ` +
+                  `kecamatan='${kecamatan}', kelurahan='${kelurahan}'`
+              );
+            }
+
+            console.log(`Inputting DOMICILE address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
+
+            // Fill domicile address fields
+            for (const [containerSelector, value] of [
+              ['#field_item_provinsi_domisili_id', ucwords(provinsi)],
+              ['#field_item_kabupaten_domisili_id', ucwords(kabupatenOrKota)],
+              ['#field_item_kecamatan_domisili_id', ucwords(kecamatan)],
+              ['#field_item_kelurahan_domisili_id', ucwords(kelurahan)],
+              ['#field_item_alamat_domisili textarea', fixedData.alamat]
+            ] as const) {
+              if (containerSelector.endsWith('textarea')) {
+                await page.waitForSelector(containerSelector, { visible: true });
+                await page.type(containerSelector, value, { delay: 100 });
+              } else {
+                await typeAndTriggerKendo(page, containerSelector, value, true);
+              }
+              await sleep(200);
+            }
+
+            console.log('✅ Domicile address filled, re-clicking save button...');
+
+            // Re-click save button after filling address
+            await page.evaluate(() => {
+              const el = document.querySelector('#save');
+              if (el) {
+                el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+              }
+            });
+
+            // Wait for validation to clear with retry loop
+            let recheckAlert = { result: false, contents: [] as string[] };
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              await sleep(500);
+              recheckAlert = await isInvalidAlertVisible(page);
+              if (!recheckAlert.result) {
+                console.log(`✅ Validation cleared after auto-fill (attempt ${attempt})`);
+                break;
+              }
+              console.log(
+                `⚠️ Still has validation errors after auto-fill (attempt ${attempt}): ${recheckAlert.contents.join(' | ')}`
+              );
+            }
+            if (recheckAlert.result) {
+              throw new Error(
+                `Form validation failed - required fields not filled after auto-fill: ${recheckAlert.contents.join('; ')}`
+              );
+            }
+          } catch (fillError) {
+            console.error('Failed to auto-fill domicile address:', fillError);
+            throw new Error(
+              `Form validation failed - required fields not filled: ${invalidAlertState.contents.join('; ')}`
+            );
+          }
+        } else {
+          // Could throw an error, or wait for user to fix, or just log and continue
+          // For now, throw to prevent hanging on modal that won't appear
+          throw new Error(
+            `Form validation failed - required fields not filled: ${invalidAlertState.contents.join('; ')}`
+          );
+        }
+      }
+
       // First: Wait for pre-save confirmation modal ("Apakah Anda yakin telah mengisi data dengan benar?")
       console.log('Waiting for pre-save confirmation modal...');
       await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
@@ -766,24 +903,37 @@ export async function processData(
 
       // Second: Wait for post-save confirmation modal ("Validasi NIK dan Tanggal Skrining")
       // This modal asks if you want to save anyway because NIK was already registered on a different date
-      console.log('Waiting for post-save confirmation modal...');
-      await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
-      await sleep(1000);
+      // Note: This modal doesn't always appear - sometimes the form submits successfully without it
+      console.log('Waiting for post-save confirmation modal (optional)...');
+      let postSaveModalAppeared = false;
+      try {
+        await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 3000 });
+        await sleep(500);
 
-      // Verify it's the save confirmation modal
-      const isSaveModal = await isSaveConfirmationModalVisible(page);
-      if (!isSaveModal) {
-        throw new Error('❌ Save confirmation modal not found or text mismatch');
+        // Verify it's the save confirmation modal
+        const isSaveModal = await isSaveConfirmationModalVisible(page);
+        if (isSaveModal) {
+          postSaveModalAppeared = true;
+        } else {
+          // Some other modal appeared, not the save confirmation - wait for it to close
+          console.log('Different modal appeared, waiting for it to close...');
+          await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
+        }
+      } catch {
+        // Timeout - modal didn't appear within 3 seconds, which is normal
+        console.log('Post-save confirmation modal did not appear (form may have submitted directly)');
       }
 
-      // Click "Ya" button to confirm saving
-      console.log('Clicking "Ya" on post-save confirmation modal...');
-      const yesButton2 = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
-      await yesButton2.click();
+      if (postSaveModalAppeared) {
+        // Click "Ya" button to confirm saving
+        console.log('Clicking "Ya" on post-save confirmation modal...');
+        const yesButton2 = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
+        await yesButton2.click();
 
-      // Wait for modal title to disappear (modal closed)
-      await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
-      await sleep(1500);
+        // Wait for modal title to disappear (modal closed)
+        await page.waitForSelector('#dialogconfirm_wnd_title', { hidden: true, timeout: 5000 }).catch(() => {});
+        await sleep(1500);
+      }
     } else {
       console.warn('⚠️\tData processed but not submitted:', fixedData, '\n');
       await waitEnter('Please manually submit the form, then press Enter to continue...');
