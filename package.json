@@ -241,7 +241,7 @@
     "@typescript-eslint/utils": "8.74.0",
     "typescript-eslint": "8.74.0",
     "binary-collections": "https://github.com/dimaslanjaka/bin/raw/515e99f12dfbeaeec4e1485631a14826845b299b/releases/bin.tgz",
-    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/85a5399f99298c761dcd4b4aaf802dcfec502088/release/cross-spawn.tgz",
+    "cross-spawn": "https://github.com/dimaslanjaka/node-cross-spawn/raw/709552e/release/cross-spawn.tgz",
     "sbg-utility": "https://github.com/dimaslanjaka/static-blog-generator/raw/1ca385787f7287155b547c5b97d5ffd5bcfab482/packages/sbg-utility/release/sbg-utility.tgz",
     "@dimaslanjaka/eslint-base-config": "https://github.com/dimaslanjaka/eslint-base-config/raw/814e8e0/release/dimaslanjaka-eslint-base-config.tgz",
     "proxies-grabber": "https://github.com/dimaslanjaka/proxies-grabber/raw/04c1ad11f3f9764f6af552213cc125a44335f050/release/proxies-grabber.tgz",
