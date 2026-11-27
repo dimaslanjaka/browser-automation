@@ -73,25 +73,30 @@ export async function typeAndTriggerKendo(page, containerSelector, value, debug 
   log('Found visible selector, focusing...');
   await page.focus(visibleSelector);
 
-  // Clear and type into visible input
+  // Clear and type into visible input - more thorough clear
   log('Clearing input...');
   await page.evaluate((sel) => {
     const input = document.querySelector(sel);
     if (input) {
       input.value = '';
       input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }, visibleSelector);
+  await page.focus(visibleSelector);
+  await page.keyboard.down('Control');
+  await page.keyboard.press('a');
+  await page.keyboard.up('Control');
+  await page.keyboard.press('Delete');
 
   log('Typing value:', value);
   await page.type(visibleSelector, value, { delay: 100 });
 
   // wait for dropdown to appear and filter
   log('Waiting for dropdown to filter...');
-  await sleep(500);
+  await sleep(800);
 
-  // Try to find and click the exact matching option in the dropdown
-  // This is more reliable than ArrowDown+Enter which might select the wrong item
+  // Try exact match click first (type to filter, then click exact match)
   log('Searching for exact match in dropdown...');
   const selected = await page.evaluate((sel, targetValue) => {
     // Kendo UI dropdown list items
@@ -107,27 +112,52 @@ export async function typeAndTriggerKendo(page, containerSelector, value, debug 
   }, visibleSelector, value);
 
   if (!selected) {
-    log('Exact match not found in dropdown, falling back to ArrowDown+Enter...');
-    // move to first suggestion
-    log('Pressing ArrowDown...');
-    await page.keyboard.press('ArrowDown');
-    // select it
-    log('Pressing Enter...');
-    await page.keyboard.press('Enter');
+    log('Exact match not found, trying case-insensitive match...');
+    const selectedCI = await page.evaluate((sel, targetValue) => {
+      const listItems = document.querySelectorAll('.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item');
+      const targetLower = targetValue.toLowerCase();
+      for (const item of listItems) {
+        const text = item.textContent?.trim().toLowerCase();
+        if (text === targetLower) {
+          item.click();
+          return true;
+        }
+      }
+      return false;
+    }, visibleSelector, value);
+
+    if (!selectedCI) {
+      log('Exact match not found in dropdown, falling back to ArrowDown+Enter...');
+      // move to first suggestion
+      log('Pressing ArrowDown...');
+      await page.keyboard.press('ArrowDown');
+      // select it
+      log('Pressing Enter...');
+      await page.keyboard.press('Enter');
+    } else {
+      log('Selected case-insensitive match from dropdown');
+    }
   } else {
     log('Selected exact match from dropdown');
   }
 
-  await sleep(200);
+  await sleep(300);
 
   // Validate the value on the visible .k-input (not the hidden input, which stores internal IDs)
+  // Retry once if validation fails due to timing
+  // Use case-insensitive comparison for Kendo UI dropdown values
   log('Validating value...');
-  const currentValue = await page.$eval(visibleSelector, (el) => el.value);
-  if (currentValue !== value) {
-    log('Validation failed. Expected:', value, 'Got:', currentValue);
-    throw new Error(
-      `[typeAndTriggerKendo] Failed to set value for selector "${containerSelector}". Expected: "${value}", but got: "${currentValue}"`
-    );
+  let currentValue = await page.$eval(visibleSelector, (el) => el.value);
+  if (currentValue.toLowerCase() !== value.toLowerCase()) {
+    log('Validation failed on first attempt. Expected:', value, 'Got:', currentValue, 'Retrying...');
+    await sleep(200);
+    currentValue = await page.$eval(visibleSelector, (el) => el.value);
+    if (currentValue.toLowerCase() !== value.toLowerCase()) {
+      log('Validation failed on retry. Expected:', value, 'Got:', currentValue);
+      throw new Error(
+        `[typeAndTriggerKendo] Failed to set value for selector "${containerSelector}". Expected: "${value}", but got: "${currentValue}"`
+      );
+    }
   }
   log('Success! Value set to:', currentValue);
 }
