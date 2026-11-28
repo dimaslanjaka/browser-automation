@@ -1,0 +1,7 @@
+tmp
+.deploy_git
+phpmyadmin
+venv
+.omo
+.cache
+public
