@@ -18,7 +18,13 @@ export async function isNikErrorVisible(page) {
         rect.width > 0 &&
         rect.height > 0;
 
-      if (isVisible) return true;
+      if (!isVisible) continue;
+
+      // Check if the notification content contains NIK error message (case-insensitive)
+      const text = (el.innerText || el.textContent || '').toLowerCase();
+      if (text.includes('nik harus 16 digit') || text.includes('nik error') || text.includes('nik tidak valid')) {
+        return true;
+      }
     }
     return false;
   });
