@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { countProcesses } from '../src/utils/get_total_processes.cjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,32 @@ const repoRoot = path.resolve(__dirname, '..');
 const jsHookPath = path.join(repoRoot, '.vscode', 'js-hook.cjs');
 const sourceExtensions = ['.ts', '.js', '.mjs', '.cjs'];
 const builtExtensions = ['.mjs', '.js', '.cjs'];
+
+/**
+ * Get the log file path for a command.
+ * @param {string} command - The subcommand name.
+ * @returns {string} Absolute path to the log file.
+ */
+function getLogFilePath(command) {
+  const logDir = path.join(repoRoot, 'tmp', 'logs', 'pp');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  // Count existing node processes for this command to determine the next process number
+  const processCount = countProcesses('node', command) || 0;
+  const nextProcessNum = processCount + 1;
+  return path.join(logDir, `${command}-${nextProcessNum}.log`);
+}
+
+/**
+ * Quote a string as a PowerShell single-quoted literal.
+ * Single quotes inside the value are escaped by doubling them.
+ * @param {string} value - Raw string.
+ * @returns {string} PowerShell-safe single-quoted literal.
+ */
+function psQuote(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
 
 /**
  * Resolve the correct source directory: src/ if present (dev), else lib/ (bundled).
@@ -117,6 +144,61 @@ function resolveRunner(command) {
 }
 
 /**
+ * Launch the runner in a new, visible PowerShell window on Windows.
+ * Output is shown live in the window AND written to the log file (Tee-Object).
+ * @param {string} command - The subcommand name.
+ * @param {string[]} nodeArgs - Node process arguments.
+ * @param {boolean} keepOpen - Keep the window open after the process exits.
+ */
+function launchWindows(command, nodeArgs, keepOpen) {
+  const logFile = getLogFilePath(command);
+
+  // & 'node.exe' 'arg1' 'arg2' ... 2>&1 | Tee-Object -FilePath 'log'
+  const psCommand =
+    `& ${psQuote(process.execPath)} ${nodeArgs.map(psQuote).join(' ')} 2>&1 ` +
+    `| Tee-Object -FilePath ${psQuote(logFile)}`;
+
+  const psFlags = ['-NoProfile', ...(keepOpen ? ['-NoExit'] : [])].join(' ');
+
+  // `start "title" powershell ...` opens a new console window.
+  // windowsVerbatimArguments stops Node from re-escaping the quotes for cmd.exe.
+  const cmdLine = `start "pp:${command}" powershell ${psFlags} -Command "${psCommand}"`;
+
+  const child = spawn('cmd.exe', ['/d', '/s', '/c', cmdLine], {
+    cwd: repoRoot,
+    detached: true,
+    stdio: 'ignore',
+    shell: false,
+    windowsVerbatimArguments: true
+    // NOTE: no windowsHide here, otherwise the new window would be hidden.
+  });
+
+  child.unref();
+  process.exit(0);
+}
+
+/**
+ * Launch the runner as a detached background process on Unix, logging to a file.
+ * @param {string} command - The subcommand name.
+ * @param {string[]} nodeArgs - Node process arguments.
+ */
+function launchUnix(command, nodeArgs) {
+  const logFile = getLogFilePath(command);
+  const out = fs.openSync(logFile, 'a');
+
+  const child = spawn(process.execPath, nodeArgs, {
+    cwd: repoRoot,
+    detached: true,
+    stdio: ['ignore', out, out],
+    shell: false
+  });
+
+  child.unref();
+  fs.closeSync(out);
+  process.exit(0);
+}
+
+/**
  * Run a runner command via Node.
  * @param {string} command - The subcommand name.
  * @param {string[]} args - Remaining arguments to forward.
@@ -134,35 +216,13 @@ function runBundledCommand(command, args, sameTerminal = false, keepOpen = false
   const nodeArgs = createNodeArgs(runnerPath, args);
 
   // Open in new terminal window for all commands unless -s/--same-terminal is specified
-  const needsNewWindow = !sameTerminal;
-
-  if (needsNewWindow) {
+  if (!sameTerminal) {
     if (process.platform === 'win32') {
-      // Windows: open a new cmd window.
-      // Use /k (keep open) when -k flag is set, otherwise /c (close after)
-      const cmdFlag = keepOpen ? '/k' : '/c';
-      const child = spawn('cmd', ['/c', 'start', '', 'cmd', cmdFlag, 'node', ...nodeArgs], {
-        cwd: repoRoot,
-        detached: true,
-        stdio: 'ignore',
-        shell: false,
-        windowsHide: true
-      });
-
-      child.unref();
-      process.exit(0);
+      launchWindows(command, nodeArgs, keepOpen);
     } else {
-      // Unix: detached process (no persistent terminal emulation)
-      const child = spawn(process.execPath, nodeArgs, {
-        cwd: repoRoot,
-        detached: true,
-        stdio: 'ignore',
-        shell: false
-      });
-
-      child.unref();
-      process.exit(0);
+      launchUnix(command, nodeArgs);
     }
+    return;
   }
 
   // Run in current terminal
