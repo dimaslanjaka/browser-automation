@@ -9,13 +9,7 @@ import { findExactKelurahanFromAddress } from '../../address/index.js';
 import type { LogDatabase } from '../../database/LogDatabase.js';
 import { MysqlLogDatabase } from '../../database/MysqlLogDatabase.js';
 import { SQLiteLogDatabase } from '../../database/SQLiteLogDatabase.js';
-import {
-  isElementExist,
-  isElementVisible,
-  typeAndTrigger,
-  typeAndTriggerKendo,
-  waitForDomStable
-} from '../../puppeteer_utils.js';
+import { isElementExist, isElementVisible, typeAndTrigger, waitForDomStable } from '../../puppeteer_utils.js';
 import { autoLoginAndEnterSkriningPage } from '../../skrin_puppeteer.js';
 import FileLockHelper from '../../utils/FileLockHelper.js';
 import { extractNumericWithComma, getNumbersOnly, sleep, waitEnter } from '../../utils/index.js';
@@ -145,10 +139,10 @@ async function resolveAndFillAddress(
   console.log(`Inputting address ${provinsi} -> ${kabupatenOrKota} -> ${kecamatan} -> ${kelurahan}`);
 
   for (const [containerSelector, value] of [
-    ['#field_item_provinsi_ktp_id', ucwords(provinsi)],
-    ['#field_item_kabupaten_ktp_id', ucwords(kabupatenOrKota)],
-    ['#field_item_kecamatan_ktp_id', ucwords(kecamatan)],
-    ['#field_item_kelurahan_ktp_id', ucwords(kelurahan)],
+    ['#field_item_provinsi_ktp_id input[type="text"]', ucwords(provinsi)],
+    ['#field_item_kabupaten_ktp_id input[type="text"]', ucwords(kabupatenOrKota)],
+    ['#field_item_kecamatan_ktp_id input[type="text"]', ucwords(kecamatan)],
+    ['#field_item_kelurahan_ktp_id input[type="text"]', ucwords(kelurahan)],
     ['#field_item_alamat_ktp textarea', fixedData.alamat]
   ] as const) {
     if (containerSelector.endsWith('textarea')) {
@@ -160,7 +154,7 @@ async function resolveAndFillAddress(
       }, containerSelector);
       await page.type(containerSelector, value, { delay: 100 });
     } else {
-      await typeAndTriggerKendo(page, containerSelector, value, true);
+      await typeAndTrigger(page, containerSelector, value);
     }
     await sleep(200);
   }
@@ -186,12 +180,12 @@ async function resolveAndFillAddress(
 async function fillFallbackLocationIfEmpty(page: Page, province: string, city: string): Promise<void> {
   console.log(`Provinsi: ${province}`, province.length === 0 ? '(empty)' : '');
   if (province.length === 0) {
-    await typeAndTriggerKendo(page, '#field_item_provinsi_ktp_id', 'Jawa Timur', true);
+    await typeAndTrigger(page, '#field_item_provinsi_ktp_id input[type="text"]', 'Jawa Timur');
   }
 
   console.log(`Kabupaten/Kota: ${city}`, city.length === 0 ? '(empty)' : '');
   if (city.length === 0) {
-    await typeAndTriggerKendo(page, '#field_item_kabupaten_ktp_id', 'Kota Surabaya', true);
+    await typeAndTrigger(page, '#field_item_kabupaten_ktp_id input[type="text"]', 'Kota Surabaya');
   }
 }
 
@@ -208,39 +202,39 @@ async function fillAllTidakFields(
 ): Promise<void> {
   // Always-Tidak fields - Kendo UI comboboxes use container selectors
   const alwaysTidakSelectors = [
-    '#field_item_riwayat_kontak_tb_id',
-    '#field_item_risiko_1_id',
-    '#field_item_risiko_4_id',
-    '#field_item_risiko_5_id',
-    '#field_item_risiko_7_id',
-    '#field_item_risiko_10_id',
-    '#field_item_risiko_11_id',
-    '#field_item_gejala_2_3_id',
-    '#field_item_gejala_2_4_id',
-    '#field_item_gejala_2_5_id',
-    '#field_item_gejala_6_id'
+    '#field_item_riwayat_kontak_tb_id input[type="text"]',
+    '#field_item_risiko_1_id input[type="text"]',
+    '#field_item_risiko_4_id input[type="text"]',
+    '#field_item_risiko_5_id input[type="text"]',
+    '#field_item_risiko_7_id input[type="text"]',
+    '#field_item_risiko_10_id input[type="text"]',
+    '#field_item_risiko_11_id input[type="text"]',
+    '#field_item_gejala_2_3_id input[type="text"]',
+    '#field_item_gejala_2_4_id input[type="text"]',
+    '#field_item_gejala_2_5_id input[type="text"]',
+    '#field_item_gejala_6_id input[type="text"]'
   ];
 
   // Gender-specific: risiko kehamilan only applies to perempuan
   if (ctx.gender.toLowerCase().trim() === 'perempuan') {
-    alwaysTidakSelectors.push('#field_item_risiko_9_id');
+    alwaysTidakSelectors.push('#field_item_risiko_9_id input[type="text"]');
   }
 
   for (const selector of alwaysTidakSelectors) {
-    await typeAndTriggerKendo(page, selector, 'Tidak', true);
+    await typeAndTrigger(page, selector, 'Tidak');
   }
 
   // Diabetes: Ya or Tidak
-  await typeAndTriggerKendo(page, '#field_item_risiko_6_id', ctx.hasDiabetes ? 'Ya' : 'Tidak', true);
+  await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', ctx.hasDiabetes ? 'Ya' : 'Tidak');
 
   // Age-specific: gejala balita fields are conditionally rendered
   if (ctx.age < 18) {
     console.log('Filling balita-specific fields with "Tidak" since age is under 18');
     const gejalaBalitaSelectors = [
-      '#field_item_gejala_1_1_id',
-      '#field_item_gejala_1_3_id',
-      '#form_item_gejala_1_4_id',
-      '#field_item_gejala_1_5_id'
+      '#field_item_gejala_1_1_id input[type="text"]',
+      '#field_item_gejala_1_3_id input[type="text"]',
+      '#form_item_gejala_1_4_id input[type="text"]',
+      '#field_item_gejala_1_5_id input[type="text"]'
     ];
 
     for (const selector of gejalaBalitaSelectors) {
@@ -248,7 +242,7 @@ async function fillAllTidakFields(
         const visible = await isElementVisible(page, selector);
         console.log(`${selector} is visible: ${visible}`);
         if (visible) {
-          await typeAndTriggerKendo(page, selector, 'Tidak', true);
+          await typeAndTrigger(page, selector, 'Tidak');
           await sleep(200);
         }
       }
@@ -259,7 +253,7 @@ async function fillAllTidakFields(
 
   // Batuk: Tidak if no cough, otherwise handled by caller via keterangan
   if (!ctx.hasBatuk) {
-    await typeAndTriggerKendo(page, '#field_item_gejala_2_1_id', 'Tidak', true);
+    await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
   }
 
   // CXR: always Tidak
@@ -435,10 +429,23 @@ export async function processData(
 
     // Wait for nik field to be ready after date selection
     await page.waitForSelector('#nik', { visible: true });
-    await sleep(500);
+    await sleep(1000);
 
     await typeAndTrigger(page, 'input[name="tempat_skrining_id_input"]', 'Puskesmas');
-    await typeAndTrigger(page, '#nik', getNumbersOnly(NIK));
+
+    // Type NIK with retry logic
+    const nikToEnter = getNumbersOnly(NIK);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await typeAndTrigger(page, '#nik', nikToEnter);
+      const nikValue = await page.$eval('#nik', (el) => (el as HTMLInputElement).value);
+      if (nikValue && nikValue.trim() !== '') {
+        console.log(`✅ NIK set successfully on attempt ${attempt}: ${nikValue}`);
+        break;
+      }
+      console.log(`⚠️ NIK field empty on attempt ${attempt}, retrying...`);
+      await sleep(500);
+    }
+
     await waitForDomStable(page, 5000, 60000);
 
     // Check if the ID modal appears
@@ -454,15 +461,8 @@ export async function processData(
       //
     }
 
-    console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
-    if (await isNikErrorVisible(page)) {
-      await waitEnter('Please check NIK error notification. Press Enter to continue...');
-      throw new Error('NIK error notification visible, please re-check. Aborting...');
-    }
-
-    console.log('Identity modal is visible:', await isIdentityModalVisible(page));
-
     if (await isIdentityModalVisible(page)) {
+      console.log('Identity modal detected, confirming identity...');
       await confirmIdentityModal(page);
     }
 
@@ -492,18 +492,18 @@ export async function processData(
       // Map gender initial to full text for dropdown
       const genderFull = gender === 'L' ? 'Laki-laki' : gender === 'P' ? 'Perempuan' : gender;
       await typeAndTrigger(page, '#field_item_nama_peserta input[name="nama_peserta"]', nama);
-      await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', genderFull, true);
-      await typeAndTriggerKendo(page, '#field_item_tgl_lahir', tgl_lahir, true);
+      await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', genderFull);
+      await typeAndTrigger(page, '#field_item_tgl_lahir input[type="text"]', tgl_lahir);
       await typeAndTrigger(page, 'input[name="pekerjaan_id_input"]', fixedData.pekerjaan);
       await resolveAndFillAddress(page, fixedData, parsedNik);
     };
 
     if (isNikNotFound) {
       const shouldClickYes = await page.evaluate(() => {
-        const dialog = document.querySelector('#dialogconfirm');
+        const dialog = document.querySelector('#dialogconfirm') as HTMLElement | null;
         if (!dialog) return false;
 
-        const text = ((dialog as any).innerText || dialog.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const text = (dialog.innerText || dialog.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
         const clickYesTriggers = [
           'access to resources is temporary closed',
           'the daily quota has reached the maximum limit',
@@ -520,13 +520,22 @@ export async function processData(
         await page.waitForSelector('#dialogconfirm_wnd_title', { visible: true, timeout: 10000 });
         await sleep(500);
 
-        // Verify it's the submit confirmation modal
-        const isSubmitModal = await isSubmitModalConfirmationVisible(page);
-        if (!isSubmitModal) {
-          throw new Error('❌ Submit confirmation modal not found or text mismatch');
+        // Verify it's the "Data tidak ditemukan" manual input modal (not submit confirmation)
+        // This modal has text "Apakah Anda akan melanjutkan penginputan manual?"
+        const isManualInputModal = await page.evaluate(() => {
+          const modal = document.querySelector('#dialogconfirm') as HTMLElement | null;
+          if (!modal) return false;
+          const text = modal.innerText || modal.textContent || '';
+          return (
+            text.includes('Apakah Anda akan melanjutkan penginputan manual') || text.includes('Data tidak ditemukan')
+          );
+        });
+
+        if (!isManualInputModal) {
+          throw new Error('❌ Expected manual input modal, but different modal found');
         }
 
-        // Click "Ya" button scoped inside the modal
+        // Click "Ya" button for "Data tidak ditemukan" manual input modal
         const yesButton = await page.waitForSelector('#dialogconfirm #yesButton', { visible: true, timeout: 5000 });
         await yesButton.click();
 
@@ -597,8 +606,13 @@ export async function processData(
           return false;
         }
         // Map gender initial to full text for dropdown
-        const genderFull = fixedData.genderInitial === 'L' ? 'Laki-laki' : fixedData.genderInitial === 'P' ? 'Perempuan' : fixedData.genderInitial;
-        await typeAndTriggerKendo(page, '#field_item_jenis_kelamin_id', genderFull, true);
+        const genderFull =
+          fixedData.genderInitial === 'L'
+            ? 'Laki-laki'
+            : fixedData.genderInitial === 'P'
+              ? 'Perempuan'
+              : fixedData.genderInitial;
+        await typeAndTrigger(page, '#field_item_jenis_kelamin_id input[type="text"]', genderFull);
         await sleep(300);
         await page.keyboard.press('ArrowDown');
         await page.keyboard.press('Enter');
@@ -630,6 +644,13 @@ export async function processData(
     // 2nd attempt to validate after manual input
     if ((await validateAfterNikNotFound(fixedData)) === false) {
       throw new Error('❌ Failed to validate required fields after manual input');
+    }
+
+    // data tidak ditemukan modal may appear if NIK is not found, or if the daily quota is reached.
+    console.log('Is NIK error notification visible:', await isNikErrorVisible(page));
+    if (await isNikErrorVisible(page)) {
+      await waitEnter('Please check NIK error notification. Press Enter to continue...');
+      throw new Error('NIK error notification visible, please re-check. Aborting...');
     }
 
     const { gender, age, birthDate, location } = await getPersonInfo(page);
@@ -829,17 +850,17 @@ export async function processData(
 
             // Fill domicile address fields
             for (const [containerSelector, value] of [
-              ['#field_item_provinsi_domisili_id', ucwords(provinsi)],
-              ['#field_item_kabupaten_domisili_id', ucwords(kabupatenOrKota)],
-              ['#field_item_kecamatan_domisili_id', ucwords(kecamatan)],
-              ['#field_item_kelurahan_domisili_id', ucwords(kelurahan)],
+              ['#field_item_provinsi_domisili_id input[type="text"]', ucwords(provinsi)],
+              ['#field_item_kabupaten_domisili_id input[type="text"]', ucwords(kabupatenOrKota)],
+              ['#field_item_kecamatan_domisili_id input[type="text"]', ucwords(kecamatan)],
+              ['#field_item_kelurahan_domisili_id input[type="text"]', ucwords(kelurahan)],
               ['#field_item_alamat_domisili textarea', fixedData.alamat]
             ] as const) {
               if (containerSelector.endsWith('textarea')) {
                 await page.waitForSelector(containerSelector, { visible: true });
                 await page.type(containerSelector, value, { delay: 100 });
               } else {
-                await typeAndTriggerKendo(page, containerSelector, value, true);
+                await typeAndTrigger(page, containerSelector, value);
               }
               await sleep(200);
             }
@@ -886,6 +907,20 @@ export async function processData(
           );
         }
       }
+
+      // Validate warning alert after all input finished (before waiting for modals)
+      // This ensures no Kendo UI validation tooltips are visible before proceeding
+      await sleep(500);
+      const finalValidationCheck = await isInvalidAlertVisible(page);
+      if (finalValidationCheck.result) {
+        console.log(
+          `⚠️ Validation errors still present before modal wait: ${finalValidationCheck.contents.join(' | ')}`
+        );
+        throw new Error(
+          `Form validation failed - required fields not filled before modal: ${finalValidationCheck.contents.join('; ')}`
+        );
+      }
+      console.log('✅ All validation checks passed, proceeding to wait for modals...');
 
       // First: Wait for pre-save confirmation modal ("Apakah Anda yakin telah mengisi data dengan benar?")
       console.log('Waiting for pre-save confirmation modal...');
