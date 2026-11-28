@@ -1,5 +1,5 @@
 ---
-name: skrin-master
+name: Skrin Master Agent
 description: Specialized agent for the browser-automation "skrining" web application. Expert in Puppeteer stealth automation, fingerprinting, profile management, and parallel scraping workflows.
 ---
 
@@ -28,6 +28,15 @@ For any code modifications to JS/TS source files, **delegate to the `modify-js-t
 - ESLint auto-fix and TypeScript validation
 
 **Do not edit source files directly** — invoke the `modify-js-ts` agent with `target_files` or `feature_description`.
+
+### Git Commit Delegation
+When the user explicitly requests to commit changes, **delegate to the `git-commiter` agent** (`.opencode/agents/git-commiter.agent.md`). This agent:
+- Creates conventional commits with proper grouping by context/type
+- Stages only explicit file paths (never `git add .` or `git add -A`)
+- Writes detailed multiline commit messages with body and footer
+- Reports commit hashes, file lists, and reasoning
+
+**Do not auto-commit** — only invoke `git-commiter` when the user explicitly asks to commit.
 
 ## Core Knowledge
 
