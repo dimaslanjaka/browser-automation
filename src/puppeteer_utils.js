@@ -99,16 +99,22 @@ export async function typeAndTriggerKendo(page, containerSelector, value, debug 
   // Use ArrowDown+Enter after filtering - more reliable than click which drops first char
   // First verify the dropdown has filtered to our value
   log('Verifying dropdown filtered...');
-  const dropdownFiltered = await page.evaluate((sel, targetValue) => {
-    const listItems = document.querySelectorAll('.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item');
-    for (const item of listItems) {
-      const text = item.textContent?.trim();
-      if (text === targetValue || text?.toLowerCase() === targetValue.toLowerCase()) {
-        return true;
+  const dropdownFiltered = await page.evaluate(
+    (sel, targetValue) => {
+      const listItems = document.querySelectorAll(
+        '.k-list-container .k-item, .k-animation-container .k-list .k-item, .k-dropdown .k-list .k-item'
+      );
+      for (const item of listItems) {
+        const text = item.textContent?.trim();
+        if (text === targetValue || text?.toLowerCase() === targetValue.toLowerCase()) {
+          return true;
+        }
       }
-    }
-    return false;
-  }, visibleSelector, value);
+      return false;
+    },
+    visibleSelector,
+    value
+  );
 
   if (!dropdownFiltered) {
     log('WARNING: Dropdown may not have filtered to expected value, continuing anyway...');
@@ -684,13 +690,38 @@ export async function closePuppeteer() {
 
 /**
  * Clears an input field, types a value into it, and triggers input and change events.
+ * Validates the value was set correctly with retry logic for slow-loading fields.
  *
  * @param {import('puppeteer').Page} page - The Puppeteer page instance.
- * @param {string} selector - The CSS selector for the input field.
+ * @param {string} selector - The CSS selector for the input field (e.g., 'input[name="nama_peserta"]' or '#field_item_provinsi_ktp_id input[type="text"]').
  * @param {string} value - The value to type into the input field.
+ * @param {Object} [options] - Additional options.
+ * @param {boolean} [options.skip=false] - If true, skip typing when element doesn't exist or isn't visible (logs warning instead of throwing).
  * @returns {Promise<void>} - A promise that resolves after typing and triggering events.
+ * @throws {Error} When the value cannot be set after all retry attempts (unless options.skip is true).
+ *
+ * @example
+ * // Basic usage
+ * await typeAndTrigger(page, '#nik', '1234567890123456');
+ *
+ * @example
+ * // Skip if field not available
+ * await typeAndTrigger(page, '#optional_field', 'value', { skip: true });
  */
-export async function typeAndTrigger(page, selector, value) {
+export async function typeAndTrigger(page, selector, value, options = { skip: false }) {
+  if (options.skip) {
+    const exists = await isElementExist(page, selector);
+    if (!exists) {
+      console.warn(`Selector ${selector} does not exist on the page. Skipping...`);
+      return;
+    }
+    const visible = await isElementVisible(page, selector);
+    if (!visible) {
+      console.warn(`Selector ${selector} exists but is not visible. Skipping...`);
+      return;
+    }
+  }
+
   await page.focus(selector);
 
   // Clear the input field
@@ -716,31 +747,39 @@ export async function typeAndTrigger(page, selector, value) {
   await page.keyboard.press('Tab');
   await sleep(300);
 
-  // Validate that the value was set correctly
+  // Validate that the value was set correctly - with retry for slow fields
   let currentValue = await page.$eval(selector, (el) => el.value);
   if (currentValue !== value) {
+    console.warn(
+      `[typeAndTrigger] Value mismatch for selector "${selector}". Expected: "${value}", but got: "${currentValue}". Retrying...`
+    );
+    await sleep(500); // Increased delay for slow fields
     // Retry typing the value if it wasn't set correctly
-    // Handle gender combobox properly (wait for dropdown and select)
     await page.waitForSelector(selector, { visible: true });
     await page.type(selector, value, { delay: 100 });
 
-    // wait for dropdown to appear (important)
-    await sleep(300);
+    // Trigger events again
+    await page.evaluate((sel) => {
+      const input = document.querySelector(sel);
+      if (input) {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }, selector);
+    await sleep(500); // Increased delay for slow fields
 
-    // move to first suggestion
-    await page.keyboard.press('ArrowDown');
-
-    // select it
-    await page.keyboard.press('Enter');
-
-    await sleep(200);
-
-    // Validate again
+    // Validate again - simple retry without ArrowDown/Enter (that's for Kendo dropdowns)
     currentValue = await page.$eval(selector, (el) => el.value);
     if (currentValue !== value) {
-      throw new Error(
-        `[typeAndTrigger ] Failed to set value for selector "${selector}". Expected: "${value}", but got: "${currentValue}"`
-      );
+      // Final attempt
+      await page.type(selector, value, { delay: 100 });
+      await sleep(500);
+      currentValue = await page.$eval(selector, (el) => el.value);
+      if (currentValue !== value) {
+        throw new Error(
+          `[typeAndTrigger] Failed to set value for selector "${selector}". Expected: "${value}", but got: "${currentValue}"`
+        );
+      }
     }
   }
 }

@@ -200,7 +200,7 @@ async function fillAllTidakFields(
   page: Page,
   ctx: { gender: string; age: number; hasDiabetes: boolean; hasBatuk: boolean }
 ): Promise<void> {
-  // Always-Tidak fields - Kendo UI comboboxes use container selectors
+  // Always-Tidak fields - use typeAndTrigger with direct input[type="text"] selectors
   const alwaysTidakSelectors = [
     '#field_item_riwayat_kontak_tb_id input[type="text"]',
     '#field_item_risiko_1_id input[type="text"]',
@@ -221,10 +221,12 @@ async function fillAllTidakFields(
   }
 
   for (const selector of alwaysTidakSelectors) {
-    await typeAndTrigger(page, selector, 'Tidak');
+    console.log(`Filling ${selector} with "Tidak"`);
+    await typeAndTrigger(page, selector, 'Tidak', { skip: true });
   }
 
   // Diabetes: Ya or Tidak
+  console.log(`Filling diabetes field with "${ctx.hasDiabetes ? 'Ya' : 'Tidak'}"`);
   await typeAndTrigger(page, '#field_item_risiko_6_id input[type="text"]', ctx.hasDiabetes ? 'Ya' : 'Tidak');
 
   // Age-specific: gejala balita fields are conditionally rendered
@@ -242,6 +244,7 @@ async function fillAllTidakFields(
         const visible = await isElementVisible(page, selector);
         console.log(`${selector} is visible: ${visible}`);
         if (visible) {
+          console.log(`Filling ${selector} with "Tidak"`);
           await typeAndTrigger(page, selector, 'Tidak');
           await sleep(200);
         }
@@ -253,10 +256,12 @@ async function fillAllTidakFields(
 
   // Batuk: Tidak if no cough, otherwise handled by caller via keterangan
   if (!ctx.hasBatuk) {
+    console.log('Filling batuk field with "Tidak" since no cough is present');
     await typeAndTrigger(page, '#field_item_gejala_2_1_id input[type="text"]', 'Tidak');
   }
 
   // CXR: always Tidak
+  console.log('Filling CXR fields with "Tidak"');
   await typeAndTrigger(page, '#form_item_cxr_pemeriksaan_id input', 'Tidak');
   await typeAndTrigger(page, '#form_item_cxr_alasan textarea', 'Tidak tahu');
 }

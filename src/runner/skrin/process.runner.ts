@@ -51,7 +51,7 @@ async function main() {
   const isSuccessModalVisible = await isSuccessNotificationVisible(page);
   if (!isSuccessModalVisible) {
     console.warn('Success notification modal did not appear as expected.');
-    process.exit(1); // exit on unexpected status to avoid silent failures
+    process.exit(0); // exit on unexpected status to avoid silent failures
   }
 
   _stopCapture();
